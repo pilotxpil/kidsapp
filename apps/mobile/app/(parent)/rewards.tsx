@@ -75,7 +75,7 @@ export default function ParentRewardsScreen() {
         <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
           <View style={[styles.header, rtl.headerSplit]}>
             <Button title={`+ ${t('addReward')}`} onPress={() => setModalVisible(true)} style={styles.addBtn} />
-            <Text style={[styles.title, rtl.textFull]}>🎁 {t('manageRewards')}</Text>
+            <Text style={[styles.title, rtl.textFull]}>{t('manageRewards')}</Text>
           </View>
 
           <Text style={[styles.subtitle, rtl.text]}>תבניות מהירות:</Text>
@@ -98,7 +98,7 @@ export default function ParentRewardsScreen() {
                   </TouchableOpacity>
                   <View style={styles.rewardInfo}>
                     <Text style={styles.rewardTitle}>{reward.icon} {reward.title}</Text>
-                    <Text style={styles.rewardMeta}>{cat.label} • {reward.cost} ⭐</Text>
+                    <Text style={styles.rewardMeta}>{cat.label} · {reward.cost} XP</Text>
                   </View>
                 </View>
               </Card>

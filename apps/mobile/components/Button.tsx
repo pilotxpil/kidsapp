@@ -8,6 +8,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, borderRadius, spacing } from '../constants/theme';
 import { BouncyPressable } from './animations/BouncyPressable';
+import { playSfx } from '../lib/sfx';
 
 interface ButtonProps {
   title: string;
@@ -17,6 +18,7 @@ interface ButtonProps {
   disabled?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  sound?: boolean;
 }
 
 export function Button({
@@ -27,11 +29,17 @@ export function Button({
   disabled,
   style,
   textStyle,
+  sound = true,
 }: ButtonProps) {
+  const handlePress = () => {
+    if (sound) playSfx('tap');
+    onPress();
+  };
+
   if (variant === 'primary') {
     return (
       <BouncyPressable
-        onPress={onPress}
+        onPress={handlePress}
         disabled={disabled || loading}
         style={[styles.wrapper, style, (disabled || loading) && styles.disabled]}
       >
@@ -64,7 +72,7 @@ export function Button({
 
   return (
     <BouncyPressable
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || loading}
       style={[
         styles.solid,
@@ -106,8 +114,8 @@ const styles = {
   },
   text: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '700' as const,
+    fontSize: 16,
+    fontWeight: '600' as const,
     textAlign: 'center' as const,
   },
   disabled: {

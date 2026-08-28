@@ -17,7 +17,7 @@ interface BouncyPressableProps extends PressableProps {
 export function BouncyPressable({
   children,
   style,
-  scaleDown = 0.92,
+  scaleDown = 0.97,
   disabled,
   onPressIn,
   onPressOut,

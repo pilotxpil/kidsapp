@@ -1,21 +1,21 @@
 export const colors = {
-  bg: '#0f0a1a',
-  bgCard: '#1a1230',
-  bgCardLight: '#251a40',
-  primary: '#7c3aed',
-  primaryLight: '#a78bfa',
-  secondary: '#f59e0b',
-  accent: '#06d6a0',
-  danger: '#ef4444',
-  success: '#22c55e',
-  text: '#ffffff',
-  textMuted: '#a1a1aa',
-  textDark: '#1a1a2e',
-  gradientStart: '#7c3aed',
-  gradientEnd: '#2563eb',
-  gold: '#fbbf24',
-  streak: '#f97316',
-  border: '#3b2d5c',
+  bg: '#0b0f14',
+  bgCard: '#141a22',
+  bgCardLight: '#1c2430',
+  primary: '#38bdf8',
+  primaryLight: '#7dd3fc',
+  secondary: '#94a3b8',
+  accent: '#22d3ee',
+  danger: '#f43f5e',
+  success: '#34d399',
+  text: '#f4f4f5',
+  textMuted: '#94a3b8',
+  textDark: '#0b0f14',
+  gradientStart: '#1d4ed8',
+  gradientEnd: '#0e7490',
+  gold: '#38bdf8',
+  streak: '#fb7185',
+  border: '#2a3441',
 };
 
 export const spacing = {
@@ -27,9 +27,9 @@ export const spacing = {
 };
 
 export const borderRadius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
+  sm: 6,
+  md: 10,
+  lg: 12,
+  xl: 16,
   full: 999,
 };

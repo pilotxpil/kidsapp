@@ -8,6 +8,7 @@ import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { RewardCard } from '../../components/RewardCard';
 import { PointsBadge } from '../../components/Card';
 import { Celebration } from '../../components/Celebration';
+import { sfxForRewardTitle, playSfx, SfxName } from '../../lib/sfx';
 import type { Reward } from '@kidsapp/shared';
 import { colors, spacing } from '../../constants/theme';
 import { rtl } from '../../lib/rtl';
@@ -21,15 +22,17 @@ export default function KidShopScreen() {
   const [celebrate, setCelebrate] = useState(false);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
 
+  const [celebrateSfx, setCelebrateSfx] = useState<SfxName>('coin');
+
   const load = useCallback(async () => {
     const res = await api.getRewards();
     setRewards(res.rewards);
   }, []);
 
-  useFocusLoad(load);
+  useFocusLoad(load, !!user);
 
   const handleRedeem = (reward: Reward) => {
-    Alert.alert(t('confirmRedeem'), `${reward.title} - ${reward.cost} ⭐`, [
+    Alert.alert(t('confirmRedeem'), `${reward.title} · ${reward.cost} XP`, [
       { text: t('no'), style: 'cancel' },
       {
         text: t('yes'),
@@ -39,9 +42,11 @@ export default function KidShopScreen() {
             await api.redeemReward(reward._id);
             setPendingIds((prev) => new Set(prev).add(reward._id));
             await refreshUser();
+            setCelebrateSfx(sfxForRewardTitle(reward.title));
             setCelebrate(true);
           } catch (err: any) {
             Alert.alert('שגיאה', err.message);
+            playSfx('error');
           } finally {
             setRedeemingId(null);
           }
@@ -51,7 +56,7 @@ export default function KidShopScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#1a0a2e']} style={styles.container}>
+    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
       <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}
@@ -65,7 +70,7 @@ export default function KidShopScreen() {
         >
           <View style={[styles.header, rtl.headerSplit]}>
             <PointsBadge points={user?.points || 0} />
-            <Text style={[styles.title, rtl.textFull]}>🛒 {t('shop')}</Text>
+            <Text style={[styles.title, rtl.textFull]}>{t('shop')}</Text>
           </View>
 
           {rewards.length === 0 ? (
@@ -86,7 +91,7 @@ export default function KidShopScreen() {
         </ScrollView>
       </SafeScreen>
 
-      <Celebration visible={celebrate} message={t('redeemRequest')} onDone={() => setCelebrate(false)} />
+      <Celebration visible={celebrate} sfx={celebrateSfx} message={t('redeemRequest')} onDone={() => setCelebrate(false)} />
     </LinearGradient>
   );
 }

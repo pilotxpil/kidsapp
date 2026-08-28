@@ -1,88 +1,35 @@
 import React, { useEffect } from 'react';
-import { Text, StyleSheet } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
-  withDelay,
-  runOnJS,
-} from 'react-native-reanimated';
+import { View, Text, StyleSheet } from 'react-native';
+import Animated, { ZoomIn } from 'react-native-reanimated';
 import { colors, borderRadius, spacing } from '../constants/theme';
+import { playSfx, SfxName } from '../lib/sfx';
 import { Confetti } from './animations/Confetti';
 
 interface CelebrationProps {
   visible: boolean;
   message?: string;
+  sfx?: SfxName;
   onDone?: () => void;
 }
 
-export function Celebration({ visible, message = 'כל הכבוד!', onDone }: CelebrationProps) {
-  const scale = useSharedValue(0);
-  const opacity = useSharedValue(0);
-  const emojiScale = useSharedValue(1);
-  const glow = useSharedValue(0);
-
+export function Celebration({ visible, message = 'בוצע', sfx = 'complete', onDone }: CelebrationProps) {
   useEffect(() => {
-    if (visible) {
-      scale.value = 0;
-      opacity.value = 0;
-      scale.value = withSpring(1, { damping: 8, stiffness: 120 });
-      opacity.value = withTiming(1, { duration: 250 });
-      emojiScale.value = withRepeat(
-        withSequence(
-          withSpring(1.2, { damping: 4 }),
-          withSpring(1, { damping: 6 })
-        ),
-        -1,
-        true
-      );
-      glow.value = withRepeat(
-        withSequence(withTiming(1, { duration: 600 }), withTiming(0.3, { duration: 600 })),
-        -1,
-        true
-      );
-
-      const timer = setTimeout(() => {
-        opacity.value = withTiming(0, { duration: 400 }, (finished) => {
-          if (finished && onDone) {
-            runOnJS(onDone)();
-          }
-        });
-      }, 2800);
-
-      return () => clearTimeout(timer);
-    } else {
-      scale.value = 0;
-      opacity.value = 0;
-    }
-  }, [visible, scale, opacity, emojiScale, glow, onDone]);
-
-  const overlayStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  const boxStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-  const emojiStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: emojiScale.value }],
-  }));
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glow.value,
-  }));
+    if (!visible) return;
+    playSfx(sfx);
+    const timer = setTimeout(() => onDone?.(), 1800);
+    return () => clearTimeout(timer);
+  }, [visible, sfx, onDone]);
 
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.overlay, overlayStyle]}>
-      <Confetti active={visible} />
-      <Animated.View style={[styles.glowRing, glowStyle]} />
-      <Animated.View style={[styles.messageBox, boxStyle]}>
-        <Animated.Text style={[styles.emoji, emojiStyle]}>🎉</Animated.Text>
+    <View style={styles.overlay} pointerEvents="none">
+      <Confetti active={visible} count={36} />
+      <Animated.View entering={ZoomIn.duration(380).springify().damping(14)} style={styles.messageBox}>
+        <Text style={styles.kicker}>XP</Text>
         <Text style={styles.message}>{message}</Text>
-        <Text style={styles.sub}>מדהים! 🚀</Text>
       </Animated.View>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -93,48 +40,32 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.75)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
   },
-  glowRing: {
-    position: 'absolute',
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: colors.primary,
-    opacity: 0.3,
-  },
   messageBox: {
     backgroundColor: colors.bgCard,
-    borderRadius: borderRadius.xl,
-    padding: spacing.xl,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.gold,
-    minWidth: 260,
-    shadowColor: colors.gold,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    elevation: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minWidth: 220,
   },
-  emoji: {
-    fontSize: 72,
-    marginBottom: spacing.md,
+  kicker: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 3,
+    marginBottom: spacing.sm,
   },
   message: {
     color: colors.text,
-    fontSize: 26,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  sub: {
-    color: colors.gold,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    marginTop: spacing.sm,
     textAlign: 'center',
   },
 });

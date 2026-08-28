@@ -1,14 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { TASK_CATEGORIES } from '@kidsapp/shared';
 import type { Task, TaskCategory } from '@kidsapp/shared';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-} from 'react-native-reanimated';
 import { Card } from './Card';
 import { Button } from './Button';
 import { RtlText } from './RtlText';
@@ -25,39 +18,19 @@ interface TaskCardProps {
   index?: number;
 }
 
-function WiggleIcon({ emoji }: { emoji: string }) {
-  const rotate = useSharedValue(0);
-
-  useEffect(() => {
-    rotate.value = withRepeat(
-      withSequence(
-        withSpring(-8, { damping: 4 }),
-        withSpring(8, { damping: 4 }),
-        withSpring(0, { damping: 6 })
-      ),
-      -1,
-      false
-    );
-  }, [rotate]);
-
-  const style = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotate.value}deg` }],
-  }));
-
-  return (
-    <Animated.Text style={[styles.icon, style]}>{emoji}</Animated.Text>
-  );
+function CategoryIcon({ emoji }: { emoji: string }) {
+  return <Text style={styles.icon}>{emoji}</Text>;
 }
 
 export function TaskCard({ task, onComplete, loading, pending, index = 0 }: TaskCardProps) {
   const cat = TASK_CATEGORIES[task.category as TaskCategory];
 
   return (
-    <FadeInUp index={index}>
+    <FadeInUp index={index} style={styles.cardWrap}>
       <Card style={styles.card} glow={pending}>
         <View style={[styles.header, rtl.cardRow]}>
           <View style={styles.iconBox}>
-            <WiggleIcon emoji={task.icon || cat?.icon || '⭐'} />
+            <CategoryIcon emoji={task.icon || cat?.icon || '◆'} />
           </View>
           <View style={styles.info}>
             <RtlText style={styles.title}>{task.title}</RtlText>
@@ -65,7 +38,7 @@ export function TaskCard({ task, onComplete, loading, pending, index = 0 }: Task
               <RtlText style={styles.description}>{task.description}</RtlText>
             ) : null}
             <View style={[styles.meta, rtl.row]}>
-              <Text style={styles.points}>+{task.points} ⭐</Text>
+              <Text style={styles.points}>+{task.points} XP</Text>
               <View style={styles.categoryBadge}>
                 <Text style={[styles.categoryText, rtl.text]}>{cat?.label}</Text>
               </View>
@@ -78,7 +51,7 @@ export function TaskCard({ task, onComplete, loading, pending, index = 0 }: Task
           </View>
         ) : (
           <Button
-            title={`✅ ${t('complete')}`}
+            title={t('complete')}
             onPress={() => onComplete(task)}
             loading={loading}
             style={styles.button}
@@ -99,24 +72,27 @@ export function CategoryTabs({ selected, onSelect }: CategoryTabsProps) {
 
   return (
     <View style={[styles.tabs, rtl.tabs]}>
-      {categories.map((cat, i) => (
-        <FadeInUp key={cat} index={i} delay={100}>
-          <TouchableOpacity
-            style={[styles.tab, selected === cat && styles.tabActive]}
-            onPress={() => onSelect(cat)}
-          >
+      {categories.map((cat) => (
+        <TouchableOpacity
+          key={cat}
+          style={[styles.tab, selected === cat && styles.tabActive]}
+          onPress={() => onSelect(cat)}
+        >
             <Text style={[styles.tabText, rtl.text, selected === cat && styles.tabTextActive]}>
               {cat === 'all' ? t('allCategories') : TASK_CATEGORIES[cat].icon}{' '}
               {cat === 'all' ? '' : TASK_CATEGORIES[cat].label}
             </Text>
-          </TouchableOpacity>
-        </FadeInUp>
+        </TouchableOpacity>
       ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  cardWrap: {
+    width: '100%',
+    alignSelf: 'stretch',
+  },
   card: {
     marginBottom: spacing.md,
     alignSelf: 'stretch',

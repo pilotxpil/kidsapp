@@ -24,8 +24,8 @@ export function RewardCard({ reward, userPoints, onRedeem, loading, pending, ind
   const cat = REWARD_CATEGORIES[reward.category as RewardCategory];
 
   return (
-    <FadeInUp index={index}>
-    <Card style={!canAfford ? [styles.card, styles.cardDisabled] : styles.card} glow={canAfford && !pending}>
+    <FadeInUp index={index} style={styles.cardWrap}>
+      <Card style={!canAfford ? [styles.card, styles.cardDisabled] : styles.card} glow={canAfford && !pending}>
       <View style={[styles.content, rtl.cardRow]}>
         <View style={styles.iconBox}>
           <Text style={styles.icon}>{reward.icon || cat?.icon || '🎁'}</Text>
@@ -40,7 +40,7 @@ export function RewardCard({ reward, userPoints, onRedeem, loading, pending, ind
               <Text style={[styles.categoryText, rtl.text]}>{cat?.label}</Text>
             </View>
             <Text style={[styles.cost, !canAfford && styles.costDisabled]}>
-              {reward.cost} ⭐
+              {reward.cost} XP
             </Text>
           </View>
         </View>
@@ -59,12 +59,16 @@ export function RewardCard({ reward, userPoints, onRedeem, loading, pending, ind
           style={styles.button}
         />
       )}
-    </Card>
+      </Card>
     </FadeInUp>
   );
 }
 
 const styles = StyleSheet.create({
+  cardWrap: {
+    width: '100%',
+    alignSelf: 'stretch',
+  },
   card: {
     marginBottom: spacing.md,
     alignSelf: 'stretch',

@@ -8,7 +8,7 @@ import { t } from '../../lib/i18n';
 const TAB_CONTENT_HEIGHT = 56;
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  return <Text style={{ fontSize: 24, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>;
+  return <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.45 }}>{emoji}</Text>;
 }
 
 export default function KidLayout() {

@@ -1,51 +1,30 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, borderRadius } from '../constants/theme';
 import { t } from '../lib/i18n';
-import { FloatingEmojis } from '../components/animations/FloatingEmojis';
 import { FadeInUp } from '../components/animations/FadeInUp';
 import { BouncyPressable } from '../components/animations/BouncyPressable';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const logoBounce = useSharedValue(0);
-
-  useEffect(() => {
-    logoBounce.value = withRepeat(
-      withSequence(
-        withSpring(-12, { damping: 4, stiffness: 120 }),
-        withSpring(0, { damping: 6, stiffness: 100 })
-      ),
-      -1,
-      true
-    );
-  }, [logoBounce]);
-
-  const logoStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: logoBounce.value }],
-  }));
 
   return (
-    <LinearGradient colors={[colors.bg, '#1a0a2e', colors.bg]} style={styles.container}>
-      <FloatingEmojis count={14} opacity={0.4} />
+    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
       <SafeAreaView style={styles.safe}>
         <View style={styles.content}>
           <FadeInUp index={0}>
-            <Animated.Text style={[styles.logo, logoStyle]}>🎮</Animated.Text>
+            <View style={styles.mark}>
+              <Text style={styles.markText}>Q</Text>
+            </View>
           </FadeInUp>
+
           <FadeInUp index={1}>
             <Text style={styles.title}>{t('appName')}</Text>
           </FadeInUp>
+
           <FadeInUp index={2}>
             <Text style={styles.tagline}>{t('appTagline')}</Text>
           </FadeInUp>
@@ -55,17 +34,16 @@ export default function WelcomeScreen() {
               <BouncyPressable
                 style={styles.kidButton}
                 onPress={() => router.push('/kid-login')}
-                scaleDown={0.95}
+                scaleDown={0.97}
               >
                 <LinearGradient
-                  colors={[colors.gradientStart, colors.gradientEnd, '#ec4899']}
+                  colors={[colors.gradientStart, colors.gradientEnd]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.kidGradient}
                 >
-                  <Text style={styles.kidEmoji}>🦁</Text>
                   <Text style={styles.kidTitle}>{t('kidLogin')}</Text>
-                  <Text style={styles.kidSub}>משימות ופרסים מגניבים!</Text>
+                  <Text style={styles.kidSub}>המשך מאיפה שעצרת</Text>
                 </LinearGradient>
               </BouncyPressable>
             </FadeInUp>
@@ -74,8 +52,8 @@ export default function WelcomeScreen() {
               <BouncyPressable
                 style={styles.parentButton}
                 onPress={() => router.push('/parent-login')}
+                scaleDown={0.97}
               >
-                <Text style={styles.parentEmoji}>👨‍👩‍👧‍👦</Text>
                 <Text style={styles.parentTitle}>{t('parentLogin')}</Text>
               </BouncyPressable>
             </FadeInUp>
@@ -94,39 +72,57 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
+    width: '100%',
   },
-  logo: { fontSize: 88, marginBottom: spacing.md, textAlign: 'center' },
+  mark: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: colors.bgCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  markText: {
+    color: colors.primary,
+    fontSize: 28,
+    fontWeight: '800',
+  },
   title: {
-    fontSize: 42,
-    fontWeight: '900',
+    fontSize: 36,
+    fontWeight: '800',
     color: colors.text,
+    letterSpacing: 4,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
   tagline: {
-    fontSize: 18,
+    fontSize: 15,
     color: colors.textMuted,
     marginBottom: spacing.xl * 2,
     textAlign: 'center',
   },
   buttons: { width: '100%', maxWidth: 400, gap: spacing.md },
-  kidButton: { borderRadius: borderRadius.xl, overflow: 'hidden' },
+  kidButton: { borderRadius: borderRadius.lg, overflow: 'hidden', width: '100%' },
   kidGradient: {
-    padding: spacing.xl,
+    paddingVertical: 20,
+    paddingHorizontal: spacing.lg,
     alignItems: 'center',
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius.lg,
   },
-  kidEmoji: { fontSize: 52, marginBottom: spacing.sm },
-  kidTitle: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  kidSub: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
+  kidTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  kidSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
   parentButton: {
     backgroundColor: colors.bgCard,
-    padding: spacing.lg,
+    paddingVertical: 16,
+    paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.lg,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
+    width: '100%',
   },
-  parentEmoji: { fontSize: 32, marginBottom: spacing.sm },
-  parentTitle: { fontSize: 18, fontWeight: '600', color: colors.textMuted },
+  parentTitle: { fontSize: 16, fontWeight: '600', color: colors.textMuted },
 });

@@ -18,6 +18,8 @@ kidsapp/
 - Docker (ל-MongoDB מקומי)
 - Expo Go (לבדיקה על טלפון)
 
+מדריך מפורט (התקנות, Docker, הרצה יומיומית, Expo): **[SETUP.md](./SETUP.md)**
+
 ## התקנה והרצה
 
 ```bash

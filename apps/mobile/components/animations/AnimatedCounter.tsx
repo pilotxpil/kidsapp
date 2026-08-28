@@ -1,12 +1,5 @@
-import React, { useEffect } from 'react';
-import { TextStyle, StyleProp } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withSpring,
-  runOnJS,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { Text, TextStyle, StyleProp } from 'react-native';
 
 interface AnimatedCounterProps {
   value: number;
@@ -15,42 +8,39 @@ interface AnimatedCounterProps {
 }
 
 export function AnimatedCounter({ value, style, suffix = '' }: AnimatedCounterProps) {
-  const display = useSharedValue(value);
-  const scale = useSharedValue(1);
   const [text, setText] = React.useState(value.toLocaleString());
+  const prev = useRef(value);
+  const first = useRef(true);
 
   useEffect(() => {
-    scale.value = withSequence(
-      withSpring(1.25, { damping: 6, stiffness: 400 }),
-      withSpring(1, { damping: 8 })
-    );
+    if (first.current) {
+      first.current = false;
+      prev.current = value;
+      setText(value.toLocaleString());
+      return;
+    }
 
-    const start = display.value;
+    if (prev.current === value) return;
+
+    const start = prev.current;
     const end = value;
-    const steps = 12;
+    prev.current = value;
+    const steps = 10;
     let step = 0;
 
-    const tick = () => {
+    const id = setInterval(() => {
       step += 1;
-      const progress = step / steps;
-      const current = Math.round(start + (end - start) * progress);
+      const current = Math.round(start + (end - start) * (step / steps));
       setText(current.toLocaleString());
-      if (step < steps) {
-        setTimeout(tick, 30);
-      } else {
-        display.value = end;
-      }
-    };
-    tick();
-  }, [value, display, scale]);
+      if (step >= steps) clearInterval(id);
+    }, 24);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+    return () => clearInterval(id);
+  }, [value]);
 
   return (
-    <Animated.Text style={[style, animatedStyle]}>
+    <Text style={style}>
       {text}{suffix}
-    </Animated.Text>
+    </Text>
   );
 }

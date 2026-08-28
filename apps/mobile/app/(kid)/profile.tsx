@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeScreen } from "../../components/SafeScreen";
@@ -11,6 +11,7 @@ import { BADGES } from '@kidsapp/shared';
 import type { KidProfile } from '@kidsapp/shared';
 import { colors, spacing, borderRadius } from '../../constants/theme';
 import { rtl } from '../../lib/rtl';
+import { isSfxMuted, setSfxMuted, playSfx } from '../../lib/sfx';
 import { t } from '../../lib/i18n';
 
 export default function KidProfileScreen() {
@@ -19,6 +20,7 @@ export default function KidProfileScreen() {
   const [profile, setProfile] = useState<KidProfile | null>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -30,14 +32,25 @@ export default function KidProfileScreen() {
     setLeaderboard(lbRes.leaderboard);
   }, [userId]);
 
-  useFocusLoad(load);
+  useFocusLoad(load, !!userId);
+
+  useEffect(() => {
+    setSoundOn(!isSfxMuted());
+  }, []);
+
+  const toggleSound = async () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    await setSfxMuted(!next);
+    if (next) playSfx('tap');
+  };
 
   const handleLogout = async () => {
     await logout();
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#1a0a2e']} style={styles.container}>
+    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
       <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}
@@ -63,7 +76,7 @@ export default function KidProfileScreen() {
             )}
           </View>
 
-          <Text style={[styles.sectionTitle, rtl.textFull]}>🏆 {t('badges')}</Text>
+          <Text style={[styles.sectionTitle, rtl.textFull]}>{t('badges')}</Text>
           <View style={[styles.badgesGrid, rtl.row]}>
             {Object.entries(BADGES).map(([key, badge]) => {
               const earned = user?.badges?.includes(key);
@@ -76,17 +89,17 @@ export default function KidProfileScreen() {
             })}
           </View>
 
-          <Text style={[styles.sectionTitle, rtl.textFull]}>📊 {t('leaderboard')}</Text>
+          <Text style={[styles.sectionTitle, rtl.textFull]}>{t('leaderboard')}</Text>
           {leaderboard.map((entry) => (
             <Card key={entry._id} style={entry._id === user?._id ? [styles.lbRow, styles.lbHighlight, rtl.row] : [styles.lbRow, rtl.row]}>
               <Text style={styles.lbRank}>#{entry.rank}</Text>
               <Text style={styles.lbAvatar}>{entry.avatar}</Text>
               <Text style={styles.lbName}>{entry.displayName}</Text>
-              <Text style={styles.lbPoints}>{entry.points} ⭐</Text>
+              <Text style={styles.lbPoints}>{entry.points} XP</Text>
             </Card>
           ))}
 
-          <Text style={[styles.sectionTitle, rtl.textFull]}>📜 {t('history')}</Text>
+          <Text style={[styles.sectionTitle, rtl.textFull]}>{t('history')}</Text>
           {profile?.recentTransactions?.map((tx) => (
             <Card key={tx._id} style={[styles.txRow, rtl.row]}>
               <View style={styles.txInfo}>
@@ -99,7 +112,12 @@ export default function KidProfileScreen() {
             </Card>
           ))}
 
-          <Button title={t('logout')} onPress={handleLogout} variant="outline" style={styles.logout} />
+          <TouchableOpacity style={styles.soundRow} onPress={toggleSound}>
+            <Text style={styles.soundLabel}>צלילים</Text>
+            <Text style={styles.soundValue}>{soundOn ? 'פועל' : 'כבוי'}</Text>
+          </TouchableOpacity>
+
+          <Button title={t('logout')} onPress={handleLogout} variant="outline" style={styles.logout} sound={false} />
         </ScrollView>
       </SafeScreen>
     </LinearGradient>
@@ -111,8 +129,8 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { padding: spacing.lg },
   avatarSection: { alignItems: 'center', marginBottom: spacing.lg },
-  avatar: { fontSize: 72, marginBottom: spacing.sm },
-  name: { color: colors.text, fontSize: 28, fontWeight: '800', marginBottom: spacing.md },
+  avatar: { fontSize: 56, marginBottom: spacing.sm },
+  name: { color: colors.text, fontSize: 24, fontWeight: '700', marginBottom: spacing.md },
   statsRow: { gap: spacing.md, marginBottom: spacing.md },
   levelWrap: { width: '100%' },
   sectionTitle: {
@@ -142,5 +160,18 @@ const styles = StyleSheet.create({
   txInfo: { flex: 1 },
   txDesc: { color: colors.text, fontWeight: '600' },
   txDate: { color: colors.textMuted, fontSize: 12 },
-  logout: { marginTop: spacing.xl, marginBottom: spacing.xl },
+  soundRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.bgCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+  },
+  soundLabel: { color: colors.text, fontWeight: '600' },
+  soundValue: { color: colors.primary, fontWeight: '700' },
+  logout: { marginTop: spacing.md, marginBottom: spacing.xl },
 });

@@ -78,18 +78,18 @@ export default function ParentDashboardScreen() {
             </View>
           )}
 
-          <Text style={[styles.sectionTitle, rtl.text]}>✅ {t('taskApprovals')}</Text>
+          <Text style={[styles.sectionTitle, rtl.text]}>{t('taskApprovals')}</Text>
           {dashboard?.pendingCompletions.length === 0 ? (
             <Text style={styles.empty}>אין בקשות ממתינות</Text>
           ) : (
             dashboard?.pendingCompletions.map((c) => (
               <Card key={c._id} style={styles.approvalCard}>
                 <View style={[styles.approvalHeader, rtl.row]}>
-                  <Text style={styles.approvalIcon}>{c.task?.icon || '⭐'}</Text>
+                  <Text style={styles.approvalIcon}>{c.task?.icon || '◆'}</Text>
                   <View style={styles.approvalInfo}>
                     <Text style={styles.approvalTitle}>{c.task?.title}</Text>
                     <Text style={styles.approvalKid}>
-                      {c.kid?.avatar} {c.kid?.displayName} • +{c.task?.points} ⭐
+                      {c.kid?.displayName} · +{c.task?.points} XP
                     </Text>
                   </View>
                 </View>
@@ -101,7 +101,7 @@ export default function ParentDashboardScreen() {
             ))
           )}
 
-          <Text style={[styles.sectionTitle, rtl.text]}>🎁 {t('rewardApprovals')}</Text>
+          <Text style={[styles.sectionTitle, rtl.text]}>{t('rewardApprovals')}</Text>
           {dashboard?.pendingRedemptions.length === 0 ? (
             <Text style={styles.empty}>אין בקשות ממתינות</Text>
           ) : (
@@ -112,7 +112,7 @@ export default function ParentDashboardScreen() {
                   <View style={styles.approvalInfo}>
                     <Text style={styles.approvalTitle}>{r.reward?.title}</Text>
                     <Text style={styles.approvalKid}>
-                      {r.kid?.avatar} {r.kid?.displayName} • {r.cost} ⭐
+                      {r.kid?.displayName} · {r.cost} XP
                     </Text>
                   </View>
                 </View>
@@ -124,13 +124,13 @@ export default function ParentDashboardScreen() {
             ))
           )}
 
-          <Text style={[styles.sectionTitle, rtl.text]}>👶 ילדים</Text>
+          <Text style={[styles.sectionTitle, rtl.text]}>{t('manageKids')}</Text>
           <View style={[styles.kidsRow, rtl.row]}>
             {dashboard?.kids.map((kid) => (
               <Card key={kid._id} style={styles.kidCard}>
                 <Text style={styles.kidAvatar}>{kid.avatar}</Text>
                 <Text style={styles.kidName}>{kid.displayName}</Text>
-                <Text style={styles.kidPoints}>{kid.points} ⭐</Text>
+                <Text style={styles.kidPoints}>{kid.points} XP</Text>
                 <Text style={styles.kidLevel}>רמה {kid.level}</Text>
               </Card>
             ))}

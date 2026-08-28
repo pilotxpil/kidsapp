@@ -6,8 +6,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { colors } from '../constants/theme';
 import { initNativeRTL, rtl } from '../lib/rtl';
+import { initSfx } from '../lib/sfx';
 
 initNativeRTL();
+initSfx();
 
 function RootNavigator() {
   const { user, loading } = useAuth();
@@ -25,14 +27,13 @@ function RootNavigator() {
       segments[0] === 'parent-register';
 
     if (!user && (inKidGroup || inParentGroup)) {
-      router.dismissAll();
       router.replace('/');
       return;
     }
 
-    if (user?.role === 'kid' && !inKidGroup) {
+    if (user?.role === 'kid' && !inKidGroup && !inAuth) {
       router.replace('/(kid)');
-    } else if (user?.role === 'parent' && !inParentGroup) {
+    } else if (user?.role === 'parent' && !inParentGroup && !inAuth) {
       router.replace('/(parent)');
     } else if (user && inAuth) {
       router.replace(user.role === 'kid' ? '/(kid)' : '/(parent)');
@@ -47,6 +48,9 @@ function RootNavigator() {
     );
   }
 
+  const isKid = !!user && user.role === 'kid';
+  const isParent = !!user && user.role === 'parent';
+
   return (
     <>
       <StatusBar barStyle="light-content" backgroundColor={colors.bg} translucent={Platform.OS === 'android'} />
@@ -55,8 +59,12 @@ function RootNavigator() {
         <Stack.Screen name="kid-login" />
         <Stack.Screen name="parent-login" />
         <Stack.Screen name="parent-register" />
-        <Stack.Screen name="(kid)" />
-        <Stack.Screen name="(parent)" />
+        <Stack.Protected guard={isKid}>
+          <Stack.Screen name="(kid)" />
+        </Stack.Protected>
+        <Stack.Protected guard={isParent}>
+          <Stack.Screen name="(parent)" />
+        </Stack.Protected>
       </Stack>
     </>
   );

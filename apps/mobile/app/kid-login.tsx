@@ -1,19 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { Celebration } from '../components/Celebration';
-import { FloatingEmojis } from '../components/animations/FloatingEmojis';
+import { playSfx } from '../lib/sfx';
 import { FadeInUp } from '../components/animations/FadeInUp';
 import { BouncyPressable } from '../components/animations/BouncyPressable';
 import { api } from '../lib/api';
@@ -31,22 +24,6 @@ export default function KidLoginScreen() {
   const [bonusMsg, setBonusMsg] = useState('');
   const { login } = useAuth();
   const router = useRouter();
-  const emojiBounce = useSharedValue(0);
-
-  useEffect(() => {
-    emojiBounce.value = withRepeat(
-      withSequence(
-        withSpring(-10, { damping: 5 }),
-        withSpring(0, { damping: 7 })
-      ),
-      -1,
-      true
-    );
-  }, [emojiBounce]);
-
-  const emojiStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: emojiBounce.value }],
-  }));
 
   const handleLogin = async () => {
     if (!username || pin.length < 4) {
@@ -63,7 +40,7 @@ export default function KidLoginScreen() {
         const parts = [];
         if (res.dailyBonus) parts.push(`${t('dailyBonus')}: +${res.dailyBonus}`);
         if (res.streakBonus) parts.push(`${t('streakBonus')}: +${res.streakBonus}`);
-        setBonusMsg(parts.join(' | '));
+        setBonusMsg(parts.join(' · '));
         setCelebrate(true);
       } else {
         router.replace('/(kid)');
@@ -71,6 +48,7 @@ export default function KidLoginScreen() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'שגיאה בהתחברות';
       setError(message);
+      playSfx('error');
       Alert.alert('שגיאה', message);
     } finally {
       setLoading(false);
@@ -78,49 +56,49 @@ export default function KidLoginScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#1a0a2e']} style={styles.container}>
-      <FloatingEmojis count={10} opacity={0.25} />
+    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.inner}>
           <BouncyPressable onPress={() => router.back()} style={styles.back}>
-            <Text style={styles.backText}>← {t('back')}</Text>
+            <Text style={styles.backText}>{t('back')}</Text>
           </BouncyPressable>
 
-          <FadeInUp index={0}>
-            <Animated.Text style={[styles.emoji, emojiStyle]}>🎮</Animated.Text>
-          </FadeInUp>
-          <FadeInUp index={1}>
-            <Text style={styles.title}>{t('kidLogin')}</Text>
-          </FadeInUp>
+          <View style={styles.body}>
+            <FadeInUp index={0}>
+              <Text style={styles.title}>{t('kidLogin')}</Text>
+              <Text style={styles.subtitle}>שם משתמש ו-PIN</Text>
+            </FadeInUp>
 
-          <FadeInUp index={2}>
-          <View style={styles.form}>
-            <Input
-              label={t('username')}
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-              placeholder="yonatan"
-            />
-            <Input
-              label={t('pin')}
-              value={pin}
-              onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
-              keyboardType="number-pad"
-              secureTextEntry
-              maxLength={4}
-              placeholder="••••"
-            />
-            <Button title={t('login')} onPress={handleLogin} loading={loading} />
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-            {__DEV__ ? <Text style={styles.devHint}>שרת: {API_URL}</Text> : null}
+            <FadeInUp index={1}>
+              <View style={styles.form}>
+              <Input
+                label={t('username')}
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+                placeholder="yonatan"
+              />
+              <Input
+                label={t('pin')}
+                value={pin}
+                onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
+                keyboardType="number-pad"
+                secureTextEntry
+                maxLength={4}
+                placeholder="••••"
+              />
+              <Button title={t('login')} onPress={handleLogin} loading={loading} />
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+              {__DEV__ ? <Text style={styles.devHint}>שרת: {API_URL}</Text> : null}
+              </View>
+            </FadeInUp>
           </View>
-          </FadeInUp>
         </KeyboardAvoidingView>
       </SafeAreaView>
 
       <Celebration
         visible={celebrate}
+        sfx="coin"
         message={bonusMsg || t('welcome')}
         onDone={() => {
           setCelebrate(false);
@@ -135,10 +113,11 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safe: { flex: 1 },
   inner: { flex: 1, padding: spacing.lg, justifyContent: 'center' },
+  body: { width: '100%', maxWidth: 400, alignSelf: 'center' },
   back: { position: 'absolute', top: spacing.lg, right: spacing.lg, zIndex: 1 },
-  backText: { color: colors.primaryLight, fontSize: 16 },
-  emoji: { fontSize: 64, textAlign: 'center', marginBottom: spacing.md },
-  title: { fontSize: 32, fontWeight: '800', color: colors.text, textAlign: 'center', marginBottom: spacing.xl },
+  backText: { color: colors.primaryLight, fontSize: 15 },
+  title: { fontSize: 28, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: spacing.xl, marginTop: spacing.sm },
   form: { maxWidth: 400, width: '100%', alignSelf: 'center' },
   error: {
     color: colors.danger,

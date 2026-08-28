@@ -3,10 +3,7 @@ import { View, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
-  withSequence,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 import { colors, borderRadius, spacing } from '../constants/theme';
 import { rtl } from '../lib/rtl';
@@ -19,29 +16,10 @@ interface CardProps {
 }
 
 export function Card({ children, style, glow }: CardProps) {
-  const pulse = useSharedValue(0);
-
-  useEffect(() => {
-    if (glow) {
-      pulse.value = withRepeat(
-        withSequence(withTiming(1, { duration: 800 }), withTiming(0.4, { duration: 800 })),
-        -1,
-        true
-      );
-    } else {
-      pulse.value = 0;
-    }
-  }, [glow, pulse]);
-
-  const glowStyle = useAnimatedStyle(() => ({
-    shadowOpacity: glow ? 0.2 + pulse.value * 0.4 : 0,
-    borderColor: glow ? colors.primary : colors.border,
-  }));
-
   return (
-    <Animated.View style={[styles.card, glow && styles.glow, glowStyle, style]}>
+    <View style={[styles.card, glow && styles.glow, style]}>
       {children}
-    </Animated.View>
+    </View>
   );
 }
 
@@ -51,24 +29,9 @@ interface PointsBadgeProps {
 }
 
 export function PointsBadge({ points, size = 'sm' }: PointsBadgeProps) {
-  const starSpin = useSharedValue(0);
-
-  useEffect(() => {
-    starSpin.value = withSequence(
-      withSpring(360, { damping: 8, stiffness: 80 }),
-      withTiming(0, { duration: 0 })
-    );
-  }, [points, starSpin]);
-
-  const starStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${starSpin.value}deg` }],
-  }));
-
   return (
     <View style={[styles.pointsBadge, size === 'lg' && styles.pointsBadgeLg]}>
-      <Animated.Text style={[styles.pointsIcon, size === 'lg' && styles.pointsIconLg, starStyle]}>
-        ⭐
-      </Animated.Text>
+      <Text style={[styles.pointsIcon, size === 'lg' && styles.pointsIconLg]}>XP</Text>
       <AnimatedCounter
         value={points}
         style={[styles.pointsText, size === 'lg' && styles.pointsTextLg]}
@@ -85,9 +48,15 @@ interface LevelBarProps {
 
 export function LevelBar({ level, progress, max }: LevelBarProps) {
   const pct = max > 0 ? Math.min((progress / max) * 100, 100) : 0;
-  const widthPct = useSharedValue(0);
+  const widthPct = useSharedValue(pct);
+  const first = React.useRef(true);
 
   useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      widthPct.value = pct;
+      return;
+    }
     widthPct.value = withSpring(pct, { damping: 14, stiffness: 90 });
   }, [pct, widthPct]);
 
@@ -113,27 +82,10 @@ interface StreakBadgeProps {
 }
 
 export function StreakBadge({ streak }: StreakBadgeProps) {
-  const fireScale = useSharedValue(1);
-
-  useEffect(() => {
-    fireScale.value = withRepeat(
-      withSequence(
-        withSpring(1.15, { damping: 4 }),
-        withSpring(1, { damping: 6 })
-      ),
-      -1,
-      true
-    );
-  }, [fireScale]);
-
-  const fireStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: fireScale.value }],
-  }));
-
   if (streak < 1) return null;
   return (
     <View style={styles.streakBadge}>
-      <Animated.Text style={[styles.streakEmoji, fireStyle]}>🔥</Animated.Text>
+      <Text style={styles.streakLabel}>STREAK</Text>
       <Text style={styles.streakText}>{streak}</Text>
     </View>
   );
@@ -150,10 +102,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   glow: {
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 12,
-    elevation: 6,
+    borderColor: colors.primary,
   },
   pointsBadge: {
     flexDirection: 'row',
@@ -169,10 +118,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   pointsIcon: {
-    fontSize: 16,
+    color: colors.primary,
+    fontWeight: '800',
+    fontSize: 11,
+    letterSpacing: 1,
   },
   pointsIconLg: {
-    fontSize: 24,
+    fontSize: 13,
   },
   pointsText: {
     color: colors.gold,
@@ -215,18 +167,23 @@ const styles = StyleSheet.create({
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#431407',
+    backgroundColor: colors.bgCardLight,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
-    gap: 4,
+    borderRadius: borderRadius.md,
+    gap: 8,
     flexShrink: 0,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  streakEmoji: {
-    fontSize: 18,
+  streakLabel: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   streakText: {
-    color: colors.streak,
+    color: colors.text,
     fontWeight: '800',
     fontSize: 16,
   },

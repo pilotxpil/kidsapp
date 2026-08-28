@@ -80,7 +80,7 @@ export default function ParentTasksScreen() {
         <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
           <View style={[styles.header, rtl.headerSplit]}>
             <Button title={`+ ${t('addTask')}`} onPress={() => setModalVisible(true)} style={styles.addBtn} />
-            <Text style={[styles.title, rtl.textFull]}>📋 {t('manageTasks')}</Text>
+            <Text style={[styles.title, rtl.textFull]}>{t('manageTasks')}</Text>
           </View>
 
           {tasks.map((task) => {
@@ -95,7 +95,7 @@ export default function ParentTasksScreen() {
                   <View style={styles.taskInfo}>
                     <Text style={styles.taskTitle}>{task.icon} {task.title}</Text>
                     <Text style={styles.taskMeta}>
-                      {kid?.displayName} • {cat.label} • +{task.points} ⭐
+                      {kid?.displayName} · {cat.label} · +{task.points} XP
                     </Text>
                   </View>
                 </View>

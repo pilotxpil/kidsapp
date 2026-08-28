@@ -37,7 +37,7 @@ export default function ParentRegisterScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#1a0a2e']} style={styles.container}>
+    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
           <ScrollView contentContainerStyle={styles.inner}>
@@ -45,7 +45,6 @@ export default function ParentRegisterScreen() {
               <Text style={styles.backText}>← {t('back')}</Text>
             </TouchableOpacity>
 
-            <Text style={styles.emoji}>🏠</Text>
             <Text style={styles.title}>{t('parentRegister')}</Text>
 
             <View style={styles.form}>
@@ -72,8 +71,7 @@ const styles = StyleSheet.create({
   inner: { flexGrow: 1, padding: spacing.lg, justifyContent: 'center' },
   back: { marginBottom: spacing.md },
   backText: { color: colors.primaryLight, fontSize: 16, textAlign: 'right' },
-  emoji: { fontSize: 64, textAlign: 'center', marginBottom: spacing.md },
-  title: { fontSize: 32, fontWeight: '800', color: colors.text, textAlign: 'center', marginBottom: spacing.xl },
+  title: { fontSize: 28, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: spacing.xl },
   form: { maxWidth: 400, width: '100%', alignSelf: 'center' },
   link: { marginTop: spacing.md, alignItems: 'center' },
   linkText: { color: colors.primaryLight, fontSize: 14 },

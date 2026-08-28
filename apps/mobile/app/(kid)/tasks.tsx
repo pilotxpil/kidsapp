@@ -8,6 +8,7 @@ import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { TaskCard, CategoryTabs } from '../../components/TaskCard';
 import { Celebration } from '../../components/Celebration';
 import { RtlText } from '../../components/RtlText';
+import { FadeInUp } from '../../components/animations/FadeInUp';
 import type { Task, TaskCategory } from '@kidsapp/shared';
 import { colors, spacing } from '../../constants/theme';
 import { rtl } from '../../lib/rtl';
@@ -29,7 +30,7 @@ export default function KidTasksScreen() {
     setTasks(res.tasks);
   }, [userId]);
 
-  useFocusLoad(load);
+  useFocusLoad(load, !!userId);
 
   const filtered = category === 'all' ? tasks : tasks.filter((t) => t.category === category);
 
@@ -47,7 +48,7 @@ export default function KidTasksScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#1a0a2e']} style={styles.container}>
+    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
       <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}
@@ -59,7 +60,9 @@ export default function KidTasksScreen() {
             />
           }
         >
-          <RtlText style={styles.title}>📋 {t('tasks')}</RtlText>
+          <FadeInUp index={0}>
+            <RtlText style={styles.title}>{t('tasks')}</RtlText>
+          </FadeInUp>
           <CategoryTabs selected={category} onSelect={setCategory} />
 
           {filtered.length === 0 ? (

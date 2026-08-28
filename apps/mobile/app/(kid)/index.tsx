@@ -1,13 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 import { SafeScreen } from '../../components/SafeScreen';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
@@ -16,35 +9,12 @@ import { PointsBadge, LevelBar, StreakBadge } from '../../components/Card';
 import { TaskCard } from '../../components/TaskCard';
 import { Celebration } from '../../components/Celebration';
 import { RtlText } from '../../components/RtlText';
-import { FloatingEmojis } from '../../components/animations/FloatingEmojis';
+import { GameWorlds } from '../../components/GameWorlds';
 import { FadeInUp } from '../../components/animations/FadeInUp';
 import type { Task, KidProfile } from '@kidsapp/shared';
 import { colors, spacing, borderRadius } from '../../constants/theme';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
-
-function GlowingPointsCard({ children }: { children: React.ReactNode }) {
-  const glow = useSharedValue(0.3);
-
-  useEffect(() => {
-    glow.value = withRepeat(
-      withSequence(withTiming(0.7, { duration: 1200 }), withTiming(0.3, { duration: 1200 })),
-      -1,
-      true
-    );
-  }, [glow]);
-
-  const style = useAnimatedStyle(() => ({
-    shadowOpacity: glow.value,
-    borderColor: `rgba(124, 58, 237, ${0.4 + glow.value * 0.4})`,
-  }));
-
-  return (
-    <Animated.View style={[styles.pointsCard, style]}>
-      {children}
-    </Animated.View>
-  );
-}
 
 export default function KidHomeScreen() {
   const { user } = useAuth();
@@ -66,7 +36,7 @@ export default function KidHomeScreen() {
     setTasks(tasksRes.tasks.slice(0, 5));
   }, [userId]);
 
-  useFocusLoad(load);
+  useFocusLoad(load, !!userId);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -88,8 +58,7 @@ export default function KidHomeScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#1a0a2e', colors.bg]} style={styles.container}>
-      <FloatingEmojis count={8} opacity={0.2} />
+    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
       <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}
@@ -100,14 +69,14 @@ export default function KidHomeScreen() {
               <View style={[styles.header, rtl.headerSplit]}>
                 <StreakBadge streak={profile?.streak ?? user?.streak ?? 0} />
                 <View style={styles.welcomeBlock}>
-                  <RtlText style={styles.greeting}>{t('welcome')},</RtlText>
-                  <RtlText style={styles.name}>{user?.avatar} {user?.displayName}</RtlText>
+                  <RtlText style={styles.greeting}>{t('welcome')}</RtlText>
+                  <RtlText style={styles.name}>{user?.displayName}</RtlText>
                 </View>
               </View>
             </FadeInUp>
 
             <FadeInUp index={1}>
-              <GlowingPointsCard>
+              <View style={styles.pointsCard}>
                 <RtlText style={styles.pointsLabel}>{t('points')}</RtlText>
                 <PointsBadge points={profile?.points ?? user?.points ?? 0} size="lg" />
                 {profile && (
@@ -119,11 +88,15 @@ export default function KidHomeScreen() {
                     />
                   </View>
                 )}
-              </GlowingPointsCard>
+              </View>
             </FadeInUp>
 
             <FadeInUp index={2}>
-              <RtlText style={styles.sectionTitle}>📋 משימות היום</RtlText>
+              <GameWorlds />
+            </FadeInUp>
+
+            <FadeInUp index={3}>
+              <RtlText style={styles.sectionTitle}>{t('tasks')}</RtlText>
             </FadeInUp>
             {tasks.length === 0 ? (
               <Text style={styles.empty}>{t('noTasks')}</Text>
@@ -165,26 +138,22 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
     alignItems: 'stretch',
   },
-  greeting: { color: colors.textMuted, fontSize: 16 },
-  name: { color: colors.text, fontSize: 28, fontWeight: '800' },
+  greeting: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+  name: { color: colors.text, fontSize: 24, fontWeight: '700' },
   pointsCard: {
     backgroundColor: colors.bgCard,
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius.lg,
     padding: spacing.lg,
     alignItems: 'center',
     marginBottom: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 16,
-    elevation: 4,
   },
-  pointsLabel: { color: colors.textMuted, fontSize: 14, marginBottom: spacing.sm, width: '100%' },
+  pointsLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1, marginBottom: spacing.sm, width: '100%' },
   levelSection: { width: '100%', marginTop: spacing.md },
   sectionTitle: {
     color: colors.text,
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
     marginBottom: spacing.md,
     width: '100%',

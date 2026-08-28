@@ -55,13 +55,13 @@ export default function ParentKidsScreen() {
         <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
           <View style={[styles.header, rtl.headerSplit]}>
             <Button title={`+ ${t('addKid')}`} onPress={() => setModalVisible(true)} style={styles.addBtn} />
-            <Text style={[styles.title, rtl.textFull]}>👶 {t('manageKids')}</Text>
+            <Text style={[styles.title, rtl.textFull]}>{t('manageKids')}</Text>
           </View>
 
           {kids.length === 0 ? (
             <Card style={styles.emptyCard}>
               <Text style={styles.emptyEmoji}>👶</Text>
-              <Text style={styles.emptyText}>הוסף את הילד הראשון שלך!</Text>
+              <Text style={styles.emptyText}>אין פרופילים עדיין</Text>
             </Card>
           ) : (
             kids.map((kid) => (
@@ -71,7 +71,7 @@ export default function ParentKidsScreen() {
                   <Text style={styles.kidName}>{kid.displayName}</Text>
                   <Text style={styles.kidUsername}>@{kid.username}</Text>
                   <View style={[styles.kidStats, rtl.row]}>
-                    <Text style={styles.kidStat}>{kid.points} ⭐</Text>
+                    <Text style={styles.kidStat}>{kid.points} XP</Text>
                     <Text style={styles.kidStat}>רמה {kid.level}</Text>
                     <Text style={styles.kidStat}>🔥 {kid.streak}</Text>
                   </View>

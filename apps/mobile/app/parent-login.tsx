@@ -35,15 +35,15 @@ export default function ParentLoginScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#1a0a2e']} style={styles.container}>
+    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.inner}>
           <TouchableOpacity onPress={() => router.back()} style={styles.back}>
             <Text style={styles.backText}>← {t('back')}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.emoji}>👨‍👩‍👧‍👦</Text>
           <Text style={styles.title}>{t('parentLogin')}</Text>
+          <Text style={styles.subtitle}>ניהול משימות, אישורים ופרסים</Text>
 
           <View style={styles.form}>
             <Input label={t('email')} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
@@ -65,8 +65,8 @@ const styles = StyleSheet.create({
   inner: { flex: 1, padding: spacing.lg, justifyContent: 'center' },
   back: { position: 'absolute', top: spacing.lg, right: spacing.lg, zIndex: 1 },
   backText: { color: colors.primaryLight, fontSize: 16 },
-  emoji: { fontSize: 64, textAlign: 'center', marginBottom: spacing.md },
-  title: { fontSize: 32, fontWeight: '800', color: colors.text, textAlign: 'center', marginBottom: spacing.xl },
+  title: { fontSize: 28, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: spacing.xl, marginTop: spacing.sm },
   form: { maxWidth: 400, width: '100%', alignSelf: 'center' },
   link: { marginTop: spacing.md, alignItems: 'center' },
   linkText: { color: colors.primaryLight, fontSize: 14 },
