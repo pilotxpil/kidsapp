@@ -7,7 +7,8 @@ import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
-import type { ParentDashboard } from '@kidsapp/shared';
+import type { ParentDashboard, TaskCategory } from '@kidsapp/shared';
+import { taskCategoryIcon } from '@kidsapp/shared';
 import { colors, spacing, borderRadius, gradientBg } from '../../constants/theme';
 
 import { rtl } from '../../lib/rtl';
@@ -86,11 +87,13 @@ export default function ParentDashboardScreen() {
             dashboard?.pendingCompletions.map((c) => (
               <Card key={c._id} style={styles.approvalCard}>
                 <View style={[styles.approvalHeader, rtl.row]}>
-                  <Text style={styles.approvalIcon}>{c.task?.icon || '◆'}</Text>
+                  <Text style={styles.approvalIcon}>
+                    {c.task?.category ? taskCategoryIcon(c.task.category as TaskCategory) : '🧱'}
+                  </Text>
                   <View style={styles.approvalInfo}>
                     <Text style={styles.approvalTitle}>{c.task?.title}</Text>
                     <Text style={styles.approvalKid}>
-                      {c.kid?.displayName} · +{c.task?.points} XP
+                      {c.kid?.displayName} · +{c.task?.points} 💎
                     </Text>
                   </View>
                 </View>
@@ -109,11 +112,11 @@ export default function ParentDashboardScreen() {
             dashboard?.pendingRedemptions.map((r) => (
               <Card key={r._id} style={styles.approvalCard}>
                 <View style={[styles.approvalHeader, rtl.row]}>
-                  <Text style={styles.approvalIcon}>{r.reward?.icon || '🎁'}</Text>
+                  <Text style={styles.approvalIcon}>{r.reward?.icon || '📦'}</Text>
                   <View style={styles.approvalInfo}>
                     <Text style={styles.approvalTitle}>{r.reward?.title}</Text>
                     <Text style={styles.approvalKid}>
-                      {r.kid?.displayName} · {r.cost} XP
+                      {r.kid?.displayName} · {r.cost} 💎
                     </Text>
                   </View>
                 </View>

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import { TaskCategory, taskCategoryIcon } from '@kidsapp/shared';
 import { authenticate, requireParent } from '../middleware/auth';
 import { User } from '../models/User';
 import { Task } from '../models/Task';
@@ -56,7 +57,7 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
       points,
       recurrence: recurrence || 'daily',
       assignedTo,
-      icon: icon || '⭐',
+      icon: icon || taskCategoryIcon(category as TaskCategory),
     });
 
     res.status(201).json({

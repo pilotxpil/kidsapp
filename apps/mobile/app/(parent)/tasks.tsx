@@ -7,7 +7,7 @@ import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
-import { TASK_CATEGORIES } from '@kidsapp/shared';
+import { TASK_CATEGORIES, taskCategoryIcon } from '@kidsapp/shared';
 import type { Task, TaskCategory, User } from '@kidsapp/shared';
 import { colors, spacing, borderRadius, gradientBg } from '../../constants/theme';
 
@@ -23,7 +23,6 @@ export default function ParentTasksScreen() {
   const [points, setPoints] = useState('20');
   const [category, setCategory] = useState<TaskCategory>('home');
   const [assignedTo, setAssignedTo] = useState('');
-  const [icon, setIcon] = useState('⭐');
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
@@ -54,7 +53,7 @@ export default function ParentTasksScreen() {
         points: parseInt(points) || 20,
         category,
         assignedTo,
-        icon,
+        icon: TASK_CATEGORIES[category].icon,
         recurrence: 'daily',
       });
       setModalVisible(false);
@@ -94,9 +93,11 @@ export default function ParentTasksScreen() {
                     <Text style={styles.delete}>🗑️</Text>
                   </TouchableOpacity>
                   <View style={styles.taskInfo}>
-                    <Text style={styles.taskTitle}>{task.icon} {task.title}</Text>
+                    <Text style={styles.taskTitle}>
+                      {taskCategoryIcon(task.category)} {task.title}
+                    </Text>
                     <Text style={styles.taskMeta}>
-                      {kid?.displayName} · {cat.label} · +{task.points} XP
+                      {kid?.displayName} · {cat.label} · +{task.points} 💎
                     </Text>
                   </View>
                 </View>
@@ -119,7 +120,7 @@ export default function ParentTasksScreen() {
                   <TouchableOpacity
                     key={key}
                     style={[styles.chip, category === key && styles.chipActive]}
-                    onPress={() => { setCategory(key); setIcon(val.icon); }}
+                    onPress={() => setCategory(key)}
                   >
                     <Text style={styles.chipText}>{val.icon} {val.label}</Text>
                   </TouchableOpacity>

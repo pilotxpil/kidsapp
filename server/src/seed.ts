@@ -65,13 +65,13 @@ async function seed() {
   });
 
   const tasks = [
-    { title: 'לסדר את החדר', category: 'home', points: 20, icon: '🛏️', assignedTo: kid1._id },
-    { title: 'לעשות שיעורי בית', category: 'school', points: 30, icon: '📚', assignedTo: kid1._id },
-    { title: 'לתרגל כדורגל', category: 'sport', points: 25, icon: '⚽', assignedTo: kid1._id },
-    { title: 'לעזור בארוחת ערב', category: 'home', points: 15, icon: '🍽️', assignedTo: kid1._id },
+    { title: 'לסדר את החדר', category: 'home', points: 20, icon: '🟩', assignedTo: kid1._id },
+    { title: 'לעשות שיעורי בית', category: 'school', points: 30, icon: '📖', assignedTo: kid1._id },
+    { title: 'לתרגל כדורגל', category: 'sport', points: 25, icon: '🏹', assignedTo: kid1._id },
+    { title: 'לעזור בארוחת ערב', category: 'home', points: 15, icon: '🟩', assignedTo: kid1._id },
     { title: 'לקרוא 20 דקות', category: 'school', points: 20, icon: '📖', assignedTo: kid2._id },
-    { title: 'לצאת עם חבר', category: 'social', points: 15, icon: '👥', assignedTo: kid2._id },
-    { title: 'חוג רובוטיקה', category: 'hobby', points: 35, icon: '🤖', assignedTo: kid1._id },
+    { title: 'לצאת עם חבר', category: 'social', points: 15, icon: '👨‍🌾', assignedTo: kid2._id },
+    { title: 'חוג רובוטיקה', category: 'hobby', points: 35, icon: '🎣', assignedTo: kid1._id },
   ];
 
   for (const t of tasks) {

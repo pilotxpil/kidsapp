@@ -132,12 +132,16 @@ export interface ParentDashboard {
 }
 
 export const TASK_CATEGORIES: Record<TaskCategory, { label: string; icon: string }> = {
-  home: { label: 'בית', icon: '🛏️' },
+  home: { label: 'בית', icon: '🟩' },
   school: { label: 'לימודים', icon: '📖' },
   social: { label: 'חברתי', icon: '👨‍🌾' },
   hobby: { label: 'חוג', icon: '🎣' },
   sport: { label: 'ספורט', icon: '🏹' },
 };
+
+export function taskCategoryIcon(category: TaskCategory): string {
+  return TASK_CATEGORIES[category]?.icon ?? '🧱';
+}
 
 export const REWARD_CATEGORIES: Record<RewardCategory, { label: string; icon: string }> = {
   gaming: { label: 'גיימינג', icon: '⛏️' },
