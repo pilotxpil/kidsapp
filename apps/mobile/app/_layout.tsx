@@ -1,6 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect, useRef } from 'react';
-import { StatusBar, ActivityIndicator, View } from 'react-native';
+import { useEffect } from 'react';
+import { StatusBar, ActivityIndicator, View, Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { colors } from '../constants/theme';
 import { initNativeRTL, rtl } from '../lib/rtl';
@@ -11,7 +12,6 @@ function RootNavigator() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const lastRedirect = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -23,23 +23,18 @@ function RootNavigator() {
       segments[0] === 'parent-login' ||
       segments[0] === 'parent-register';
 
-    let target: string | null = null;
-
     if (!user && (inKidGroup || inParentGroup)) {
-      target = '/';
-    } else if (user?.role === 'kid' && !inKidGroup) {
-      target = '/(kid)';
-    } else if (user?.role === 'parent' && !inParentGroup) {
-      target = '/(parent)';
-    } else if (user && inAuth) {
-      target = user.role === 'kid' ? '/(kid)' : '/(parent)';
+      router.dismissAll();
+      router.replace('/');
+      return;
     }
 
-    if (target && lastRedirect.current !== target) {
-      lastRedirect.current = target;
-      router.replace(target as any);
-    } else if (!target) {
-      lastRedirect.current = null;
+    if (user?.role === 'kid' && !inKidGroup) {
+      router.replace('/(kid)');
+    } else if (user?.role === 'parent' && !inParentGroup) {
+      router.replace('/(parent)');
+    } else if (user && inAuth) {
+      router.replace(user.role === 'kid' ? '/(kid)' : '/(parent)');
     }
   }, [user, loading, segments, router]);
 
@@ -53,7 +48,7 @@ function RootNavigator() {
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.bg} translucent={Platform.OS === 'android'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="kid-login" />
@@ -68,10 +63,12 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <View style={rtl.root}>
-      <AuthProvider>
-        <RootNavigator />
-      </AuthProvider>
-    </View>
+    <SafeAreaProvider>
+      <View style={rtl.root}>
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
+      </View>
+    </SafeAreaProvider>
   );
 }

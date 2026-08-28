@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Modal, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeScreen } from "../../components/SafeScreen";
 import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
@@ -76,7 +76,7 @@ export default function ParentTasksScreen() {
 
   return (
     <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
-      <SafeAreaView style={styles.safe}>
+      <SafeScreen tabs style={styles.safe}>
         <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
           <View style={[styles.header, rtl.headerSplit]}>
             <Button title={`+ ${t('addTask')}`} onPress={() => setModalVisible(true)} style={styles.addBtn} />
@@ -145,7 +145,7 @@ export default function ParentTasksScreen() {
             </View>
           </View>
         </Modal>
-      </SafeAreaView>
+      </SafeScreen>
     </LinearGradient>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeScreen } from "../../components/SafeScreen";
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
@@ -48,7 +48,7 @@ export default function KidTasksScreen() {
 
   return (
     <LinearGradient colors={[colors.bg, '#1a0a2e']} style={styles.container}>
-      <SafeAreaView style={styles.safe}>
+      <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}
           refreshControl={
@@ -76,7 +76,7 @@ export default function KidTasksScreen() {
             ))
           )}
         </ScrollView>
-      </SafeAreaView>
+      </SafeScreen>
 
       <Celebration visible={celebrate} message={t('taskSubmitted')} onDone={() => setCelebrate(false)} />
     </LinearGradient>

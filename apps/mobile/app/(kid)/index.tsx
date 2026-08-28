@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeScreen } from '../../components/SafeScreen';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
@@ -57,13 +57,13 @@ export default function KidHomeScreen() {
 
   return (
     <LinearGradient colors={[colors.bg, '#1a0a2e', colors.bg]} style={styles.container}>
-      <SafeAreaView style={styles.safe}>
+      <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         >
           <View style={styles.content}>
-          <View style={[styles.header, rtl.headerSplit]}>
+            <View style={[styles.header, rtl.headerSplit]}>
             <StreakBadge streak={profile?.streak ?? user?.streak ?? 0} />
             <View style={styles.welcomeBlock}>
               <RtlText style={styles.greeting}>{t('welcome')},</RtlText>
@@ -101,7 +101,7 @@ export default function KidHomeScreen() {
           )}
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </SafeScreen>
 
       <Celebration
         visible={celebrate}

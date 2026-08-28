@@ -1,8 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { SafeScreen } from "../../components/SafeScreen";
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
@@ -17,7 +16,6 @@ import { t } from '../../lib/i18n';
 export default function KidProfileScreen() {
   const { user, logout } = useAuth();
   const userId = user?._id;
-  const router = useRouter();
   const [profile, setProfile] = useState<KidProfile | null>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,12 +34,11 @@ export default function KidProfileScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/');
   };
 
   return (
     <LinearGradient colors={[colors.bg, '#1a0a2e']} style={styles.container}>
-      <SafeAreaView style={styles.safe}>
+      <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}
           refreshControl={
@@ -104,7 +101,7 @@ export default function KidProfileScreen() {
 
           <Button title={t('logout')} onPress={handleLogout} variant="outline" style={styles.logout} />
         </ScrollView>
-      </SafeAreaView>
+      </SafeScreen>
     </LinearGradient>
   );
 }

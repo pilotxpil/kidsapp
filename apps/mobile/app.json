@@ -15,10 +15,16 @@
         "CFBundleLocalizations": ["he"]
       }
     },
+    "androidNavigationBar": {
+      "backgroundColor": "#1a1230",
+      "barStyle": "light-content",
+      "enforceContrast": false
+    },
     "android": {
       "package": "com.kidsapp.quest",
       "supportsRTL": true,
       "usesCleartextTraffic": true,
+      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#1a0a2e",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

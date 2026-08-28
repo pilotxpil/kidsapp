@@ -1,14 +1,19 @@
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../constants/theme';
 import { RtlTabBar } from '../../components/RtlTabBar';
 import { t } from '../../lib/i18n';
+
+const TAB_CONTENT_HEIGHT = 56;
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return <Text style={{ fontSize: 24, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>;
 }
 
 export default function KidLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       tabBar={(props) => <RtlTabBar {...props} />}
@@ -17,8 +22,9 @@ export default function KidLayout() {
         tabBarStyle: {
           backgroundColor: colors.bgCard,
           borderTopColor: colors.border,
-          height: 65,
-          paddingBottom: 8,
+          height: TAB_CONTENT_HEIGHT + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: insets.bottom,
         },
         tabBarActiveTintColor: colors.primaryLight,
         tabBarInactiveTintColor: colors.textMuted,

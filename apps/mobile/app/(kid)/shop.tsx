@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeScreen } from "../../components/SafeScreen";
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
@@ -52,7 +52,7 @@ export default function KidShopScreen() {
 
   return (
     <LinearGradient colors={[colors.bg, '#1a0a2e']} style={styles.container}>
-      <SafeAreaView style={styles.safe}>
+      <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}
           refreshControl={
@@ -83,7 +83,7 @@ export default function KidShopScreen() {
             ))
           )}
         </ScrollView>
-      </SafeAreaView>
+      </SafeScreen>
 
       <Celebration visible={celebrate} message={t('redeemRequest')} onDone={() => setCelebrate(false)} />
     </LinearGradient>

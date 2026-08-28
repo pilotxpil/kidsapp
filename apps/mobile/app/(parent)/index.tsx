@@ -1,9 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeScreen } from "../../components/SafeScreen";
 import { useFocusLoad } from '../../hooks/useFocusLoad';
-import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
@@ -15,7 +14,6 @@ import { t } from '../../lib/i18n';
 
 export default function ParentDashboardScreen() {
   const { user, logout } = useAuth();
-  const router = useRouter();
   const [dashboard, setDashboard] = useState<ParentDashboard | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -38,12 +36,11 @@ export default function ParentDashboardScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/');
   };
 
   return (
     <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
-      <SafeAreaView style={styles.safe}>
+      <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}
           refreshControl={
@@ -139,7 +136,7 @@ export default function ParentDashboardScreen() {
             ))}
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </SafeScreen>
     </LinearGradient>
   );
 }
