@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { Celebration } from '../components/Celebration';
+import { FloatingEmojis } from '../components/animations/FloatingEmojis';
+import { FadeInUp } from '../components/animations/FadeInUp';
+import { BouncyPressable } from '../components/animations/BouncyPressable';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { colors, spacing } from '../constants/theme';
@@ -21,6 +31,22 @@ export default function KidLoginScreen() {
   const [bonusMsg, setBonusMsg] = useState('');
   const { login } = useAuth();
   const router = useRouter();
+  const emojiBounce = useSharedValue(0);
+
+  useEffect(() => {
+    emojiBounce.value = withRepeat(
+      withSequence(
+        withSpring(-10, { damping: 5 }),
+        withSpring(0, { damping: 7 })
+      ),
+      -1,
+      true
+    );
+  }, [emojiBounce]);
+
+  const emojiStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: emojiBounce.value }],
+  }));
 
   const handleLogin = async () => {
     if (!username || pin.length < 4) {
@@ -53,15 +79,21 @@ export default function KidLoginScreen() {
 
   return (
     <LinearGradient colors={[colors.bg, '#1a0a2e']} style={styles.container}>
+      <FloatingEmojis count={10} opacity={0.25} />
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.inner}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.back}>
+          <BouncyPressable onPress={() => router.back()} style={styles.back}>
             <Text style={styles.backText}>← {t('back')}</Text>
-          </TouchableOpacity>
+          </BouncyPressable>
 
-          <Text style={styles.emoji}>🎮</Text>
-          <Text style={styles.title}>{t('kidLogin')}</Text>
+          <FadeInUp index={0}>
+            <Animated.Text style={[styles.emoji, emojiStyle]}>🎮</Animated.Text>
+          </FadeInUp>
+          <FadeInUp index={1}>
+            <Text style={styles.title}>{t('kidLogin')}</Text>
+          </FadeInUp>
 
+          <FadeInUp index={2}>
           <View style={styles.form}>
             <Input
               label={t('username')}
@@ -83,6 +115,7 @@ export default function KidLoginScreen() {
             {error ? <Text style={styles.error}>{error}</Text> : null}
             {__DEV__ ? <Text style={styles.devHint}>שרת: {API_URL}</Text> : null}
           </View>
+          </FadeInUp>
         </KeyboardAvoidingView>
       </SafeAreaView>
 

@@ -1,6 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeScreen } from '../../components/SafeScreen';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
@@ -9,10 +16,35 @@ import { PointsBadge, LevelBar, StreakBadge } from '../../components/Card';
 import { TaskCard } from '../../components/TaskCard';
 import { Celebration } from '../../components/Celebration';
 import { RtlText } from '../../components/RtlText';
+import { FloatingEmojis } from '../../components/animations/FloatingEmojis';
+import { FadeInUp } from '../../components/animations/FadeInUp';
 import type { Task, KidProfile } from '@kidsapp/shared';
 import { colors, spacing, borderRadius } from '../../constants/theme';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
+
+function GlowingPointsCard({ children }: { children: React.ReactNode }) {
+  const glow = useSharedValue(0.3);
+
+  useEffect(() => {
+    glow.value = withRepeat(
+      withSequence(withTiming(0.7, { duration: 1200 }), withTiming(0.3, { duration: 1200 })),
+      -1,
+      true
+    );
+  }, [glow]);
+
+  const style = useAnimatedStyle(() => ({
+    shadowOpacity: glow.value,
+    borderColor: `rgba(124, 58, 237, ${0.4 + glow.value * 0.4})`,
+  }));
+
+  return (
+    <Animated.View style={[styles.pointsCard, style]}>
+      {children}
+    </Animated.View>
+  );
+}
 
 export default function KidHomeScreen() {
   const { user } = useAuth();
@@ -57,48 +89,56 @@ export default function KidHomeScreen() {
 
   return (
     <LinearGradient colors={[colors.bg, '#1a0a2e', colors.bg]} style={styles.container}>
+      <FloatingEmojis count={8} opacity={0.2} />
       <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         >
           <View style={styles.content}>
-            <View style={[styles.header, rtl.headerSplit]}>
-            <StreakBadge streak={profile?.streak ?? user?.streak ?? 0} />
-            <View style={styles.welcomeBlock}>
-              <RtlText style={styles.greeting}>{t('welcome')},</RtlText>
-              <RtlText style={styles.name}>{user?.avatar} {user?.displayName}</RtlText>
-            </View>
-          </View>
-
-          <View style={styles.pointsCard}>
-            <RtlText style={styles.pointsLabel}>{t('points')}</RtlText>
-            <PointsBadge points={profile?.points ?? user?.points ?? 0} size="lg" />
-            {profile && (
-              <View style={styles.levelSection}>
-                <LevelBar
-                  level={profile.level}
-                  progress={profile.xpProgress}
-                  max={profile.xpToNextLevel}
-                />
+            <FadeInUp index={0}>
+              <View style={[styles.header, rtl.headerSplit]}>
+                <StreakBadge streak={profile?.streak ?? user?.streak ?? 0} />
+                <View style={styles.welcomeBlock}>
+                  <RtlText style={styles.greeting}>{t('welcome')},</RtlText>
+                  <RtlText style={styles.name}>{user?.avatar} {user?.displayName}</RtlText>
+                </View>
               </View>
-            )}
-          </View>
+            </FadeInUp>
 
-          <RtlText style={styles.sectionTitle}>📋 משימות היום</RtlText>
-          {tasks.length === 0 ? (
-            <Text style={styles.empty}>{t('noTasks')}</Text>
-          ) : (
-            tasks.map((task) => (
-              <TaskCard
-                key={task._id}
-                task={task}
-                onComplete={handleComplete}
-                loading={completingId === task._id}
-                pending={pendingIds.has(task._id)}
-              />
-            ))
-          )}
+            <FadeInUp index={1}>
+              <GlowingPointsCard>
+                <RtlText style={styles.pointsLabel}>{t('points')}</RtlText>
+                <PointsBadge points={profile?.points ?? user?.points ?? 0} size="lg" />
+                {profile && (
+                  <View style={styles.levelSection}>
+                    <LevelBar
+                      level={profile.level}
+                      progress={profile.xpProgress}
+                      max={profile.xpToNextLevel}
+                    />
+                  </View>
+                )}
+              </GlowingPointsCard>
+            </FadeInUp>
+
+            <FadeInUp index={2}>
+              <RtlText style={styles.sectionTitle}>📋 משימות היום</RtlText>
+            </FadeInUp>
+            {tasks.length === 0 ? (
+              <Text style={styles.empty}>{t('noTasks')}</Text>
+            ) : (
+              tasks.map((task, i) => (
+                <TaskCard
+                  key={task._id}
+                  task={task}
+                  index={i + 3}
+                  onComplete={handleComplete}
+                  loading={completingId === task._id}
+                  pending={pendingIds.has(task._id)}
+                />
+              ))
+            )}
           </View>
         </ScrollView>
       </SafeScreen>
@@ -135,6 +175,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 16,
+    elevation: 4,
   },
   pointsLabel: { color: colors.textMuted, fontSize: 14, marginBottom: spacing.sm, width: '100%' },
   levelSection: { width: '100%', marginTop: spacing.md },

@@ -5,6 +5,7 @@ import type { Reward, RewardCategory } from '@kidsapp/shared';
 import { Card } from './Card';
 import { Button } from './Button';
 import { RtlText } from './RtlText';
+import { FadeInUp } from './animations/FadeInUp';
 import { colors, spacing, borderRadius } from '../constants/theme';
 import { rtl } from '../lib/rtl';
 import { t } from '../lib/i18n';
@@ -15,13 +16,15 @@ interface RewardCardProps {
   onRedeem: (reward: Reward) => void;
   loading?: boolean;
   pending?: boolean;
+  index?: number;
 }
 
-export function RewardCard({ reward, userPoints, onRedeem, loading, pending }: RewardCardProps) {
+export function RewardCard({ reward, userPoints, onRedeem, loading, pending, index = 0 }: RewardCardProps) {
   const canAfford = userPoints >= reward.cost;
   const cat = REWARD_CATEGORIES[reward.category as RewardCategory];
 
   return (
+    <FadeInUp index={index}>
     <Card style={!canAfford ? [styles.card, styles.cardDisabled] : styles.card} glow={canAfford && !pending}>
       <View style={[styles.content, rtl.cardRow]}>
         <View style={styles.iconBox}>
@@ -57,6 +60,7 @@ export function RewardCard({ reward, userPoints, onRedeem, loading, pending }: R
         />
       )}
     </Card>
+    </FadeInUp>
   );
 }
 

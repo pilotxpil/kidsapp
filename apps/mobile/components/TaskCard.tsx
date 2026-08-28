@@ -1,10 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { TASK_CATEGORIES } from '@kidsapp/shared';
 import type { Task, TaskCategory } from '@kidsapp/shared';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+} from 'react-native-reanimated';
 import { Card } from './Card';
 import { Button } from './Button';
 import { RtlText } from './RtlText';
+import { FadeInUp } from './animations/FadeInUp';
 import { colors, spacing, borderRadius } from '../constants/theme';
 import { rtl } from '../lib/rtl';
 import { t } from '../lib/i18n';
@@ -14,43 +22,70 @@ interface TaskCardProps {
   onComplete: (task: Task) => void;
   loading?: boolean;
   pending?: boolean;
+  index?: number;
 }
 
-export function TaskCard({ task, onComplete, loading, pending }: TaskCardProps) {
+function WiggleIcon({ emoji }: { emoji: string }) {
+  const rotate = useSharedValue(0);
+
+  useEffect(() => {
+    rotate.value = withRepeat(
+      withSequence(
+        withSpring(-8, { damping: 4 }),
+        withSpring(8, { damping: 4 }),
+        withSpring(0, { damping: 6 })
+      ),
+      -1,
+      false
+    );
+  }, [rotate]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotate.value}deg` }],
+  }));
+
+  return (
+    <Animated.Text style={[styles.icon, style]}>{emoji}</Animated.Text>
+  );
+}
+
+export function TaskCard({ task, onComplete, loading, pending, index = 0 }: TaskCardProps) {
   const cat = TASK_CATEGORIES[task.category as TaskCategory];
 
   return (
-    <Card style={styles.card} glow={pending}>
-      <View style={[styles.header, rtl.cardRow]}>
-        <View style={styles.iconBox}>
-          <Text style={styles.icon}>{task.icon || cat?.icon || '⭐'}</Text>
-        </View>
-        <View style={styles.info}>
-          <RtlText style={styles.title}>{task.title}</RtlText>
-          {task.description ? (
-            <RtlText style={styles.description}>{task.description}</RtlText>
-          ) : null}
-          <View style={[styles.meta, rtl.row]}>
-            <Text style={styles.points}>+{task.points} ⭐</Text>
-            <View style={styles.categoryBadge}>
-              <Text style={[styles.categoryText, rtl.text]}>{cat?.label}</Text>
+    <FadeInUp index={index}>
+      <Card style={styles.card} glow={pending}>
+        <View style={[styles.header, rtl.cardRow]}>
+          <View style={styles.iconBox}>
+            <WiggleIcon emoji={task.icon || cat?.icon || '⭐'} />
+          </View>
+          <View style={styles.info}>
+            <RtlText style={styles.title}>{task.title}</RtlText>
+            {task.description ? (
+              <RtlText style={styles.description}>{task.description}</RtlText>
+            ) : null}
+            <View style={[styles.meta, rtl.row]}>
+              <Text style={styles.points}>+{task.points} ⭐</Text>
+              <View style={styles.categoryBadge}>
+                <Text style={[styles.categoryText, rtl.text]}>{cat?.label}</Text>
+              </View>
             </View>
           </View>
         </View>
-      </View>
-      {pending ? (
-        <View style={styles.pendingBadge}>
-          <Text style={[styles.pendingText, rtl.textCenter]}>⏳ {t('pending')}</Text>
-        </View>
-      ) : (
-        <Button
-          title={t('complete')}
-          onPress={() => onComplete(task)}
-          loading={loading}
-          style={styles.button}
-        />
-      )}
-    </Card>
+        {pending ? (
+          <View style={styles.pendingBadge}>
+            <Text style={[styles.pendingText, rtl.textCenter]}>⏳ {t('pending')}</Text>
+          </View>
+        ) : (
+          <Button
+            title={`✅ ${t('complete')}`}
+            onPress={() => onComplete(task)}
+            loading={loading}
+            style={styles.button}
+          />
+        )}
+      </Card>
+    </FadeInUp>
   );
 }
 
@@ -64,17 +99,18 @@ export function CategoryTabs({ selected, onSelect }: CategoryTabsProps) {
 
   return (
     <View style={[styles.tabs, rtl.tabs]}>
-      {categories.map((cat) => (
-        <TouchableOpacity
-          key={cat}
-          style={[styles.tab, selected === cat && styles.tabActive]}
-          onPress={() => onSelect(cat)}
-        >
-          <Text style={[styles.tabText, rtl.text, selected === cat && styles.tabTextActive]}>
-            {cat === 'all' ? t('allCategories') : TASK_CATEGORIES[cat].icon}{' '}
-            {cat === 'all' ? '' : TASK_CATEGORIES[cat].label}
-          </Text>
-        </TouchableOpacity>
+      {categories.map((cat, i) => (
+        <FadeInUp key={cat} index={i} delay={100}>
+          <TouchableOpacity
+            style={[styles.tab, selected === cat && styles.tabActive]}
+            onPress={() => onSelect(cat)}
+          >
+            <Text style={[styles.tabText, rtl.text, selected === cat && styles.tabTextActive]}>
+              {cat === 'all' ? t('allCategories') : TASK_CATEGORIES[cat].icon}{' '}
+              {cat === 'all' ? '' : TASK_CATEGORIES[cat].label}
+            </Text>
+          </TouchableOpacity>
+        </FadeInUp>
       ))}
     </View>
   );

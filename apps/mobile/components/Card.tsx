@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { colors, borderRadius, spacing } from '../constants/theme';
 import { rtl } from '../lib/rtl';
+import { AnimatedCounter } from './animations/AnimatedCounter';
 
 interface CardProps {
   children: React.ReactNode;
@@ -10,10 +19,29 @@ interface CardProps {
 }
 
 export function Card({ children, style, glow }: CardProps) {
+  const pulse = useSharedValue(0);
+
+  useEffect(() => {
+    if (glow) {
+      pulse.value = withRepeat(
+        withSequence(withTiming(1, { duration: 800 }), withTiming(0.4, { duration: 800 })),
+        -1,
+        true
+      );
+    } else {
+      pulse.value = 0;
+    }
+  }, [glow, pulse]);
+
+  const glowStyle = useAnimatedStyle(() => ({
+    shadowOpacity: glow ? 0.2 + pulse.value * 0.4 : 0,
+    borderColor: glow ? colors.primary : colors.border,
+  }));
+
   return (
-    <View style={[styles.card, glow && styles.glow, style]}>
+    <Animated.View style={[styles.card, glow && styles.glow, glowStyle, style]}>
       {children}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -23,12 +51,28 @@ interface PointsBadgeProps {
 }
 
 export function PointsBadge({ points, size = 'sm' }: PointsBadgeProps) {
+  const starSpin = useSharedValue(0);
+
+  useEffect(() => {
+    starSpin.value = withSequence(
+      withSpring(360, { damping: 8, stiffness: 80 }),
+      withTiming(0, { duration: 0 })
+    );
+  }, [points, starSpin]);
+
+  const starStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${starSpin.value}deg` }],
+  }));
+
   return (
     <View style={[styles.pointsBadge, size === 'lg' && styles.pointsBadgeLg]}>
-      <Text style={[styles.pointsIcon, size === 'lg' && styles.pointsIconLg]}>⭐</Text>
-      <Text style={[styles.pointsText, size === 'lg' && styles.pointsTextLg]}>
-        {points.toLocaleString()}
-      </Text>
+      <Animated.Text style={[styles.pointsIcon, size === 'lg' && styles.pointsIconLg, starStyle]}>
+        ⭐
+      </Animated.Text>
+      <AnimatedCounter
+        value={points}
+        style={[styles.pointsText, size === 'lg' && styles.pointsTextLg]}
+      />
     </View>
   );
 }
@@ -41,6 +85,16 @@ interface LevelBarProps {
 
 export function LevelBar({ level, progress, max }: LevelBarProps) {
   const pct = max > 0 ? Math.min((progress / max) * 100, 100) : 0;
+  const widthPct = useSharedValue(0);
+
+  useEffect(() => {
+    widthPct.value = withSpring(pct, { damping: 14, stiffness: 90 });
+  }, [pct, widthPct]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${widthPct.value}%`,
+  }));
+
   return (
     <View style={styles.levelContainer}>
       <View style={[styles.levelHeader, rtl.rowBetween]}>
@@ -48,7 +102,7 @@ export function LevelBar({ level, progress, max }: LevelBarProps) {
         <Text style={[styles.xpText, rtl.text]}>{progress}/{max} XP</Text>
       </View>
       <View style={styles.barBg}>
-        <View style={[styles.barFill, { width: `${pct}%` }]} />
+        <Animated.View style={[styles.barFill, fillStyle]} />
       </View>
     </View>
   );
@@ -59,10 +113,27 @@ interface StreakBadgeProps {
 }
 
 export function StreakBadge({ streak }: StreakBadgeProps) {
+  const fireScale = useSharedValue(1);
+
+  useEffect(() => {
+    fireScale.value = withRepeat(
+      withSequence(
+        withSpring(1.15, { damping: 4 }),
+        withSpring(1, { damping: 6 })
+      ),
+      -1,
+      true
+    );
+  }, [fireScale]);
+
+  const fireStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: fireScale.value }],
+  }));
+
   if (streak < 1) return null;
   return (
     <View style={styles.streakBadge}>
-      <Text style={styles.streakEmoji}>🔥</Text>
+      <Animated.Text style={[styles.streakEmoji, fireStyle]}>🔥</Animated.Text>
       <Text style={styles.streakText}>{streak}</Text>
     </View>
   );
@@ -79,12 +150,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   glow: {
-    borderColor: colors.primary,
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowRadius: 12,
+    elevation: 6,
   },
   pointsBadge: {
     flexDirection: 'row',

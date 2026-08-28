@@ -1,6 +1,17 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { Text, StyleSheet } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+  withDelay,
+  runOnJS,
+} from 'react-native-reanimated';
 import { colors, borderRadius, spacing } from '../constants/theme';
+import { Confetti } from './animations/Confetti';
 
 interface CelebrationProps {
   visible: boolean;
@@ -8,55 +19,68 @@ interface CelebrationProps {
   onDone?: () => void;
 }
 
-const EMOJIS = ['🎉', '⭐', '🏆', '💎', '🔥', '✨', '🎮', '👑'];
-
 export function Celebration({ visible, message = 'כל הכבוד!', onDone }: CelebrationProps) {
-  const scale = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useSharedValue(0);
+  const opacity = useSharedValue(0);
+  const emojiScale = useSharedValue(1);
+  const glow = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 4 }),
-        Animated.timing(opacity, { toValue: 1, duration: 300, useNativeDriver: true }),
-      ]).start();
+      scale.value = 0;
+      opacity.value = 0;
+      scale.value = withSpring(1, { damping: 8, stiffness: 120 });
+      opacity.value = withTiming(1, { duration: 250 });
+      emojiScale.value = withRepeat(
+        withSequence(
+          withSpring(1.2, { damping: 4 }),
+          withSpring(1, { damping: 6 })
+        ),
+        -1,
+        true
+      );
+      glow.value = withRepeat(
+        withSequence(withTiming(1, { duration: 600 }), withTiming(0.3, { duration: 600 })),
+        -1,
+        true
+      );
 
       const timer = setTimeout(() => {
-        Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: true }).start(
-          () => onDone?.()
-        );
-      }, 2500);
+        opacity.value = withTiming(0, { duration: 400 }, (finished) => {
+          if (finished && onDone) {
+            runOnJS(onDone)();
+          }
+        });
+      }, 2800);
 
       return () => clearTimeout(timer);
     } else {
-      scale.setValue(0);
-      opacity.setValue(0);
+      scale.value = 0;
+      opacity.value = 0;
     }
-  }, [visible]);
+  }, [visible, scale, opacity, emojiScale, glow, onDone]);
+
+  const overlayStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  const boxStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+  const emojiStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: emojiScale.value }],
+  }));
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glow.value,
+  }));
 
   if (!visible) return null;
 
-  const { width } = Dimensions.get('window');
-
   return (
-    <Animated.View style={[styles.overlay, { opacity }]}>
-      {EMOJIS.map((emoji, i) => (
-        <Text
-          key={i}
-          style={[
-            styles.floatingEmoji,
-            {
-              left: (width / EMOJIS.length) * i + 10,
-              top: 100 + (i % 3) * 80,
-            },
-          ]}
-        >
-          {emoji}
-        </Text>
-      ))}
-      <Animated.View style={[styles.messageBox, { transform: [{ scale }] }]}>
-        <Text style={styles.emoji}>🎉</Text>
+    <Animated.View style={[styles.overlay, overlayStyle]}>
+      <Confetti active={visible} />
+      <Animated.View style={[styles.glowRing, glowStyle]} />
+      <Animated.View style={[styles.messageBox, boxStyle]}>
+        <Animated.Text style={[styles.emoji, emojiStyle]}>🎉</Animated.Text>
         <Text style={styles.message}>{message}</Text>
+        <Text style={styles.sub}>מדהים! 🚀</Text>
       </Animated.View>
     </Animated.View>
   );
@@ -69,14 +93,18 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
   },
-  floatingEmoji: {
+  glowRing: {
     position: 'absolute',
-    fontSize: 36,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: colors.primary,
+    opacity: 0.3,
   },
   messageBox: {
     backgroundColor: colors.bgCard,
@@ -85,16 +113,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: colors.gold,
-    minWidth: 250,
+    minWidth: 260,
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 10,
   },
   emoji: {
-    fontSize: 64,
+    fontSize: 72,
     marginBottom: spacing.md,
   },
   message: {
     color: colors.text,
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
+    textAlign: 'center',
+  },
+  sub: {
+    color: colors.gold,
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: spacing.sm,
     textAlign: 'center',
   },
 });

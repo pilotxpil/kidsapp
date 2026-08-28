@@ -65,10 +65,11 @@ export default function KidTasksScreen() {
           {filtered.length === 0 ? (
             <Text style={styles.empty}>{t('noTasks')}</Text>
           ) : (
-            filtered.map((task) => (
+            filtered.map((task, i) => (
               <TaskCard
                 key={task._id}
                 task={task}
+                index={i}
                 onComplete={handleComplete}
                 loading={completingId === task._id}
                 pending={pendingIds.has(task._id)}

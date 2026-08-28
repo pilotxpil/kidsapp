@@ -71,9 +71,10 @@ export default function KidShopScreen() {
           {rewards.length === 0 ? (
             <Text style={styles.empty}>{t('noRewards')}</Text>
           ) : (
-            rewards.map((reward) => (
+            rewards.map((reward, i) => (
               <RewardCard
                 key={reward._id}
+                index={i}
                 reward={reward}
                 userPoints={user?.points || 0}
                 onRedeem={handleRedeem}

@@ -1,14 +1,13 @@
 import React from 'react';
 import {
-  TouchableOpacity,
   Text,
-  StyleSheet,
   ActivityIndicator,
   ViewStyle,
   TextStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, borderRadius, spacing } from '../constants/theme';
+import { BouncyPressable } from './animations/BouncyPressable';
 
 interface ButtonProps {
   title: string;
@@ -31,10 +30,9 @@ export function Button({
 }: ButtonProps) {
   if (variant === 'primary') {
     return (
-      <TouchableOpacity
+      <BouncyPressable
         onPress={onPress}
         disabled={disabled || loading}
-        activeOpacity={0.8}
         style={[styles.wrapper, style, (disabled || loading) && styles.disabled]}
       >
         <LinearGradient
@@ -49,7 +47,7 @@ export function Button({
             <Text style={[styles.text, textStyle]}>{title}</Text>
           )}
         </LinearGradient>
-      </TouchableOpacity>
+      </BouncyPressable>
     );
   }
 
@@ -65,10 +63,9 @@ export function Button({
   };
 
   return (
-    <TouchableOpacity
+    <BouncyPressable
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.8}
       style={[
         styles.solid,
         variantStyles[variant],
@@ -83,37 +80,37 @@ export function Button({
           {title}
         </Text>
       )}
-    </TouchableOpacity>
+    </BouncyPressable>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   wrapper: {
     borderRadius: borderRadius.lg,
-    overflow: 'hidden',
+    overflow: 'hidden' as const,
   },
   gradient: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     minHeight: 52,
   },
   solid: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
     minHeight: 52,
   },
   text: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontWeight: '700' as const,
+    textAlign: 'center' as const,
   },
   disabled: {
     opacity: 0.5,
   },
-});
+};
