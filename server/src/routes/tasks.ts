@@ -1,0 +1,262 @@
+import { Router, Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import { authenticate, requireParent } from '../middleware/auth';
+import { User } from '../models/User';
+import { Task } from '../models/Task';
+import { TaskCompletion } from '../models/TaskCompletion';
+import { formatUser } from '../utils/format';
+
+const router = Router();
+
+router.get('/', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { kidId } = req.query;
+    const targetKidId = req.user!.role === 'kid' ? req.user!.userId : (kidId as string);
+
+    if (!targetKidId) {
+      return res.status(400).json({ error: 'נדרש kidId' });
+    }
+
+    const tasks = await Task.find({
+      familyId: req.user!.familyId,
+      assignedTo: targetKidId,
+      isActive: true,
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      tasks: tasks.map((t) => ({
+        _id: t._id.toString(),
+        familyId: t.familyId.toString(),
+        title: t.title,
+        description: t.description,
+        category: t.category,
+        points: t.points,
+        recurrence: t.recurrence,
+        assignedTo: t.assignedTo.toString(),
+        icon: t.icon,
+        isActive: t.isActive,
+        createdAt: t.createdAt.toISOString(),
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטעינת משימות' });
+  }
+});
+
+router.post('/', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const { title, description, category, points, recurrence, assignedTo, icon } = req.body;
+
+    const task = await Task.create({
+      familyId: req.user!.familyId,
+      title,
+      description: description || '',
+      category,
+      points,
+      recurrence: recurrence || 'daily',
+      assignedTo,
+      icon: icon || '⭐',
+    });
+
+    res.status(201).json({
+      task: {
+        _id: task._id.toString(),
+        familyId: task.familyId.toString(),
+        title: task.title,
+        description: task.description,
+        category: task.category,
+        points: task.points,
+        recurrence: task.recurrence,
+        assignedTo: task.assignedTo.toString(),
+        icon: task.icon,
+        isActive: task.isActive,
+        createdAt: task.createdAt.toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה ביצירת משימה' });
+  }
+});
+
+router.put('/:id', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const task = await Task.findOneAndUpdate(
+      { _id: req.params.id, familyId: req.user!.familyId },
+      req.body,
+      { new: true }
+    );
+    if (!task) return res.status(404).json({ error: 'משימה לא נמצאה' });
+    res.json({ task });
+  } catch (err) {
+    res.status(500).json({ error: 'שגיאה בעדכון משימה' });
+  }
+});
+
+router.delete('/:id', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    await Task.findOneAndUpdate(
+      { _id: req.params.id, familyId: req.user!.familyId },
+      { isActive: false }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'שגיאה במחיקת משימה' });
+  }
+});
+
+router.post('/:id/complete', authenticate, async (req: Request, res: Response) => {
+  try {
+    const task = await Task.findOne({
+      _id: req.params.id,
+      familyId: req.user!.familyId,
+    });
+
+    if (!task) return res.status(404).json({ error: 'משימה לא נמצאה' });
+
+    const kidId = req.user!.role === 'kid' ? req.user!.userId : req.body.kidId;
+    if (!kidId) return res.status(400).json({ error: 'נדרש kidId' });
+
+    const existing = await TaskCompletion.findOne({
+      taskId: task._id,
+      kidId,
+      status: 'pending',
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: 'כבר יש בקשה ממתינה למשימה זו' });
+    }
+
+    const completion = await TaskCompletion.create({
+      taskId: task._id,
+      kidId,
+      familyId: req.user!.familyId,
+      status: 'pending',
+    });
+
+    res.status(201).json({
+      completion: {
+        _id: completion._id.toString(),
+        taskId: completion.taskId.toString(),
+        kidId: completion.kidId.toString(),
+        familyId: completion.familyId.toString(),
+        status: completion.status,
+        submittedAt: completion.submittedAt.toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בסימון משימה' });
+  }
+});
+
+router.get('/completions/pending', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const completions = await TaskCompletion.find({
+      familyId: req.user!.familyId,
+      status: 'pending',
+    })
+      .populate('taskId')
+      .populate('kidId', 'displayName avatar')
+      .sort({ submittedAt: -1 });
+
+    res.json({
+      completions: completions.map((c) => ({
+        _id: c._id.toString(),
+        taskId: c.taskId.toString(),
+        kidId: c.kidId.toString(),
+        familyId: c.familyId.toString(),
+        status: c.status,
+        submittedAt: c.submittedAt.toISOString(),
+        task: c.taskId && typeof c.taskId === 'object' ? {
+          _id: (c.taskId as any)._id.toString(),
+          title: (c.taskId as any).title,
+          points: (c.taskId as any).points,
+          icon: (c.taskId as any).icon,
+          category: (c.taskId as any).category,
+        } : undefined,
+        kid: c.kidId && typeof c.kidId === 'object' ? {
+          _id: (c.kidId as any)._id.toString(),
+          displayName: (c.kidId as any).displayName,
+          avatar: (c.kidId as any).avatar,
+        } : undefined,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'שגיאה בטעינת בקשות' });
+  }
+});
+
+router.post('/completions/:id/approve', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const { action } = req.body;
+    const completion = await TaskCompletion.findOne({
+      _id: req.params.id,
+      familyId: req.user!.familyId,
+      status: 'pending',
+    }).populate('taskId');
+
+    if (!completion) return res.status(404).json({ error: 'בקשה לא נמצאה' });
+
+    if (action === 'reject') {
+      completion.status = 'rejected';
+      completion.reviewedAt = new Date();
+      completion.reviewedBy = req.user!.userId as any;
+      await completion.save();
+      return res.json({ completion });
+    }
+
+    const task = completion.taskId as any;
+    const kid = await User.findById(completion.kidId);
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+
+    const { awardPoints } = await import('../services/gamification');
+
+    completion.status = 'approved';
+    completion.reviewedAt = new Date();
+    completion.reviewedBy = req.user!.userId as any;
+    await completion.save();
+
+    await awardPoints(kid, task.points, 'task', `משימה: ${task.title}`, completion._id.toString());
+
+    if (task.category === 'sport' && !kid.badges.includes('sport_star')) {
+      const sportCount = await TaskCompletion.countDocuments({
+        kidId: kid._id,
+        status: 'approved',
+      });
+      const sportTasks = await Task.find({ familyId: kid.familyId, category: 'sport' });
+      const sportTaskIds = sportTasks.map((t) => t._id);
+      const sportCompletions = await TaskCompletion.countDocuments({
+        kidId: kid._id,
+        status: 'approved',
+        taskId: { $in: sportTaskIds },
+      });
+      if (sportCompletions >= 10) {
+        kid.badges.push('sport_star');
+        await kid.save();
+      }
+    }
+
+    if (task.category === 'school' && !kid.badges.includes('scholar')) {
+      const schoolTasks = await Task.find({ familyId: kid.familyId, category: 'school' });
+      const schoolTaskIds = schoolTasks.map((t) => t._id);
+      const schoolCompletions = await TaskCompletion.countDocuments({
+        kidId: kid._id,
+        status: 'approved',
+        taskId: { $in: schoolTaskIds },
+      });
+      if (schoolCompletions >= 10) {
+        kid.badges.push('scholar');
+        await kid.save();
+      }
+    }
+
+    res.json({ completion, kid: formatUser(kid) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה באישור משימה' });
+  }
+});
+
+export default router;
