@@ -9,7 +9,8 @@ import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { TASK_CATEGORIES } from '@kidsapp/shared';
 import type { Task, TaskCategory, User } from '@kidsapp/shared';
-import { colors, spacing, borderRadius } from '../../constants/theme';
+import { colors, spacing, borderRadius, gradientBg } from '../../constants/theme';
+
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 
@@ -75,7 +76,7 @@ export default function ParentTasksScreen() {
   const categories = Object.entries(TASK_CATEGORIES) as [TaskCategory, { label: string; icon: string }][];
 
   return (
-    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
+    <LinearGradient colors={[...gradientBg]} style={styles.container}>
       <SafeScreen tabs style={styles.safe}>
         <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
           <View style={[styles.header, rtl.headerSplit]}>

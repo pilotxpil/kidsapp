@@ -7,7 +7,8 @@ import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { colors, spacing } from '../constants/theme';
+import { colors, spacing, gradientBg } from '../constants/theme';
+
 import { t } from '../lib/i18n';
 
 export default function ParentLoginScreen() {
@@ -35,7 +36,7 @@ export default function ParentLoginScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
+    <LinearGradient colors={[...gradientBg]} style={styles.container}>
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.inner}>
           <TouchableOpacity onPress={() => router.back()} style={styles.back}>

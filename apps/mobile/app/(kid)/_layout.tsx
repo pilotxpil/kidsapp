@@ -21,31 +21,32 @@ export default function KidLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: colors.bgCard,
-          borderTopColor: colors.border,
+          borderTopWidth: 3,
+          borderTopColor: colors.borderLight,
           height: TAB_CONTENT_HEIGHT + insets.bottom,
           paddingTop: 8,
           paddingBottom: insets.bottom,
         },
-        tabBarActiveTintColor: colors.primaryLight,
+        tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ title: t('home'), tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} /> }}
+        options={{ title: t('home'), tabBarIcon: ({ focused }) => <TabIcon emoji="🟩" focused={focused} /> }}
       />
       <Tabs.Screen
         name="tasks"
-        options={{ title: t('tasks'), tabBarIcon: ({ focused }) => <TabIcon emoji="📋" focused={focused} /> }}
+        options={{ title: t('tasks'), tabBarIcon: ({ focused }) => <TabIcon emoji="📜" focused={focused} /> }}
       />
       <Tabs.Screen
         name="shop"
-        options={{ title: t('shop'), tabBarIcon: ({ focused }) => <TabIcon emoji="🛒" focused={focused} /> }}
+        options={{ title: t('shop'), tabBarIcon: ({ focused }) => <TabIcon emoji="💎" focused={focused} /> }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: t('profile'), tabBarIcon: ({ focused }) => <TabIcon emoji="👤" focused={focused} /> }}
+        options={{ title: t('profile'), tabBarIcon: ({ focused }) => <TabIcon emoji="🛡️" focused={focused} /> }}
       />
     </Tabs>
   );

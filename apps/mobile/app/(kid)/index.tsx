@@ -12,7 +12,8 @@ import { RtlText } from '../../components/RtlText';
 import { GameWorlds } from '../../components/GameWorlds';
 import { FadeInUp } from '../../components/animations/FadeInUp';
 import type { Task, KidProfile } from '@kidsapp/shared';
-import { colors, spacing, borderRadius } from '../../constants/theme';
+import { colors, spacing, borderRadius, gradientBg, blockBorder } from '../../constants/theme';
+
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 
@@ -58,7 +59,7 @@ export default function KidHomeScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
+    <LinearGradient colors={[...gradientBg]} style={styles.container}>
       <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}
@@ -142,12 +143,11 @@ const styles = StyleSheet.create({
   name: { color: colors.text, fontSize: 24, fontWeight: '700' },
   pointsCard: {
     backgroundColor: colors.bgCard,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     padding: spacing.lg,
     alignItems: 'center',
     marginBottom: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...blockBorder(2),
   },
   pointsLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1, marginBottom: spacing.sm, width: '100%' },
   levelSection: { width: '100%', marginTop: spacing.md },

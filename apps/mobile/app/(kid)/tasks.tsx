@@ -10,7 +10,8 @@ import { Celebration } from '../../components/Celebration';
 import { RtlText } from '../../components/RtlText';
 import { FadeInUp } from '../../components/animations/FadeInUp';
 import type { Task, TaskCategory } from '@kidsapp/shared';
-import { colors, spacing } from '../../constants/theme';
+import { colors, spacing, gradientBg } from '../../constants/theme';
+
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 
@@ -48,7 +49,7 @@ export default function KidTasksScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
+    <LinearGradient colors={[...gradientBg]} style={styles.container}>
       <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}

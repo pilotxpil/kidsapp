@@ -132,33 +132,33 @@ export interface ParentDashboard {
 }
 
 export const TASK_CATEGORIES: Record<TaskCategory, { label: string; icon: string }> = {
-  home: { label: 'בית', icon: '🏠' },
-  school: { label: 'לימודים', icon: '📚' },
-  social: { label: 'חברתי', icon: '👥' },
-  hobby: { label: 'חוג', icon: '🎨' },
-  sport: { label: 'ספורט', icon: '⚽' },
+  home: { label: 'בית', icon: '🛏️' },
+  school: { label: 'לימודים', icon: '📖' },
+  social: { label: 'חברתי', icon: '👨‍🌾' },
+  hobby: { label: 'חוג', icon: '🎣' },
+  sport: { label: 'ספורט', icon: '🏹' },
 };
 
 export const REWARD_CATEGORIES: Record<RewardCategory, { label: string; icon: string }> = {
-  gaming: { label: 'גיימינג', icon: '🎮' },
-  food: { label: 'אוכל', icon: '🍕' },
-  screen: { label: 'מסך', icon: '📱' },
-  privilege: { label: 'הרשאות', icon: '⭐' },
-  other: { label: 'אחר', icon: '🎁' },
+  gaming: { label: 'גיימינג', icon: '⛏️' },
+  food: { label: 'אוכל', icon: '🍖' },
+  screen: { label: 'מסך', icon: '🖥️' },
+  privilege: { label: 'הרשאות', icon: '✨' },
+  other: { label: 'אחר', icon: '📦' },
 };
 
-export const AVATARS = ['🦁', '🐯', '🦊', '🐻', '🐼', '🐸', '🦄', '🐲', '🤖', '👾', '🎮', '⚡'];
+export const AVATARS = ['🐷', '🐮', '🐑', '🐔', '🐺', '🐱', '🧟', '🕷️', '🐉', '🦇', '🐝', '🐢'];
 
 export const BADGES: Record<string, { label: string; icon: string; description: string }> = {
-  first_task: { label: 'משימה ראשונה', icon: '🌟', description: 'השלמת את המשימה הראשונה!' },
+  first_task: { label: 'משימה ראשונה', icon: '💚', description: 'השלמת את המשימה הראשונה!' },
   streak_3: { label: 'רצף 3 ימים', icon: '🔥', description: '3 ימים ברצף!' },
   streak_7: { label: 'שבוע מושלם', icon: '💎', description: '7 ימים ברצף!' },
   streak_30: { label: 'חודש אגדי', icon: '👑', description: '30 ימים ברצף!' },
-  level_5: { label: 'רמה 5', icon: '🏆', description: 'הגעת לרמה 5!' },
-  level_10: { label: 'אגדה', icon: '⚡', description: 'הגעת לרמה 10!' },
-  task_master: { label: 'מלך המטלות', icon: '🎯', description: '50 משימות הושלמו!' },
-  sport_star: { label: 'אלוף הספורט', icon: '⚽', description: '10 משימות ספורט!' },
-  scholar: { label: 'תלמיד מצטיין', icon: '📚', description: '10 משימות לימודים!' },
+  level_5: { label: 'רמה 5', icon: '⚔️', description: 'הגעת לרמה 5!' },
+  level_10: { label: 'אגדה', icon: '🗡️', description: 'הגעת לרמה 10!' },
+  task_master: { label: 'מלך המטלות', icon: '⛏️', description: '50 משימות הושלמו!' },
+  sport_star: { label: 'אלוף הספורט', icon: '🏹', description: '10 משימות ספורט!' },
+  scholar: { label: 'תלמיד מצטיין', icon: '📖', description: '10 משימות לימודים!' },
 };
 
 export function xpForLevel(level: number): number {

@@ -59,5 +59,5 @@ export function sfxForRewardTitle(title: string): SfxName {
   if (t.includes('robux') || t.includes('roblox') || t.includes('רובלוקס')) return 'coin';
   if (t.includes('brawl') || t.includes('gem') || t.includes('ברול')) return 'gem';
   if (t.includes('minecraft') || t.includes('mine') || t.includes('מיינקראפט')) return 'complete';
-  return 'coin';
+  return 'complete';
 }

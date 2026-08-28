@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, { ZoomIn } from 'react-native-reanimated';
-import { colors, borderRadius, spacing } from '../constants/theme';
+import { colors, borderRadius, spacing, blockBorder } from '../constants/theme';
 import { playSfx, SfxName } from '../lib/sfx';
 import { Confetti } from './animations/Confetti';
 
@@ -26,7 +26,7 @@ export function Celebration({ visible, message = 'בוצע', sfx = 'complete', o
     <View style={styles.overlay} pointerEvents="none">
       <Confetti active={visible} count={36} />
       <Animated.View entering={ZoomIn.duration(380).springify().damping(14)} style={styles.messageBox}>
-        <Text style={styles.kicker}>XP</Text>
+        <Text style={styles.kicker}>💚 XP</Text>
         <Text style={styles.message}>{message}</Text>
       </Animated.View>
     </View>
@@ -47,16 +47,15 @@ const styles = StyleSheet.create({
   },
   messageBox: {
     backgroundColor: colors.bgCard,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...blockBorder(3),
     minWidth: 220,
   },
   kicker: {
-    color: colors.primary,
+    color: colors.accent,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 3,

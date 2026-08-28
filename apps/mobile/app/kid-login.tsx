@@ -11,7 +11,8 @@ import { FadeInUp } from '../components/animations/FadeInUp';
 import { BouncyPressable } from '../components/animations/BouncyPressable';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { colors, spacing } from '../constants/theme';
+import { colors, spacing, gradientBg } from '../constants/theme';
+
 import { API_URL } from '../lib/config';
 import { t } from '../lib/i18n';
 
@@ -56,7 +57,7 @@ export default function KidLoginScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
+    <LinearGradient colors={[...gradientBg]} style={styles.container}>
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.inner}>
           <BouncyPressable onPress={() => router.back()} style={styles.back}>

@@ -9,7 +9,8 @@ import { Card, PointsBadge, LevelBar, StreakBadge } from '../../components/Card'
 import { Button } from '../../components/Button';
 import { BADGES } from '@kidsapp/shared';
 import type { KidProfile } from '@kidsapp/shared';
-import { colors, spacing, borderRadius } from '../../constants/theme';
+import { colors, spacing, borderRadius, gradientBg } from '../../constants/theme';
+
 import { rtl } from '../../lib/rtl';
 import { isSfxMuted, setSfxMuted, playSfx } from '../../lib/sfx';
 import { t } from '../../lib/i18n';
@@ -50,7 +51,7 @@ export default function KidProfileScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
+    <LinearGradient colors={[...gradientBg]} style={styles.container}>
       <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}

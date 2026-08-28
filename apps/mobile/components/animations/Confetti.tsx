@@ -11,7 +11,7 @@ import { colors } from '../../constants/theme';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
-const CONFETTI_COLORS = [colors.primary, colors.accent, '#64748b', '#1d4ed8', '#22d3ee'];
+const CONFETTI_COLORS = [colors.primary, colors.accent, colors.emerald, colors.diamond, colors.gold, colors.dirt];
 
 interface ConfettiProps {
   active: boolean;
@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
   piece: {
     position: 'absolute',
     top: 0,
-    width: 4,
-    height: 12,
-    borderRadius: 1,
+    width: 8,
+    height: 8,
+    borderRadius: 0,
   },
 });

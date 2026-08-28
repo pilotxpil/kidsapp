@@ -1,6 +1,6 @@
 export const he = {
   appName: 'QUEST',
-  appTagline: 'משימות. XP. פרסים.',
+  appTagline: 'כרות. בנה. הרווח XP.',
   kidLogin: 'כניסה',
   parentLogin: 'כניסת הורה',
   parentRegister: 'הרשמת הורה',

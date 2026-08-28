@@ -5,7 +5,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { colors, borderRadius, spacing } from '../constants/theme';
+import { colors, borderRadius, spacing, blockBorder } from '../constants/theme';
 import { rtl } from '../lib/rtl';
 import { AnimatedCounter } from './animations/AnimatedCounter';
 
@@ -31,7 +31,7 @@ interface PointsBadgeProps {
 export function PointsBadge({ points, size = 'sm' }: PointsBadgeProps) {
   return (
     <View style={[styles.pointsBadge, size === 'lg' && styles.pointsBadgeLg]}>
-      <Text style={[styles.pointsIcon, size === 'lg' && styles.pointsIconLg]}>XP</Text>
+      <Text style={[styles.pointsIcon, size === 'lg' && styles.pointsIconLg]}>💎</Text>
       <AnimatedCounter
         value={points}
         style={[styles.pointsText, size === 'lg' && styles.pointsTextLg]}
@@ -85,6 +85,7 @@ export function StreakBadge({ streak }: StreakBadgeProps) {
   if (streak < 1) return null;
   return (
     <View style={styles.streakBadge}>
+      <Text style={styles.streakEmoji}>🔥</Text>
       <Text style={styles.streakLabel}>STREAK</Text>
       <Text style={styles.streakText}>{streak}</Text>
     </View>
@@ -94,15 +95,15 @@ export function StreakBadge({ streak }: StreakBadgeProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.bgCard,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...blockBorder(2),
     alignSelf: 'stretch',
     width: '100%',
   },
   glow: {
-    borderColor: colors.primary,
+    borderTopColor: colors.accent,
+    borderLeftColor: colors.accent,
   },
   pointsBadge: {
     flexDirection: 'row',
@@ -118,16 +119,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   pointsIcon: {
-    color: colors.primary,
-    fontWeight: '800',
-    fontSize: 11,
-    letterSpacing: 1,
+    fontSize: 14,
   },
   pointsIconLg: {
-    fontSize: 13,
+    fontSize: 22,
   },
   pointsText: {
-    color: colors.gold,
+    color: colors.emerald,
     fontWeight: '800',
     fontSize: 16,
   },
@@ -141,7 +139,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   levelText: {
-    color: colors.primaryLight,
+    color: colors.accent,
     fontWeight: '700',
     fontSize: 14,
   },
@@ -150,11 +148,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   barBg: {
-    height: 10,
+    height: 12,
     backgroundColor: colors.bgCardLight,
-    borderRadius: borderRadius.full,
+    borderRadius: borderRadius.sm,
     overflow: 'hidden',
     width: '100%',
+    ...blockBorder(1),
   },
   barFill: {
     position: 'absolute',
@@ -162,7 +161,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: colors.accent,
-    borderRadius: borderRadius.full,
+    borderRadius: borderRadius.sm,
   },
   streakBadge: {
     flexDirection: 'row',
@@ -170,14 +169,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgCardLight,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.sm,
     gap: 8,
     flexShrink: 0,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...blockBorder(2),
+  },
+  streakEmoji: {
+    fontSize: 14,
   },
   streakLabel: {
-    color: colors.textMuted,
+    color: colors.streak,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 1,

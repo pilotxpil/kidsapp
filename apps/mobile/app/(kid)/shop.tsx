@@ -10,7 +10,8 @@ import { PointsBadge } from '../../components/Card';
 import { Celebration } from '../../components/Celebration';
 import { sfxForRewardTitle, playSfx, SfxName } from '../../lib/sfx';
 import type { Reward } from '@kidsapp/shared';
-import { colors, spacing } from '../../constants/theme';
+import { colors, spacing, gradientBg } from '../../constants/theme';
+
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 
@@ -56,7 +57,7 @@ export default function KidShopScreen() {
   };
 
   return (
-    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
+    <LinearGradient colors={[...gradientBg]} style={styles.container}>
       <SafeScreen tabs style={styles.safe}>
         <ScrollView
           contentContainerStyle={[styles.scroll, rtl.scrollContent]}

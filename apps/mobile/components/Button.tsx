@@ -6,7 +6,7 @@ import {
   TextStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, borderRadius, spacing } from '../constants/theme';
+import { colors, borderRadius, spacing, blockBorder } from '../constants/theme';
 import { BouncyPressable } from './animations/BouncyPressable';
 import { playSfx } from '../lib/sfx';
 
@@ -94,8 +94,11 @@ export function Button({
 
 const styles = {
   wrapper: {
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     overflow: 'hidden' as const,
+    ...blockBorder(2),
+    borderBottomColor: colors.buttonShadow,
+    borderRightColor: colors.buttonShadow,
   },
   gradient: {
     paddingVertical: spacing.md,
@@ -107,16 +110,20 @@ const styles = {
   solid: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     minHeight: 52,
+    ...blockBorder(2),
   },
   text: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     textAlign: 'center' as const,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 0,
   },
   disabled: {
     opacity: 0.5,

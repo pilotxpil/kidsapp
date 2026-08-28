@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, spacing, borderRadius } from '../constants/theme';
+import { colors, spacing, borderRadius, gradientBg, blockBorder } from '../constants/theme';
 import { t } from '../lib/i18n';
 import { FadeInUp } from '../components/animations/FadeInUp';
 import { BouncyPressable } from '../components/animations/BouncyPressable';
@@ -12,12 +12,12 @@ export default function WelcomeScreen() {
   const router = useRouter();
 
   return (
-    <LinearGradient colors={[colors.bg, '#0f172a']} style={styles.container}>
+    <LinearGradient colors={[...gradientBg]} style={styles.container}>
       <SafeAreaView style={styles.safe}>
         <View style={styles.content}>
           <FadeInUp index={0}>
             <View style={styles.mark}>
-              <Text style={styles.markText}>Q</Text>
+              <Text style={styles.markText}>⛏️</Text>
             </View>
           </FadeInUp>
 
@@ -75,28 +75,28 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   mark: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
+    width: 72,
+    height: 72,
+    borderRadius: borderRadius.md,
     backgroundColor: colors.bgCard,
-    borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
+    ...blockBorder(3),
   },
   markText: {
-    color: colors.primary,
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 36,
   },
   title: {
     fontSize: 36,
     fontWeight: '800',
     color: colors.text,
-    letterSpacing: 4,
+    letterSpacing: 2,
     marginBottom: spacing.sm,
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 0,
   },
   tagline: {
     fontSize: 15,
@@ -118,11 +118,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgCard,
     paddingVertical: 16,
     paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
     width: '100%',
+    ...blockBorder(2),
   },
   parentTitle: { fontSize: 16, fontWeight: '600', color: colors.textMuted },
 });

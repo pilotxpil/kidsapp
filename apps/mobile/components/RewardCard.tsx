@@ -6,7 +6,7 @@ import { Card } from './Card';
 import { Button } from './Button';
 import { RtlText } from './RtlText';
 import { FadeInUp } from './animations/FadeInUp';
-import { colors, spacing, borderRadius } from '../constants/theme';
+import { colors, spacing, borderRadius, blockBorder } from '../constants/theme';
 import { rtl } from '../lib/rtl';
 import { t } from '../lib/i18n';
 
@@ -28,7 +28,7 @@ export function RewardCard({ reward, userPoints, onRedeem, loading, pending, ind
       <Card style={!canAfford ? [styles.card, styles.cardDisabled] : styles.card} glow={canAfford && !pending}>
       <View style={[styles.content, rtl.cardRow]}>
         <View style={styles.iconBox}>
-          <Text style={styles.icon}>{reward.icon || cat?.icon || '🎁'}</Text>
+          <Text style={styles.icon}>{reward.icon || cat?.icon || '📦'}</Text>
         </View>
         <View style={styles.info}>
           <RtlText style={styles.title}>{reward.title}</RtlText>
@@ -40,7 +40,7 @@ export function RewardCard({ reward, userPoints, onRedeem, loading, pending, ind
               <Text style={[styles.categoryText, rtl.text]}>{cat?.label}</Text>
             </View>
             <Text style={[styles.cost, !canAfford && styles.costDisabled]}>
-              {reward.cost} XP
+              {reward.cost} 💎
             </Text>
           </View>
         </View>
@@ -83,11 +83,12 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 64,
     height: 64,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.bgCardLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginEnd: spacing.md,
+    ...blockBorder(2),
   },
   icon: {
     fontSize: 32,
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   cost: {
-    color: colors.gold,
+    color: colors.emerald,
     fontWeight: '800',
     fontSize: 18,
   },
@@ -134,10 +135,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   pendingBadge: {
-    backgroundColor: '#422006',
+    backgroundColor: colors.secondary,
     padding: spacing.sm,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.sm,
     alignItems: 'center',
+    ...blockBorder(1),
   },
   pendingText: {
     color: colors.secondary,

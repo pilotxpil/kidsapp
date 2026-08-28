@@ -1,6 +1,6 @@
 /**
- * Generate original 16-bit SFX (not from any commercial game).
- * Square/noise tones inspired by arcade / block / gem pickups.
+ * Generate original 8-bit SFX inspired by block-game UI / XP / item pickups.
+ * Not copied from any commercial game assets.
  */
 const fs = require('fs');
 const path = require('path');
@@ -36,9 +36,9 @@ function tone(freq, dur, vol = 0.35, type = 'square') {
   const out = new Array(n);
   for (let i = 0; i < n; i++) {
     const t = i / RATE;
-    const attack = Math.min(1, i / (RATE * 0.008));
-    const release = Math.max(0, 1 - i / n);
-    const env = attack * release;
+    const attack = Math.min(1, i / (RATE * 0.004));
+    const release = Math.max(0, 1 - (i - n * 0.6) / (n * 0.4));
+    const env = attack * Math.max(0, release);
     let s = Math.sin(2 * Math.PI * freq * t);
     if (type === 'square') s = s >= 0 ? 1 : -1;
     if (type === 'noise') s = Math.random() * 2 - 1;
@@ -48,41 +48,71 @@ function tone(freq, dur, vol = 0.35, type = 'square') {
   return out;
 }
 
+function silence(dur) {
+  return new Array(Math.floor(RATE * dur)).fill(0);
+}
+
 function concat(...parts) {
   return parts.flat();
 }
 
 fs.mkdirSync(outDir, { recursive: true });
 
-fs.writeFileSync(path.join(outDir, 'tap.wav'), wav(tone(1400, 0.045, 0.22, 'square')));
+// UI button click — short inventory-style pop
+fs.writeFileSync(
+  path.join(outDir, 'tap.wav'),
+  wav(tone(620, 0.035, 0.25, 'square'))
+);
 
+// XP orb pickup — rapid ascending green sparkle
 fs.writeFileSync(
   path.join(outDir, 'complete.wav'),
   wav(
     concat(
-      tone(420, 0.07, 0.28, 'square'),
-      tone(620, 0.09, 0.3, 'square'),
-      tone(840, 0.12, 0.26, 'square')
+      tone(330, 0.05, 0.22, 'square'),
+      tone(440, 0.05, 0.24, 'square'),
+      tone(554, 0.06, 0.26, 'square'),
+      tone(659, 0.08, 0.24, 'square'),
+      tone(880, 0.1, 0.2, 'square')
     )
   )
 );
 
+// Diamond pickup — bright high chime
 fs.writeFileSync(
   path.join(outDir, 'gem.wav'),
   wav(
     concat(
-      tone(880, 0.06, 0.28, 'sine'),
-      tone(1174, 0.07, 0.3, 'sine'),
-      tone(1760, 0.14, 0.24, 'sine')
+      tone(988, 0.05, 0.28, 'sine'),
+      tone(1319, 0.06, 0.3, 'sine'),
+      tone(1760, 0.1, 0.26, 'sine'),
+      tone(2093, 0.12, 0.22, 'sine')
     )
   )
 );
 
+// Emerald / coin pickup
 fs.writeFileSync(
   path.join(outDir, 'coin.wav'),
-  wav(concat(tone(1319, 0.07, 0.28, 'square'), tone(1661, 0.12, 0.26, 'square')))
+  wav(
+    concat(
+      tone(784, 0.04, 0.26, 'square'),
+      tone(988, 0.05, 0.28, 'square'),
+      tone(1175, 0.08, 0.26, 'square')
+    )
+  )
 );
 
-fs.writeFileSync(path.join(outDir, 'error.wav'), wav(tone(180, 0.16, 0.28, 'square')));
+// Damage / error — low thud
+fs.writeFileSync(
+  path.join(outDir, 'error.wav'),
+  wav(
+    concat(
+      tone(120, 0.08, 0.32, 'square'),
+      tone(80, 0.14, 0.28, 'square'),
+      silence(0.02)
+    )
+  )
+);
 
-console.log('Wrote original SFX to', outDir);
+console.log('Wrote Minecraft-inspired SFX to', outDir);

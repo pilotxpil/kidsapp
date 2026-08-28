@@ -6,7 +6,7 @@ import { Card } from './Card';
 import { Button } from './Button';
 import { RtlText } from './RtlText';
 import { FadeInUp } from './animations/FadeInUp';
-import { colors, spacing, borderRadius } from '../constants/theme';
+import { colors, spacing, borderRadius, blockBorder } from '../constants/theme';
 import { rtl } from '../lib/rtl';
 import { t } from '../lib/i18n';
 
@@ -38,7 +38,7 @@ export function TaskCard({ task, onComplete, loading, pending, index = 0 }: Task
               <RtlText style={styles.description}>{task.description}</RtlText>
             ) : null}
             <View style={[styles.meta, rtl.row]}>
-              <Text style={styles.points}>+{task.points} XP</Text>
+              <Text style={styles.points}>+{task.points} 💎</Text>
               <View style={styles.categoryBadge}>
                 <Text style={[styles.categoryText, rtl.text]}>{cat?.label}</Text>
               </View>
@@ -104,11 +104,12 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 56,
     height: 56,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.bgCardLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginEnd: spacing.md,
+    ...blockBorder(2),
   },
   icon: {
     fontSize: 28,
@@ -144,7 +145,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   points: {
-    color: colors.gold,
+    color: colors.emerald,
     fontWeight: '700',
     fontSize: 14,
   },
@@ -152,10 +153,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   pendingBadge: {
-    backgroundColor: '#422006',
+    backgroundColor: colors.secondary,
     padding: spacing.sm,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.sm,
     alignItems: 'center',
+    ...blockBorder(1),
   },
   pendingText: {
     color: colors.secondary,
@@ -168,14 +170,16 @@ const styles = StyleSheet.create({
   tab: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.bgCard,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...blockBorder(1),
   },
   tabActive: {
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    borderTopColor: colors.primaryLight,
+    borderLeftColor: colors.primaryLight,
+    borderBottomColor: colors.primaryDark,
+    borderRightColor: colors.primaryDark,
   },
   tabText: {
     color: colors.textMuted,

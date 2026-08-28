@@ -1,21 +1,34 @@
+import { ViewStyle } from 'react-native';
+
+/** Minecraft-inspired palette: grass, dirt, stone, emerald XP, diamond accents */
 export const colors = {
-  bg: '#0b0f14',
-  bgCard: '#141a22',
-  bgCardLight: '#1c2430',
-  primary: '#38bdf8',
-  primaryLight: '#7dd3fc',
-  secondary: '#94a3b8',
-  accent: '#22d3ee',
-  danger: '#f43f5e',
-  success: '#34d399',
-  text: '#f4f4f5',
-  textMuted: '#94a3b8',
-  textDark: '#0b0f14',
-  gradientStart: '#1d4ed8',
-  gradientEnd: '#0e7490',
-  gold: '#38bdf8',
-  streak: '#fb7185',
-  border: '#2a3441',
+  bg: '#1a1a1a',
+  bgDeep: '#0d1f0d',
+  bgCard: '#3a3a3a',
+  bgCardLight: '#4a4a4a',
+  primary: '#5D8C3B',
+  primaryLight: '#7CB342',
+  primaryDark: '#3B6B22',
+  secondary: '#8B6914',
+  accent: '#80FF20',
+  danger: '#C62828',
+  success: '#5D8C3B',
+  text: '#FFFFFF',
+  textMuted: '#A0A0A0',
+  textDark: '#1a1a1a',
+  gradientStart: '#5D8C3B',
+  gradientEnd: '#3B6B22',
+  gold: '#FFD700',
+  emerald: '#50C878',
+  diamond: '#4FC3F7',
+  streak: '#FF6D00',
+  border: '#555555',
+  borderLight: '#8B8B8B',
+  borderDark: '#2D2D2D',
+  buttonShadow: '#2D5016',
+  dirt: '#8B6914',
+  stone: '#7D7D7D',
+  sky: '#78A7FF',
 };
 
 export const spacing = {
@@ -26,10 +39,27 @@ export const spacing = {
   xl: 32,
 };
 
+/** Blocky corners — Minecraft GUI uses sharp/slightly rounded edges */
 export const borderRadius = {
-  sm: 6,
-  md: 10,
-  lg: 12,
-  xl: 16,
+  sm: 2,
+  md: 4,
+  lg: 6,
+  xl: 8,
   full: 999,
 };
+
+export const gradientBg = [colors.bg, colors.bgDeep] as const;
+
+/** 3D block border effect for cards and buttons */
+export function blockBorder(width = 3): ViewStyle {
+  return {
+    borderTopWidth: width,
+    borderLeftWidth: width,
+    borderBottomWidth: width,
+    borderRightWidth: width,
+    borderTopColor: colors.borderLight,
+    borderLeftColor: colors.borderLight,
+    borderBottomColor: colors.borderDark,
+    borderRightColor: colors.borderDark,
+  };
+}
