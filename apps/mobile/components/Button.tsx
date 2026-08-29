@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Text,
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  StyleSheet,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, borderRadius, spacing, blockBorder } from '../constants/theme';
+import { spacing } from '../constants/theme';
+import { useTheme } from '../lib/theme-context';
 import { BouncyPressable } from './animations/BouncyPressable';
 import { playSfx } from '../lib/sfx';
 
@@ -31,6 +33,53 @@ export function Button({
   textStyle,
   sound = true,
 }: ButtonProps) {
+  const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        wrapper: {
+          borderRadius: borderRadius.md,
+          overflow: 'hidden' as const,
+          ...cardBorder(2),
+          borderBottomColor: colors.buttonShadow,
+          borderRightColor: colors.buttonShadow,
+          shadowColor: colors.glow,
+          shadowOpacity: 0.45,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 8,
+        },
+        gradient: {
+          paddingVertical: spacing.md,
+          paddingHorizontal: spacing.lg,
+          alignItems: 'center' as const,
+          justifyContent: 'center' as const,
+          minHeight: 52,
+        },
+        solid: {
+          paddingVertical: spacing.md,
+          paddingHorizontal: spacing.lg,
+          borderRadius: borderRadius.md,
+          alignItems: 'center' as const,
+          justifyContent: 'center' as const,
+          minHeight: 52,
+          ...cardBorder(2),
+        },
+        text: {
+          color: '#fff',
+          fontSize: 16,
+          fontWeight: '700' as const,
+          textAlign: 'center' as const,
+          textShadowColor: 'rgba(0,0,0,0.4)',
+          textShadowOffset: { width: 1, height: 1 },
+          textShadowRadius: 0,
+        },
+        disabled: { opacity: 0.5 },
+      }),
+    [themeId, colors, borderRadius, cardBorder]
+  );
+
   const handlePress = () => {
     if (sound) playSfx('tap');
     onPress();
@@ -91,41 +140,3 @@ export function Button({
     </BouncyPressable>
   );
 }
-
-const styles = {
-  wrapper: {
-    borderRadius: borderRadius.md,
-    overflow: 'hidden' as const,
-    ...blockBorder(2),
-    borderBottomColor: colors.buttonShadow,
-    borderRightColor: colors.buttonShadow,
-  },
-  gradient: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    minHeight: 52,
-  },
-  solid: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.md,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    minHeight: 52,
-    ...blockBorder(2),
-  },
-  text: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700' as const,
-    textAlign: 'center' as const,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 0,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-};

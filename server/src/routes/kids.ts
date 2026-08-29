@@ -41,13 +41,43 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
       displayName,
       username,
       pinHash,
-      avatar: avatar || '🦁',
+      avatar: avatar || '🐷',
     });
 
     res.status(201).json({ kid: formatUser(kid) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'שגיאה ביצירת פרופיל ילד' });
+  }
+});
+
+router.patch('/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+
+    if (req.user!.role === 'kid' && req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'אין הרשאה' });
+    }
+
+    const { uiTheme, avatar, displayName } = req.body;
+
+    if (uiTheme !== undefined) {
+      if (!['minecraft', 'brawl', 'roblox'].includes(uiTheme)) {
+        return res.status(400).json({ error: 'ערכת עיצוב לא תקינה' });
+      }
+      kid.uiTheme = uiTheme;
+    }
+
+    if (avatar !== undefined) kid.avatar = avatar;
+    if (displayName !== undefined) kid.displayName = displayName;
+
+    await kid.save();
+    res.json({ kid: formatUser(kid) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בעדכון פרופיל' });
   }
 });
 
@@ -139,6 +169,7 @@ router.get('/dashboard', authenticate, requireParent, async (req: Request, res: 
             title: (c.taskId as any).title,
             points: (c.taskId as any).points,
             icon: (c.taskId as any).icon,
+            category: (c.taskId as any).category,
           } : undefined,
           kid: c.kidId && typeof c.kidId === 'object' ? {
             displayName: (c.kidId as any).displayName,

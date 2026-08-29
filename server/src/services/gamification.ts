@@ -165,6 +165,7 @@ function formatKid(kid: IUser) {
     streak: kid.streak,
     lastActiveDate: kid.lastActiveDate,
     badges: kid.badges,
+    uiTheme: kid.uiTheme || 'minecraft',
     createdAt: kid.createdAt.toISOString(),
   };
 }

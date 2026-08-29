@@ -15,6 +15,7 @@ export function formatUser(user: IUser) {
     streak: user.streak,
     lastActiveDate: user.lastActiveDate,
     badges: user.badges,
+    uiTheme: user.uiTheme || 'minecraft',
     createdAt: user.createdAt.toISOString(),
   };
 }

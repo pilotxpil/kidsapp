@@ -17,6 +17,8 @@ export const he = {
   tasks: 'משימות',
   shop: 'חנות',
   profile: 'פרופיל',
+  uiTheme: 'עיצוב',
+  uiThemeHint: 'בחר את הסגנון שלך — נשמר לפרופיל שלך',
   points: 'XP',
   level: 'רמה',
   streak: 'רצף',

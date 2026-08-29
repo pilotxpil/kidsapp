@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Animated, { ZoomIn } from 'react-native-reanimated';
-import { colors, borderRadius, spacing, blockBorder } from '../constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { ZoomIn, FadeIn } from 'react-native-reanimated';
+import { spacing } from '../constants/theme';
+import { useTheme } from '../lib/theme-context';
 import { playSfx, SfxName } from '../lib/sfx';
 import { Confetti } from './animations/Confetti';
 
@@ -12,22 +14,49 @@ interface CelebrationProps {
   onDone?: () => void;
 }
 
-export function Celebration({ visible, message = 'בוצע', sfx = 'complete', onDone }: CelebrationProps) {
+export function Celebration({ visible, message = 'בוצע', sfx, onDone }: CelebrationProps) {
+  const { colors, borderRadius, cardBorder, celebrationKicker, heroGradient, sfx: themeSfx, icon } = useTheme();
+  const playName = sfx ?? themeSfx;
+
   useEffect(() => {
     if (!visible) return;
-    playSfx(sfx);
-    const timer = setTimeout(() => onDone?.(), 1800);
+    playSfx(playName);
+    const timer = setTimeout(() => onDone?.(), 2000);
     return () => clearTimeout(timer);
-  }, [visible, sfx, onDone]);
+  }, [visible, playName, onDone]);
 
   if (!visible) return null;
 
   return (
     <View style={styles.overlay} pointerEvents="none">
-      <Confetti active={visible} count={36} />
-      <Animated.View entering={ZoomIn.duration(380).springify().damping(14)} style={styles.messageBox}>
-        <Text style={styles.kicker}>💚 XP</Text>
-        <Text style={styles.message}>{message}</Text>
+      <Confetti active={visible} count={48} />
+      <Animated.View entering={ZoomIn.duration(400).springify().damping(12)}>
+        <LinearGradient
+          colors={[...heroGradient]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[
+            {
+              borderRadius: borderRadius.lg,
+              paddingVertical: spacing.xl,
+              paddingHorizontal: spacing.xl * 1.5,
+              alignItems: 'center',
+              minWidth: 260,
+              ...cardBorder(3),
+            },
+          ]}
+        >
+          <Animated.Text entering={FadeIn.delay(100)} style={styles.bigIcon}>
+            {icon}
+          </Animated.Text>
+          <Text style={styles.kicker}>{celebrationKicker}</Text>
+          <Text style={styles.message}>{message}</Text>
+          <View style={[styles.sparkRow]}>
+            {['✨', '⭐', '✨'].map((s, i) => (
+              <Text key={i} style={styles.spark}>{s}</Text>
+            ))}
+          </View>
+        </LinearGradient>
       </Animated.View>
     </View>
   );
@@ -40,31 +69,31 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
   },
-  messageBox: {
-    backgroundColor: colors.bgCard,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    alignItems: 'center',
-    ...blockBorder(3),
-    minWidth: 220,
-  },
+  bigIcon: { fontSize: 52, marginBottom: spacing.sm },
   kicker: {
-    color: colors.accent,
-    fontSize: 13,
+    color: '#fff',
+    fontSize: 14,
     fontWeight: '800',
     letterSpacing: 3,
     marginBottom: spacing.sm,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   message: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '600',
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
+  sparkRow: { flexDirection: 'row', gap: 12, marginTop: spacing.md },
+  spark: { fontSize: 18, opacity: 0.9 },
 });

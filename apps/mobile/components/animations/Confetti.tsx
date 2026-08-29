@@ -7,11 +7,9 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../lib/theme-context';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
-
-const CONFETTI_COLORS = [colors.primary, colors.accent, colors.emerald, colors.diamond, colors.gold, colors.dirt];
 
 interface ConfettiProps {
   active: boolean;
@@ -52,15 +50,18 @@ function ConfettiPiece({ x, delay, color }: { x: number; delay: number; color: s
 }
 
 export function Confetti({ active, count = 28 }: ConfettiProps) {
+  const { colors } = useTheme();
+  const confettiColors = colors.confetti;
+
   const pieces = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => ({
         id: i,
         x: Math.random() * SCREEN_W,
         delay: Math.random() * 280,
-        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        color: confettiColors[i % confettiColors.length],
       })),
-    [count]
+    [count, confettiColors]
   );
 
   if (!active) return null;

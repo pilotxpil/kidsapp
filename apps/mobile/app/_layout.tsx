@@ -4,7 +4,8 @@ import { useEffect } from 'react';
 import { StatusBar, ActivityIndicator, View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth';
-import { colors } from '../constants/theme';
+import { ThemeProvider, useTheme } from '../lib/theme-context';
+import { spacing } from '../constants/theme';
 import { initNativeRTL, rtl } from '../lib/rtl';
 import { initSfx } from '../lib/sfx';
 
@@ -13,6 +14,7 @@ initSfx();
 
 function RootNavigator() {
   const { user, loading } = useAuth();
+  const { colors } = useTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -75,7 +77,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <View style={rtl.root}>
         <AuthProvider>
-          <RootNavigator />
+          <ThemeProvider>
+            <RootNavigator />
+          </ThemeProvider>
         </AuthProvider>
       </View>
     </SafeAreaProvider>

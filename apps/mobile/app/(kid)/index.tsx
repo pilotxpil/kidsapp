@@ -1,24 +1,24 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SafeScreen } from '../../components/SafeScreen';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
-import { PointsBadge, LevelBar, StreakBadge } from '../../components/Card';
+import { PointsBadge, LevelBar } from '../../components/Card';
 import { TaskCard } from '../../components/TaskCard';
 import { Celebration } from '../../components/Celebration';
-import { RtlText } from '../../components/RtlText';
 import { GameWorlds } from '../../components/GameWorlds';
+import { ThemedScreen } from '../../components/ThemedScreen';
+import { ThemedHero, SectionHeader } from '../../components/ThemedHero';
 import { FadeInUp } from '../../components/animations/FadeInUp';
 import type { Task, KidProfile } from '@kidsapp/shared';
-import { colors, spacing, borderRadius, gradientBg, blockBorder } from '../../constants/theme';
-
+import { spacing } from '../../constants/theme';
+import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 
 export default function KidHomeScreen() {
   const { user } = useAuth();
+  const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
   const userId = user?._id;
   const [profile, setProfile] = useState<KidProfile | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -26,6 +26,37 @@ export default function KidHomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        scroll: { padding: spacing.lg, width: '100%' },
+        content: { width: '100%', alignSelf: 'stretch' },
+        statsCard: {
+          backgroundColor: colors.bgCard,
+          borderRadius: borderRadius.lg,
+          overflow: 'hidden',
+          marginBottom: spacing.lg,
+          ...cardBorder(2),
+        },
+        statsInner: {
+          padding: spacing.lg,
+          alignItems: 'center',
+        },
+        pointsLabel: {
+          color: colors.textMuted,
+          fontSize: 11,
+          fontWeight: '700',
+          letterSpacing: 2,
+          marginBottom: spacing.sm,
+          width: '100%',
+          textAlign: 'center',
+        },
+        levelSection: { width: '100%', marginTop: spacing.md },
+        empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.xl },
+      }),
+    [themeId, colors, borderRadius, cardBorder]
+  );
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -59,26 +90,25 @@ export default function KidHomeScreen() {
   };
 
   return (
-    <LinearGradient colors={[...gradientBg]} style={styles.container}>
-      <SafeScreen tabs style={styles.safe}>
-        <ScrollView
-          contentContainerStyle={[styles.scroll, rtl.scrollContent]}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-        >
-          <View style={styles.content}>
-            <FadeInUp index={0}>
-              <View style={[styles.header, rtl.headerSplit]}>
-                <StreakBadge streak={profile?.streak ?? user?.streak ?? 0} />
-                <View style={styles.welcomeBlock}>
-                  <RtlText style={styles.greeting}>{t('welcome')}</RtlText>
-                  <RtlText style={styles.name}>{user?.displayName}</RtlText>
-                </View>
-              </View>
-            </FadeInUp>
+    <ThemedScreen tabs>
+      <ScrollView
+        contentContainerStyle={[styles.scroll, rtl.scrollContent]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      >
+        <View style={styles.content}>
+          <FadeInUp index={0}>
+            <ThemedHero
+              displayName={user?.displayName ?? ''}
+              avatar={user?.avatar ?? '🎮'}
+              streak={profile?.streak ?? user?.streak ?? 0}
+              level={profile?.level ?? user?.level}
+            />
+          </FadeInUp>
 
-            <FadeInUp index={1}>
-              <View style={styles.pointsCard}>
-                <RtlText style={styles.pointsLabel}>{t('points')}</RtlText>
+          <FadeInUp index={1}>
+            <View style={styles.statsCard}>
+              <View style={styles.statsInner}>
+                <Text style={styles.pointsLabel}>{t('points').toUpperCase()}</Text>
                 <PointsBadge points={profile?.points ?? user?.points ?? 0} size="lg" />
                 {profile && (
                   <View style={styles.levelSection}>
@@ -90,73 +120,38 @@ export default function KidHomeScreen() {
                   </View>
                 )}
               </View>
-            </FadeInUp>
+            </View>
+          </FadeInUp>
 
-            <FadeInUp index={2}>
-              <GameWorlds />
-            </FadeInUp>
+          <FadeInUp index={2}>
+            <GameWorlds />
+          </FadeInUp>
 
-            <FadeInUp index={3}>
-              <RtlText style={styles.sectionTitle}>{t('tasks')}</RtlText>
-            </FadeInUp>
-            {tasks.length === 0 ? (
-              <Text style={styles.empty}>{t('noTasks')}</Text>
-            ) : (
-              tasks.map((task, i) => (
-                <TaskCard
-                  key={task._id}
-                  task={task}
-                  index={i + 3}
-                  onComplete={handleComplete}
-                  loading={completingId === task._id}
-                  pending={pendingIds.has(task._id)}
-                />
-              ))
-            )}
-          </View>
-        </ScrollView>
-      </SafeScreen>
+          <FadeInUp index={3}>
+            <SectionHeader title={t('tasks')} icon="📜" />
+          </FadeInUp>
+          {tasks.length === 0 ? (
+            <Text style={styles.empty}>{t('noTasks')}</Text>
+          ) : (
+            tasks.map((task, i) => (
+              <TaskCard
+                key={task._id}
+                task={task}
+                index={i + 4}
+                onComplete={handleComplete}
+                loading={completingId === task._id}
+                pending={pendingIds.has(task._id)}
+              />
+            ))
+          )}
+        </View>
+      </ScrollView>
 
       <Celebration
         visible={celebrate}
         message={t('taskSubmitted')}
         onDone={() => setCelebrate(false)}
       />
-    </LinearGradient>
+    </ThemedScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: spacing.lg, width: '100%' },
-  content: { width: '100%', alignSelf: 'stretch' },
-  header: {
-    marginBottom: spacing.lg,
-  },
-  welcomeBlock: {
-    flex: 1,
-    marginRight: spacing.md,
-    alignItems: 'stretch',
-  },
-  greeting: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
-  name: { color: colors.text, fontSize: 24, fontWeight: '700' },
-  pointsCard: {
-    backgroundColor: colors.bgCard,
-    borderRadius: borderRadius.md,
-    padding: spacing.lg,
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    ...blockBorder(2),
-  },
-  pointsLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '600', letterSpacing: 1, marginBottom: spacing.sm, width: '100%' },
-  levelSection: { width: '100%', marginTop: spacing.md },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: spacing.md,
-    width: '100%',
-  },
-  empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.xl },
-});

@@ -12,6 +12,10 @@ export type PointTransactionType = 'task' | 'redemption' | 'bonus' | 'streak' | 
 
 export type RewardCategory = 'gaming' | 'food' | 'screen' | 'privilege' | 'other';
 
+export type UiThemeId = 'minecraft' | 'brawl' | 'roblox';
+
+export const UI_THEME_IDS: UiThemeId[] = ['minecraft', 'brawl', 'roblox'];
+
 export interface FamilySettings {
   language: string;
   theme: string;
@@ -39,6 +43,7 @@ export interface User {
   streak: number;
   lastActiveDate?: string;
   badges: string[];
+  uiTheme?: UiThemeId;
   createdAt: string;
 }
 

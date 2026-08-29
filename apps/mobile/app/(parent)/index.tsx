@@ -8,14 +8,15 @@ import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import type { ParentDashboard, TaskCategory } from '@kidsapp/shared';
-import { taskCategoryIcon } from '@kidsapp/shared';
 import { colors, spacing, borderRadius, gradientBg } from '../../constants/theme';
+import { useTheme } from '../../lib/theme-context';
 
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 
 export default function ParentDashboardScreen() {
   const { user, logout } = useAuth();
+  const { categoryIcon } = useTheme();
   const [dashboard, setDashboard] = useState<ParentDashboard | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -88,7 +89,7 @@ export default function ParentDashboardScreen() {
               <Card key={c._id} style={styles.approvalCard}>
                 <View style={[styles.approvalHeader, rtl.row]}>
                   <Text style={styles.approvalIcon}>
-                    {c.task?.category ? taskCategoryIcon(c.task.category as TaskCategory) : '🧱'}
+                    {c.task?.category ? categoryIcon(c.task.category as TaskCategory) : '🧱'}
                   </Text>
                   <View style={styles.approvalInfo}>
                     <Text style={styles.approvalTitle}>{c.task?.title}</Text>

@@ -1,84 +1,102 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { colors, spacing, borderRadius, blockBorder } from '../constants/theme';
+import { spacing } from '../constants/theme';
+import { UI_THEME_OPTIONS } from '../constants/themes';
+import { useTheme } from '../lib/theme-context';
 import { BouncyPressable } from './animations/BouncyPressable';
 import { FadeInUp } from './animations/FadeInUp';
-import { playSfx, SfxName } from '../lib/sfx';
+import { SectionHeader } from './ThemedHero';
+import { playSfx } from '../lib/sfx';
 import { rtl } from '../lib/rtl';
-
-const WORLDS: { id: string; icon: string; title: string; subtitle: string; sfx: SfxName; accent: string }[] = [
-  { id: 'minecraft', icon: '🟩', title: 'Minecraft', subtitle: 'בלוקים', sfx: 'complete', accent: colors.primary },
-  { id: 'brawl', icon: '💎', title: 'Brawl Stars', subtitle: 'ג׳מס', sfx: 'gem', accent: colors.diamond },
-  { id: 'roblox', icon: '🪙', title: 'Roblox', subtitle: 'Robux', sfx: 'coin', accent: colors.gold },
-];
 
 export function GameWorlds() {
   const router = useRouter();
+  const { id: currentId, borderRadius, cardBorder } = useTheme();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        wrap: { width: '100%', marginBottom: spacing.lg },
+        row: { gap: spacing.sm },
+        cardWrap: { flex: 1 },
+        card: {
+          flex: 1,
+          borderRadius: borderRadius.lg,
+          overflow: 'hidden',
+          minHeight: 118,
+          ...cardBorder(2),
+        },
+        cardInner: {
+          flex: 1,
+          paddingVertical: spacing.md,
+          paddingHorizontal: spacing.sm,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        decor: {
+          position: 'absolute',
+          top: 4,
+          right: 6,
+          fontSize: 20,
+          opacity: 0.35,
+        },
+        icon: { fontSize: 32, marginBottom: 6 },
+        title: { color: '#fff', fontSize: 11, fontWeight: '800', textAlign: 'center' },
+        sub: { color: 'rgba(255,255,255,0.75)', fontSize: 10, marginTop: 2 },
+        activeTag: {
+          marginTop: 6,
+          fontSize: 9,
+          fontWeight: '800',
+          color: '#fff',
+          backgroundColor: 'rgba(0,0,0,0.35)',
+          paddingHorizontal: 8,
+          paddingVertical: 2,
+          borderRadius: borderRadius.full,
+          overflow: 'hidden',
+        },
+        inactiveOverlay: {
+          ...StyleSheet.absoluteFillObject,
+          backgroundColor: 'rgba(0,0,0,0.45)',
+        },
+      }),
+    [currentId, borderRadius, cardBorder]
+  );
 
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.heading, rtl.text]}>⛏️ עולמות</Text>
+      <SectionHeader title="עולמות" icon="🎮" />
       <View style={[styles.row, rtl.row]}>
-        {WORLDS.map((world, i) => (
-          <FadeInUp key={world.id} index={i} style={styles.cardWrap}>
-            <BouncyPressable
-              style={[styles.card, { borderTopColor: world.accent, borderLeftColor: world.accent }]}
-              onPress={() => {
-                playSfx(world.sfx);
-                router.push('/(kid)/shop');
-              }}
-            >
-              <Text style={styles.icon}>{world.icon}</Text>
-              <Text style={styles.title}>{world.title}</Text>
-              <Text style={styles.sub}>{world.subtitle}</Text>
-            </BouncyPressable>
-          </FadeInUp>
-        ))}
+        {UI_THEME_OPTIONS.map((world, i) => {
+          const active = world.id === currentId;
+          return (
+            <FadeInUp key={world.id} index={i} style={styles.cardWrap}>
+              <BouncyPressable
+                style={[styles.card, active && { borderColor: world.accent, borderWidth: 3 }]}
+                onPress={() => {
+                  playSfx(world.sfx);
+                  router.push('/(kid)/shop');
+                }}
+              >
+                <LinearGradient
+                  colors={[world.heroGradient[0], world.heroGradient[1]]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.cardInner}
+                >
+                  {!active && <View style={styles.inactiveOverlay} />}
+                  <Text style={styles.decor}>{world.decorEmojis[0]}</Text>
+                  <Text style={styles.icon}>{world.icon}</Text>
+                  <Text style={styles.title}>{world.name}</Text>
+                  <Text style={styles.sub}>{world.subtitle}</Text>
+                  {active && <Text style={styles.activeTag}>● פעיל</Text>}
+                </LinearGradient>
+              </BouncyPressable>
+            </FadeInUp>
+          );
+        })}
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    width: '100%',
-    marginBottom: spacing.lg,
-  },
-  heading: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
-  },
-  row: {
-    gap: spacing.sm,
-  },
-  cardWrap: {
-    flex: 1,
-  },
-  card: {
-    flex: 1,
-    backgroundColor: colors.bgCard,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    alignItems: 'center',
-    ...blockBorder(2),
-  },
-  icon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 11,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  sub: {
-    color: colors.textMuted,
-    fontSize: 11,
-    marginTop: 4,
-  },
-});

@@ -1,6 +1,6 @@
 import { API_URL } from './config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { AuthResponse, User, Task, Reward, KidProfile, ParentDashboard } from '@kidsapp/shared';
+import type { AuthResponse, User, Task, Reward, KidProfile, ParentDashboard, UiThemeId } from '@kidsapp/shared';
 
 const TOKEN_KEY = 'kidsapp_token';
 
@@ -176,6 +176,13 @@ export const api = {
   createKid(data: { displayName: string; username: string; pin: string; avatar: string }) {
     return request<{ kid: User }>('/kids', {
       method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateKid(id: string, data: { uiTheme?: UiThemeId; avatar?: string; displayName?: string }) {
+    return request<{ kid: User }>(`/kids/${id}`, {
+      method: 'PATCH',
       body: JSON.stringify(data),
     });
   },

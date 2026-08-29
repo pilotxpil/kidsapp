@@ -7,14 +7,16 @@ import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
-import { TASK_CATEGORIES, taskCategoryIcon } from '@kidsapp/shared';
+import { TASK_CATEGORIES } from '@kidsapp/shared';
 import type { Task, TaskCategory, User } from '@kidsapp/shared';
 import { colors, spacing, borderRadius, gradientBg } from '../../constants/theme';
+import { useTheme } from '../../lib/theme-context';
 
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 
 export default function ParentTasksScreen() {
+  const { categoryIcon } = useTheme();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [kids, setKids] = useState<User[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -94,7 +96,7 @@ export default function ParentTasksScreen() {
                   </TouchableOpacity>
                   <View style={styles.taskInfo}>
                     <Text style={styles.taskTitle}>
-                      {taskCategoryIcon(task.category)} {task.title}
+                      {categoryIcon(task.category)} {task.title}
                     </Text>
                     <Text style={styles.taskMeta}>
                       {kid?.displayName} · {cat.label} · +{task.points} 💎

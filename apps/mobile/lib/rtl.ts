@@ -42,20 +42,34 @@ export const rtl = {
   },
 
   get row(): ViewStyle {
-    return { flexDirection: 'row', ...webDirection() };
+    if (Platform.OS === 'web') {
+      return { flexDirection: 'row', ...webDirection() };
+    }
+    return { flexDirection: nativeRowDirection(), width: '100%' };
   },
 
   get rowBetween(): ViewStyle {
+    if (Platform.OS === 'web') {
+      return {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        ...webDirection(),
+      };
+    }
     return {
-      flexDirection: 'row',
+      flexDirection: nativeRowDirection(),
       justifyContent: 'space-between',
       alignItems: 'center',
-      ...webDirection(),
+      width: '100%',
     };
   },
 
   get tabs(): ViewStyle {
-    return { flexDirection: 'row', flexWrap: 'wrap', ...webDirection() };
+    if (Platform.OS === 'web') {
+      return { flexDirection: 'row', flexWrap: 'wrap', ...webDirection() };
+    }
+    return { flexDirection: nativeRowDirection(), flexWrap: 'wrap', width: '100%' };
   },
 
   get scrollContent(): ViewStyle {
