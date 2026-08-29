@@ -8,7 +8,7 @@ import { TaskCompletion } from '../models/TaskCompletion';
 import { Redemption } from '../models/Redemption';
 import { PointTransaction } from '../models/PointTransaction';
 import { formatUser } from '../utils/format';
-import { getKidProfile } from '../services/gamification';
+import { getKidProfile, getDailyStarStatus, claimDailyStar } from '../services/gamification';
 
 const router = Router();
 
@@ -89,6 +89,54 @@ router.get('/:id/profile', authenticate, async (req: Request, res: Response) => 
     res.json({ profile });
   } catch (err) {
     res.status(500).json({ error: 'שגיאה בטעינת פרופיל' });
+  }
+});
+
+router.get('/:id/daily-star', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role === 'kid' && req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'אין הרשאה' });
+    }
+
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+
+    const status = await getDailyStarStatus(kid);
+    res.json({ status });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטעינת כוכב יומי' });
+  }
+});
+
+router.post('/:id/daily-star/claim', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role !== 'kid' || req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'רק הילד יכול לפתוח את הכוכב' });
+    }
+
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+
+    const result = await claimDailyStar(kid);
+    if (!result.ok) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    res.json({
+      dailyBonus: result.dailyBonus,
+      streakBonus: result.streakBonus,
+      totalPoints: result.totalPoints,
+      streak: result.streak,
+      points: result.points,
+      level: result.level,
+      xp: result.xp,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בפתיחת הכוכב' });
   }
 });
 

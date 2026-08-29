@@ -1,23 +1,102 @@
-import { calculateLevel } from '@kidsapp/shared';
+import { calculateLevel, DAILY_STAR_TAPS, DAILY_STAR_BONUS } from '@kidsapp/shared';
 import { IUser, User } from '../models/User';
 import { PointTransaction } from '../models/PointTransaction';
 import { TaskCompletion } from '../models/TaskCompletion';
 import { todayString } from '../utils/format';
 
-const DAILY_BONUS = 10;
 const STREAK_BONUSES: Record<number, number> = {
   3: 25,
   7: 50,
   30: 200,
 };
 
-export async function processDailyLogin(kid: IUser): Promise<{ dailyBonus: number; streakBonus: number }> {
-  const today = todayString();
-  let dailyBonus = 0;
-  let streakBonus = 0;
+function isDailyStarUnlimited(): boolean {
+  return process.env.NODE_ENV !== 'production';
+}
 
-  if (kid.lastActiveDate === today) {
-    return { dailyBonus: 0, streakBonus: 0 };
+function projectedStreak(kid: IUser): number {
+  const today = todayString();
+  if (kid.lastActiveDate === today) return kid.streak;
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  if (kid.lastActiveDate === yesterdayStr) return kid.streak + 1;
+  return 1;
+}
+
+async function hasClaimedDailyStarToday(kidId: IUser['_id']): Promise<boolean> {
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
+  const existing = await PointTransaction.findOne({
+    kidId,
+    type: 'daily',
+    createdAt: { $gte: start },
+  });
+  return !!existing;
+}
+
+export async function getDailyStarStatus(kid: IUser) {
+  const unlimited = isDailyStarUnlimited();
+  const claimedToday = await hasClaimedDailyStarToday(kid._id);
+  const available = unlimited || !claimedToday;
+  const streak = !claimedToday ? projectedStreak(kid) : kid.streak;
+  const streakBonus = available && !claimedToday && STREAK_BONUSES[streak] ? STREAK_BONUSES[streak] : 0;
+  const dailyBonus = available ? DAILY_STAR_BONUS : 0;
+
+  return {
+    available,
+    tapsRequired: DAILY_STAR_TAPS,
+    dailyBonus,
+    streakBonus,
+    totalPoints: dailyBonus + streakBonus,
+    streak,
+    unlimited,
+  };
+}
+
+/** Login no longer awards points — the daily star claim does. */
+export async function processDailyLogin(kid: IUser): Promise<{ dailyStarAvailable: boolean }> {
+  const status = await getDailyStarStatus(kid);
+  return { dailyStarAvailable: status.available };
+}
+
+export async function claimDailyStar(kid: IUser) {
+  const today = todayString();
+  const unlimited = isDailyStarUnlimited();
+  const claimedToday = await hasClaimedDailyStarToday(kid._id);
+
+  if (claimedToday && !unlimited) {
+    return { ok: false as const, error: 'כבר פתחת את הכוכב היום' };
+  }
+
+  // Dev re-claim: award daily bonus only, skip streak side-effects
+  if (claimedToday && unlimited) {
+    const dailyBonus = DAILY_STAR_BONUS;
+    kid.points += dailyBonus;
+    kid.xp += dailyBonus;
+    await PointTransaction.create({
+      kidId: kid._id,
+      familyId: kid.familyId,
+      amount: dailyBonus,
+      type: 'daily',
+      description: 'כוכב יומי (בדיקה)',
+    });
+    await updateLevelAndBadges(kid);
+    await kid.save();
+
+    return {
+      ok: true as const,
+      dailyBonus,
+      streakBonus: 0,
+      totalPoints: dailyBonus,
+      streak: kid.streak,
+      points: kid.points,
+      level: kid.level,
+      xp: kid.xp,
+      unlimited: true,
+    };
   }
 
   const yesterday = new Date();
@@ -31,7 +110,8 @@ export async function processDailyLogin(kid: IUser): Promise<{ dailyBonus: numbe
   }
 
   kid.lastActiveDate = today;
-  dailyBonus = DAILY_BONUS;
+
+  const dailyBonus = DAILY_STAR_BONUS;
   kid.points += dailyBonus;
   kid.xp += dailyBonus;
 
@@ -40,9 +120,10 @@ export async function processDailyLogin(kid: IUser): Promise<{ dailyBonus: numbe
     familyId: kid.familyId,
     amount: dailyBonus,
     type: 'daily',
-    description: 'בונוס יומי',
+    description: 'כוכב יומי',
   });
 
+  let streakBonus = 0;
   if (STREAK_BONUSES[kid.streak]) {
     streakBonus = STREAK_BONUSES[kid.streak];
     kid.points += streakBonus;
@@ -59,7 +140,17 @@ export async function processDailyLogin(kid: IUser): Promise<{ dailyBonus: numbe
   await updateLevelAndBadges(kid);
   await kid.save();
 
-  return { dailyBonus, streakBonus };
+  return {
+    ok: true as const,
+    dailyBonus,
+    streakBonus,
+    totalPoints: dailyBonus + streakBonus,
+    streak: kid.streak,
+    points: kid.points,
+    level: kid.level,
+    xp: kid.xp,
+    unlimited,
+  };
 }
 
 export async function awardPoints(

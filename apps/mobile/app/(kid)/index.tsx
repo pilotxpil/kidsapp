@@ -7,10 +7,11 @@ import { PointsBadge, LevelBar } from '../../components/Card';
 import { TaskCard } from '../../components/TaskCard';
 import { Celebration } from '../../components/Celebration';
 import { GameWorlds } from '../../components/GameWorlds';
+import { DailyStar } from '../../components/DailyStar';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { ThemedHero, SectionHeader } from '../../components/ThemedHero';
 import { FadeInUp } from '../../components/animations/FadeInUp';
-import type { Task, KidProfile } from '@kidsapp/shared';
+import type { Task, KidProfile, DailyStarClaimResult } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
@@ -26,6 +27,7 @@ export default function KidHomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [starKey, setStarKey] = useState(0);
 
   const styles = useMemo(
     () =>
@@ -73,7 +75,22 @@ export default function KidHomeScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     await load();
+    setStarKey((k) => k + 1);
     setRefreshing(false);
+  };
+
+  const handleStarClaimed = (result: DailyStarClaimResult) => {
+    setProfile((prev) =>
+      prev
+        ? {
+            ...prev,
+            points: result.points,
+            level: result.level,
+            xp: result.xp,
+            streak: result.streak,
+          }
+        : prev
+    );
   };
 
   const handleComplete = async (task: Task) => {
@@ -146,6 +163,8 @@ export default function KidHomeScreen() {
           )}
         </View>
       </ScrollView>
+
+      {userId ? <DailyStar key={starKey} kidId={userId} onClaimed={handleStarClaimed} /> : null}
 
       <Celebration
         visible={celebrate}

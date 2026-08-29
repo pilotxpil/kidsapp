@@ -16,6 +16,31 @@ export type UiThemeId = 'minecraft' | 'brawl' | 'roblox';
 
 export const UI_THEME_IDS: UiThemeId[] = ['minecraft', 'brawl', 'roblox'];
 
+/** Daily gift star — tap this many times to claim (Brawl Stars–style). */
+export const DAILY_STAR_TAPS = 4;
+export const DAILY_STAR_BONUS = 10;
+
+export interface DailyStarStatus {
+  available: boolean;
+  tapsRequired: number;
+  dailyBonus: number;
+  streakBonus: number;
+  totalPoints: number;
+  streak: number;
+  /** True in non-production — star can be claimed repeatedly for testing. */
+  unlimited?: boolean;
+}
+
+export interface DailyStarClaimResult {
+  dailyBonus: number;
+  streakBonus: number;
+  totalPoints: number;
+  streak: number;
+  points: number;
+  level: number;
+  xp: number;
+}
+
 export interface FamilySettings {
   language: string;
   theme: string;

@@ -10,18 +10,18 @@ import { Confetti } from './animations/Confetti';
 interface CelebrationProps {
   visible: boolean;
   message?: string;
-  sfx?: SfxName;
+  sfx?: SfxName | false;
   onDone?: () => void;
 }
 
 export function Celebration({ visible, message = 'בוצע', sfx, onDone }: CelebrationProps) {
   const { colors, borderRadius, cardBorder, celebrationKicker, heroGradient, sfx: themeSfx, icon } = useTheme();
-  const playName = sfx ?? themeSfx;
+  const playName = sfx === false ? null : (sfx ?? themeSfx);
 
   useEffect(() => {
     if (!visible) return;
-    playSfx(playName);
-    const timer = setTimeout(() => onDone?.(), 2000);
+    if (playName) playSfx(playName);
+    const timer = setTimeout(() => onDone?.(), 1600);
     return () => clearTimeout(timer);
   }, [visible, playName, onDone]);
 
@@ -30,7 +30,7 @@ export function Celebration({ visible, message = 'בוצע', sfx, onDone }: Cele
   return (
     <View style={styles.overlay} pointerEvents="none">
       <Confetti active={visible} count={48} />
-      <Animated.View entering={ZoomIn.duration(400).springify().damping(12)}>
+      <Animated.View entering={ZoomIn.duration(220).springify().damping(14)}>
         <LinearGradient
           colors={[...heroGradient]}
           start={{ x: 0, y: 0 }}

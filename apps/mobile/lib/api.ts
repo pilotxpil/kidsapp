@@ -1,6 +1,16 @@
 import { API_URL } from './config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { AuthResponse, User, Task, Reward, KidProfile, ParentDashboard, UiThemeId } from '@kidsapp/shared';
+import type {
+  AuthResponse,
+  User,
+  Task,
+  Reward,
+  KidProfile,
+  ParentDashboard,
+  UiThemeId,
+  DailyStarStatus,
+  DailyStarClaimResult,
+} from '@kidsapp/shared';
 
 const TOKEN_KEY = 'kidsapp_token';
 
@@ -84,7 +94,7 @@ export const api = {
   },
 
   kidLogin(username: string, pin: string) {
-    return request<AuthResponse & { dailyBonus?: number; streakBonus?: number }>('/auth/kid/login', {
+    return request<AuthResponse & { dailyStarAvailable?: boolean }>('/auth/kid/login', {
       method: 'POST',
       body: JSON.stringify({ username, pin }),
     });
@@ -196,6 +206,14 @@ export const api = {
 
   getKidProfile(id: string) {
     return request<{ profile: KidProfile }>(`/kids/${id}/profile`);
+  },
+
+  getDailyStar(id: string) {
+    return request<{ status: DailyStarStatus }>(`/kids/${id}/daily-star`);
+  },
+
+  claimDailyStar(id: string) {
+    return request<DailyStarClaimResult>(`/kids/${id}/daily-star/claim`, { method: 'POST' });
   },
 
   getTransactions(id: string) {

@@ -37,11 +37,8 @@ export default function KidLoginScreen() {
       const res = await api.kidLogin(username, pin);
       await login(res.token, res.user);
 
-      if (res.dailyBonus || res.streakBonus) {
-        const parts = [];
-        if (res.dailyBonus) parts.push(`${t('dailyBonus')}: +${res.dailyBonus}`);
-        if (res.streakBonus) parts.push(`${t('streakBonus')}: +${res.streakBonus}`);
-        setBonusMsg(parts.join(' · '));
+      if (res.dailyStarAvailable) {
+        setBonusMsg(t('dailyStarWaiting'));
         setCelebrate(true);
       } else {
         router.replace('/(kid)');
