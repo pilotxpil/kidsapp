@@ -1,16 +1,15 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SafeScreen } from "../../components/SafeScreen";
 import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
+import { ThemedScreen } from '../../components/ThemedScreen';
 import { REWARD_CATEGORIES } from '@kidsapp/shared';
 import type { Reward, RewardCategory } from '@kidsapp/shared';
-import { colors, spacing, borderRadius, gradientBg } from '../../constants/theme';
-
+import { spacing } from '../../constants/theme';
+import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 
@@ -23,6 +22,7 @@ const DEFAULT_REWARDS = [
 ];
 
 export default function ParentRewardsScreen() {
+  const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [title, setTitle] = useState('');
@@ -31,6 +31,85 @@ export default function ParentRewardsScreen() {
   const [category, setCategory] = useState<RewardCategory>('gaming');
   const [icon, setIcon] = useState('🎁');
   const [loading, setLoading] = useState(false);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        scroll: { padding: spacing.lg, maxWidth: 800, alignSelf: 'center', width: '100%' },
+        header: { marginBottom: spacing.md },
+        title: { color: colors.text, fontSize: 24, fontWeight: '800', flex: 1, minWidth: 0 },
+        addBtn: { flexShrink: 0 },
+        subtitle: { color: colors.textMuted, marginBottom: spacing.sm, width: '100%' },
+        templates: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
+        template: {
+          backgroundColor: colors.bgCard,
+          padding: spacing.sm,
+          borderRadius: borderRadius.md,
+          alignItems: 'center',
+          width: '30%',
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        templateIcon: { fontSize: 24, textAlign: 'center' },
+        templateText: {
+          color: colors.text,
+          fontSize: 11,
+          textAlign: 'center',
+          marginTop: 4,
+          writingDirection: 'rtl',
+          width: '100%',
+        },
+        rewardCard: { marginBottom: spacing.sm },
+        rewardRow: { alignItems: 'center', width: '100%' },
+        delete: { fontSize: 20 },
+        rewardInfo: { flex: 1, minWidth: 0 },
+        rewardTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
+        rewardMeta: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
+        modalOverlay: {
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          justifyContent: 'center',
+          padding: spacing.lg,
+        },
+        modal: {
+          backgroundColor: colors.bgCard,
+          borderRadius: borderRadius.xl,
+          padding: spacing.lg,
+          maxWidth: 500,
+          alignSelf: 'center',
+          width: '100%',
+          ...cardBorder(2),
+        },
+        modalTitle: {
+          color: colors.text,
+          fontSize: 22,
+          fontWeight: '800',
+          textAlign: 'center',
+          marginBottom: spacing.lg,
+          writingDirection: 'rtl',
+        },
+        label: {
+          color: colors.text,
+          fontSize: 14,
+          fontWeight: '600',
+          marginBottom: spacing.sm,
+          width: '100%',
+        },
+        chips: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+        chip: {
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm,
+          borderRadius: borderRadius.full,
+          backgroundColor: colors.bgCardLight,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+        chipText: { color: colors.text, fontSize: 13, writingDirection: 'rtl' },
+        modalActions: { gap: spacing.sm, marginTop: spacing.md },
+      }),
+    [themeId, colors, borderRadius, cardBorder]
+  );
 
   const load = useCallback(async () => {
     const res = await api.getRewards();
@@ -60,7 +139,7 @@ export default function ParentRewardsScreen() {
     await load();
   };
 
-  const applyTemplate = (tpl: typeof DEFAULT_REWARDS[0]) => {
+  const applyTemplate = (tpl: (typeof DEFAULT_REWARDS)[0]) => {
     setTitle(tpl.title);
     setIcon(tpl.icon);
     setCost(tpl.cost);
@@ -71,100 +150,83 @@ export default function ParentRewardsScreen() {
   const categories = Object.entries(REWARD_CATEGORIES) as [RewardCategory, { label: string; icon: string }][];
 
   return (
-    <LinearGradient colors={[...gradientBg]} style={styles.container}>
-      <SafeScreen tabs style={styles.safe}>
-        <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
-          <View style={[styles.header, rtl.headerSplit]}>
-            <Button title={`+ ${t('addReward')}`} onPress={() => setModalVisible(true)} style={styles.addBtn} />
-            <Text style={[styles.title, rtl.textFull]}>{t('manageRewards')}</Text>
-          </View>
+    <ThemedScreen tabs>
+      <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
+        <View style={[styles.header, rtl.headerSplit]}>
+          <Button title={`+ ${t('addReward')}`} onPress={() => setModalVisible(true)} style={styles.addBtn} />
+          <Text style={[styles.title, rtl.textFull]}>{t('manageRewards')}</Text>
+        </View>
 
-          <Text style={[styles.subtitle, rtl.text]}>תבניות מהירות:</Text>
-          <View style={[styles.templates, rtl.row]}>
-            {DEFAULT_REWARDS.map((tpl) => (
-              <TouchableOpacity key={tpl.title} style={styles.template} onPress={() => applyTemplate(tpl)}>
-                <Text style={styles.templateIcon}>{tpl.icon}</Text>
-                <Text style={styles.templateText}>{tpl.title}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        <Text style={[styles.subtitle, rtl.textFull]}>תבניות מהירות:</Text>
+        <View style={[styles.templates, rtl.row]}>
+          {DEFAULT_REWARDS.map((tpl) => (
+            <TouchableOpacity key={tpl.title} style={styles.template} onPress={() => applyTemplate(tpl)}>
+              <Text style={styles.templateIcon}>{tpl.icon}</Text>
+              <Text style={styles.templateText}>{tpl.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-          {rewards.map((reward) => {
-            const cat = REWARD_CATEGORIES[reward.category];
-            return (
-              <Card key={reward._id} style={styles.rewardCard}>
-                <View style={[styles.rewardRow, rtl.row]}>
-                  <TouchableOpacity onPress={() => handleDelete(reward._id)}>
-                    <Text style={styles.delete}>🗑️</Text>
-                  </TouchableOpacity>
-                  <View style={styles.rewardInfo}>
-                    <Text style={styles.rewardTitle}>{reward.icon} {reward.title}</Text>
-                    <Text style={styles.rewardMeta}>{cat.label} · {reward.cost} XP</Text>
-                  </View>
+        {rewards.map((reward) => {
+          const cat = REWARD_CATEGORIES[reward.category];
+          return (
+            <Card key={reward._id} style={styles.rewardCard}>
+              <View style={[styles.rewardRow, rtl.row]}>
+                <TouchableOpacity onPress={() => handleDelete(reward._id)}>
+                  <Text style={styles.delete}>🗑️</Text>
+                </TouchableOpacity>
+                <View style={styles.rewardInfo}>
+                  <Text style={[styles.rewardTitle, rtl.textFull]}>
+                    {reward.icon} {reward.title}
+                  </Text>
+                  <Text style={[styles.rewardMeta, rtl.textFull]}>
+                    {cat.label} · {reward.cost} {pointsEmoji}
+                  </Text>
                 </View>
-              </Card>
-            );
-          })}
-        </ScrollView>
-
-        <Modal visible={modalVisible} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modal}>
-              <Text style={styles.modalTitle}>{t('addReward')}</Text>
-              <Input label={t('title')} value={title} onChangeText={setTitle} />
-              <Input label={t('description')} value={description} onChangeText={setDescription} />
-              <Input label={t('cost')} value={cost} onChangeText={setCost} keyboardType="number-pad" />
-
-              <Text style={styles.label}>{t('category')}</Text>
-              <View style={[styles.chips, rtl.row]}>
-                {categories.map(([key, val]) => (
-                  <TouchableOpacity
-                    key={key}
-                    style={[styles.chip, category === key && styles.chipActive]}
-                    onPress={() => { setCategory(key); setIcon(val.icon); }}
-                  >
-                    <Text style={styles.chipText}>{val.icon} {val.label}</Text>
-                  </TouchableOpacity>
-                ))}
               </View>
+            </Card>
+          );
+        })}
+      </ScrollView>
 
-              <View style={[styles.modalActions, rtl.row]}>
-                <Button title={t('save')} onPress={handleCreate} loading={loading} style={{ flex: 1 }} />
-                <Button title={t('cancel')} onPress={() => setModalVisible(false)} variant="outline" style={{ flex: 1 }} />
-              </View>
+      <Modal visible={modalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>{t('addReward')}</Text>
+            <Input label={t('title')} value={title} onChangeText={setTitle} />
+            <Input label={t('description')} value={description} onChangeText={setDescription} />
+            <Input label={t('cost')} value={cost} onChangeText={setCost} keyboardType="number-pad" />
+
+            <Text style={[styles.label, rtl.textFull]}>{t('category')}</Text>
+            <View style={[styles.chips, rtl.row]}>
+              {categories.map(([key, val]) => (
+                <TouchableOpacity
+                  key={key}
+                  style={[styles.chip, category === key && styles.chipActive]}
+                  onPress={() => {
+                    setCategory(key);
+                    setIcon(val.icon);
+                  }}
+                >
+                  <Text style={styles.chipText}>
+                    {val.icon} {val.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={[styles.modalActions, rtl.row]}>
+              <Button title={t('save')} onPress={handleCreate} loading={loading} style={{ flex: 1 }} />
+              <Button
+                title={t('cancel')}
+                onPress={() => setModalVisible(false)}
+                variant="outline"
+                style={{ flex: 1 }}
+              />
             </View>
           </View>
-        </Modal>
-      </SafeScreen>
-    </LinearGradient>
+        </View>
+      </Modal>
+    </ThemedScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: spacing.lg, maxWidth: 800, alignSelf: 'center', width: '100%' },
-  header: { marginBottom: spacing.md },
-  title: { color: colors.text, fontSize: 24, fontWeight: '800', flex: 1, marginRight: spacing.md },
-  addBtn: { paddingHorizontal: spacing.md },
-  subtitle: { color: colors.textMuted, marginBottom: spacing.sm, width: '100%' },
-  templates: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-  template: { backgroundColor: colors.bgCard, padding: spacing.sm, borderRadius: borderRadius.md, alignItems: 'center', width: '30%', borderWidth: 1, borderColor: colors.border },
-  templateIcon: { fontSize: 24 },
-  templateText: { color: colors.text, fontSize: 11, textAlign: 'center', marginTop: 4 },
-  rewardCard: { marginBottom: spacing.sm },
-  rewardRow: { alignItems: 'center' },
-  delete: { fontSize: 20, marginEnd: spacing.md },
-  rewardInfo: { flex: 1 },
-  rewardTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
-  rewardMeta: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: spacing.lg },
-  modal: { backgroundColor: colors.bgCard, borderRadius: borderRadius.xl, padding: spacing.lg, maxWidth: 500, alignSelf: 'center', width: '100%' },
-  modalTitle: { color: colors.text, fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: spacing.lg },
-  label: { color: colors.text, fontSize: 14, fontWeight: '600', marginBottom: spacing.sm },
-  chips: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
-  chip: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: borderRadius.full, backgroundColor: colors.bgCardLight, borderWidth: 1, borderColor: colors.border },
-  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { color: colors.text, fontSize: 13 },
-  modalActions: { gap: spacing.sm, marginTop: spacing.md },
-});

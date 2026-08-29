@@ -94,13 +94,20 @@ export const api = {
     return request<{ user: User }>('/auth/me');
   },
 
+  updateMe(data: { uiTheme?: UiThemeId }) {
+    return request<{ user: User }>('/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
   getTasks(kidId?: string) {
     const query = kidId ? `?kidId=${kidId}` : '';
     return request<{ tasks: Task[] }>(`/tasks${query}`);
   },
 
-  createTask(data: Partial<Task>) {
-    return request<{ task: Task }>('/tasks', {
+  createTask(data: Omit<Partial<Task>, 'assignedTo'> & { assignedTo: string | string[] }) {
+    return request<{ task: Task; tasks: Task[] }>('/tasks', {
       method: 'POST',
       body: JSON.stringify(data),
     });

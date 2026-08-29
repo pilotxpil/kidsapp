@@ -15,18 +15,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { user, refreshUser } = useAuth();
   const [pendingThemeId, setPendingThemeId] = useState<UiThemeId | null>(null);
 
-  const serverThemeId: UiThemeId =
-    user?.role === 'kid' && user.uiTheme ? user.uiTheme : DEFAULT_THEME_ID;
-
+  const serverThemeId: UiThemeId = user?.uiTheme ?? DEFAULT_THEME_ID;
   const themeId = pendingThemeId ?? serverThemeId;
   const theme = useMemo(() => getTheme(themeId), [themeId]);
 
   const setUiTheme = useCallback(
     async (id: UiThemeId) => {
-      if (!user || user.role !== 'kid') return;
+      if (!user) return;
       setPendingThemeId(id);
       try {
-        await api.updateKid(user._id, { uiTheme: id });
+        await api.updateMe({ uiTheme: id });
         await refreshUser();
       } finally {
         setPendingThemeId(null);

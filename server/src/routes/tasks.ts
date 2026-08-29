@@ -49,32 +49,60 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
   try {
     const { title, description, category, points, recurrence, assignedTo, icon } = req.body;
 
-    const task = await Task.create({
+    if (!title || !category) {
+      return res.status(400).json({ error: 'חסרים שדות חובה' });
+    }
+
+    const rawIds: unknown[] = Array.isArray(assignedTo)
+      ? assignedTo
+      : assignedTo
+        ? [assignedTo]
+        : [];
+
+    const kidIds = [...new Set(rawIds.map(String).filter(Boolean))];
+    if (kidIds.length === 0) {
+      return res.status(400).json({ error: 'יש לבחור לפחות ילד אחד' });
+    }
+
+    const kids = await User.find({
+      _id: { $in: kidIds },
+      familyId: req.user!.familyId,
+      role: 'kid',
+    });
+
+    if (kids.length !== kidIds.length) {
+      return res.status(400).json({ error: 'אחד או יותר מהילדים לא נמצאו במשפחה' });
+    }
+
+    const payload = {
       familyId: req.user!.familyId,
       title,
       description: description || '',
       category,
-      points,
+      points: Number(points) || 20,
       recurrence: recurrence || 'daily',
-      assignedTo,
       icon: icon || taskCategoryIcon(category as TaskCategory),
-    });
+    };
 
-    res.status(201).json({
-      task: {
-        _id: task._id.toString(),
-        familyId: task.familyId.toString(),
-        title: task.title,
-        description: task.description,
-        category: task.category,
-        points: task.points,
-        recurrence: task.recurrence,
-        assignedTo: task.assignedTo.toString(),
-        icon: task.icon,
-        isActive: task.isActive,
-        createdAt: task.createdAt.toISOString(),
-      },
-    });
+    const created = await Task.insertMany(
+      kids.map((kid) => ({ ...payload, assignedTo: kid._id }))
+    );
+
+    const tasks = created.map((task) => ({
+      _id: task._id.toString(),
+      familyId: task.familyId.toString(),
+      title: task.title,
+      description: task.description,
+      category: task.category,
+      points: task.points,
+      recurrence: task.recurrence,
+      assignedTo: task.assignedTo.toString(),
+      icon: task.icon,
+      isActive: task.isActive,
+      createdAt: task.createdAt.toISOString(),
+    }));
+
+    res.status(201).json({ task: tasks[0], tasks });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'שגיאה ביצירת משימה' });

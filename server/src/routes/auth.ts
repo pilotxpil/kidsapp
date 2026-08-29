@@ -124,4 +124,25 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
   res.json({ user: formatUser(user) });
 });
 
+router.patch('/me', authenticate, async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(req.user!.userId);
+    if (!user) return res.status(404).json({ error: 'משתמש לא נמצא' });
+
+    const { uiTheme } = req.body;
+    if (uiTheme !== undefined) {
+      if (!['minecraft', 'brawl', 'roblox'].includes(uiTheme)) {
+        return res.status(400).json({ error: 'ערכת עיצוב לא תקינה' });
+      }
+      user.uiTheme = uiTheme;
+    }
+
+    await user.save();
+    res.json({ user: formatUser(user) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בעדכון פרופיל' });
+  }
+});
+
 export default router;

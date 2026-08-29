@@ -39,6 +39,8 @@ export const he = {
   category: 'קטגוריה',
   cost: 'עלות (XP)',
   assignTo: 'שייך ל',
+  assignToHint: 'אפשר לבחור כמה ילדים — נוצרת משימה לכל אחד',
+  selectAllKids: 'כולם',
   save: 'שמירה',
   cancel: 'ביטול',
   redeem: 'מימוש',
