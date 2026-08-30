@@ -64,6 +64,34 @@ function GridPattern({ color, step = 56 }: { color: string; step?: number }) {
   );
 }
 
+function HeartPattern({ colors: [c1, c2, c3] }: { colors: [string, string, string] }) {
+  const orbs = [
+    { size: 260, x: W * 0.55, y: -60, color: c1, opacity: 0.22 },
+    { size: 180, x: -50, y: H * 0.15, color: c2, opacity: 0.18 },
+    { size: 140, x: W * 0.25, y: H * 0.55, color: c3, opacity: 0.14 },
+    { size: 100, x: W * 0.7, y: H * 0.4, color: c1, opacity: 0.1 },
+  ];
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {orbs.map((o, i) => (
+        <View
+          key={i}
+          style={{
+            position: 'absolute',
+            left: o.x,
+            top: o.y,
+            width: o.size,
+            height: o.size,
+            borderRadius: o.size / 2,
+            backgroundColor: o.color,
+            opacity: o.opacity,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+
 export function ThemeBackground() {
   const { gradientBg, decorEmojis, pattern, colors, id } = useTheme();
 
@@ -75,6 +103,9 @@ export function ThemeBackground() {
       {pattern === 'blocks' && <GridPattern color={colors.primary} step={48} />}
       {pattern === 'stars' && (
         <StarPattern colors={[colors.primary, colors.accent, colors.secondary]} />
+      )}
+      {pattern === 'hearts' && (
+        <HeartPattern colors={[colors.primary, colors.secondary, colors.accent]} />
       )}
       {pattern === 'studs' && <GridPattern color={colors.textMuted} step={36} />}
       <FloatingEmojis key={emojiKey} emojis={decorEmojis} count={10} opacity={0.18} />

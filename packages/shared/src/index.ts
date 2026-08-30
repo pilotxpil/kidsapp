@@ -12,13 +12,16 @@ export type PointTransactionType = 'task' | 'redemption' | 'bonus' | 'streak' | 
 
 export type RewardCategory = 'gaming' | 'food' | 'screen' | 'privilege' | 'other';
 
-export type UiThemeId = 'minecraft' | 'brawl' | 'roblox';
+export type UiThemeId = 'minecraft' | 'brawl' | 'roblox' | 'sparkle';
 
-export const UI_THEME_IDS: UiThemeId[] = ['minecraft', 'brawl', 'roblox'];
+export const UI_THEME_IDS: UiThemeId[] = ['minecraft', 'brawl', 'roblox', 'sparkle'];
 
 /** Daily gift star — tap this many times to claim (Brawl Stars–style). */
 export const DAILY_STAR_TAPS = 4;
 export const DAILY_STAR_BONUS = 10;
+
+/** Approved tasks needed to unlock one treasure chest. */
+export const TREASURE_CHEST_TASKS = 5;
 
 export interface DailyStarStatus {
   available: boolean;
@@ -36,6 +39,57 @@ export interface DailyStarClaimResult {
   streakBonus: number;
   totalPoints: number;
   streak: number;
+  points: number;
+  level: number;
+  xp: number;
+}
+
+export interface FortuneWheelSegment {
+  id: string;
+  label: string;
+  points: number;
+  color: string;
+  /** Relative weight for RNG (higher = more common). */
+  weight: number;
+}
+
+export const FORTUNE_WHEEL_SEGMENTS: FortuneWheelSegment[] = [
+  { id: 'p5', label: '+5', points: 5, color: '#42A5F5', weight: 22 },
+  { id: 'p10', label: '+10', points: 10, color: '#66BB6A', weight: 20 },
+  { id: 'p8', label: '+8', points: 8, color: '#26C6DA', weight: 18 },
+  { id: 'p15', label: '+15', points: 15, color: '#FFA726', weight: 14 },
+  { id: 'p3', label: '+3', points: 3, color: '#90A4AE', weight: 12 },
+  { id: 'p25', label: '+25', points: 25, color: '#AB47BC', weight: 8 },
+  { id: 'p12', label: '+12', points: 12, color: '#EF5350', weight: 10 },
+  { id: 'p50', label: '+50!', points: 50, color: '#FFD54F', weight: 3 },
+];
+
+export interface FortuneWheelStatus {
+  available: boolean;
+  segments: FortuneWheelSegment[];
+  unlimited?: boolean;
+}
+
+export interface FortuneWheelSpinResult {
+  segmentIndex: number;
+  segment: FortuneWheelSegment;
+  pointsAwarded: number;
+  points: number;
+  level: number;
+  xp: number;
+}
+
+export interface TreasureChestStatus {
+  ready: boolean;
+  progress: number;
+  needed: number;
+  approvedTasks: number;
+  chestsOpened: number;
+  unlimited?: boolean;
+}
+
+export interface TreasureChestOpenResult {
+  pointsAwarded: number;
   points: number;
   level: number;
   xp: number;

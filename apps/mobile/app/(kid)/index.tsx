@@ -8,10 +8,18 @@ import { TaskCard } from '../../components/TaskCard';
 import { Celebration } from '../../components/Celebration';
 import { GameWorlds } from '../../components/GameWorlds';
 import { DailyStar } from '../../components/DailyStar';
+import { FortuneWheel } from '../../components/FortuneWheel';
+import { TreasureChest } from '../../components/TreasureChest';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { ThemedHero, SectionHeader } from '../../components/ThemedHero';
 import { FadeInUp } from '../../components/animations/FadeInUp';
-import type { Task, KidProfile, DailyStarClaimResult } from '@kidsapp/shared';
+import type {
+  Task,
+  KidProfile,
+  DailyStarClaimResult,
+  FortuneWheelSpinResult,
+  TreasureChestOpenResult,
+} from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
@@ -28,6 +36,8 @@ export default function KidHomeScreen() {
   const [celebrate, setCelebrate] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [starKey, setStarKey] = useState(0);
+  const [chestKey, setChestKey] = useState(0);
+  const [starOpen, setStarOpen] = useState(false);
 
   const styles = useMemo(
     () =>
@@ -76,10 +86,11 @@ export default function KidHomeScreen() {
     setRefreshing(true);
     await load();
     setStarKey((k) => k + 1);
+    setChestKey((k) => k + 1);
     setRefreshing(false);
   };
 
-  const handleStarClaimed = (result: DailyStarClaimResult) => {
+  const applyPoints = (result: { points: number; level: number; xp: number; streak?: number }) => {
     setProfile((prev) =>
       prev
         ? {
@@ -87,10 +98,22 @@ export default function KidHomeScreen() {
             points: result.points,
             level: result.level,
             xp: result.xp,
-            streak: result.streak,
+            ...(result.streak != null ? { streak: result.streak } : {}),
           }
         : prev
     );
+  };
+
+  const handleStarClaimed = (result: DailyStarClaimResult) => {
+    applyPoints(result);
+  };
+
+  const handleWheelWon = (result: FortuneWheelSpinResult) => {
+    applyPoints(result);
+  };
+
+  const handleChestOpened = (result: TreasureChestOpenResult) => {
+    applyPoints(result);
   };
 
   const handleComplete = async (task: Task) => {
@@ -140,11 +163,17 @@ export default function KidHomeScreen() {
             </View>
           </FadeInUp>
 
-          <FadeInUp index={2}>
+          {userId ? (
+            <FadeInUp index={2}>
+              <TreasureChest kidId={userId} refreshKey={chestKey} onOpened={handleChestOpened} />
+            </FadeInUp>
+          ) : null}
+
+          <FadeInUp index={3}>
             <GameWorlds />
           </FadeInUp>
 
-          <FadeInUp index={3}>
+          <FadeInUp index={4}>
             <SectionHeader title={t('tasks')} icon="📜" />
           </FadeInUp>
           {tasks.length === 0 ? (
@@ -154,7 +183,7 @@ export default function KidHomeScreen() {
               <TaskCard
                 key={task._id}
                 task={task}
-                index={i + 4}
+                index={i + 5}
                 onComplete={handleComplete}
                 loading={completingId === task._id}
                 pending={pendingIds.has(task._id)}
@@ -164,7 +193,22 @@ export default function KidHomeScreen() {
         </View>
       </ScrollView>
 
-      {userId ? <DailyStar key={starKey} kidId={userId} onClaimed={handleStarClaimed} /> : null}
+      {userId ? (
+        <>
+          <DailyStar
+            key={starKey}
+            kidId={userId}
+            onClaimed={handleStarClaimed}
+            onOpenChange={setStarOpen}
+          />
+          <FortuneWheel
+            key={`wheel-${starKey}`}
+            kidId={userId}
+            blocked={starOpen}
+            onWon={handleWheelWon}
+          />
+        </>
+      ) : null}
 
       <Celebration
         visible={celebrate}

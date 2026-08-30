@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import { UI_THEME_IDS } from '@kidsapp/shared';
 import { authenticate, requireParent } from '../middleware/auth';
 import { User } from '../models/User';
 import { Task } from '../models/Task';
@@ -8,7 +9,15 @@ import { TaskCompletion } from '../models/TaskCompletion';
 import { Redemption } from '../models/Redemption';
 import { PointTransaction } from '../models/PointTransaction';
 import { formatUser } from '../utils/format';
-import { getKidProfile, getDailyStarStatus, claimDailyStar } from '../services/gamification';
+import {
+  getKidProfile,
+  getDailyStarStatus,
+  claimDailyStar,
+  getFortuneWheelStatus,
+  spinFortuneWheel,
+  getTreasureChestStatus,
+  openTreasureChest,
+} from '../services/gamification';
 
 const router = Router();
 
@@ -64,7 +73,7 @@ router.patch('/:id', authenticate, async (req: Request, res: Response) => {
     const { uiTheme, avatar, displayName } = req.body;
 
     if (uiTheme !== undefined) {
-      if (!['minecraft', 'brawl', 'roblox'].includes(uiTheme)) {
+      if (!UI_THEME_IDS.includes(uiTheme)) {
         return res.status(400).json({ error: 'ערכת עיצוב לא תקינה' });
       }
       kid.uiTheme = uiTheme;
@@ -137,6 +146,84 @@ router.post('/:id/daily-star/claim', authenticate, async (req: Request, res: Res
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'שגיאה בפתיחת הכוכב' });
+  }
+});
+
+router.get('/:id/fortune-wheel', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role === 'kid' && req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'אין הרשאה' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const status = await getFortuneWheelStatus(kid);
+    res.json({ status });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטעינת גלגל המזל' });
+  }
+});
+
+router.post('/:id/fortune-wheel/spin', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role !== 'kid' || req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'רק הילד יכול לסובב את הגלגל' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const result = await spinFortuneWheel(kid);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({
+      segmentIndex: result.segmentIndex,
+      segment: result.segment,
+      pointsAwarded: result.pointsAwarded,
+      points: result.points,
+      level: result.level,
+      xp: result.xp,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בסיבוב הגלגל' });
+  }
+});
+
+router.get('/:id/treasure-chest', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role === 'kid' && req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'אין הרשאה' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const status = await getTreasureChestStatus(kid);
+    res.json({ status });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטעינת תיבת האוצר' });
+  }
+});
+
+router.post('/:id/treasure-chest/open', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role !== 'kid' || req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'רק הילד יכול לפתוח את התיבה' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const result = await openTreasureChest(kid);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({
+      pointsAwarded: result.pointsAwarded,
+      points: result.points,
+      level: result.level,
+      xp: result.xp,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בפתיחת התיבה' });
   }
 });
 

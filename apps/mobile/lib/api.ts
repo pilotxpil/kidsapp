@@ -10,6 +10,10 @@ import type {
   UiThemeId,
   DailyStarStatus,
   DailyStarClaimResult,
+  FortuneWheelStatus,
+  FortuneWheelSpinResult,
+  TreasureChestStatus,
+  TreasureChestOpenResult,
 } from '@kidsapp/shared';
 
 const TOKEN_KEY = 'kidsapp_token';
@@ -214,6 +218,22 @@ export const api = {
 
   claimDailyStar(id: string) {
     return request<DailyStarClaimResult>(`/kids/${id}/daily-star/claim`, { method: 'POST' });
+  },
+
+  getFortuneWheel(id: string) {
+    return request<{ status: FortuneWheelStatus }>(`/kids/${id}/fortune-wheel`);
+  },
+
+  spinFortuneWheel(id: string) {
+    return request<FortuneWheelSpinResult>(`/kids/${id}/fortune-wheel/spin`, { method: 'POST' });
+  },
+
+  getTreasureChest(id: string) {
+    return request<{ status: TreasureChestStatus }>(`/kids/${id}/treasure-chest`);
+  },
+
+  openTreasureChest(id: string) {
+    return request<TreasureChestOpenResult>(`/kids/${id}/treasure-chest/open`, { method: 'POST' });
   },
 
   getTransactions(id: string) {

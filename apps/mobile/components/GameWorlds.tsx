@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { spacing } from '../constants/theme';
@@ -11,21 +11,25 @@ import { SectionHeader } from './ThemedHero';
 import { playSfx } from '../lib/sfx';
 import { rtl } from '../lib/rtl';
 
+const CARD_HEIGHT = 118;
+const GRID_PADDING = spacing.lg;
+
 export function GameWorlds() {
   const router = useRouter();
+  const { width: screenW } = useWindowDimensions();
   const { id: currentId, borderRadius, cardBorder } = useTheme();
+  const gap = spacing.sm;
+  const cardWidth = Math.floor((screenW - GRID_PADDING * 2 - gap) / 2);
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
         wrap: { width: '100%', marginBottom: spacing.lg },
-        row: { gap: spacing.sm },
-        cardWrap: { flex: 1 },
+        grid: { gap: spacing.sm, width: '100%' },
         card: {
-          flex: 1,
           borderRadius: borderRadius.lg,
           overflow: 'hidden',
-          minHeight: 118,
+          height: CARD_HEIGHT,
           ...cardBorder(2),
         },
         cardInner: {
@@ -67,11 +71,11 @@ export function GameWorlds() {
   return (
     <View style={styles.wrap}>
       <SectionHeader title="עולמות" icon="🎮" />
-      <View style={[styles.row, rtl.row]}>
+      <View style={[styles.grid, rtl.tabs]}>
         {UI_THEME_OPTIONS.map((world, i) => {
           const active = world.id === currentId;
           return (
-            <FadeInUp key={world.id} index={i} style={styles.cardWrap}>
+            <FadeInUp key={world.id} index={i} style={{ width: cardWidth }}>
               <BouncyPressable
                 style={[styles.card, active && { borderColor: world.accent, borderWidth: 3 }]}
                 onPress={() => {

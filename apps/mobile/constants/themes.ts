@@ -52,7 +52,7 @@ export interface AppTheme {
   pointsEmoji: string;
   celebrationKicker: string;
   allCategoryIcon: string;
-  pattern: 'blocks' | 'stars' | 'studs';
+  pattern: 'blocks' | 'stars' | 'studs' | 'hearts';
 }
 
 function blockBorder(colors: ThemeColors, width = 3): ViewStyle {
@@ -182,6 +182,36 @@ const ROBLOX_COLORS: ThemeColors = {
   confetti: ['#E2231A', '#FFFFFF', '#393B3D', '#FFD700', '#00C853', '#00A2FF'],
 };
 
+const SPARKLE_COLORS: ThemeColors = {
+  bg: '#2D1B3D',
+  bgDeep: '#1A0F24',
+  bgCard: '#5C3D6E',
+  bgCardLight: '#7B5294',
+  primary: '#FF6EC7',
+  primaryLight: '#FFB3E6',
+  primaryDark: '#D63384',
+  secondary: '#B388FF',
+  accent: '#FFD6F0',
+  danger: '#FF4081',
+  success: '#69F0AE',
+  text: '#FFFFFF',
+  textMuted: '#D4A5E8',
+  textDark: '#2D1B3D',
+  gradientStart: '#FF6EC7',
+  gradientEnd: '#7B1FA2',
+  gold: '#FFD700',
+  emerald: '#69F0AE',
+  diamond: '#E1BEE7',
+  streak: '#FF80AB',
+  border: '#9C27B0',
+  borderLight: '#CE93D8',
+  borderDark: '#4A148C',
+  buttonShadow: '#880E4F',
+  glow: '#FF6EC7',
+  cardShine: '#FFB3E6',
+  confetti: ['#FF6EC7', '#B388FF', '#FFD700', '#FF80AB', '#E1BEE7', '#FFFFFF'],
+};
+
 export const THEMES: Record<UiThemeId, AppTheme> = {
   minecraft: {
     id: 'minecraft',
@@ -245,6 +275,27 @@ export const THEMES: Record<UiThemeId, AppTheme> = {
     celebrationKicker: '🪙 Robux!',
     allCategoryIcon: '🌐',
     pattern: 'studs',
+  },
+  sparkle: {
+    id: 'sparkle',
+    name: 'Sparkle',
+    subtitle: 'נסיכות וקסמים',
+    icon: '🦄',
+    sfx: 'gem',
+    colors: SPARKLE_COLORS,
+    gradientBg: ['#3D2554', '#251535', '#120A1A'],
+    heroGradient: ['#FF6EC7', '#9B59B6'],
+    decorEmojis: ['✨', '🦄', '💖', '🌸', '👑', '💫', '🦋', '💜'],
+    heroEmoji: '✨',
+    heroTagline: 'זוהר, צבור, תאיר!',
+    borderRadius: { sm: 12, md: 18, lg: 24, xl: 32, full: 999 },
+    cardBorder: (w) => glowBorder(SPARKLE_COLORS, w),
+    tabIcons: { home: '✨', tasks: '📋', shop: '👑', profile: '💖' },
+    taskCategoryIcons: { home: '🏰', school: '📖', social: '💕', hobby: '🎀', sport: '⭐' },
+    pointsEmoji: '💖',
+    celebrationKicker: '✨ Sparkle!',
+    allCategoryIcon: '✨',
+    pattern: 'hearts',
   },
 };
 

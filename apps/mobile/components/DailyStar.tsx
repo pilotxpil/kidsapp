@@ -22,11 +22,12 @@ import { api } from '../lib/api';
 interface DailyStarProps {
   kidId: string;
   onClaimed?: (result: DailyStarClaimResult) => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const STAGE = 220;
 
-export function DailyStar({ kidId, onClaimed }: DailyStarProps) {
+export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
   const insets = useSafeAreaInsets();
   const { colors, borderRadius, cardBorder, heroGradient, id: themeId } = useTheme();
   const [status, setStatus] = useState<DailyStarStatus | null>(null);
@@ -39,10 +40,16 @@ export function DailyStar({ kidId, onClaimed }: DailyStarProps) {
   const unlimitedRef = useRef(false);
   const onClaimedRef = useRef(onClaimed);
   onClaimedRef.current = onClaimed;
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
   const starRef = useRef<Star3DHandle>(null);
 
   const flash = useSharedValue(0);
   const unlimited = !!status?.unlimited;
+
+  useEffect(() => {
+    onOpenChangeRef.current?.(visible);
+  }, [visible]);
 
   const styles = useMemo(
     () =>

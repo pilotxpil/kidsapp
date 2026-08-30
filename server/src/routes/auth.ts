@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { UI_THEME_IDS } from '@kidsapp/shared';
 import { Family } from '../models/Family';
 import { User } from '../models/User';
 import { formatUser } from '../utils/format';
@@ -130,7 +131,7 @@ router.patch('/me', authenticate, async (req: Request, res: Response) => {
 
     const { uiTheme } = req.body;
     if (uiTheme !== undefined) {
-      if (!['minecraft', 'brawl', 'roblox'].includes(uiTheme)) {
+      if (!UI_THEME_IDS.includes(uiTheme)) {
         return res.status(400).json({ error: 'ערכת עיצוב לא תקינה' });
       }
       user.uiTheme = uiTheme;

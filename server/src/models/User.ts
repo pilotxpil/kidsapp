@@ -15,7 +15,7 @@ export interface IUser extends Document {
   streak: number;
   lastActiveDate?: string;
   badges: string[];
-  uiTheme?: 'minecraft' | 'brawl' | 'roblox';
+  uiTheme?: 'minecraft' | 'brawl' | 'roblox' | 'sparkle';
   createdAt: Date;
 }
 
@@ -35,7 +35,7 @@ const userSchema = new Schema<IUser>(
     streak: { type: Number, default: 0 },
     lastActiveDate: { type: String },
     badges: { type: [String], default: [] },
-    uiTheme: { type: String, enum: ['minecraft', 'brawl', 'roblox'], default: 'minecraft' },
+    uiTheme: { type: String, enum: ['minecraft', 'brawl', 'roblox', 'sparkle'], default: 'minecraft' },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );
