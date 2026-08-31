@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Modal, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { G, Path, Text as SvgText, Circle } from 'react-native-svg';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,8 +25,6 @@ import { api } from '../lib/api';
 
 interface FortuneWheelProps {
   kidId: string;
-  /** When true, don't auto-open (e.g. daily star is showing). */
-  blocked?: boolean;
   onWon?: (result: FortuneWheelSpinResult) => void;
 }
 
@@ -55,9 +52,8 @@ function labelPos(index: number, total: number) {
   return polar(CX, CY, R * 0.62, mid);
 }
 
-export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProps) {
-  const insets = useSafeAreaInsets();
-  const { colors, borderRadius, cardBorder, heroGradient, id: themeId } = useTheme();
+export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
+  const { borderRadius, cardBorder, heroGradient, id: themeId } = useTheme();
   const [status, setStatus] = useState<FortuneWheelStatus | null>(null);
   const [visible, setVisible] = useState(false);
   const [spinning, setSpinning] = useState(false);
@@ -94,19 +90,6 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
           alignItems: 'stretch',
           width: '100%',
         },
-        closeBtn: {
-          position: 'absolute',
-          top: spacing.md,
-          left: spacing.md,
-          zIndex: 2,
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          backgroundColor: 'rgba(0,0,0,0.35)',
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        closeText: { color: '#fff', fontSize: 18, fontWeight: '700' },
         title: {
           color: '#fff',
           fontSize: 22,
@@ -162,57 +145,24 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
           fontWeight: '800',
           textAlign: 'center',
         },
-        devBadge: {
-          marginTop: spacing.sm,
-          color: 'rgba(255,255,255,0.65)',
-          fontSize: 11,
-          fontWeight: '700',
-          textAlign: 'center',
-          alignSelf: 'center',
-        },
-        reopenFab: {
-          position: 'absolute',
-          left: spacing.lg,
-          zIndex: 50,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          paddingVertical: 10,
-          paddingHorizontal: 14,
-          borderRadius: borderRadius.full,
-          backgroundColor: colors.bgCard,
-          ...cardBorder(2),
-        },
-        reopenIcon: { fontSize: 18 },
-        reopenLabel: { color: colors.text, fontSize: 12, fontWeight: '800' },
       }),
-    [themeId, colors, borderRadius, cardBorder]
+    [themeId, borderRadius, cardBorder]
   );
 
   const load = useCallback(async () => {
     try {
       const res = await api.getFortuneWheel(kidId);
       setStatus(res.status);
-      if (res.status.available && !blocked) setVisible(true);
-      if (!res.status.available) setVisible(false);
+      setVisible(!!res.status.available);
     } catch {
       setStatus(null);
       setVisible(false);
     }
-  }, [kidId, blocked]);
+  }, [kidId]);
 
   useEffect(() => {
     load();
   }, [load]);
-
-  useEffect(() => {
-    if (!status) return;
-    if (blocked) {
-      setVisible(false);
-      return;
-    }
-    if (status.available) setVisible(true);
-  }, [blocked, status]);
 
   const wheelStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
@@ -223,7 +173,9 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
     const result = pendingResult.current;
     if (!result) return;
     playSfx('gem');
-    setCelebrateMsg(`+${result.pointsAwarded} ${t('points')}!`);
+    const parts = [`+${result.pointsAwarded} ${t('points')}`];
+    if (result.streakBonus) parts.push(`${t('streakBonus')}: +${result.streakBonus}`);
+    setCelebrateMsg(`${parts.join(' · ')}!`);
     setCelebrate(true);
     onWonRef.current?.(result);
   }, []);
@@ -258,47 +210,21 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
 
   const handleCelebrateDone = () => {
     setCelebrate(false);
-    if (status?.unlimited) {
-      setStatus((prev) => (prev ? { ...prev, available: true } : prev));
-      return;
-    }
     setVisible(false);
     setStatus((prev) => (prev ? { ...prev, available: false } : prev));
   };
 
-  if (!status) return null;
+  if (!status?.available && !visible) return null;
 
   const segments = status.segments;
 
   return (
-    <>
-      {status.unlimited && !visible && !blocked ? (
-        <Pressable
-          onPress={() => {
-            setStatus((prev) => (prev ? { ...prev, available: true } : prev));
-            setVisible(true);
-          }}
-          style={[styles.reopenFab, { bottom: Math.max(insets.bottom, 12) + 64 }]}
-          accessibilityRole="button"
-          accessibilityLabel={t('wheelDevOpen')}
-        >
-          <Text style={styles.reopenIcon}>🎡</Text>
-          <Text style={styles.reopenLabel}>{t('wheelDevOpen')}</Text>
-        </Pressable>
-      ) : null}
-
       <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
         {visible ? (
         <View style={styles.modalRoot}>
           <Animated.View style={[styles.overlay, overlayStyle]}>
             <Animated.View style={[styles.card, enterStyle]}>
               <LinearGradient colors={[...heroGradient]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.inner}>
-                {status.unlimited ? (
-                  <Pressable onPress={() => setVisible(false)} style={styles.closeBtn} hitSlop={8}>
-                    <Text style={styles.closeText}>✕</Text>
-                  </Pressable>
-                ) : null}
-
                 <Text style={styles.title}>{t('fortuneWheel')}</Text>
                 <Text style={styles.hint}>{t('fortuneWheelHint')}</Text>
 
@@ -343,7 +269,6 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
                     <Text style={styles.spinBtnText}>{t('wheelSpin')}</Text>
                   )}
                 </BouncyPressable>
-                {status.unlimited ? <Text style={styles.devBadge}>{t('dailyStarDevMode')}</Text> : null}
               </LinearGradient>
             </Animated.View>
           </Animated.View>
@@ -357,6 +282,5 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
         </View>
         ) : null}
       </Modal>
-    </>
   );
 }

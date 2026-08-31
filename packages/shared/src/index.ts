@@ -20,8 +20,13 @@ export const UI_THEME_IDS: UiThemeId[] = ['minecraft', 'brawl', 'roblox', 'spark
 export const DAILY_STAR_TAPS = 4;
 export const DAILY_STAR_BONUS = 10;
 
-/** Approved tasks needed to unlock one treasure chest. */
+/** Approved tasks needed to unlock one treasure chest. @deprecated chest is now a random daily surprise */
 export const TREASURE_CHEST_TASKS = 5;
+
+/** ~22% of days offer a surprise chest (deterministic per kid + date). */
+export const SURPRISE_CHEST_DAILY_CHANCE = 0.22;
+
+export type DailyGiftType = 'star' | 'wheel';
 
 export interface DailyStarStatus {
   available: boolean;
@@ -30,8 +35,6 @@ export interface DailyStarStatus {
   streakBonus: number;
   totalPoints: number;
   streak: number;
-  /** True in non-production — star can be claimed repeatedly for testing. */
-  unlimited?: boolean;
 }
 
 export interface DailyStarClaimResult {
@@ -67,13 +70,14 @@ export const FORTUNE_WHEEL_SEGMENTS: FortuneWheelSegment[] = [
 export interface FortuneWheelStatus {
   available: boolean;
   segments: FortuneWheelSegment[];
-  unlimited?: boolean;
 }
 
 export interface FortuneWheelSpinResult {
   segmentIndex: number;
   segment: FortuneWheelSegment;
   pointsAwarded: number;
+  streakBonus?: number;
+  streak: number;
   points: number;
   level: number;
   xp: number;
@@ -81,11 +85,6 @@ export interface FortuneWheelSpinResult {
 
 export interface TreasureChestStatus {
   ready: boolean;
-  progress: number;
-  needed: number;
-  approvedTasks: number;
-  chestsOpened: number;
-  unlimited?: boolean;
 }
 
 export interface TreasureChestOpenResult {

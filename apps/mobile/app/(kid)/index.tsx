@@ -37,7 +37,6 @@ export default function KidHomeScreen() {
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [starKey, setStarKey] = useState(0);
   const [chestKey, setChestKey] = useState(0);
-  const [starOpen, setStarOpen] = useState(false);
 
   const styles = useMemo(
     () =>
@@ -109,7 +108,7 @@ export default function KidHomeScreen() {
   };
 
   const handleWheelWon = (result: FortuneWheelSpinResult) => {
-    applyPoints(result);
+    applyPoints({ ...result, streak: result.streak });
   };
 
   const handleChestOpened = (result: TreasureChestOpenResult) => {
@@ -199,12 +198,10 @@ export default function KidHomeScreen() {
             key={starKey}
             kidId={userId}
             onClaimed={handleStarClaimed}
-            onOpenChange={setStarOpen}
           />
           <FortuneWheel
             key={`wheel-${starKey}`}
             kidId={userId}
-            blocked={starOpen}
             onWon={handleWheelWon}
           />
         </>

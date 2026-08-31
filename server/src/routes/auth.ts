@@ -99,7 +99,7 @@ router.post('/kid/login', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'שם משתמש או PIN שגויים' });
     }
 
-    const { dailyStarAvailable } = await processDailyLogin(kid);
+    const { dailyGiftAvailable, dailyGiftType } = await processDailyLogin(kid);
 
     const token = jwt.sign(
       { userId: kid._id.toString(), role: 'kid', familyId: kid.familyId.toString() },
@@ -110,7 +110,10 @@ router.post('/kid/login', async (req: Request, res: Response) => {
     res.json({
       token,
       user: formatUser(kid),
-      dailyStarAvailable,
+      dailyGiftAvailable,
+      dailyGiftType,
+      /** @deprecated use dailyGiftAvailable */
+      dailyStarAvailable: dailyGiftAvailable,
     });
   } catch (err) {
     console.error(err);

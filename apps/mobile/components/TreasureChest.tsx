@@ -252,30 +252,7 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
     }
   };
 
-  if (!status) return null;
-
-  const ratio = Math.min(1, status.progress / status.needed);
-
-  if (!status.ready) {
-    return (
-      <View style={styles.mutedCard}>
-        <View style={styles.mutedInner}>
-          <Text style={styles.mutedIcon}>📦</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.mutedTitle}>{t('treasureChest')}</Text>
-            <Text style={styles.mutedSub}>
-              {t('chestProgress')
-                .replace('{progress}', String(status.progress))
-                .replace('{needed}', String(status.needed))}
-            </Text>
-            <View style={styles.mutedBarBg}>
-              <View style={[styles.mutedBarFill, { width: `${ratio * 100}%` }]} />
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  }
+  if (!status?.ready) return null;
 
   return (
     <>
@@ -323,11 +300,8 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
                     <Text style={styles.openBtnText}>{t('chestOpen')}</Text>
                   )}
                 </BouncyPressable>
-                {status.unlimited ? (
-                  <Text style={styles.closeLink}>{t('dailyStarDevMode')}</Text>
-                ) : null}
                 <Pressable onPress={() => setModalOpen(false)} disabled={opening}>
-                  <Text style={styles.closeLink}>{t('dailyStarDevClose')}</Text>
+                  <Text style={styles.closeLink}>{t('close')}</Text>
                 </Pressable>
               </LinearGradient>
             </Animated.View>
@@ -339,7 +313,7 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
             message={celebrateMsg || t('chestOpened')}
             onDone={() => {
               setCelebrate(false);
-              if (!status.unlimited) setModalOpen(false);
+              setModalOpen(false);
             }}
           />
         </View>

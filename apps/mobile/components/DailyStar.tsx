@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   FadeIn,
   useSharedValue,
@@ -28,8 +27,7 @@ interface DailyStarProps {
 const STAGE = 220;
 
 export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
-  const insets = useSafeAreaInsets();
-  const { colors, borderRadius, cardBorder, heroGradient, id: themeId } = useTheme();
+  const { borderRadius, cardBorder, heroGradient, id: themeId } = useTheme();
   const [status, setStatus] = useState<DailyStarStatus | null>(null);
   const [visible, setVisible] = useState(false);
   const [taps, setTaps] = useState(0);
@@ -37,7 +35,6 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
   const [celebrateMsg, setCelebrateMsg] = useState('');
   const claimingRef = useRef(false);
   const claimStartedRef = useRef(false);
-  const unlimitedRef = useRef(false);
   const onClaimedRef = useRef(onClaimed);
   onClaimedRef.current = onClaimed;
   const onOpenChangeRef = useRef(onOpenChange);
@@ -45,7 +42,6 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
   const starRef = useRef<Star3DHandle>(null);
 
   const flash = useSharedValue(0);
-  const unlimited = !!status?.unlimited;
   const { overlayStyle, cardStyle: enterStyle } = useModalEnter(visible);
 
   useEffect(() => {
@@ -77,24 +73,6 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
           paddingBottom: spacing.xl,
           paddingHorizontal: spacing.lg,
           alignItems: 'center',
-        },
-        closeBtn: {
-          position: 'absolute',
-          top: spacing.md,
-          left: spacing.md,
-          zIndex: 2,
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          backgroundColor: 'rgba(0,0,0,0.35)',
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        closeText: {
-          color: '#fff',
-          fontSize: 18,
-          fontWeight: '700',
-          lineHeight: 20,
         },
         title: {
           color: '#fff',
@@ -146,35 +124,8 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
           marginTop: spacing.md,
           textAlign: 'center',
         },
-        devBadge: {
-          marginTop: spacing.sm,
-          color: 'rgba(255,255,255,0.65)',
-          fontSize: 11,
-          fontWeight: '700',
-          letterSpacing: 1,
-          textAlign: 'center',
-        },
-        reopenFab: {
-          position: 'absolute',
-          right: spacing.lg,
-          zIndex: 50,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          paddingVertical: 10,
-          paddingHorizontal: 14,
-          borderRadius: borderRadius.full ?? 999,
-          backgroundColor: colors.bgCard,
-          ...cardBorder(2),
-        },
-        reopenIcon: { fontSize: 18 },
-        reopenLabel: {
-          color: colors.text,
-          fontSize: 12,
-          fontWeight: '800',
-        },
       }),
-    [themeId, colors, borderRadius, cardBorder]
+    [themeId, borderRadius, cardBorder]
   );
 
   const resetInteraction = useCallback(() => {
@@ -189,7 +140,6 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
     try {
       const res = await api.getDailyStar(kidId);
       setStatus(res.status);
-      unlimitedRef.current = !!res.status.unlimited;
       resetInteraction();
       setVisible(!!res.status.available);
     } catch {
@@ -205,32 +155,6 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
   const flashStyle = useAnimatedStyle(() => ({
     opacity: flash.value,
   }));
-
-  const resetForDevReplay = useCallback(() => {
-    resetInteraction();
-    setStatus((prev) =>
-      prev
-        ? {
-            ...prev,
-            available: true,
-            streakBonus: 0,
-            totalPoints: prev.dailyBonus || 10,
-          }
-        : prev
-    );
-  }, [resetInteraction]);
-
-  const handleDevClose = () => {
-    if (!unlimitedRef.current) return;
-    resetInteraction();
-    setVisible(false);
-  };
-
-  const handleDevOpen = () => {
-    if (!unlimitedRef.current) return;
-    resetForDevReplay();
-    setVisible(true);
-  };
 
   const finishClaim = useCallback(async () => {
     if (claimStartedRef.current) return;
@@ -255,10 +179,6 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
 
   const handleCelebrateDone = () => {
     setCelebrate(false);
-    if (unlimitedRef.current) {
-      resetForDevReplay();
-      return;
-    }
     setVisible(false);
     setStatus((prev) =>
       prev ? { ...prev, available: false, dailyBonus: 0, streakBonus: 0, totalPoints: 0 } : prev
@@ -288,7 +208,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
     }
   };
 
-  if (!status) return null;
+  if (!status?.available && !visible) return null;
 
   const remaining = status ? Math.max(status.tapsRequired - taps, 0) : 0;
   const rewardHint = status
@@ -298,37 +218,12 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
     : '';
 
   return (
-    <>
-      {unlimited && !visible ? (
-        <Pressable
-          onPress={handleDevOpen}
-          style={[styles.reopenFab, { bottom: Math.max(insets.bottom, 12) + 64 }]}
-          accessibilityRole="button"
-          accessibilityLabel={t('dailyStarDevOpen')}
-        >
-          <Text style={styles.reopenIcon}>⭐</Text>
-          <Text style={styles.reopenLabel}>{t('dailyStarDevOpen')}</Text>
-        </Pressable>
-      ) : null}
-
-      <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
-        {visible ? (
+    <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
+      {visible ? (
         <View style={styles.modalRoot}>
           <Animated.View style={[styles.overlay, overlayStyle]}>
             <Animated.View style={[styles.card, enterStyle]}>
               <LinearGradient colors={[...heroGradient]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.inner}>
-                {unlimited ? (
-                  <Pressable
-                    onPress={handleDevClose}
-                    style={styles.closeBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('dailyStarDevClose')}
-                    hitSlop={8}
-                  >
-                    <Text style={styles.closeText}>✕</Text>
-                  </Pressable>
-                ) : null}
-
                 <Animated.View style={[styles.flash, flashStyle]} pointerEvents="none" />
                 <Animated.Text entering={FadeIn.delay(80)} style={styles.title}>
                   {t('dailyStar')}
@@ -346,13 +241,12 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
                 </Pressable>
 
                 <View style={styles.dots}>
-                  {Array.from({ length: status.tapsRequired }).map((_, i) => (
+                  {Array.from({ length: status?.tapsRequired ?? 4 }).map((_, i) => (
                     <View key={i} style={[styles.dot, i < taps && styles.dotFilled]} />
                   ))}
                 </View>
 
                 <Text style={styles.reward}>{rewardHint}</Text>
-                {unlimited ? <Text style={styles.devBadge}>{t('dailyStarDevMode')}</Text> : null}
               </LinearGradient>
             </Animated.View>
           </Animated.View>
@@ -364,8 +258,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
             onDone={handleCelebrateDone}
           />
         </View>
-        ) : null}
-      </Modal>
-    </>
+      ) : null}
+    </Modal>
   );
 }

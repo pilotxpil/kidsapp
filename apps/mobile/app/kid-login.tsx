@@ -37,8 +37,8 @@ export default function KidLoginScreen() {
       const res = await api.kidLogin(username, pin);
       await login(res.token, res.user);
 
-      if (res.dailyStarAvailable) {
-        setBonusMsg(t('dailyStarWaiting'));
+      if (res.dailyGiftAvailable ?? res.dailyStarAvailable) {
+        setBonusMsg(t('dailyGiftWaiting'));
         setCelebrate(true);
       } else {
         router.replace('/(kid)');

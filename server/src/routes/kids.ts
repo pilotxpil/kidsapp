@@ -179,6 +179,8 @@ router.post('/:id/fortune-wheel/spin', authenticate, async (req: Request, res: R
       segmentIndex: result.segmentIndex,
       segment: result.segment,
       pointsAwarded: result.pointsAwarded,
+      streakBonus: result.streakBonus,
+      streak: result.streak,
       points: result.points,
       level: result.level,
       xp: result.xp,

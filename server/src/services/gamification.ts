@@ -3,7 +3,8 @@ import {
   DAILY_STAR_TAPS,
   DAILY_STAR_BONUS,
   FORTUNE_WHEEL_SEGMENTS,
-  TREASURE_CHEST_TASKS,
+  SURPRISE_CHEST_DAILY_CHANCE,
+  type DailyGiftType,
   type FortuneWheelSegment,
 } from '@kidsapp/shared';
 import { IUser, User } from '../models/User';
@@ -19,15 +20,33 @@ const STREAK_BONUSES: Record<number, number> = {
 
 const WHEEL_DESC = 'גלגל מזל';
 const CHEST_DESC = 'תיבת אוצר';
-
-function isDevUnlimited(): boolean {
-  return process.env.NODE_ENV !== 'production';
-}
+const CHEST_REWARDS = [8, 10, 12, 15, 18];
 
 function startOfUtcDay(): Date {
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);
   return start;
+}
+
+/** Deterministic 0–1 roll — stable for the same kid + date + salt all day. */
+function dailyRoll(kidId: string, date: string, salt: string): number {
+  const str = `${kidId}:${date}:${salt}`;
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) / 4294967296;
+}
+
+function getDailyGiftType(kidId: IUser['_id']): DailyGiftType {
+  const today = todayString();
+  return dailyRoll(kidId.toString(), today, 'gift') < 0.5 ? 'star' : 'wheel';
+}
+
+function isSurpriseChestDay(kidId: IUser['_id']): boolean {
+  const today = todayString();
+  return dailyRoll(kidId.toString(), today, 'chest') < SURPRISE_CHEST_DAILY_CHANCE;
 }
 
 function projectedStreak(kid: IUser): number {
@@ -51,68 +70,37 @@ async function hasClaimedDailyStarToday(kidId: IUser['_id']): Promise<boolean> {
   return !!existing;
 }
 
-export async function getDailyStarStatus(kid: IUser) {
-  const unlimited = isDevUnlimited();
-  const claimedToday = await hasClaimedDailyStarToday(kid._id);
-  const available = unlimited || !claimedToday;
-  const streak = !claimedToday ? projectedStreak(kid) : kid.streak;
-  const streakBonus = available && !claimedToday && STREAK_BONUSES[streak] ? STREAK_BONUSES[streak] : 0;
-  const dailyBonus = available ? DAILY_STAR_BONUS : 0;
-
-  return {
-    available,
-    tapsRequired: DAILY_STAR_TAPS,
-    dailyBonus,
-    streakBonus,
-    totalPoints: dailyBonus + streakBonus,
-    streak,
-    unlimited,
-  };
+async function hasSpunWheelToday(kidId: IUser['_id']): Promise<boolean> {
+  const existing = await PointTransaction.findOne({
+    kidId,
+    type: 'bonus',
+    description: WHEEL_DESC,
+    createdAt: { $gte: startOfUtcDay() },
+  });
+  return !!existing;
 }
 
-/** Login no longer awards points — the daily star claim does. */
-export async function processDailyLogin(kid: IUser): Promise<{ dailyStarAvailable: boolean }> {
-  const status = await getDailyStarStatus(kid);
-  return { dailyStarAvailable: status.available };
+async function hasOpenedChestToday(kidId: IUser['_id']): Promise<boolean> {
+  const existing = await PointTransaction.findOne({
+    kidId,
+    type: 'bonus',
+    description: CHEST_DESC,
+    createdAt: { $gte: startOfUtcDay() },
+  });
+  return !!existing;
 }
 
-export async function claimDailyStar(kid: IUser) {
+async function hasUsedDailyGiftToday(kidId: IUser['_id']): Promise<boolean> {
+  const [star, wheel] = await Promise.all([
+    hasClaimedDailyStarToday(kidId),
+    hasSpunWheelToday(kidId),
+  ]);
+  return star || wheel;
+}
+
+/** Updates streak / lastActiveDate and awards milestone streak bonus once per day. */
+async function recordDailyActivity(kid: IUser): Promise<number> {
   const today = todayString();
-  const unlimited = isDevUnlimited();
-  const claimedToday = await hasClaimedDailyStarToday(kid._id);
-
-  if (claimedToday && !unlimited) {
-    return { ok: false as const, error: 'כבר פתחת את הכוכב היום' };
-  }
-
-  // Dev re-claim: award daily bonus only, skip streak side-effects
-  if (claimedToday && unlimited) {
-    const dailyBonus = DAILY_STAR_BONUS;
-    kid.points += dailyBonus;
-    kid.xp += dailyBonus;
-    await PointTransaction.create({
-      kidId: kid._id,
-      familyId: kid.familyId,
-      amount: dailyBonus,
-      type: 'daily',
-      description: 'כוכב יומי (בדיקה)',
-    });
-    await updateLevelAndBadges(kid);
-    await kid.save();
-
-    return {
-      ok: true as const,
-      dailyBonus,
-      streakBonus: 0,
-      totalPoints: dailyBonus,
-      streak: kid.streak,
-      points: kid.points,
-      level: kid.level,
-      xp: kid.xp,
-      unlimited: true,
-    };
-  }
-
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split('T')[0];
@@ -122,8 +110,61 @@ export async function claimDailyStar(kid: IUser) {
   } else if (kid.lastActiveDate !== today) {
     kid.streak = 1;
   }
-
   kid.lastActiveDate = today;
+
+  const streakBonus = STREAK_BONUSES[kid.streak] ?? 0;
+  if (!streakBonus) return 0;
+
+  kid.points += streakBonus;
+  kid.xp += streakBonus;
+  await PointTransaction.create({
+    kidId: kid._id,
+    familyId: kid.familyId,
+    amount: streakBonus,
+    type: 'streak',
+    description: `בונוס רצף ${kid.streak} ימים`,
+  });
+  return streakBonus;
+}
+
+export async function getDailyStarStatus(kid: IUser) {
+  const giftType = getDailyGiftType(kid._id);
+  const claimedToday = await hasClaimedDailyStarToday(kid._id);
+  const available = giftType === 'star' && !claimedToday;
+  const streak = available ? projectedStreak(kid) : kid.streak;
+  const streakBonus = available && STREAK_BONUSES[streak] ? STREAK_BONUSES[streak] : 0;
+  const dailyBonus = available ? DAILY_STAR_BONUS : 0;
+
+  return {
+    available,
+    tapsRequired: DAILY_STAR_TAPS,
+    dailyBonus,
+    streakBonus,
+    totalPoints: dailyBonus + streakBonus,
+    streak,
+    giftType,
+  };
+}
+
+export async function processDailyLogin(kid: IUser) {
+  const giftType = getDailyGiftType(kid._id);
+  const used = await hasUsedDailyGiftToday(kid._id);
+  return {
+    dailyGiftType: giftType,
+    dailyGiftAvailable: !used,
+  };
+}
+
+export async function claimDailyStar(kid: IUser) {
+  if (getDailyGiftType(kid._id) !== 'star') {
+    return { ok: false as const, error: 'היום מתנה אחרת מחכה לך' };
+  }
+
+  if (await hasClaimedDailyStarToday(kid._id)) {
+    return { ok: false as const, error: 'כבר פתחת את הכוכב היום' };
+  }
+
+  const streakBonus = await recordDailyActivity(kid);
 
   const dailyBonus = DAILY_STAR_BONUS;
   kid.points += dailyBonus;
@@ -137,20 +178,6 @@ export async function claimDailyStar(kid: IUser) {
     description: 'כוכב יומי',
   });
 
-  let streakBonus = 0;
-  if (STREAK_BONUSES[kid.streak]) {
-    streakBonus = STREAK_BONUSES[kid.streak];
-    kid.points += streakBonus;
-    kid.xp += streakBonus;
-    await PointTransaction.create({
-      kidId: kid._id,
-      familyId: kid.familyId,
-      amount: streakBonus,
-      type: 'streak',
-      description: `בונוס רצף ${kid.streak} ימים`,
-    });
-  }
-
   await updateLevelAndBadges(kid);
   await kid.save();
 
@@ -163,18 +190,7 @@ export async function claimDailyStar(kid: IUser) {
     points: kid.points,
     level: kid.level,
     xp: kid.xp,
-    unlimited,
   };
-}
-
-async function hasSpunWheelToday(kidId: IUser['_id']): Promise<boolean> {
-  const existing = await PointTransaction.findOne({
-    kidId,
-    type: 'bonus',
-    description: WHEEL_DESC,
-    createdAt: { $gte: startOfUtcDay() },
-  });
-  return !!existing;
 }
 
 function pickWeightedSegment(): { index: number; segment: FortuneWheelSegment } {
@@ -189,82 +205,64 @@ function pickWeightedSegment(): { index: number; segment: FortuneWheelSegment } 
 }
 
 export async function getFortuneWheelStatus(kid: IUser) {
-  const unlimited = isDevUnlimited();
+  const giftType = getDailyGiftType(kid._id);
   const spun = await hasSpunWheelToday(kid._id);
   return {
-    available: unlimited || !spun,
+    available: giftType === 'wheel' && !spun,
     segments: FORTUNE_WHEEL_SEGMENTS,
-    unlimited,
+    giftType,
   };
 }
 
 export async function spinFortuneWheel(kid: IUser) {
-  const unlimited = isDevUnlimited();
-  const spun = await hasSpunWheelToday(kid._id);
+  if (getDailyGiftType(kid._id) !== 'wheel') {
+    return { ok: false as const, error: 'היום מתנה אחרת מחכה לך' };
+  }
 
-  if (spun && !unlimited) {
+  if (await hasSpunWheelToday(kid._id)) {
     return { ok: false as const, error: 'כבר סובבת את הגלגל היום' };
   }
 
+  const streakBonus = await recordDailyActivity(kid);
   const { index, segment } = pickWeightedSegment();
-  await awardPoints(kid, segment.points, 'bonus', WHEEL_DESC);
+
+  kid.points += segment.points;
+  kid.xp += segment.points;
+  await updateLevelAndBadges(kid);
+  await kid.save();
+
+  await PointTransaction.create({
+    kidId: kid._id,
+    familyId: kid.familyId,
+    amount: segment.points,
+    type: 'bonus',
+    description: WHEEL_DESC,
+  });
 
   return {
     ok: true as const,
     segmentIndex: index,
     segment,
     pointsAwarded: segment.points,
+    streakBonus,
+    streak: kid.streak,
     points: kid.points,
     level: kid.level,
     xp: kid.xp,
   };
 }
 
-async function countChestsOpened(kidId: IUser['_id']): Promise<number> {
-  return PointTransaction.countDocuments({
-    kidId,
-    type: 'bonus',
-    description: CHEST_DESC,
-  });
-}
-
 export async function getTreasureChestStatus(kid: IUser) {
-  const unlimited = isDevUnlimited();
-  const approvedTasks = await TaskCompletion.countDocuments({
-    kidId: kid._id,
-    status: 'approved',
-  });
-  const chestsOpened = await countChestsOpened(kid._id);
-  const chestsEarned = Math.floor(approvedTasks / TREASURE_CHEST_TASKS);
-  const ready = unlimited || chestsEarned > chestsOpened;
-  const progress = unlimited ? TREASURE_CHEST_TASKS : approvedTasks % TREASURE_CHEST_TASKS;
-
-  return {
-    ready,
-    progress: ready && !unlimited ? TREASURE_CHEST_TASKS : progress,
-    needed: TREASURE_CHEST_TASKS,
-    approvedTasks,
-    chestsOpened,
-    unlimited,
-  };
+  const openedToday = await hasOpenedChestToday(kid._id);
+  const ready = isSurpriseChestDay(kid._id) && !openedToday;
+  return { ready };
 }
-
-const CHEST_REWARDS = [15, 20, 25, 30, 40];
 
 export async function openTreasureChest(kid: IUser) {
-  const unlimited = isDevUnlimited();
   const status = await getTreasureChestStatus(kid);
 
-  if (!status.ready && !unlimited) {
-    return { ok: false as const, error: 'התיבה עדיין לא מוכנה' };
-  }
-
-  if (!unlimited) {
-    const approvedTasks = status.approvedTasks;
-    const chestsEarned = Math.floor(approvedTasks / TREASURE_CHEST_TASKS);
-    if (chestsEarned <= status.chestsOpened) {
-      return { ok: false as const, error: 'התיבה עדיין לא מוכנה' };
-    }
+  if (!status.ready) {
+    return { ok: false as const, error: 'אין תיבה היום — נסה שוב מחר!' };
   }
 
   const pointsAwarded = CHEST_REWARDS[Math.floor(Math.random() * CHEST_REWARDS.length)];
