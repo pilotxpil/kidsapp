@@ -24,6 +24,7 @@ import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
+import { KidLoginQrModal } from '../../components/KidLoginQrModal';
 
 export default function ParentKidsScreen() {
   const insets = useSafeAreaInsets();
@@ -36,6 +37,7 @@ export default function ParentKidsScreen() {
   const [pin, setPin] = useState('');
   const [avatar, setAvatar] = useState(AVATARS[0]);
   const [loading, setLoading] = useState(false);
+  const [qrKid, setQrKid] = useState<User | null>(null);
   const savingRef = useRef(false);
 
   const modalMaxHeight = Dimensions.get('window').height - insets.top - insets.bottom - spacing.lg * 2;
@@ -67,6 +69,8 @@ export default function ParentKidsScreen() {
         kidStat: { color: colors.gold, fontWeight: '700' },
         editBtn: { padding: spacing.xs, flexShrink: 0 },
         editIcon: { fontSize: 20 },
+        qrBtn: { padding: spacing.xs, flexShrink: 0 },
+        qrIcon: { fontSize: 20 },
         modalOverlay: {
           flex: 1,
           backgroundColor: 'rgba(0,0,0,0.7)',
@@ -240,6 +244,9 @@ export default function ParentKidsScreen() {
                   </View>
                 </View>
                 <Text style={styles.kidAvatar}>{kid.avatar}</Text>
+                <TouchableOpacity style={styles.qrBtn} onPress={() => setQrKid(kid)}>
+                  <Text style={styles.qrIcon}>📷</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.editBtn} onPress={() => openEdit(kid)}>
                   <Text style={styles.editIcon}>✏️</Text>
                 </TouchableOpacity>
@@ -299,6 +306,8 @@ export default function ParentKidsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <KidLoginQrModal kid={qrKid} visible={!!qrKid} onClose={() => setQrKid(null)} />
     </ThemedScreen>
   );
 }

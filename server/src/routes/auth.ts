@@ -138,20 +138,30 @@ router.post('/parent/login', async (req: Request, res: Response) => {
 
 router.post('/kid/login', async (req: Request, res: Response) => {
   try {
-    const { username, pin } = req.body;
+    const { username, pin, familyCode } = req.body;
 
-    if (!username || !pin) {
-      return res.status(400).json({ error: 'שם משתמש ו-PIN נדרשים' });
+    if (!username || !pin || !familyCode) {
+      return res.status(400).json({ error: 'קוד משפחה, שם משתמש ו-PIN נדרשים' });
     }
 
-    const kid = await User.findOne({ username, role: 'kid' });
+    const code = normalizeInviteCode(String(familyCode));
+    const family = await Family.findOne({ inviteCode: code });
+    if (!family) {
+      return res.status(401).json({ error: 'קוד משפחה, שם משתמש או PIN שגויים' });
+    }
+
+    const kid = await User.findOne({
+      username: String(username).trim(),
+      role: 'kid',
+      familyId: family._id,
+    });
     if (!kid || !kid.pinHash) {
-      return res.status(401).json({ error: 'שם משתמש או PIN שגויים' });
+      return res.status(401).json({ error: 'קוד משפחה, שם משתמש או PIN שגויים' });
     }
 
-    const valid = await bcrypt.compare(pin, kid.pinHash);
+    const valid = await bcrypt.compare(String(pin), kid.pinHash);
     if (!valid) {
-      return res.status(401).json({ error: 'שם משתמש או PIN שגויים' });
+      return res.status(401).json({ error: 'קוד משפחה, שם משתמש או PIN שגויים' });
     }
 
     const { dailyGiftAvailable, dailyGiftType } = await processDailyLogin(kid);

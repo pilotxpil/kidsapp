@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Text, StyleSheet, Alert } from 'react-native';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Text, StyleSheet, Alert, Platform, View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
@@ -7,28 +7,64 @@ import { Celebration } from '../components/Celebration';
 import { AuthBrand } from '../components/AuthBrand';
 import { AuthScreenShell } from '../components/AuthScreenShell';
 import { AuthFormCard } from '../components/AuthFormCard';
+import { KidLoginScanner } from '../components/KidLoginScanner';
 import { playSfx } from '../lib/sfx';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { spacing } from '../constants/theme';
 import { kidAuthTheme } from '../constants/theme';
-import { API_URL } from '../lib/config';
 import { t } from '../lib/i18n';
 import { resetKidGiftDismissals } from '../lib/kid-gift-dismiss';
+import { getSavedFamilyCode, saveFamilyCode } from '../lib/kid-login-storage';
 
 export default function KidLoginScreen() {
+  const [familyCode, setFamilyCode] = useState('');
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [celebrate, setCelebrate] = useState(false);
   const [bonusMsg, setBonusMsg] = useState('');
+  const [scannerOpen, setScannerOpen] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    void getSavedFamilyCode().then((code) => {
+      if (code) setFamilyCode(code);
+    });
+  }, []);
+
+  const applyScan = useCallback((payload: { familyCode: string; username: string }) => {
+    setFamilyCode(payload.familyCode);
+    setUsername(payload.username);
+    void saveFamilyCode(payload.familyCode);
+    playSfx('coin');
+  }, []);
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
+        scanRow: {
+          width: '100%',
+          alignItems: 'flex-end',
+          marginBottom: spacing.sm,
+        },
+        scanBtn: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing.sm,
+          paddingVertical: spacing.xs,
+          borderRadius: 999,
+          backgroundColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+          borderColor: 'rgba(255,255,255,0.15)',
+        },
+        scanText: {
+          color: kidAuthTheme.colors.textMuted,
+          fontSize: 12,
+          fontWeight: '600',
+        },
         error: {
           color: kidAuthTheme.colors.danger,
           textAlign: 'center',
@@ -36,25 +72,28 @@ export default function KidLoginScreen() {
           fontSize: 14,
           fontWeight: '600',
         },
-        devHint: {
+        hint: {
           color: kidAuthTheme.colors.textMuted,
-          textAlign: 'center',
-          marginTop: spacing.sm,
-          fontSize: 11,
+          fontSize: 12,
+          textAlign: 'right',
+          marginTop: -spacing.sm,
+          marginBottom: spacing.md,
         },
       }),
     []
   );
 
   const handleLogin = async () => {
-    if (!username || pin.length < 4) {
-      Alert.alert('שגיאה', 'הזן שם משתמש ו-PIN של 4 ספרות');
+    const code = familyCode.trim();
+    if (!code || !username || pin.length < 4) {
+      Alert.alert('שגיאה', 'הזן קוד משפחה, שם משתמש ו-PIN של 4 ספרות');
       return;
     }
     setLoading(true);
     setError('');
     try {
-      const res = await api.kidLogin(username, pin);
+      const res = await api.kidLogin(username.trim(), pin, code);
+      await saveFamilyCode(code);
       resetKidGiftDismissals();
       await login(res.token, res.user);
 
@@ -85,6 +124,29 @@ export default function KidLoginScreen() {
         <AuthBrand variant="kid" compact />
 
         <AuthFormCard themeId="brawl">
+          {Platform.OS !== 'web' ? (
+            <View style={styles.scanRow}>
+              <Pressable
+                onPress={() => setScannerOpen(true)}
+                style={styles.scanBtn}
+                accessibilityRole="button"
+                accessibilityLabel={t('scanKidLogin')}
+              >
+                <Text style={styles.scanText}>📷 {t('scanKidLogin')}</Text>
+              </Pressable>
+            </View>
+          ) : null}
+
+          <Input
+            label={t('familyCode')}
+            value={familyCode}
+            onChangeText={(v) => setFamilyCode(v.replace(/\D/g, '').slice(0, 6))}
+            keyboardType="number-pad"
+            maxLength={6}
+            placeholder="123456"
+          />
+          <Text style={styles.hint}>{t('familyCodeHint')}</Text>
+
           <Input
             label={t('username')}
             value={username}
@@ -103,9 +165,14 @@ export default function KidLoginScreen() {
           />
           <Button title={t('login')} onPress={handleLogin} loading={loading} />
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          {__DEV__ ? <Text style={styles.devHint}>שרת: {API_URL}</Text> : null}
         </AuthFormCard>
       </AuthScreenShell>
+
+      <KidLoginScanner
+        visible={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={applyScan}
+      />
 
       <Celebration
         visible={celebrate}

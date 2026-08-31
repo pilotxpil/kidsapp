@@ -104,10 +104,10 @@ export const api = {
     });
   },
 
-  kidLogin(username: string, pin: string) {
+  kidLogin(username: string, pin: string, familyCode: string) {
     return request<AuthResponse & { dailyStarAvailable?: boolean }>('/auth/kid/login', {
       method: 'POST',
-      body: JSON.stringify({ username, pin }),
+      body: JSON.stringify({ username, pin, familyCode }),
     });
   },
 

@@ -15,6 +15,8 @@ import { spacing } from '../constants/theme';
 import { useTheme } from '../lib/theme-context';
 import { playSfx } from '../lib/sfx';
 import { t } from '../lib/i18n';
+import { rtl } from '../lib/rtl';
+import { RtlText } from './RtlText';
 import { Celebration } from './Celebration';
 import { useModalEnter } from './animations/modalEnter';
 import { BouncyPressable } from './animations/BouncyPressable';
@@ -53,9 +55,6 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
         },
         inner: {
           padding: spacing.lg,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: spacing.md,
         },
         iconWrap: {
           width: 64,
@@ -64,18 +63,16 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
           justifyContent: 'center',
         },
         icon: { fontSize: 44 },
-        body: { flex: 1 },
+        body: { flex: 1, minWidth: 0 },
         title: {
           color: '#fff',
           fontSize: 16,
           fontWeight: '800',
-          textAlign: 'left',
         },
         sub: {
           color: 'rgba(255,255,255,0.85)',
           fontSize: 12,
           marginTop: 4,
-          textAlign: 'left',
         },
         barBg: {
           marginTop: spacing.sm,
@@ -169,7 +166,6 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
         },
         mutedInner: {
           padding: spacing.lg,
-          flexDirection: 'row',
           alignItems: 'center',
           gap: spacing.md,
         },
@@ -263,13 +259,15 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
       >
         <View style={styles.card}>
           <LinearGradient colors={[...heroGradient]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.inner}>
-            <Animated.View style={[styles.iconWrap, iconStyle]}>
-              <Text style={styles.icon}>🎁</Text>
-            </Animated.View>
-            <View style={styles.body}>
-              <Text style={styles.title}>{t('treasureChest')}</Text>
-              <Text style={styles.sub}>{t('chestReadyHint')}</Text>
-              <Text style={styles.readyTag}>{t('chestTapToOpen')}</Text>
+            <View style={[rtl.cardRow, { alignItems: 'center', gap: spacing.md }]}>
+              <Animated.View style={[styles.iconWrap, iconStyle]}>
+                <Text style={styles.icon}>🎁</Text>
+              </Animated.View>
+              <View style={styles.body}>
+                <RtlText style={styles.title}>{t('treasureChest')}</RtlText>
+                <RtlText style={styles.sub}>{t('chestReadyHint')}</RtlText>
+                <Text style={[styles.readyTag, rtl.text]}>{t('chestTapToOpen')}</Text>
+              </View>
             </View>
           </LinearGradient>
         </View>

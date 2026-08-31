@@ -50,7 +50,13 @@
       ],
       "expo-font",
       "expo-web-browser",
-      "expo-av"
+      "expo-av",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "נדרשת מצלמה לסריקת קוד כניסה לילדים"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

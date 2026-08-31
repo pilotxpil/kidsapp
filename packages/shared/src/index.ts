@@ -133,6 +133,59 @@ export interface FamilyInviteInfo {
   canInvite: boolean;
 }
 
+/** Payload encoded in parent→kid login QR codes. */
+export interface KidLoginQrPayload {
+  v: 1;
+  familyCode: string;
+  username: string;
+  displayName?: string;
+}
+
+export function buildKidLoginQrPayload(
+  familyCode: string,
+  username: string,
+  displayName?: string
+): string {
+  const payload: KidLoginQrPayload = {
+    v: 1,
+    familyCode: familyCode.trim(),
+    username: username.trim(),
+    ...(displayName ? { displayName } : {}),
+  };
+  return JSON.stringify(payload);
+}
+
+export function parseKidLoginQr(raw: string): KidLoginQrPayload | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  try {
+    if (trimmed.startsWith('kidsquest://')) {
+      const query = trimmed.includes('?') ? trimmed.split('?')[1] : '';
+      const params = new URLSearchParams(query);
+      const familyCode = params.get('code') ?? params.get('familyCode') ?? '';
+      const username = params.get('user') ?? params.get('username') ?? '';
+      if (familyCode && username) {
+        return { v: 1, familyCode, username, displayName: params.get('name') ?? undefined };
+      }
+    }
+
+    const data = JSON.parse(trimmed) as Partial<KidLoginQrPayload>;
+    if (data.v === 1 && data.familyCode && data.username) {
+      return {
+        v: 1,
+        familyCode: String(data.familyCode).trim(),
+        username: String(data.username).trim(),
+        displayName: data.displayName ? String(data.displayName) : undefined,
+      };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 export interface User {
   _id: string;
   role: UserRole;
