@@ -40,6 +40,9 @@ const userSchema = new Schema<IUser>(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
-userSchema.index({ username: 1, familyId: 1 }, { unique: true, sparse: true });
+userSchema.index(
+  { username: 1, familyId: 1 },
+  { unique: true, partialFilterExpression: { username: { $exists: true, $type: 'string' } } }
+);
 
 export const User = mongoose.model<IUser>('User', userSchema);

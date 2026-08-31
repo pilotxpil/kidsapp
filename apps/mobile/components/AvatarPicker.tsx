@@ -8,7 +8,7 @@ import {
   Pressable,
   TouchableOpacity,
 } from 'react-native';
-import { AVATARS } from '@kidsapp/shared';
+import { AVATARS, PARENT_AVATARS } from '@kidsapp/shared';
 import { spacing } from '../constants/theme';
 import { useAuth } from '../lib/auth';
 import { api } from '../lib/api';
@@ -28,6 +28,7 @@ export function AvatarPickerModal({ visible, onClose }: AvatarPickerModalProps) 
   const { borderRadius, colors, cardBorder } = useTheme();
   const [saving, setSaving] = useState<string | null>(null);
   const current = user?.avatar ?? AVATARS[0];
+  const options = user?.role === 'parent' ? PARENT_AVATARS : AVATARS;
 
   const handleSelect = async (avatar: string) => {
     if (!user || saving) return;
@@ -38,7 +39,11 @@ export function AvatarPickerModal({ visible, onClose }: AvatarPickerModalProps) 
     setSaving(avatar);
     try {
       playSfx('tap');
-      await api.updateKid(user._id, { avatar });
+      if (user.role === 'parent') {
+        await api.updateMe({ avatar });
+      } else {
+        await api.updateKid(user._id, { avatar });
+      }
       await refreshUser();
       onClose();
     } finally {
@@ -63,7 +68,7 @@ export function AvatarPickerModal({ visible, onClose }: AvatarPickerModalProps) 
           <Text style={[styles.title, { color: colors.text }]}>{t('selectAvatar')}</Text>
           <Text style={[styles.hint, { color: colors.textMuted }]}>{t('selectAvatarHint')}</Text>
           <View style={[styles.grid, rtl.tabs]}>
-            {AVATARS.map((emoji) => {
+            {options.map((emoji) => {
               const selected = emoji === current;
               const loading = saving === emoji;
               return (

@@ -53,7 +53,11 @@ export default function ParentLayout() {
       />
       <Tabs.Screen
         name="kids"
-        options={{ title: t('manageKids'), tabBarIcon: ({ focused }) => <TabIcon emoji={tabIcons.profile} focused={focused} /> }}
+        options={{ title: t('manageKids'), tabBarIcon: ({ focused }) => <TabIcon emoji="👨‍👩‍👧‍👦" focused={focused} /> }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{ title: t('profile'), tabBarIcon: ({ focused }) => <TabIcon emoji={tabIcons.profile} focused={focused} /> }}
       />
     </Tabs>
   );

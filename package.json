@@ -7,9 +7,9 @@
     "server"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev -w server\" \"npm run start -w @kidsapp/mobile\"",
+    "dev": "npm run build -w @kidsapp/shared && concurrently \"npm run dev -w server\" \"npm run start -w @kidsapp/mobile\"",
     "dev:server": "npm run dev -w server",
-    "dev:mobile": "npm run start -w @kidsapp/mobile",
+    "dev:mobile": "npm run build -w @kidsapp/shared && npm run start -w @kidsapp/mobile",
     "build": "npm run build -w @kidsapp/shared && npm run build -w server",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down"

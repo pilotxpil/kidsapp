@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { TASK_CATEGORIES } from '@kidsapp/shared';
-import type { Task, TaskCategory } from '@kidsapp/shared';
+import { TASK_CATEGORIES, TASK_RECURRENCE } from '@kidsapp/shared';
+import type { Task, TaskCategory, TaskRecurrence } from '@kidsapp/shared';
 import { Card } from './Card';
 import { Button } from './Button';
 import { RtlText } from './RtlText';
@@ -15,14 +15,21 @@ interface TaskCardProps {
   task: Task;
   onComplete: (task: Task) => void;
   loading?: boolean;
-  pending?: boolean;
   index?: number;
 }
 
-export function TaskCard({ task, onComplete, loading, pending, index = 0 }: TaskCardProps) {
+function completedLabel(recurrence: TaskRecurrence): string {
+  if (recurrence === 'daily') return t('completedToday');
+  if (recurrence === 'weekly') return t('completedThisWeek');
+  return t('completedOnce');
+}
+
+export function TaskCard({ task, onComplete, loading, index = 0 }: TaskCardProps) {
   const { colors, borderRadius, cardBorder, categoryIcon, pointsEmoji, id: themeId } = useTheme();
   const cat = TASK_CATEGORIES[task.category as TaskCategory];
   const icon = categoryIcon(task.category as TaskCategory);
+  const isPending = task.completionStatus === 'pending';
+  const isCompleted = task.completionStatus === 'completed';
 
   const styles = useMemo(
     () =>
@@ -46,14 +53,19 @@ export function TaskCard({ task, onComplete, loading, pending, index = 0 }: Task
         points: { color: colors.gold, fontWeight: '800', fontSize: 15 },
         categoryText: { color: colors.text, fontSize: 12, fontWeight: '700' },
         button: { marginTop: spacing.sm },
-        pendingBadge: {
-          backgroundColor: colors.secondary,
+        statusBadge: {
           padding: spacing.sm,
           borderRadius: borderRadius.sm,
           alignItems: 'center',
           ...cardBorder(1),
         },
-        pendingText: { color: colors.text, fontWeight: '600' },
+        pendingBadge: {
+          backgroundColor: colors.secondary,
+        },
+        completedBadge: {
+          backgroundColor: colors.bgCardLight,
+        },
+        statusText: { color: colors.text, fontWeight: '600' },
         tabs: { gap: spacing.sm, marginBottom: spacing.md },
         tab: {
           paddingHorizontal: spacing.md,
@@ -77,7 +89,7 @@ export function TaskCard({ task, onComplete, loading, pending, index = 0 }: Task
 
   return (
     <FadeInUp index={index} style={styles.cardWrap}>
-      <Card style={styles.card} glow={pending}>
+      <Card style={styles.card} glow={isPending}>
         <View style={styles.header}>
           <RtlText style={styles.title}>{task.title}</RtlText>
           {task.description ? (
@@ -90,11 +102,20 @@ export function TaskCard({ task, onComplete, loading, pending, index = 0 }: Task
                 {icon} {cat?.label}
               </Text>
             </View>
+            {task.recurrence === 'daily' ? (
+              <View style={styles.categoryBadge}>
+                <Text style={[styles.categoryText, rtl.text]}>🔁 {TASK_RECURRENCE.daily.label}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
-        {pending ? (
-          <View style={styles.pendingBadge}>
-            <Text style={[styles.pendingText, rtl.textCenter]}>⏳ {t('pending')}</Text>
+        {isPending ? (
+          <View style={[styles.statusBadge, styles.pendingBadge]}>
+            <Text style={[styles.statusText, rtl.textCenter]}>⏳ {t('pending')}</Text>
+          </View>
+        ) : isCompleted ? (
+          <View style={[styles.statusBadge, styles.completedBadge]}>
+            <Text style={[styles.statusText, rtl.textCenter]}>✓ {completedLabel(task.recurrence)}</Text>
           </View>
         ) : (
           <Button

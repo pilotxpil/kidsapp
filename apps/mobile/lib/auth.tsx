@@ -58,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         prev.level === userData.level &&
         prev.xp === userData.xp &&
         prev.streak === userData.streak &&
+        prev.displayName === userData.displayName &&
         prev.uiTheme === userData.uiTheme &&
         prev.avatar === userData.avatar &&
         prev.badges.length === userData.badges.length &&

@@ -1,5 +1,17 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Modal,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
+  Pressable,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
@@ -22,15 +34,20 @@ const DEFAULT_REWARDS = [
 ];
 
 export default function ParentRewardsScreen() {
+  const insets = useSafeAreaInsets();
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [cost, setCost] = useState('100');
   const [category, setCategory] = useState<RewardCategory>('gaming');
   const [icon, setIcon] = useState('🎁');
   const [loading, setLoading] = useState(false);
+  const savingRef = useRef(false);
+
+  const modalMaxHeight = Dimensions.get('window').height - insets.top - insets.bottom - spacing.lg * 2;
 
   const styles = useMemo(
     () =>
@@ -60,8 +77,9 @@ export default function ParentRewardsScreen() {
           width: '100%',
         },
         rewardCard: { marginBottom: spacing.sm },
-        rewardRow: { alignItems: 'center', width: '100%' },
-        delete: { fontSize: 20 },
+        rewardRow: { alignItems: 'flex-start', width: '100%', gap: spacing.sm },
+        actions: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', flexShrink: 0 },
+        actionIcon: { fontSize: 20 },
         rewardInfo: { flex: 1, minWidth: 0 },
         rewardTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
         rewardMeta: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
@@ -69,17 +87,20 @@ export default function ParentRewardsScreen() {
           flex: 1,
           backgroundColor: 'rgba(0,0,0,0.7)',
           justifyContent: 'center',
-          padding: spacing.lg,
+          paddingHorizontal: spacing.lg,
+          paddingVertical: spacing.md,
         },
+        modalBackdrop: { ...StyleSheet.absoluteFillObject },
         modal: {
           backgroundColor: colors.bgCard,
           borderRadius: borderRadius.xl,
-          padding: spacing.lg,
           maxWidth: 500,
           alignSelf: 'center',
           width: '100%',
+          overflow: 'hidden',
           ...cardBorder(2),
         },
+        modalScroll: { padding: spacing.lg, paddingBottom: spacing.sm },
         modalTitle: {
           color: colors.text,
           fontSize: 22,
@@ -94,8 +115,18 @@ export default function ParentRewardsScreen() {
           fontWeight: '600',
           marginBottom: spacing.sm,
           width: '100%',
+          textAlign: 'right',
+          writingDirection: 'rtl',
         },
-        chips: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+        chipRow: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: spacing.sm,
+          marginBottom: spacing.md,
+          justifyContent: 'flex-end',
+          width: '100%',
+          ...(Platform.OS === 'web' ? { direction: 'rtl' as const } : {}),
+        },
         chip: {
           paddingHorizontal: spacing.md,
           paddingVertical: spacing.sm,
@@ -105,8 +136,14 @@ export default function ParentRewardsScreen() {
           borderColor: colors.border,
         },
         chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-        chipText: { color: colors.text, fontSize: 13, writingDirection: 'rtl' },
-        modalActions: { gap: spacing.sm, marginTop: spacing.md },
+        chipText: { color: colors.text, fontSize: 13, textAlign: 'right', writingDirection: 'rtl' },
+        modalActions: {
+          gap: spacing.sm,
+          padding: spacing.lg,
+          paddingTop: spacing.sm,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        },
       }),
     [themeId, colors, borderRadius, cardBorder]
   );
@@ -118,18 +155,60 @@ export default function ParentRewardsScreen() {
 
   useFocusLoad(load);
 
-  const handleCreate = async () => {
-    if (!title) return;
+  const resetForm = () => {
+    setEditingReward(null);
+    setTitle('');
+    setDescription('');
+    setCost('100');
+    setCategory('gaming');
+    setIcon('🎁');
+  };
+
+  const openCreate = () => {
+    resetForm();
+    setModalVisible(true);
+  };
+
+  const openEdit = (reward: Reward) => {
+    setEditingReward(reward);
+    setTitle(reward.title);
+    setDescription(reward.description);
+    setCost(String(reward.cost));
+    setCategory(reward.category);
+    setIcon(reward.icon);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    resetForm();
+  };
+
+  const handleSave = async () => {
+    if (savingRef.current || loading) return;
+    if (!title.trim()) return;
+
+    savingRef.current = true;
     setLoading(true);
     try {
-      await api.createReward({ title, description, cost: parseInt(cost) || 100, category, icon });
-      setModalVisible(false);
-      setTitle('');
-      setDescription('');
+      const payload = {
+        title: title.trim(),
+        description,
+        cost: parseInt(cost) || 100,
+        category,
+        icon,
+      };
+      if (editingReward) {
+        await api.updateReward(editingReward._id, payload);
+      } else {
+        await api.createReward(payload);
+      }
+      closeModal();
       await load();
     } catch (err: any) {
       alert(err.message);
     } finally {
+      savingRef.current = false;
       setLoading(false);
     }
   };
@@ -140,7 +219,9 @@ export default function ParentRewardsScreen() {
   };
 
   const applyTemplate = (tpl: (typeof DEFAULT_REWARDS)[0]) => {
+    setEditingReward(null);
     setTitle(tpl.title);
+    setDescription('');
     setIcon(tpl.icon);
     setCost(tpl.cost);
     setCategory(tpl.category);
@@ -153,7 +234,7 @@ export default function ParentRewardsScreen() {
     <ThemedScreen tabs>
       <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
         <View style={[styles.header, rtl.headerSplit]}>
-          <Button title={`+ ${t('addReward')}`} onPress={() => setModalVisible(true)} style={styles.addBtn} />
+          <Button title={`+ ${t('addReward')}`} onPress={openCreate} style={styles.addBtn} />
           <Text style={[styles.title, rtl.textFull]}>{t('manageRewards')}</Text>
         </View>
 
@@ -172,9 +253,6 @@ export default function ParentRewardsScreen() {
           return (
             <Card key={reward._id} style={styles.rewardCard}>
               <View style={[styles.rewardRow, rtl.row]}>
-                <TouchableOpacity onPress={() => handleDelete(reward._id)}>
-                  <Text style={styles.delete}>🗑️</Text>
-                </TouchableOpacity>
                 <View style={styles.rewardInfo}>
                   <Text style={[styles.rewardTitle, rtl.textFull]}>
                     {reward.icon} {reward.title}
@@ -183,49 +261,62 @@ export default function ParentRewardsScreen() {
                     {cat.label} · {reward.cost} {pointsEmoji}
                   </Text>
                 </View>
+                <View style={styles.actions}>
+                  <TouchableOpacity onPress={() => openEdit(reward)}>
+                    <Text style={styles.actionIcon}>✏️</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDelete(reward._id)}>
+                    <Text style={styles.actionIcon}>🗑️</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </Card>
           );
         })}
       </ScrollView>
 
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>{t('addReward')}</Text>
-            <Input label={t('title')} value={title} onChangeText={setTitle} />
-            <Input label={t('description')} value={description} onChangeText={setDescription} />
-            <Input label={t('cost')} value={cost} onChangeText={setCost} keyboardType="number-pad" />
+      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={closeModal}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={closeModal} />
+          <View style={[styles.modal, { maxHeight: modalMaxHeight }]}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.modalScroll}
+              showsVerticalScrollIndicator
+            >
+              <Text style={styles.modalTitle}>{editingReward ? t('editReward') : t('addReward')}</Text>
+              <Input label={t('title')} value={title} onChangeText={setTitle} />
+              <Input label={t('description')} value={description} onChangeText={setDescription} />
+              <Input label={t('cost')} value={cost} onChangeText={setCost} keyboardType="number-pad" />
 
-            <Text style={[styles.label, rtl.textFull]}>{t('category')}</Text>
-            <View style={[styles.chips, rtl.row]}>
-              {categories.map(([key, val]) => (
-                <TouchableOpacity
-                  key={key}
-                  style={[styles.chip, category === key && styles.chipActive]}
-                  onPress={() => {
-                    setCategory(key);
-                    setIcon(val.icon);
-                  }}
-                >
-                  <Text style={styles.chipText}>
-                    {val.icon} {val.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+              <Text style={styles.label}>{t('category')}</Text>
+              <View style={styles.chipRow}>
+                {categories.map(([key, val]) => (
+                  <TouchableOpacity
+                    key={key}
+                    style={[styles.chip, category === key && styles.chipActive]}
+                    onPress={() => {
+                      setCategory(key);
+                      setIcon(val.icon);
+                    }}
+                  >
+                    <Text style={styles.chipText}>
+                      {val.icon} {val.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
 
             <View style={[styles.modalActions, rtl.row]}>
-              <Button title={t('save')} onPress={handleCreate} loading={loading} style={{ flex: 1 }} />
-              <Button
-                title={t('cancel')}
-                onPress={() => setModalVisible(false)}
-                variant="outline"
-                style={{ flex: 1 }}
-              />
+              <Button title={t('save')} onPress={handleSave} loading={loading} style={{ flex: 1 }} />
+              <Button title={t('cancel')} onPress={closeModal} variant="outline" style={{ flex: 1 }} />
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </ThemedScreen>
   );

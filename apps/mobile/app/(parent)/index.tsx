@@ -6,8 +6,6 @@ import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { ThemedScreen } from '../../components/ThemedScreen';
-import { ThemePicker } from '../../components/ThemePicker';
-import { SectionHeader } from '../../components/ThemedHero';
 import type { ParentDashboard, TaskCategory } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
@@ -72,13 +70,6 @@ export default function ParentDashboardScreen() {
         },
         kidPoints: { color: colors.gold, fontWeight: '700', marginTop: 4, textAlign: 'center', width: '100%' },
         kidLevel: { color: colors.textMuted, fontSize: 12, textAlign: 'center', width: '100%' },
-        sectionHint: {
-          color: colors.textMuted,
-          fontSize: 13,
-          marginBottom: spacing.md,
-          width: '100%',
-        },
-        themeSection: { marginTop: spacing.lg, marginBottom: spacing.md },
       }),
     [themeId, colors, borderRadius, cardBorder]
   );
@@ -229,12 +220,6 @@ export default function ParentDashboardScreen() {
               </View>
             </Card>
           ))}
-        </View>
-
-        <View style={styles.themeSection}>
-          <SectionHeader title={t('uiTheme')} icon="🎨" />
-          <Text style={[styles.sectionHint, rtl.textFull]}>{t('uiThemeHint')}</Text>
-          <ThemePicker />
         </View>
       </ScrollView>
     </ThemedScreen>

@@ -4,6 +4,8 @@ export type TaskCategory = 'home' | 'school' | 'social' | 'hobby' | 'sport';
 
 export type TaskRecurrence = 'once' | 'daily' | 'weekly';
 
+export type TaskCompletionStatus = 'available' | 'pending' | 'completed';
+
 export type CompletionStatus = 'pending' | 'approved' | 'rejected';
 
 export type RedemptionStatus = 'pending' | 'approved' | 'rejected' | 'fulfilled';
@@ -110,9 +112,18 @@ export interface FamilySettings {
 export interface Family {
   _id: string;
   name: string;
-  parentId: string;
+  parentIds: string[];
+  inviteCode?: string;
   settings: FamilySettings;
   createdAt: string;
+}
+
+export interface FamilyInviteInfo {
+  inviteCode: string;
+  parentCount: number;
+  maxParents: number;
+  parents: { displayName: string }[];
+  canInvite: boolean;
 }
 
 export interface User {
@@ -145,6 +156,7 @@ export interface Task {
   icon: string;
   isActive: boolean;
   createdAt: string;
+  completionStatus?: TaskCompletionStatus;
 }
 
 export interface TaskCompletion {
@@ -230,9 +242,32 @@ export const TASK_CATEGORIES: Record<TaskCategory, { label: string; icon: string
   sport: { label: 'ספורט', icon: '🏹' },
 };
 
+export const TASK_RECURRENCE: Record<TaskRecurrence, { label: string; icon: string }> = {
+  daily: { label: 'יומי', icon: '🔁' },
+  once: { label: 'חד פעמי', icon: '1️⃣' },
+  weekly: { label: 'שבועי', icon: '📅' },
+};
+
 export function taskCategoryIcon(category: TaskCategory): string {
   return TASK_CATEGORIES[category]?.icon ?? '🧱';
 }
+
+export interface TaskTemplate {
+  title: string;
+  category: TaskCategory;
+  points: number;
+}
+
+/** Ready-made tasks for quick parent setup (matches demo seed). */
+export const TASK_TEMPLATES: TaskTemplate[] = [
+  { title: 'לסדר את החדר', category: 'home', points: 20 },
+  { title: 'לעשות שיעורי בית', category: 'school', points: 30 },
+  { title: 'לתרגל כדורגל', category: 'sport', points: 25 },
+  { title: 'לעזור בארוחת ערב', category: 'home', points: 15 },
+  { title: 'לקרוא 20 דקות', category: 'school', points: 20 },
+  { title: 'לצאת עם חבר', category: 'social', points: 15 },
+  { title: 'חוג רובוטיקה', category: 'hobby', points: 35 },
+];
 
 export const REWARD_CATEGORIES: Record<RewardCategory, { label: string; icon: string }> = {
   gaming: { label: 'גיימינג', icon: '⛏️' },
@@ -243,6 +278,8 @@ export const REWARD_CATEGORIES: Record<RewardCategory, { label: string; icon: st
 };
 
 export const AVATARS = ['🐷', '🐮', '🐑', '🐔', '🐺', '🐱', '🧟', '🕷️', '🐉', '🦇', '🐝', '🐢'];
+
+export const PARENT_AVATARS = ['👨‍👩‍👧‍👦', '👨', '👩', '🧔', '👩‍🦱', '🧑', '👴', '👵', '🦁', '🐻'];
 
 export const BADGES: Record<string, { label: string; icon: string; description: string }> = {
   first_task: { label: 'משימה ראשונה', icon: '💚', description: 'השלמת את המשימה הראשונה!' },

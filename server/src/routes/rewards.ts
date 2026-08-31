@@ -71,13 +71,36 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
 
 router.put('/:id', authenticate, requireParent, async (req: Request, res: Response) => {
   try {
+    const { title, description, cost, category, icon, imageUrl } = req.body;
+    const updates: Record<string, unknown> = {};
+    if (title !== undefined) updates.title = title;
+    if (description !== undefined) updates.description = description;
+    if (cost !== undefined) updates.cost = Number(cost);
+    if (category !== undefined) updates.category = category;
+    if (icon !== undefined) updates.icon = icon;
+    if (imageUrl !== undefined) updates.imageUrl = imageUrl;
+
     const reward = await Reward.findOneAndUpdate(
       { _id: req.params.id, familyId: req.user!.familyId },
-      req.body,
+      updates,
       { new: true }
     );
     if (!reward) return res.status(404).json({ error: 'פרס לא נמצא' });
-    res.json({ reward });
+    res.json({
+      reward: {
+        _id: reward._id.toString(),
+        familyId: reward.familyId.toString(),
+        title: reward.title,
+        description: reward.description,
+        cost: reward.cost,
+        category: reward.category,
+        icon: reward.icon,
+        imageUrl: reward.imageUrl,
+        requiresApproval: reward.requiresApproval,
+        isActive: reward.isActive,
+        createdAt: reward.createdAt.toISOString(),
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: 'שגיאה בעדכון פרס' });
   }

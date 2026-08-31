@@ -6,6 +6,10 @@ import { User } from '../models/User';
 import { Task } from '../models/Task';
 import { TaskCompletion } from '../models/TaskCompletion';
 import { formatUser } from '../utils/format';
+import {
+  getTaskCompletionStatus,
+  completionBlockedMessage,
+} from '../utils/taskAvailability';
 
 const router = Router();
 
@@ -24,6 +28,22 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
       isActive: true,
     }).sort({ createdAt: -1 });
 
+    const taskIds = tasks.map((t) => t._id);
+    const completions = taskIds.length
+      ? await TaskCompletion.find({
+          taskId: { $in: taskIds },
+          kidId: targetKidId,
+          status: { $in: ['pending', 'approved'] },
+        })
+      : [];
+
+    const completionsByTask = new Map<string, typeof completions>();
+    for (const c of completions) {
+      const key = c.taskId.toString();
+      if (!completionsByTask.has(key)) completionsByTask.set(key, []);
+      completionsByTask.get(key)!.push(c);
+    }
+
     res.json({
       tasks: tasks.map((t) => ({
         _id: t._id.toString(),
@@ -37,6 +57,10 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
         icon: t.icon,
         isActive: t.isActive,
         createdAt: t.createdAt.toISOString(),
+        completionStatus: getTaskCompletionStatus(
+          t.recurrence,
+          completionsByTask.get(t._id.toString()) ?? []
+        ),
       })),
     });
   } catch (err) {
@@ -111,13 +135,37 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
 
 router.put('/:id', authenticate, requireParent, async (req: Request, res: Response) => {
   try {
+    const { title, description, category, points, recurrence, icon } = req.body;
+    const updates: Record<string, unknown> = {};
+    if (title !== undefined) updates.title = title;
+    if (description !== undefined) updates.description = description;
+    if (category !== undefined) updates.category = category;
+    if (points !== undefined) updates.points = Number(points) || 20;
+    if (recurrence !== undefined) updates.recurrence = recurrence;
+    if (icon !== undefined) updates.icon = icon;
+    else if (category !== undefined) updates.icon = taskCategoryIcon(category as TaskCategory);
+
     const task = await Task.findOneAndUpdate(
       { _id: req.params.id, familyId: req.user!.familyId },
-      req.body,
+      updates,
       { new: true }
     );
     if (!task) return res.status(404).json({ error: 'משימה לא נמצאה' });
-    res.json({ task });
+    res.json({
+      task: {
+        _id: task._id.toString(),
+        familyId: task.familyId.toString(),
+        title: task.title,
+        description: task.description,
+        category: task.category,
+        points: task.points,
+        recurrence: task.recurrence,
+        assignedTo: task.assignedTo.toString(),
+        icon: task.icon,
+        isActive: task.isActive,
+        createdAt: task.createdAt.toISOString(),
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: 'שגיאה בעדכון משימה' });
   }
@@ -147,14 +195,18 @@ router.post('/:id/complete', authenticate, async (req: Request, res: Response) =
     const kidId = req.user!.role === 'kid' ? req.user!.userId : req.body.kidId;
     if (!kidId) return res.status(400).json({ error: 'נדרש kidId' });
 
-    const existing = await TaskCompletion.findOne({
+    const existing = await TaskCompletion.find({
       taskId: task._id,
       kidId,
-      status: 'pending',
+      status: { $in: ['pending', 'approved'] },
     });
 
-    if (existing) {
+    const status = getTaskCompletionStatus(task.recurrence, existing);
+    if (status === 'pending') {
       return res.status(400).json({ error: 'כבר יש בקשה ממתינה למשימה זו' });
+    }
+    if (status === 'completed') {
+      return res.status(400).json({ error: completionBlockedMessage(task.recurrence) });
     }
 
     const completion = await TaskCompletion.create({

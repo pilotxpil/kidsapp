@@ -6,6 +6,9 @@ import authRoutes from './routes/auth';
 import taskRoutes from './routes/tasks';
 import rewardRoutes from './routes/rewards';
 import kidRoutes from './routes/kids';
+import familyRoutes from './routes/family';
+import { migrateFamilies } from './utils/migrateFamilies';
+import { migrateUserIndexes } from './utils/migrateUserIndexes';
 
 dotenv.config();
 
@@ -23,11 +26,14 @@ app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
 app.use('/rewards', rewardRoutes);
 app.use('/kids', kidRoutes);
+app.use('/family', familyRoutes);
 
 async function start() {
   try {
     await mongoose.connect(process.env.MONGODB_URI!);
     console.log(`Connected to MongoDB (${mongoose.connection.name})`);
+    await migrateFamilies();
+    await migrateUserIndexes();
 
     app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`Server running on http://0.0.0.0:${PORT}`);

@@ -8,6 +8,7 @@ import type {
   KidProfile,
   ParentDashboard,
   UiThemeId,
+  FamilyInviteInfo,
   DailyStarStatus,
   DailyStarClaimResult,
   FortuneWheelStatus,
@@ -83,10 +84,16 @@ export const api = {
     return getToken();
   },
 
-  parentRegister(email: string, password: string, displayName: string, familyName: string) {
+  parentRegister(
+    email: string,
+    password: string,
+    displayName: string,
+    familyName?: string,
+    inviteCode?: string
+  ) {
     return request<AuthResponse>('/auth/parent/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, displayName, familyName }),
+      body: JSON.stringify({ email, password, displayName, familyName, inviteCode }),
     });
   },
 
@@ -108,7 +115,7 @@ export const api = {
     return request<{ user: User }>('/auth/me');
   },
 
-  updateMe(data: { uiTheme?: UiThemeId }) {
+  updateMe(data: { uiTheme?: UiThemeId; displayName?: string; avatar?: string }) {
     return request<{ user: User }>('/auth/me', {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -246,5 +253,9 @@ export const api = {
 
   getDashboard() {
     return request<{ dashboard: ParentDashboard }>('/kids/dashboard');
+  },
+
+  getFamilyInvite() {
+    return request<FamilyInviteInfo>('/family/invite');
   },
 };

@@ -19,7 +19,6 @@ export default function KidTasksScreen() {
   const userId = user?._id;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [category, setCategory] = useState<TaskCategory | 'all'>('all');
-  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -47,7 +46,9 @@ export default function KidTasksScreen() {
     setCompletingId(task._id);
     try {
       await api.completeTask(task._id);
-      setPendingIds((prev) => new Set(prev).add(task._id));
+      setTasks((prev) =>
+        prev.map((t) => (t._id === task._id ? { ...t, completionStatus: 'pending' as const } : t))
+      );
       setCelebrate(true);
     } catch (err: any) {
       alert(err.message);
@@ -81,7 +82,6 @@ export default function KidTasksScreen() {
               index={i}
               onComplete={handleComplete}
               loading={completingId === task._id}
-              pending={pendingIds.has(task._id)}
             />
           ))
         )}

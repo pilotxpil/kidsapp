@@ -5,6 +5,8 @@ import { Family } from './models/Family';
 import { User } from './models/User';
 import { Task } from './models/Task';
 import { Reward } from './models/Reward';
+import { TASK_TEMPLATES, taskCategoryIcon } from '@kidsapp/shared';
+import { generateUniqueInviteCode } from './utils/inviteCode';
 
 dotenv.config();
 
@@ -29,9 +31,12 @@ async function seed() {
     avatar: '👨‍👩‍👧‍👦',
   });
 
+  const inviteCode = await generateUniqueInviteCode();
   const family = await Family.create({
     name: 'משפחת כהן',
     parentId: parent._id,
+    parentIds: [parent._id],
+    inviteCode,
   });
   parent.familyId = family._id;
   await parent.save();
@@ -65,13 +70,21 @@ async function seed() {
   });
 
   const tasks = [
-    { title: 'לסדר את החדר', category: 'home', points: 20, icon: '🟩', assignedTo: kid1._id },
-    { title: 'לעשות שיעורי בית', category: 'school', points: 30, icon: '📖', assignedTo: kid1._id },
-    { title: 'לתרגל כדורגל', category: 'sport', points: 25, icon: '🏹', assignedTo: kid1._id },
-    { title: 'לעזור בארוחת ערב', category: 'home', points: 15, icon: '🟩', assignedTo: kid1._id },
-    { title: 'לקרוא 20 דקות', category: 'school', points: 20, icon: '📖', assignedTo: kid2._id },
-    { title: 'לצאת עם חבר', category: 'social', points: 15, icon: '👨‍🌾', assignedTo: kid2._id },
-    { title: 'חוג רובוטיקה', category: 'hobby', points: 35, icon: '🎣', assignedTo: kid1._id },
+    ...TASK_TEMPLATES.slice(0, 4).map((t) => ({
+      ...t,
+      icon: taskCategoryIcon(t.category),
+      assignedTo: kid1._id,
+    })),
+    ...TASK_TEMPLATES.slice(4, 6).map((t) => ({
+      ...t,
+      icon: taskCategoryIcon(t.category),
+      assignedTo: kid2._id,
+    })),
+    {
+      ...TASK_TEMPLATES[6],
+      icon: taskCategoryIcon(TASK_TEMPLATES[6].category),
+      assignedTo: kid1._id,
+    },
   ];
 
   for (const t of tasks) {
@@ -95,6 +108,7 @@ async function seed() {
 
   console.log('\n✅ Seed data created!\n');
   console.log('Parent login: parent@test.com / parent123');
+  console.log(`Family invite code (for 2nd parent): ${inviteCode}`);
   console.log('Kid 1 login: yonatan / 1234');
   console.log('Kid 2 login: itay / 5678');
 
