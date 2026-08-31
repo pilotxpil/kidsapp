@@ -25,7 +25,7 @@ const userSchema = new Schema<IUser>(
     familyId: { type: Schema.Types.ObjectId, ref: 'Family', required: true },
     displayName: { type: String, required: true },
     avatar: { type: String, default: '🦁' },
-    email: { type: String, sparse: true },
+    email: { type: String, unique: true, sparse: true },
     passwordHash: { type: String },
     username: { type: String, sparse: true },
     pinHash: { type: String },
@@ -40,7 +40,6 @@ const userSchema = new Schema<IUser>(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
-userSchema.index({ email: 1 }, { sparse: true, unique: true });
 userSchema.index({ username: 1, familyId: 1 }, { unique: true, sparse: true });
 
 export const User = mongoose.model<IUser>('User', userSchema);

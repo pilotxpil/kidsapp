@@ -6,6 +6,7 @@ import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { Card, PointsBadge, LevelBar, StreakBadge } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { ThemePicker } from '../../components/ThemePicker';
+import { AvatarPickerModal } from '../../components/AvatarPicker';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { AvatarFrame, SectionHeader } from '../../components/ThemedHero';
 import { BADGES, BADGE_REWARDS } from '@kidsapp/shared';
@@ -27,6 +28,7 @@ export default function KidProfileScreen() {
   const [soundOn, setSoundOn] = useState(true);
   const [musicOn, setMusicOn] = useState(true);
   const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
+  const [avatarOpen, setAvatarOpen] = useState(false);
 
   const styles = useMemo(
     () =>
@@ -89,6 +91,16 @@ export default function KidProfileScreen() {
         },
         settingsLabel: { color: colors.text, fontWeight: '600', flex: 1 },
         settingsValue: { color: colors.primary, fontWeight: '700', flexShrink: 0 },
+        avatarEditBtn: {
+          marginTop: spacing.sm,
+          marginBottom: spacing.md,
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.lg,
+          borderRadius: borderRadius.full,
+          borderWidth: 2,
+          borderColor: colors.primary,
+        },
+        avatarEditText: { color: colors.primary, fontWeight: '700', fontSize: 14 },
         logout: { marginTop: spacing.md, marginBottom: spacing.xl },
         badgeModalOverlay: {
           flex: 1,
@@ -197,8 +209,16 @@ export default function KidProfileScreen() {
         }
       >
         <View style={styles.avatarSection}>
-          <AvatarFrame avatar={user?.avatar ?? '🎮'} size="lg" />
+          <TouchableOpacity activeOpacity={0.85} onPress={() => { playSfx('tap'); setAvatarOpen(true); }}>
+            <AvatarFrame avatar={user?.avatar ?? '🎮'} size="lg" />
+          </TouchableOpacity>
           <Text style={styles.name}>{user?.displayName}</Text>
+          <TouchableOpacity
+            style={styles.avatarEditBtn}
+            onPress={() => { playSfx('tap'); setAvatarOpen(true); }}
+          >
+            <Text style={styles.avatarEditText}>{t('selectAvatar')}</Text>
+          </TouchableOpacity>
           <View style={[styles.statsRow, rtl.row]}>
             <PointsBadge points={user?.points || 0} />
             <StreakBadge streak={user?.streak || 0} />
@@ -301,6 +321,8 @@ export default function KidProfileScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      <AvatarPickerModal visible={avatarOpen} onClose={() => setAvatarOpen(false)} />
     </ThemedScreen>
   );
 }

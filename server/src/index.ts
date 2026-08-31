@@ -27,7 +27,7 @@ app.use('/kids', kidRoutes);
 async function start() {
   try {
     await mongoose.connect(process.env.MONGODB_URI!);
-    console.log('Connected to MongoDB');
+    console.log(`Connected to MongoDB (${mongoose.connection.name})`);
 
     app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`Server running on http://0.0.0.0:${PORT}`);

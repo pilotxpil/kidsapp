@@ -9,7 +9,7 @@
 | אפליקציה (ילד + הורה) | `apps/mobile` | Expo SDK 54 — אנדרואיד, iOS וווב |
 | API | `server` | Node.js (Express) על פורט **3001** |
 | טיפוסים משותפים | `packages/shared` | חבילה שנבנית ל-`dist` לפני הרצה |
-| MongoDB | Docker | מסד נתונים מקומי על פורט **27017** |
+| MongoDB | Docker (local) או Atlas (production) | מסד נתונים — DB נפרד: `kidsapp` |
 
 זה מונוריפו (npm workspaces). כמעט כל הפקודות רצות מתיקיית השורש `kidsapp/`.
 
@@ -45,7 +45,15 @@ docker compose version
 
 בלי Docker, `npm run db:up` ייכשל והשרת לא יצליח להתחבר ל-MongoDB.
 
-**אלטרנטיבה:** אם כבר יש לכם MongoDB מקומי על פורט 27017, אפשר לדלג על Docker — ודאו ש-`server/.env` מצביע על אותו URI.
+**אלטרנטיבה — MongoDB Atlas (production):** אותו cluster Atlas כמו פרויקטים אחרים (למשל theboard), עם **database נפרד** `kidsapp`:
+
+```
+MONGODB_URI=mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/kidsapp?retryWrites=true&w=majority
+```
+
+הגדירו ב-`server/.env`. אין צורך ב-Docker כשמשתמשים ב-Atlas.
+
+**אלטרנטיבה — Docker מקומי:** אם כבר יש MongoDB מקומי על פורט 27017, אפשר לדלג על Docker — ודאו ש-`server/.env` מצביע על אותו URI.
 
 ### 3. Expo Go (לבדיקה על טלפון אמיתי)
 

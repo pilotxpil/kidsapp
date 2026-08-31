@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { UI_THEME_IDS } from '@kidsapp/shared';
+import { UI_THEME_IDS, AVATARS } from '@kidsapp/shared';
 import { authenticate, requireParent } from '../middleware/auth';
 import { User } from '../models/User';
 import { Task } from '../models/Task';
@@ -79,7 +79,12 @@ router.patch('/:id', authenticate, async (req: Request, res: Response) => {
       kid.uiTheme = uiTheme;
     }
 
-    if (avatar !== undefined) kid.avatar = avatar;
+    if (avatar !== undefined) {
+      if (!AVATARS.includes(avatar)) {
+        return res.status(400).json({ error: 'אווטאר לא תקין' });
+      }
+      kid.avatar = avatar;
+    }
     if (displayName !== undefined) kid.displayName = displayName;
 
     await kid.save();

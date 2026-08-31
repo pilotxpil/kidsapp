@@ -84,6 +84,7 @@ export const he = {
   taskApprovals: 'אישורי משימות',
   rewardApprovals: 'אישורי פרסים',
   selectAvatar: 'בחר אווטאר',
+  selectAvatarHint: 'בחר את האווטאר שלך — נשמר לפרופיל',
   createAccount: 'יצירת חשבון',
   alreadyHaveAccount: 'יש לך חשבון? התחבר',
   noAccount: 'אין חשבון? הירשם',
