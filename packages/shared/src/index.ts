@@ -28,6 +28,11 @@ export const SURPRISE_CHEST_DAILY_CHANCE = 0.22;
 
 export type DailyGiftType = 'star' | 'wheel';
 
+export interface BadgeUnlock {
+  id: string;
+  xpAwarded: number;
+}
+
 export interface DailyStarStatus {
   available: boolean;
   tapsRequired: number;
@@ -45,6 +50,7 @@ export interface DailyStarClaimResult {
   points: number;
   level: number;
   xp: number;
+  newBadges?: BadgeUnlock[];
 }
 
 export interface FortuneWheelSegment {
@@ -81,6 +87,7 @@ export interface FortuneWheelSpinResult {
   points: number;
   level: number;
   xp: number;
+  newBadges?: BadgeUnlock[];
 }
 
 export interface TreasureChestStatus {
@@ -92,6 +99,7 @@ export interface TreasureChestOpenResult {
   points: number;
   level: number;
   xp: number;
+  newBadges?: BadgeUnlock[];
 }
 
 export interface FamilySettings {
@@ -246,6 +254,19 @@ export const BADGES: Record<string, { label: string; icon: string; description: 
   task_master: { label: 'מלך המטלות', icon: '⛏️', description: '50 משימות הושלמו!' },
   sport_star: { label: 'אלוף הספורט', icon: '🏹', description: '10 משימות ספורט!' },
   scholar: { label: 'תלמיד מצטיין', icon: '📖', description: '10 משימות לימודים!' },
+};
+
+/** One-time XP bonus when a badge is first earned. */
+export const BADGE_REWARDS: Record<string, number> = {
+  first_task: 10,
+  streak_3: 15,
+  streak_7: 30,
+  streak_30: 100,
+  level_5: 25,
+  level_10: 50,
+  task_master: 75,
+  sport_star: 20,
+  scholar: 20,
 };
 
 export function xpForLevel(level: number): number {

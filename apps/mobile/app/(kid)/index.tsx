@@ -6,7 +6,6 @@ import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { PointsBadge, LevelBar } from '../../components/Card';
 import { TaskCard } from '../../components/TaskCard';
 import { Celebration } from '../../components/Celebration';
-import { GameWorlds } from '../../components/GameWorlds';
 import { DailyStar } from '../../components/DailyStar';
 import { FortuneWheel } from '../../components/FortuneWheel';
 import { TreasureChest } from '../../components/TreasureChest';
@@ -24,9 +23,11 @@ import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
+import { useCelebrateBadges } from '../../lib/badge-celebration';
 
 export default function KidHomeScreen() {
   const { user } = useAuth();
+  const celebrateBadges = useCelebrateBadges();
   const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
   const userId = user?._id;
   const [profile, setProfile] = useState<KidProfile | null>(null);
@@ -105,14 +106,17 @@ export default function KidHomeScreen() {
 
   const handleStarClaimed = (result: DailyStarClaimResult) => {
     applyPoints(result);
+    if (result.newBadges?.length) celebrateBadges(result.newBadges);
   };
 
   const handleWheelWon = (result: FortuneWheelSpinResult) => {
     applyPoints({ ...result, streak: result.streak });
+    if (result.newBadges?.length) celebrateBadges(result.newBadges);
   };
 
   const handleChestOpened = (result: TreasureChestOpenResult) => {
     applyPoints(result);
+    if (result.newBadges?.length) celebrateBadges(result.newBadges);
   };
 
   const handleComplete = async (task: Task) => {
@@ -169,10 +173,6 @@ export default function KidHomeScreen() {
           ) : null}
 
           <FadeInUp index={3}>
-            <GameWorlds />
-          </FadeInUp>
-
-          <FadeInUp index={4}>
             <SectionHeader title={t('tasks')} icon="📜" />
           </FadeInUp>
           {tasks.length === 0 ? (
@@ -182,7 +182,7 @@ export default function KidHomeScreen() {
               <TaskCard
                 key={task._id}
                 task={task}
-                index={i + 5}
+                index={i + 4}
                 onComplete={handleComplete}
                 loading={completingId === task._id}
                 pending={pendingIds.has(task._id)}

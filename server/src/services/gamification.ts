@@ -4,12 +4,16 @@ import {
   DAILY_STAR_BONUS,
   FORTUNE_WHEEL_SEGMENTS,
   SURPRISE_CHEST_DAILY_CHANCE,
+  BADGES,
+  BADGE_REWARDS,
+  type BadgeUnlock,
   type DailyGiftType,
   type FortuneWheelSegment,
 } from '@kidsapp/shared';
 import { IUser, User } from '../models/User';
 import { PointTransaction } from '../models/PointTransaction';
 import { TaskCompletion } from '../models/TaskCompletion';
+import { Task } from '../models/Task';
 import { todayString } from '../utils/format';
 
 const STREAK_BONUSES: Record<number, number> = {
@@ -178,7 +182,7 @@ export async function claimDailyStar(kid: IUser) {
     description: 'כוכב יומי',
   });
 
-  await updateLevelAndBadges(kid);
+  const newBadges = await updateLevelAndBadges(kid);
   await kid.save();
 
   return {
@@ -190,6 +194,7 @@ export async function claimDailyStar(kid: IUser) {
     points: kid.points,
     level: kid.level,
     xp: kid.xp,
+    newBadges,
   };
 }
 
@@ -228,7 +233,7 @@ export async function spinFortuneWheel(kid: IUser) {
 
   kid.points += segment.points;
   kid.xp += segment.points;
-  await updateLevelAndBadges(kid);
+  const newBadges = await updateLevelAndBadges(kid);
   await kid.save();
 
   await PointTransaction.create({
@@ -249,6 +254,7 @@ export async function spinFortuneWheel(kid: IUser) {
     points: kid.points,
     level: kid.level,
     xp: kid.xp,
+    newBadges,
   };
 }
 
@@ -266,7 +272,7 @@ export async function openTreasureChest(kid: IUser) {
   }
 
   const pointsAwarded = CHEST_REWARDS[Math.floor(Math.random() * CHEST_REWARDS.length)];
-  await awardPoints(kid, pointsAwarded, 'bonus', CHEST_DESC);
+  const newBadges = await awardPoints(kid, pointsAwarded, 'bonus', CHEST_DESC);
 
   return {
     ok: true as const,
@@ -274,6 +280,7 @@ export async function openTreasureChest(kid: IUser) {
     points: kid.points,
     level: kid.level,
     xp: kid.xp,
+    newBadges,
   };
 }
 
@@ -283,10 +290,10 @@ export async function awardPoints(
   type: 'task' | 'bonus',
   description: string,
   referenceId?: string
-) {
+): Promise<BadgeUnlock[]> {
   kid.points += amount;
   kid.xp += amount;
-  await updateLevelAndBadges(kid);
+  const newBadges = await updateLevelAndBadges(kid);
   await kid.save();
 
   await PointTransaction.create({
@@ -297,6 +304,8 @@ export async function awardPoints(
     description,
     referenceId,
   });
+
+  return newBadges;
 }
 
 export async function deductPoints(kid: IUser, amount: number, description: string, referenceId?: string) {
@@ -313,7 +322,7 @@ export async function deductPoints(kid: IUser, amount: number, description: stri
   });
 }
 
-async function updateLevelAndBadges(kid: IUser) {
+async function updateLevelAndBadges(kid: IUser): Promise<BadgeUnlock[]> {
   const { level } = calculateLevel(kid.xp);
   kid.level = level;
 
@@ -322,17 +331,87 @@ async function updateLevelAndBadges(kid: IUser) {
     status: 'approved',
   });
 
-  const newBadges: string[] = [];
+  const candidates: string[] = [];
 
-  if (approvedCount >= 1 && !kid.badges.includes('first_task')) newBadges.push('first_task');
-  if (approvedCount >= 50 && !kid.badges.includes('task_master')) newBadges.push('task_master');
-  if (kid.streak >= 3 && !kid.badges.includes('streak_3')) newBadges.push('streak_3');
-  if (kid.streak >= 7 && !kid.badges.includes('streak_7')) newBadges.push('streak_7');
-  if (kid.streak >= 30 && !kid.badges.includes('streak_30')) newBadges.push('streak_30');
-  if (level >= 5 && !kid.badges.includes('level_5')) newBadges.push('level_5');
-  if (level >= 10 && !kid.badges.includes('level_10')) newBadges.push('level_10');
+  if (approvedCount >= 1 && !kid.badges.includes('first_task')) candidates.push('first_task');
+  if (approvedCount >= 50 && !kid.badges.includes('task_master')) candidates.push('task_master');
+  if (kid.streak >= 3 && !kid.badges.includes('streak_3')) candidates.push('streak_3');
+  if (kid.streak >= 7 && !kid.badges.includes('streak_7')) candidates.push('streak_7');
+  if (kid.streak >= 30 && !kid.badges.includes('streak_30')) candidates.push('streak_30');
+  if (level >= 5 && !kid.badges.includes('level_5')) candidates.push('level_5');
+  if (level >= 10 && !kid.badges.includes('level_10')) candidates.push('level_10');
 
-  kid.badges = [...new Set([...kid.badges, ...newBadges])];
+  if (!kid.badges.includes('sport_star')) {
+    const sportTasks = await Task.find({ familyId: kid.familyId, category: 'sport' });
+    if (sportTasks.length > 0) {
+      const sportCompletions = await TaskCompletion.countDocuments({
+        kidId: kid._id,
+        status: 'approved',
+        taskId: { $in: sportTasks.map((t) => t._id) },
+      });
+      if (sportCompletions >= 10) candidates.push('sport_star');
+    }
+  }
+
+  if (!kid.badges.includes('scholar')) {
+    const schoolTasks = await Task.find({ familyId: kid.familyId, category: 'school' });
+    if (schoolTasks.length > 0) {
+      const schoolCompletions = await TaskCompletion.countDocuments({
+        kidId: kid._id,
+        status: 'approved',
+        taskId: { $in: schoolTasks.map((t) => t._id) },
+      });
+      if (schoolCompletions >= 10) candidates.push('scholar');
+    }
+  }
+
+  const unlocks: BadgeUnlock[] = [];
+
+  for (const id of candidates) {
+    const xpAwarded = BADGE_REWARDS[id] ?? 0;
+    kid.badges.push(id);
+    if (xpAwarded > 0) {
+      kid.points += xpAwarded;
+      kid.xp += xpAwarded;
+      await PointTransaction.create({
+        kidId: kid._id,
+        familyId: kid.familyId,
+        amount: xpAwarded,
+        type: 'bonus',
+        description: `תג: ${BADGES[id]?.label ?? id}`,
+      });
+    }
+    unlocks.push({ id, xpAwarded });
+  }
+
+  kid.badges = [...new Set(kid.badges)];
+
+  // Badge XP may push level — check level badges once more
+  const finalLevel = calculateLevel(kid.xp).level;
+  kid.level = finalLevel;
+  const levelCandidates: string[] = [];
+  if (finalLevel >= 5 && !kid.badges.includes('level_5')) levelCandidates.push('level_5');
+  if (finalLevel >= 10 && !kid.badges.includes('level_10')) levelCandidates.push('level_10');
+
+  for (const id of levelCandidates) {
+    const xpAwarded = BADGE_REWARDS[id] ?? 0;
+    kid.badges.push(id);
+    if (xpAwarded > 0) {
+      kid.points += xpAwarded;
+      kid.xp += xpAwarded;
+      await PointTransaction.create({
+        kidId: kid._id,
+        familyId: kid.familyId,
+        amount: xpAwarded,
+        type: 'bonus',
+        description: `תג: ${BADGES[id]?.label ?? id}`,
+      });
+    }
+    unlocks.push({ id, xpAwarded });
+  }
+
+  kid.badges = [...new Set(kid.badges)];
+  return unlocks;
 }
 
 export async function getKidProfile(kidId: string) {

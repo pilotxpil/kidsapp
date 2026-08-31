@@ -97,6 +97,13 @@ export const he = {
   fulfilled: 'מומש',
   approved: 'אושר',
   rejected: 'נדחה',
+  soundEffects: 'צלילים',
+  backgroundMusic: 'מוזיקה',
+  badgeUnlocked: 'תג חדש!',
+  badgeHowToUnlock: 'איך לפתוח?',
+  badgeEarnedXp: 'קיבלת +{n} XP',
+  on: 'פועל',
+  off: 'כבוי',
 };
 
 export type TranslationKey = keyof typeof he;

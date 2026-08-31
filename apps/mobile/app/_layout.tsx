@@ -8,9 +8,11 @@ import { ThemeProvider, useTheme } from '../lib/theme-context';
 import { spacing } from '../constants/theme';
 import { initNativeRTL, rtl } from '../lib/rtl';
 import { initSfx } from '../lib/sfx';
+import { initBgm } from '../lib/bgm';
 
 initNativeRTL();
 initSfx();
+initBgm();
 
 function RootNavigator() {
   const { user, loading } = useAuth();

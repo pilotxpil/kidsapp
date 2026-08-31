@@ -47,7 +47,7 @@ export async function playSfx(name: SfxName, opts?: { volume?: number }) {
   if (muted) return;
   try {
     if (!ready) await initSfx();
-    const volume = opts?.volume ?? 0.8;
+    const volume = opts?.volume ?? 0.65;
     const { sound } = await Audio.Sound.createAsync(FILES[name], { shouldPlay: true, volume });
     sound.setOnPlaybackStatusUpdate((status) => {
       if (status.isLoaded && status.didJustFinish) {

@@ -59,7 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         prev.xp === userData.xp &&
         prev.streak === userData.streak &&
         prev.uiTheme === userData.uiTheme &&
-        prev.badges.length === userData.badges.length
+        prev.badges.length === userData.badges.length &&
+        prev.badges.every((b) => userData.badges.includes(b))
       ) {
         return prev;
       }

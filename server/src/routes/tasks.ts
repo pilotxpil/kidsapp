@@ -249,39 +249,8 @@ router.post('/completions/:id/approve', authenticate, requireParent, async (req:
 
     await awardPoints(kid, task.points, 'task', `משימה: ${task.title}`, completion._id.toString());
 
-    if (task.category === 'sport' && !kid.badges.includes('sport_star')) {
-      const sportCount = await TaskCompletion.countDocuments({
-        kidId: kid._id,
-        status: 'approved',
-      });
-      const sportTasks = await Task.find({ familyId: kid.familyId, category: 'sport' });
-      const sportTaskIds = sportTasks.map((t) => t._id);
-      const sportCompletions = await TaskCompletion.countDocuments({
-        kidId: kid._id,
-        status: 'approved',
-        taskId: { $in: sportTaskIds },
-      });
-      if (sportCompletions >= 10) {
-        kid.badges.push('sport_star');
-        await kid.save();
-      }
-    }
-
-    if (task.category === 'school' && !kid.badges.includes('scholar')) {
-      const schoolTasks = await Task.find({ familyId: kid.familyId, category: 'school' });
-      const schoolTaskIds = schoolTasks.map((t) => t._id);
-      const schoolCompletions = await TaskCompletion.countDocuments({
-        kidId: kid._id,
-        status: 'approved',
-        taskId: { $in: schoolTaskIds },
-      });
-      if (schoolCompletions >= 10) {
-        kid.badges.push('scholar');
-        await kid.save();
-      }
-    }
-
-    res.json({ completion, kid: formatUser(kid) });
+    const updatedKid = await User.findById(kid._id);
+    res.json({ completion, kid: formatUser(updatedKid ?? kid) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'שגיאה באישור משימה' });

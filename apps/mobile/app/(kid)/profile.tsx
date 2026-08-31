@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
@@ -8,12 +8,13 @@ import { Button } from '../../components/Button';
 import { ThemePicker } from '../../components/ThemePicker';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { AvatarFrame, SectionHeader } from '../../components/ThemedHero';
-import { BADGES } from '@kidsapp/shared';
+import { BADGES, BADGE_REWARDS } from '@kidsapp/shared';
 import type { KidProfile } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { isSfxMuted, setSfxMuted, playSfx } from '../../lib/sfx';
+import { isBgmMuted, setBgmMuted, startBgm } from '../../lib/bgm';
 import { t } from '../../lib/i18n';
 
 export default function KidProfileScreen() {
@@ -24,6 +25,8 @@ export default function KidProfileScreen() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
+  const [musicOn, setMusicOn] = useState(true);
+  const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
 
   const styles = useMemo(
     () =>
@@ -87,6 +90,57 @@ export default function KidProfileScreen() {
         settingsLabel: { color: colors.text, fontWeight: '600', flex: 1 },
         settingsValue: { color: colors.primary, fontWeight: '700', flexShrink: 0 },
         logout: { marginTop: spacing.md, marginBottom: spacing.xl },
+        badgeModalOverlay: {
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.65)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: spacing.lg,
+        },
+        badgeModalCard: {
+          backgroundColor: colors.bgCard,
+          borderRadius: borderRadius.lg,
+          padding: spacing.xl,
+          width: '100%',
+          maxWidth: 320,
+          alignItems: 'center',
+          ...cardBorder(3),
+        },
+        badgeModalIcon: { fontSize: 56, marginBottom: spacing.md },
+        badgeModalTitle: {
+          color: colors.text,
+          fontSize: 20,
+          fontWeight: '800',
+          textAlign: 'center',
+          marginBottom: spacing.sm,
+        },
+        badgeModalDesc: {
+          color: colors.textMuted,
+          fontSize: 15,
+          textAlign: 'center',
+          lineHeight: 22,
+          marginBottom: spacing.md,
+        },
+        badgeModalReward: {
+          color: colors.emerald,
+          fontSize: 16,
+          fontWeight: '700',
+          textAlign: 'center',
+          marginBottom: spacing.md,
+        },
+        badgeModalLocked: {
+          color: colors.gold,
+          fontSize: 13,
+          fontWeight: '700',
+          textAlign: 'center',
+          marginBottom: spacing.xs,
+        },
+        badgeModalClose: {
+          marginTop: spacing.sm,
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.xl,
+        },
+        badgeModalCloseText: { color: colors.primary, fontWeight: '700', fontSize: 16 },
       }),
     [themeId, colors, borderRadius, cardBorder]
   );
@@ -105,6 +159,7 @@ export default function KidProfileScreen() {
 
   useEffect(() => {
     setSoundOn(!isSfxMuted());
+    setMusicOn(!isBgmMuted());
   }, []);
 
   const toggleSound = async () => {
@@ -114,9 +169,20 @@ export default function KidProfileScreen() {
     if (next) playSfx('tap');
   };
 
+  const toggleMusic = async () => {
+    const next = !musicOn;
+    setMusicOn(next);
+    await setBgmMuted(!next);
+    if (next) void startBgm();
+  };
+
   const handleLogout = async () => {
     await logout();
   };
+
+  const selectedBadgeData = selectedBadge ? BADGES[selectedBadge] : null;
+  const selectedEarned = selectedBadge ? user?.badges?.includes(selectedBadge) : false;
+  const selectedReward = selectedBadge ? BADGE_REWARDS[selectedBadge] ?? 0 : 0;
 
   return (
     <ThemedScreen tabs>
@@ -153,12 +219,22 @@ export default function KidProfileScreen() {
           {Object.entries(BADGES).map(([key, badge]) => {
             const earned = user?.badges?.includes(key);
             return (
-              <Card key={key} style={earned ? styles.badgeCard : [styles.badgeCard, styles.badgeLocked]}>
-                <View style={styles.badgeInner}>
-                  <Text style={styles.badgeIcon}>{earned ? badge.icon : '🔒'}</Text>
-                  <Text style={[styles.badgeLabel, !earned && styles.badgeLabelLocked]}>{badge.label}</Text>
-                </View>
-              </Card>
+              <TouchableOpacity
+                key={key}
+                activeOpacity={0.75}
+                onPress={() => {
+                  playSfx('tap');
+                  setSelectedBadge(key);
+                }}
+                style={earned ? styles.badgeCard : [styles.badgeCard, styles.badgeLocked]}
+              >
+                <Card style={{ width: '100%' }}>
+                  <View style={styles.badgeInner}>
+                    <Text style={styles.badgeIcon}>{earned ? badge.icon : '🔒'}</Text>
+                    <Text style={[styles.badgeLabel, !earned && styles.badgeLabelLocked]}>{badge.label}</Text>
+                  </View>
+                </Card>
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -191,12 +267,40 @@ export default function KidProfileScreen() {
         ))}
 
         <TouchableOpacity style={[styles.settingsRow, rtl.rowBetween]} onPress={toggleSound}>
-          <Text style={[styles.settingsLabel, rtl.textFull]}>צלילים</Text>
-          <Text style={[styles.settingsValue, rtl.text]}>{soundOn ? 'פועל' : 'כבוי'}</Text>
+          <Text style={[styles.settingsLabel, rtl.textFull]}>{t('soundEffects')}</Text>
+          <Text style={[styles.settingsValue, rtl.text]}>{soundOn ? t('on') : t('off')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.settingsRow, rtl.rowBetween]} onPress={toggleMusic}>
+          <Text style={[styles.settingsLabel, rtl.textFull]}>{t('backgroundMusic')}</Text>
+          <Text style={[styles.settingsValue, rtl.text]}>{musicOn ? t('on') : t('off')}</Text>
         </TouchableOpacity>
 
         <Button title={t('logout')} onPress={handleLogout} variant="outline" style={styles.logout} sound={false} />
       </ScrollView>
+
+      <Modal visible={!!selectedBadgeData} transparent animationType="fade" onRequestClose={() => setSelectedBadge(null)}>
+        <Pressable style={styles.badgeModalOverlay} onPress={() => setSelectedBadge(null)}>
+          <Pressable style={styles.badgeModalCard} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.badgeModalIcon}>
+              {selectedEarned ? selectedBadgeData!.icon : '🔒'}
+            </Text>
+            <Text style={styles.badgeModalTitle}>{selectedBadgeData?.label}</Text>
+            {!selectedEarned && (
+              <Text style={styles.badgeModalLocked}>{t('badgeHowToUnlock')}</Text>
+            )}
+            <Text style={styles.badgeModalDesc}>{selectedBadgeData?.description}</Text>
+            {selectedEarned && selectedReward > 0 && (
+              <Text style={styles.badgeModalReward}>
+                {t('badgeEarnedXp').replace('{n}', String(selectedReward))}
+              </Text>
+            )}
+            <TouchableOpacity style={styles.badgeModalClose} onPress={() => setSelectedBadge(null)}>
+              <Text style={styles.badgeModalCloseText}>{t('close')}</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ThemedScreen>
   );
 }

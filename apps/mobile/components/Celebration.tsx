@@ -11,13 +11,24 @@ import { useModalEnter } from './animations/modalEnter';
 interface CelebrationProps {
   visible: boolean;
   message?: string;
+  icon?: string;
+  kicker?: string;
   sfx?: SfxName | false;
   onDone?: () => void;
 }
 
-export function Celebration({ visible, message = 'בוצע', sfx, onDone }: CelebrationProps) {
-  const { borderRadius, cardBorder, celebrationKicker, heroGradient, sfx: themeSfx, icon } = useTheme();
+export function Celebration({
+  visible,
+  message = 'בוצע',
+  icon,
+  kicker,
+  sfx,
+  onDone,
+}: CelebrationProps) {
+  const { borderRadius, cardBorder, celebrationKicker, heroGradient, sfx: themeSfx, icon: themeIcon } = useTheme();
   const playName = sfx === false ? null : (sfx ?? themeSfx);
+  const displayIcon = icon ?? themeIcon;
+  const displayKicker = kicker ?? celebrationKicker;
   const { overlayStyle, cardStyle: enterStyle } = useModalEnter(visible);
 
   useEffect(() => {
@@ -48,8 +59,8 @@ export function Celebration({ visible, message = 'בוצע', sfx, onDone }: Cele
             },
           ]}
         >
-          <Text style={styles.bigIcon}>{icon}</Text>
-          <Text style={styles.kicker}>{celebrationKicker}</Text>
+          <Text style={styles.bigIcon}>{displayIcon}</Text>
+          <Text style={styles.kicker}>{displayKicker}</Text>
           <Text style={styles.message}>{message}</Text>
           <View style={styles.sparkRow}>
             {['✨', '⭐', '✨'].map((s, i) => (
