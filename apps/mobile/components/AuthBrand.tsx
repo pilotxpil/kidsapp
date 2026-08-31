@@ -1,7 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { FadeInUp } from './animations/FadeInUp';
+import { AuthLogo3D, type AuthLogoVariant } from './AuthLogo3D';
 import { getTheme } from '../constants/themes';
 import { spacing } from '../constants/theme';
 import { t } from '../lib/i18n';
@@ -15,27 +23,37 @@ interface AuthBrandProps {
 
 export function AuthBrand({ variant, compact }: AuthBrandProps) {
   const theme = variant === 'kid' ? getTheme('brawl') : getTheme('roblox');
-  const markEmoji =
-    variant === 'kid' ? '💎' : variant === 'register' ? '🛡️' : variant === 'parent' ? '🪙' : '🏆';
+  const logoVariant: AuthLogoVariant =
+    variant === 'kid' || variant === 'welcome' ? 'gem' : variant === 'register' ? 'shield' : 'coin';
+  const logoSize = variant === 'welcome' && !compact ? 130 : compact ? 96 : 130;
+  const titlePulse = useSharedValue(1);
+
+  useEffect(() => {
+    titlePulse.value = withRepeat(
+      withSequence(
+        withTiming(1.04, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      false
+    );
+  }, [titlePulse]);
+
+  const titleAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: titlePulse.value }],
+  }));
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
         wrap: { alignItems: 'center', width: '100%' },
-        mark: {
-          width: compact ? 72 : 96,
-          height: compact ? 72 : 96,
-          borderRadius: theme.borderRadius.lg,
+        gemStage: {
+          width: logoSize,
+          height: logoSize,
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: compact ? spacing.sm : spacing.md,
-          ...theme.cardBorder(3),
-          shadowColor: theme.colors.glow,
-          shadowOpacity: 0.55,
-          shadowRadius: 18,
-          elevation: 14,
+          marginBottom: compact ? spacing.xs : spacing.sm,
         },
-        markText: { fontSize: compact ? 36 : 48 },
         appName: {
           fontSize: compact ? 32 : 44,
           fontWeight: '900',
@@ -70,7 +88,7 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
           marginBottom: compact ? spacing.lg : spacing.xl,
         },
       }),
-    [compact, theme]
+    [compact, theme, logoSize]
   );
 
   const nameParts = t('appName').split('Quest');
@@ -78,21 +96,18 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
   return (
     <View style={styles.wrap}>
       <FadeInUp index={0}>
-        <LinearGradient
-          colors={[theme.colors.gradientStart, theme.colors.gradientEnd]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.mark}
-        >
-          <Text style={styles.markText}>{markEmoji}</Text>
-        </LinearGradient>
+        <View style={styles.gemStage}>
+          <AuthLogo3D variant={logoVariant} size={logoSize} />
+        </View>
       </FadeInUp>
 
       <FadeInUp index={1}>
-        <Text style={styles.appName}>
-          {nameParts[0]}
-          <Text style={styles.appNameAccent}>Quest</Text>
-        </Text>
+        <Animated.View style={titleAnimStyle}>
+          <Text style={styles.appName}>
+            {nameParts[0]}
+            <Text style={styles.appNameAccent}>Quest</Text>
+          </Text>
+        </Animated.View>
       </FadeInUp>
 
       {variant === 'welcome' ? (
