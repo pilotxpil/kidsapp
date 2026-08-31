@@ -254,19 +254,20 @@ export function taskCategoryIcon(category: TaskCategory): string {
 
 export interface TaskTemplate {
   title: string;
+  description: string;
   category: TaskCategory;
   points: number;
 }
 
 /** Ready-made tasks for quick parent setup (matches demo seed). */
 export const TASK_TEMPLATES: TaskTemplate[] = [
-  { title: 'לסדר את החדר', category: 'home', points: 20 },
-  { title: 'לעשות שיעורי בית', category: 'school', points: 30 },
-  { title: 'לתרגל כדורגל', category: 'sport', points: 25 },
-  { title: 'לעזור בארוחת ערב', category: 'home', points: 15 },
-  { title: 'לקרוא 20 דקות', category: 'school', points: 20 },
-  { title: 'לצאת עם חבר', category: 'social', points: 15 },
-  { title: 'חוג רובוטיקה', category: 'hobby', points: 35 },
+  { title: 'לסדר את החדר', description: 'לסדר את המיטה, לארגן צעצועים ולנקות את הרצפה', category: 'home', points: 20 },
+  { title: 'לעשות שיעורי בית', description: 'להשלים את כל המטלות שניתנו בבית הספר', category: 'school', points: 30 },
+  { title: 'לתרגל כדורגל', description: 'תרגול כדורגל או משחק בחוץ', category: 'sport', points: 25 },
+  { title: 'לעזור בארוחת ערב', description: 'לעזור בהכנה, הגשה או ניקוי אחרי הארוחה', category: 'home', points: 15 },
+  { title: 'לקרוא 20 דקות', description: 'קריאה שקטה של ספר או סיפור', category: 'school', points: 20 },
+  { title: 'לצאת עם חבר', description: 'בילוי חברתי מחוץ לבית', category: 'social', points: 15 },
+  { title: 'חוג רובוטיקה', description: 'השתתפות בחוג רובוטיקה או פרויקט', category: 'hobby', points: 35 },
 ];
 
 export const REWARD_CATEGORIES: Record<RewardCategory, { label: string; icon: string }> = {
@@ -276,6 +277,23 @@ export const REWARD_CATEGORIES: Record<RewardCategory, { label: string; icon: st
   privilege: { label: 'הרשאות', icon: '✨' },
   other: { label: 'אחר', icon: '📦' },
 };
+
+export interface RewardTemplate {
+  title: string;
+  description: string;
+  icon: string;
+  cost: number;
+  category: RewardCategory;
+}
+
+/** Ready-made rewards for quick parent setup. */
+export const REWARD_TEMPLATES: RewardTemplate[] = [
+  { title: '80 Robux', description: 'רובוקס לרובלוקס', icon: '🎮', cost: 500, category: 'gaming' },
+  { title: 'Brawl Stars Gems', description: '100 ג׳מס לבראול סטארס', icon: '💎', cost: 400, category: 'gaming' },
+  { title: 'Minecraft Coins', description: 'מטבעות למיינקראפט', icon: '⛏️', cost: 350, category: 'gaming' },
+  { title: 'הזמנת פיצה', description: 'פיצה מהמסעדה האהובה', icon: '🍕', cost: 800, category: 'food' },
+  { title: '30 דק מסך', description: 'זמן מסך בונוס', icon: '📱', cost: 150, category: 'screen' },
+];
 
 export const AVATARS = ['🐷', '🐮', '🐑', '🐔', '🐺', '🐱', '🧟', '🕷️', '🐉', '🦇', '🐝', '🐢'];
 

@@ -5,7 +5,7 @@ import { Family } from './models/Family';
 import { User } from './models/User';
 import { Task } from './models/Task';
 import { Reward } from './models/Reward';
-import { TASK_TEMPLATES, taskCategoryIcon } from '@kidsapp/shared';
+import { TASK_TEMPLATES, taskCategoryIcon, REWARD_TEMPLATES } from '@kidsapp/shared';
 import { generateUniqueInviteCode } from './utils/inviteCode';
 
 dotenv.config();
@@ -88,18 +88,14 @@ async function seed() {
   ];
 
   for (const t of tasks) {
-    await Task.create({ ...t, familyId: family._id, description: '', recurrence: 'daily' });
+    await Task.create({ ...t, familyId: family._id, description: t.description, recurrence: 'daily' });
   }
 
   const rewards = [
-    { title: '80 Robux', description: 'רובוקס לרובלוקס', cost: 500, category: 'gaming', icon: '🎮' },
-    { title: 'Brawl Stars Gems', description: '100 ג׳מס', cost: 400, category: 'gaming', icon: '💎' },
-    { title: 'Minecraft Coins', description: 'מטבעות למיינקראפט', cost: 350, category: 'gaming', icon: '⛏️' },
-    { title: 'הזמנת פיצה', description: 'פיצה מהמסעדה האהובה', cost: 800, category: 'food', icon: '🍕' },
-    { title: '30 דק מסך נוסף', description: 'זמן מסך בונוס', cost: 150, category: 'screen', icon: '📱' },
-    { title: 'בחירת ארוחת ערב', description: 'אתה בוחר מה לאכול', cost: 300, category: 'privilege', icon: '🍔' },
-    { title: 'לישון מאוחר', description: '30 דקות נוספות', cost: 250, category: 'privilege', icon: '🌙' },
-    { title: 'יציאה לארקייד', description: 'יום כיף בארקייד', cost: 1200, category: 'other', icon: '🕹️' },
+    ...REWARD_TEMPLATES,
+    { title: 'בחירת ארוחת ערב', description: 'אתה בוחר מה לאכול', cost: 300, category: 'privilege' as const, icon: '🍔' },
+    { title: 'לישון מאוחר', description: '30 דקות נוספות', cost: 250, category: 'privilege' as const, icon: '🌙' },
+    { title: 'יציאה לארקייד', description: 'יום כיף בארקייד', cost: 1200, category: 'other' as const, icon: '🕹️' },
   ];
 
   for (const r of rewards) {

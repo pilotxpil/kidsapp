@@ -1,5 +1,17 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Modal,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
+  Pressable,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
@@ -14,14 +26,19 @@ import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 
 export default function ParentKidsScreen() {
+  const insets = useSafeAreaInsets();
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
   const [kids, setKids] = useState<User[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingKid, setEditingKid] = useState<User | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
   const [avatar, setAvatar] = useState(AVATARS[0]);
   const [loading, setLoading] = useState(false);
+  const savingRef = useRef(false);
+
+  const modalMaxHeight = Dimensions.get('window').height - insets.top - insets.bottom - spacing.lg * 2;
 
   const styles = useMemo(
     () =>
@@ -41,28 +58,33 @@ export default function ParentKidsScreen() {
           width: '100%',
         },
         kidCard: { marginBottom: spacing.md },
-        kidRow: { alignItems: 'center', width: '100%' },
+        kidRow: { alignItems: 'flex-start', width: '100%', gap: spacing.sm },
         kidAvatar: { fontSize: 48 },
         kidInfo: { flex: 1, minWidth: 0 },
         kidName: { color: colors.text, fontSize: 20, fontWeight: '800' },
         kidUsername: { color: colors.textMuted },
         kidStats: { gap: spacing.md, marginTop: spacing.sm },
         kidStat: { color: colors.gold, fontWeight: '700' },
+        editBtn: { padding: spacing.xs, flexShrink: 0 },
+        editIcon: { fontSize: 20 },
         modalOverlay: {
           flex: 1,
           backgroundColor: 'rgba(0,0,0,0.7)',
           justifyContent: 'center',
-          padding: spacing.lg,
+          paddingHorizontal: spacing.lg,
+          paddingVertical: spacing.md,
         },
+        modalBackdrop: { ...StyleSheet.absoluteFillObject },
         modal: {
           backgroundColor: colors.bgCard,
           borderRadius: borderRadius.xl,
-          padding: spacing.lg,
           maxWidth: 500,
           alignSelf: 'center',
           width: '100%',
+          overflow: 'hidden',
           ...cardBorder(2),
         },
+        modalScroll: { padding: spacing.lg, paddingBottom: spacing.sm },
         modalTitle: {
           color: colors.text,
           fontSize: 22,
@@ -77,8 +99,18 @@ export default function ParentKidsScreen() {
           fontWeight: '600',
           marginBottom: spacing.sm,
           width: '100%',
+          textAlign: 'right',
+          writingDirection: 'rtl',
         },
-        avatars: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+        chipRow: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: spacing.sm,
+          marginBottom: spacing.md,
+          justifyContent: 'flex-end',
+          width: '100%',
+          ...(Platform.OS === 'web' ? { direction: 'rtl' as const } : {}),
+        },
         avatarBtn: {
           width: 48,
           height: 48,
@@ -91,7 +123,13 @@ export default function ParentKidsScreen() {
         },
         avatarActive: { borderColor: colors.primary },
         avatarEmoji: { fontSize: 24 },
-        modalActions: { gap: spacing.sm, marginTop: spacing.md },
+        modalActions: {
+          gap: spacing.sm,
+          padding: spacing.lg,
+          paddingTop: spacing.sm,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        },
       }),
     [themeId, colors, borderRadius, cardBorder]
   );
@@ -103,22 +141,72 @@ export default function ParentKidsScreen() {
 
   useFocusLoad(load);
 
-  const handleCreate = async () => {
-    if (!displayName || !username || pin.length < 4) {
-      alert('מלא את כל השדות (PIN של 4 ספרות)');
+  const resetForm = () => {
+    setEditingKid(null);
+    setDisplayName('');
+    setUsername('');
+    setPin('');
+    setAvatar(AVATARS[0]);
+  };
+
+  const openCreate = () => {
+    resetForm();
+    setModalVisible(true);
+  };
+
+  const openEdit = (kid: User) => {
+    setEditingKid(kid);
+    setDisplayName(kid.displayName);
+    setUsername(kid.username ?? '');
+    setPin('');
+    setAvatar(kid.avatar || AVATARS[0]);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    resetForm();
+  };
+
+  const handleSave = async () => {
+    if (savingRef.current || loading) return;
+    if (!displayName.trim() || !username.trim()) {
+      alert('מלא שם תצוגה ושם משתמש');
       return;
     }
+    if (!editingKid && pin.length < 4) {
+      alert('PIN חייב 4 ספרות');
+      return;
+    }
+    if (editingKid && pin.length > 0 && pin.length < 4) {
+      alert('PIN חייב 4 ספרות');
+      return;
+    }
+
+    savingRef.current = true;
     setLoading(true);
     try {
-      await api.createKid({ displayName, username, pin, avatar });
-      setModalVisible(false);
-      setDisplayName('');
-      setUsername('');
-      setPin('');
+      if (editingKid) {
+        await api.updateKid(editingKid._id, {
+          displayName: displayName.trim(),
+          username: username.trim(),
+          avatar,
+          ...(pin.length > 0 ? { pin } : {}),
+        });
+      } else {
+        await api.createKid({
+          displayName: displayName.trim(),
+          username: username.trim(),
+          pin,
+          avatar,
+        });
+      }
+      closeModal();
       await load();
     } catch (err: any) {
       alert(err.message);
     } finally {
+      savingRef.current = false;
       setLoading(false);
     }
   };
@@ -127,7 +215,7 @@ export default function ParentKidsScreen() {
     <ThemedScreen tabs>
       <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
         <View style={[styles.header, rtl.headerSplit]}>
-          <Button title={`+ ${t('addKid')}`} onPress={() => setModalVisible(true)} style={styles.addBtn} />
+          <Button title={`+ ${t('addKid')}`} onPress={openCreate} style={styles.addBtn} />
           <Text style={[styles.title, rtl.textFull]}>{t('manageKids')}</Text>
         </View>
 
@@ -142,7 +230,6 @@ export default function ParentKidsScreen() {
           kids.map((kid) => (
             <Card key={kid._id} style={styles.kidCard}>
               <View style={[styles.kidRow, rtl.row]}>
-                <Text style={styles.kidAvatar}>{kid.avatar}</Text>
                 <View style={styles.kidInfo}>
                   <Text style={[styles.kidName, rtl.textFull]}>{kid.displayName}</Text>
                   <Text style={[styles.kidUsername, rtl.textFull]}>@{kid.username}</Text>
@@ -152,56 +239,65 @@ export default function ParentKidsScreen() {
                     <Text style={styles.kidStat}>🔥 {kid.streak}</Text>
                   </View>
                 </View>
+                <Text style={styles.kidAvatar}>{kid.avatar}</Text>
+                <TouchableOpacity style={styles.editBtn} onPress={() => openEdit(kid)}>
+                  <Text style={styles.editIcon}>✏️</Text>
+                </TouchableOpacity>
               </View>
             </Card>
           ))
         )}
       </ScrollView>
 
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>{t('addKid')}</Text>
-            <Input label={t('displayName')} value={displayName} onChangeText={setDisplayName} placeholder="יונתן" />
-            <Input
-              label={t('username')}
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-              placeholder="yonatan"
-            />
-            <Input
-              label={t('pin')}
-              value={pin}
-              onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
-              keyboardType="number-pad"
-              maxLength={4}
-            />
+      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={closeModal}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={closeModal} />
+          <View style={[styles.modal, { maxHeight: modalMaxHeight }]}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.modalScroll}
+              showsVerticalScrollIndicator
+            >
+              <Text style={styles.modalTitle}>{editingKid ? t('editKid') : t('addKid')}</Text>
+              <Input label={t('displayName')} value={displayName} onChangeText={setDisplayName} placeholder="יונתן" />
+              <Input
+                label={t('username')}
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+                placeholder="yonatan"
+              />
+              <Input
+                label={editingKid ? t('pinOptional') : t('pin')}
+                value={pin}
+                onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
+                keyboardType="number-pad"
+                maxLength={4}
+              />
 
-            <Text style={[styles.label, rtl.textFull]}>{t('selectAvatar')}</Text>
-            <View style={[styles.avatars, rtl.row]}>
-              {AVATARS.map((a) => (
-                <TouchableOpacity
-                  key={a}
-                  style={[styles.avatarBtn, avatar === a && styles.avatarActive]}
-                  onPress={() => setAvatar(a)}
-                >
-                  <Text style={styles.avatarEmoji}>{a}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+              <Text style={styles.label}>{t('selectAvatar')}</Text>
+              <View style={styles.chipRow}>
+                {AVATARS.map((a) => (
+                  <TouchableOpacity
+                    key={a}
+                    style={[styles.avatarBtn, avatar === a && styles.avatarActive]}
+                    onPress={() => setAvatar(a)}
+                  >
+                    <Text style={styles.avatarEmoji}>{a}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
 
             <View style={[styles.modalActions, rtl.row]}>
-              <Button title={t('save')} onPress={handleCreate} loading={loading} style={{ flex: 1 }} />
-              <Button
-                title={t('cancel')}
-                onPress={() => setModalVisible(false)}
-                variant="outline"
-                style={{ flex: 1 }}
-              />
+              <Button title={t('save')} onPress={handleSave} loading={loading} style={{ flex: 1 }} />
+              <Button title={t('cancel')} onPress={closeModal} variant="outline" style={{ flex: 1 }} />
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </ThemedScreen>
   );

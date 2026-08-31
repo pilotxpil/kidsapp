@@ -208,7 +208,10 @@ export const api = {
     });
   },
 
-  updateKid(id: string, data: { uiTheme?: UiThemeId; avatar?: string; displayName?: string }) {
+  updateKid(
+    id: string,
+    data: { uiTheme?: UiThemeId; avatar?: string; displayName?: string; username?: string; pin?: string }
+  ) {
     return request<{ kid: User }>(`/kids/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),

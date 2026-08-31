@@ -54,6 +54,8 @@ export const he = {
   completedOnce: 'הושלם',
   addReward: 'פרס חדש',
   addKid: 'הוסף פרופיל',
+  editKid: 'עריכת פרופיל ילד',
+  pinOptional: 'PIN חדש (השאר ריק אם לא לשנות)',
   title: 'כותרת',
   description: 'תיאור',
   category: 'קטגוריה',

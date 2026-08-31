@@ -18,20 +18,14 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
-import { REWARD_CATEGORIES } from '@kidsapp/shared';
-import type { Reward, RewardCategory } from '@kidsapp/shared';
+import { REWARD_CATEGORIES, REWARD_TEMPLATES } from '@kidsapp/shared';
+import type { Reward, RewardCategory, RewardTemplate } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 
-const DEFAULT_REWARDS = [
-  { title: '80 Robux', icon: '🎮', cost: '500', category: 'gaming' as RewardCategory },
-  { title: 'Brawl Stars Gems', icon: '💎', cost: '400', category: 'gaming' as RewardCategory },
-  { title: 'Minecraft Coins', icon: '⛏️', cost: '350', category: 'gaming' as RewardCategory },
-  { title: 'הזמנת פיצה', icon: '🍕', cost: '800', category: 'food' as RewardCategory },
-  { title: '30 דק מסך', icon: '📱', cost: '150', category: 'screen' as RewardCategory },
-];
+const DEFAULT_REWARDS = REWARD_TEMPLATES;
 
 export default function ParentRewardsScreen() {
   const insets = useSafeAreaInsets();
@@ -73,6 +67,14 @@ export default function ParentRewardsScreen() {
           fontSize: 11,
           textAlign: 'center',
           marginTop: 4,
+          writingDirection: 'rtl',
+          width: '100%',
+        },
+        templateDesc: {
+          color: colors.textMuted,
+          fontSize: 9,
+          textAlign: 'center',
+          marginTop: 2,
           writingDirection: 'rtl',
           width: '100%',
         },
@@ -135,8 +137,16 @@ export default function ParentRewardsScreen() {
           borderWidth: 1,
           borderColor: colors.border,
         },
-        chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+        chipContent: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          ...(Platform.OS === 'web' ? { direction: 'rtl' as const } : {}),
+        },
+        chipIcon: { fontSize: 13 },
+        chipActive: { backgroundColor: colors.primaryDark, borderColor: colors.primaryDark },
         chipText: { color: colors.text, fontSize: 13, textAlign: 'right', writingDirection: 'rtl' },
+        chipTextActive: { color: colors.text, fontWeight: '700' },
         modalActions: {
           gap: spacing.sm,
           padding: spacing.lg,
@@ -218,12 +228,12 @@ export default function ParentRewardsScreen() {
     await load();
   };
 
-  const applyTemplate = (tpl: (typeof DEFAULT_REWARDS)[0]) => {
+  const applyTemplate = (tpl: RewardTemplate) => {
     setEditingReward(null);
     setTitle(tpl.title);
-    setDescription('');
+    setDescription(tpl.description);
     setIcon(tpl.icon);
-    setCost(tpl.cost);
+    setCost(String(tpl.cost));
     setCategory(tpl.category);
     setModalVisible(true);
   };
@@ -244,6 +254,7 @@ export default function ParentRewardsScreen() {
             <TouchableOpacity key={tpl.title} style={styles.template} onPress={() => applyTemplate(tpl)}>
               <Text style={styles.templateIcon}>{tpl.icon}</Text>
               <Text style={styles.templateText}>{tpl.title}</Text>
+              <Text style={styles.templateDesc}>{tpl.description}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -303,9 +314,12 @@ export default function ParentRewardsScreen() {
                       setIcon(val.icon);
                     }}
                   >
-                    <Text style={styles.chipText}>
-                      {val.icon} {val.label}
-                    </Text>
+                    <View style={styles.chipContent}>
+                      <Text style={styles.chipIcon}>{val.icon}</Text>
+                      <Text style={[styles.chipText, category === key && styles.chipTextActive]}>
+                        {val.label}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>

@@ -165,13 +165,21 @@ export default function ParentTasksScreen() {
           borderColor: colors.border,
           alignSelf: 'flex-end',
         },
-        chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+        chipContent: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+          ...(Platform.OS === 'web' ? { direction: 'rtl' as const } : {}),
+        },
+        chipIcon: { fontSize: 13 },
+        chipActive: { backgroundColor: colors.primaryDark, borderColor: colors.primaryDark },
         chipText: {
           color: colors.text,
           fontSize: 13,
           textAlign: 'right',
           writingDirection: 'rtl',
         },
+        chipTextActive: { color: colors.text, fontWeight: '700' },
         modalActions: {
           gap: spacing.sm,
           padding: spacing.lg,
@@ -271,7 +279,7 @@ export default function ParentTasksScreen() {
     setEditingGroup(null);
     if (template) {
       setTitle(template.title);
-      setDescription('');
+      setDescription(template.description);
       setPoints(String(template.points));
       setCategory(template.category);
       setRecurrence('daily');
@@ -449,6 +457,9 @@ export default function ParentTasksScreen() {
                       {categoryIcon(template.category)} {template.title}
                     </Text>
                     <Text style={styles.templateMeta}>
+                      {template.description}
+                    </Text>
+                    <Text style={styles.templateMeta}>
                       +{template.points} {pointsEmoji} · {TASK_RECURRENCE.daily.icon}{' '}
                       {TASK_RECURRENCE.daily.label}
                       {missing === 0 ? ` · ${t('taskExists')}` : ''}
@@ -495,9 +506,12 @@ export default function ParentTasksScreen() {
                     style={[styles.chip, category === key && styles.chipActive]}
                     onPress={() => setCategory(key)}
                   >
-                    <Text style={styles.chipText}>
-                      {val.icon} {val.label}
-                    </Text>
+                    <View style={styles.chipContent}>
+                      <Text style={styles.chipIcon}>{val.icon}</Text>
+                      <Text style={[styles.chipText, category === key && styles.chipTextActive]}>
+                        {val.label}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -511,9 +525,12 @@ export default function ParentTasksScreen() {
                     style={[styles.chip, recurrence === key && styles.chipActive]}
                     onPress={() => setRecurrence(key)}
                   >
-                    <Text style={styles.chipText}>
-                      {val.icon} {val.label}
-                    </Text>
+                    <View style={styles.chipContent}>
+                      <Text style={styles.chipIcon}>{val.icon}</Text>
+                      <Text style={[styles.chipText, recurrence === key && styles.chipTextActive]}>
+                        {val.label}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -526,7 +543,12 @@ export default function ParentTasksScreen() {
                     style={[styles.chip, allSelected && styles.chipActive]}
                     onPress={toggleAllKids}
                   >
-                    <Text style={styles.chipText}>👨‍👩‍👧‍👦 {t('selectAllKids')}</Text>
+                    <View style={styles.chipContent}>
+                      <Text style={styles.chipIcon}>👨‍👩‍👧‍👦</Text>
+                      <Text style={[styles.chipText, allSelected && styles.chipTextActive]}>
+                        {t('selectAllKids')}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 )}
                 {kids.map((kid) => {
@@ -537,10 +559,13 @@ export default function ParentTasksScreen() {
                       style={[styles.chip, selected && styles.chipActive]}
                       onPress={() => toggleKid(kid._id)}
                     >
-                      <Text style={styles.chipText}>
-                        {selected ? '✓ ' : ''}
-                        {kid.avatar} {kid.displayName}
-                      </Text>
+                      <View style={styles.chipContent}>
+                        {selected ? <Text style={styles.chipIcon}>✓</Text> : null}
+                        <Text style={styles.chipIcon}>{kid.avatar}</Text>
+                        <Text style={[styles.chipText, selected && styles.chipTextActive]}>
+                          {kid.displayName}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   );
                 })}

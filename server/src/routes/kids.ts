@@ -70,7 +70,7 @@ router.patch('/:id', authenticate, async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'אין הרשאה' });
     }
 
-    const { uiTheme, avatar, displayName } = req.body;
+    const { uiTheme, avatar, displayName, username, pin } = req.body;
 
     if (uiTheme !== undefined) {
       if (!UI_THEME_IDS.includes(uiTheme)) {
@@ -85,7 +85,37 @@ router.patch('/:id', authenticate, async (req: Request, res: Response) => {
       }
       kid.avatar = avatar;
     }
-    if (displayName !== undefined) kid.displayName = displayName;
+    if (displayName !== undefined) {
+      const name = String(displayName).trim();
+      if (!name) {
+        return res.status(400).json({ error: 'שם תצוגה לא יכול להיות ריק' });
+      }
+      kid.displayName = name;
+    }
+
+    if (req.user!.role === 'parent') {
+      if (username !== undefined) {
+        const nextUsername = String(username).trim();
+        if (!nextUsername) {
+          return res.status(400).json({ error: 'שם משתמש לא יכול להיות ריק' });
+        }
+        const existing = await User.findOne({
+          username: nextUsername,
+          familyId: req.user!.familyId,
+          _id: { $ne: kid._id },
+        });
+        if (existing) {
+          return res.status(400).json({ error: 'שם משתמש כבר קיים' });
+        }
+        kid.username = nextUsername;
+      }
+      if (pin !== undefined && String(pin).length > 0) {
+        if (String(pin).length < 4) {
+          return res.status(400).json({ error: 'PIN חייב 4 ספרות' });
+        }
+        kid.pinHash = await bcrypt.hash(String(pin), 10);
+      }
+    }
 
     await kid.save();
     res.json({ kid: formatUser(kid) });
