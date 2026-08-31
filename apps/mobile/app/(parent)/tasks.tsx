@@ -154,7 +154,6 @@ export default function ParentTasksScreen() {
           justifyContent: 'flex-end',
           alignItems: 'flex-end',
           width: '100%',
-          ...(Platform.OS === 'web' ? { direction: 'rtl' as const } : {}),
         },
         chip: {
           paddingHorizontal: spacing.md,
@@ -169,7 +168,6 @@ export default function ParentTasksScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           gap: 4,
-          ...(Platform.OS === 'web' ? { direction: 'rtl' as const } : {}),
         },
         chipIcon: { fontSize: 13 },
         chipActive: { backgroundColor: colors.primaryDark, borderColor: colors.primaryDark },

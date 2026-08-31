@@ -127,7 +127,6 @@ export default function ParentRewardsScreen() {
           marginBottom: spacing.md,
           justifyContent: 'flex-end',
           width: '100%',
-          ...(Platform.OS === 'web' ? { direction: 'rtl' as const } : {}),
         },
         chip: {
           paddingHorizontal: spacing.md,
@@ -141,7 +140,6 @@ export default function ParentRewardsScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           gap: 4,
-          ...(Platform.OS === 'web' ? { direction: 'rtl' as const } : {}),
         },
         chipIcon: { fontSize: 13 },
         chipActive: { backgroundColor: colors.primaryDark, borderColor: colors.primaryDark },

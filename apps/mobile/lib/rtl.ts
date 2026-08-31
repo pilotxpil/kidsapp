@@ -12,11 +12,17 @@ function hebrewAlign(): 'left' | 'right' {
 }
 
 function webDirection(): ViewStyle {
-  return Platform.OS === 'web' ? { direction: 'rtl' } : {};
+  return {};
 }
 
 function nativeRowDirection(): 'row' | 'row-reverse' {
   return I18nManager.isRTL ? 'row' : 'row-reverse';
+}
+
+/** Physical LTR: first JSX child on the left (e.g. badge · title). */
+function headerSplitDirection(): 'row' | 'row-reverse' {
+  if (Platform.OS === 'web') return 'row-reverse';
+  return I18nManager.isRTL ? 'row-reverse' : 'row';
 }
 
 export const rtl = {
@@ -25,18 +31,19 @@ export const rtl = {
   },
 
   /** Streak/badge left · greeting/title right */
-  headerSplit: {
-    flexDirection: 'row',
-    direction: 'ltr',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-  } as ViewStyle,
+  get headerSplit(): ViewStyle {
+    return {
+      flexDirection: headerSplitDirection(),
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+    };
+  },
 
   /** Icon on the right (icon first in JSX) */
   get cardRow(): ViewStyle {
     if (Platform.OS === 'web') {
-      return { flexDirection: 'row', direction: 'rtl', alignItems: 'flex-start', width: '100%' };
+      return { flexDirection: 'row', alignItems: 'flex-start', width: '100%' };
     }
     return { flexDirection: nativeRowDirection(), alignItems: 'flex-start', width: '100%' };
   },

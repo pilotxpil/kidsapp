@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BouncyPressable } from './animations/BouncyPressable';
 import { getTheme } from '../constants/themes';
+import { rtl } from '../lib/rtl';
 import type { UiThemeId } from '@kidsapp/shared';
 
 type PortalVariant = 'hero' | 'parent';
@@ -120,7 +121,7 @@ export function PortalButton({ variant, emoji, title, subtitle, onPress, style }
               style={[styles.topAccent, { borderRadius: theme.borderRadius.lg }]}
             />
 
-            <View style={styles.content}>
+            <View style={[styles.content, rtl.row]}>
               <View
                 style={[
                   styles.emojiBubble,
@@ -193,12 +194,10 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   content: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 14,
     zIndex: 1,
-    direction: 'rtl',
   },
   emojiBubble: {
     width: 52,

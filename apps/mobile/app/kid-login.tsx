@@ -152,7 +152,6 @@ export default function KidLoginScreen() {
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
-            placeholder="yonatan"
           />
           <Input
             label={t('pin')}

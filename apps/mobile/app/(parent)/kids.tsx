@@ -113,7 +113,6 @@ export default function ParentKidsScreen() {
           marginBottom: spacing.md,
           justifyContent: 'flex-end',
           width: '100%',
-          ...(Platform.OS === 'web' ? { direction: 'rtl' as const } : {}),
         },
         avatarBtn: {
           width: 48,
