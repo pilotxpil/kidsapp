@@ -18,6 +18,13 @@ export type UiThemeId = 'minecraft' | 'brawl' | 'roblox' | 'sparkle';
 
 export const UI_THEME_IDS: UiThemeId[] = ['minecraft', 'brawl', 'roblox', 'sparkle'];
 
+export const DEFAULT_KID_THEME_ID: UiThemeId = 'brawl';
+export const DEFAULT_PARENT_THEME_ID: UiThemeId = 'roblox';
+
+export function defaultUiThemeForRole(role: UserRole): UiThemeId {
+  return role === 'kid' ? DEFAULT_KID_THEME_ID : DEFAULT_PARENT_THEME_ID;
+}
+
 /** Daily gift star — tap this many times to claim (Brawl Stars–style). */
 export const DAILY_STAR_TAPS = 4;
 export const DAILY_STAR_BONUS = 10;

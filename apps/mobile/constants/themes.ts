@@ -299,11 +299,11 @@ export const THEMES: Record<UiThemeId, AppTheme> = {
   },
 };
 
-export const DEFAULT_THEME_ID: UiThemeId = 'minecraft';
+export const DEFAULT_THEME_ID: UiThemeId = 'roblox';
 
 export function getTheme(id?: UiThemeId | null): AppTheme {
   if (id && THEMES[id]) return THEMES[id];
-  return THEMES.minecraft;
+  return THEMES.roblox;
 }
 
 export const UI_THEME_OPTIONS = (Object.values(THEMES) as AppTheme[]).map((t) => ({

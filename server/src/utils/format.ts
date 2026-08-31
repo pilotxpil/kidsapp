@@ -1,3 +1,4 @@
+import { defaultUiThemeForRole } from '@kidsapp/shared';
 import { IUser } from '../models/User';
 
 export function formatUser(user: IUser) {
@@ -15,7 +16,7 @@ export function formatUser(user: IUser) {
     streak: user.streak,
     lastActiveDate: user.lastActiveDate,
     badges: user.badges,
-    uiTheme: user.uiTheme || 'minecraft',
+    uiTheme: user.uiTheme || defaultUiThemeForRole(user.role),
     createdAt: user.createdAt.toISOString(),
   };
 }

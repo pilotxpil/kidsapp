@@ -9,6 +9,7 @@ import {
   type BadgeUnlock,
   type DailyGiftType,
   type FortuneWheelSegment,
+  defaultUiThemeForRole,
 } from '@kidsapp/shared';
 import { IUser, User } from '../models/User';
 import { PointTransaction } from '../models/PointTransaction';
@@ -459,7 +460,7 @@ function formatKid(kid: IUser) {
     streak: kid.streak,
     lastActiveDate: kid.lastActiveDate,
     badges: kid.badges,
-    uiTheme: kid.uiTheme || 'minecraft',
+    uiTheme: kid.uiTheme || defaultUiThemeForRole('kid'),
     createdAt: kid.createdAt.toISOString(),
   };
 }

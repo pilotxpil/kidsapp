@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { UI_THEME_IDS, AVATARS } from '@kidsapp/shared';
+import { UI_THEME_IDS, AVATARS, DEFAULT_KID_THEME_ID } from '@kidsapp/shared';
 import { authenticate, requireParent } from '../middleware/auth';
 import { User } from '../models/User';
 import { Task } from '../models/Task';
@@ -51,6 +51,7 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
       username,
       pinHash,
       avatar: avatar || '🐷',
+      uiTheme: DEFAULT_KID_THEME_ID,
     });
 
     res.status(201).json({ kid: formatUser(kid) });

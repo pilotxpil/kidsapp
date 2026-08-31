@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useMemo, useCallback, useState } from 'react';
 import type { TaskCategory, UiThemeId } from '@kidsapp/shared';
+import { defaultUiThemeForRole } from '@kidsapp/shared';
 import { useAuth } from './auth';
 import { api } from './api';
-import { AppTheme, DEFAULT_THEME_ID, getTheme } from '../constants/themes';
+import { AppTheme, getTheme } from '../constants/themes';
 
 interface ThemeContextValue extends AppTheme {
   setUiTheme: (id: UiThemeId) => Promise<void>;
@@ -15,7 +16,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { user, refreshUser } = useAuth();
   const [pendingThemeId, setPendingThemeId] = useState<UiThemeId | null>(null);
 
-  const serverThemeId: UiThemeId = user?.uiTheme ?? DEFAULT_THEME_ID;
+  const serverThemeId: UiThemeId =
+    user?.uiTheme ?? (user ? defaultUiThemeForRole(user.role) : 'roblox');
   const themeId = pendingThemeId ?? serverThemeId;
   const theme = useMemo(() => getTheme(themeId), [themeId]);
 
@@ -49,7 +51,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) {
-    const fallback = getTheme(DEFAULT_THEME_ID);
+    const fallback = getTheme('roblox');
     return {
       ...fallback,
       setUiTheme: async () => {},

@@ -17,6 +17,11 @@ import { Celebration } from './Celebration';
 import { useModalEnter } from './animations/modalEnter';
 import { Star3D, type Star3DHandle } from './Star3D';
 import { api } from '../lib/api';
+import {
+  dismissKidGift,
+  isKidGiftDismissed,
+  subscribeKidGiftDismiss,
+} from '../lib/kid-gift-dismiss';
 
 interface DailyStarProps {
   kidId: string;
@@ -124,6 +129,30 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
           marginTop: spacing.md,
           textAlign: 'center',
         },
+        closeBtn: {
+          position: 'absolute',
+          top: spacing.sm,
+          left: spacing.sm,
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: 'rgba(0,0,0,0.25)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        closeBtnText: {
+          color: '#fff',
+          fontSize: 18,
+          fontWeight: '700',
+          lineHeight: 20,
+        },
+        closeLink: {
+          marginTop: spacing.md,
+          color: 'rgba(255,255,255,0.7)',
+          fontSize: 13,
+          fontWeight: '600',
+          textAlign: 'center',
+        },
       }),
     [themeId, borderRadius, cardBorder]
   );
@@ -141,7 +170,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
       const res = await api.getDailyStar(kidId);
       setStatus(res.status);
       resetInteraction();
-      setVisible(!!res.status.available);
+      setVisible(!!res.status.available && !isKidGiftDismissed('star'));
     } catch {
       setStatus(null);
       setVisible(false);
@@ -151,6 +180,8 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => subscribeKidGiftDismiss(load), [load]);
 
   const flashStyle = useAnimatedStyle(() => ({
     opacity: flash.value,
@@ -183,6 +214,12 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
     setStatus((prev) =>
       prev ? { ...prev, available: false, dailyBonus: 0, streakBonus: 0, totalPoints: 0 } : prev
     );
+  };
+
+  const handleDismiss = () => {
+    if (claimingRef.current || celebrate) return;
+    dismissKidGift('star');
+    setVisible(false);
   };
 
   const handleTap = () => {
@@ -224,6 +261,15 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
           <Animated.View style={[styles.overlay, overlayStyle]}>
             <Animated.View style={[styles.card, enterStyle]}>
               <LinearGradient colors={[...heroGradient]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.inner}>
+                <Pressable
+                  style={styles.closeBtn}
+                  onPress={handleDismiss}
+                  disabled={claimingRef.current || celebrate}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('close')}
+                >
+                  <Text style={styles.closeBtnText}>✕</Text>
+                </Pressable>
                 <Animated.View style={[styles.flash, flashStyle]} pointerEvents="none" />
                 <Animated.Text entering={FadeIn.delay(80)} style={styles.title}>
                   {t('dailyStar')}
@@ -247,6 +293,10 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
                 </View>
 
                 <Text style={styles.reward}>{rewardHint}</Text>
+
+                <Pressable onPress={handleDismiss} disabled={claimingRef.current || celebrate}>
+                  <Text style={styles.closeLink}>{t('close')}</Text>
+                </Pressable>
               </LinearGradient>
             </Animated.View>
           </Animated.View>

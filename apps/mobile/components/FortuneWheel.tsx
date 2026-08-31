@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Modal, ActivityIndicator, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { G, Path, Text as SvgText, Circle } from 'react-native-svg';
 import Animated, {
@@ -22,6 +22,11 @@ import { Celebration } from './Celebration';
 import { useModalEnter } from './animations/modalEnter';
 import { BouncyPressable } from './animations/BouncyPressable';
 import { api } from '../lib/api';
+import {
+  dismissKidGift,
+  isKidGiftDismissed,
+  subscribeKidGiftDismiss,
+} from '../lib/kid-gift-dismiss';
 
 interface FortuneWheelProps {
   kidId: string;
@@ -145,6 +150,32 @@ export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
           fontWeight: '800',
           textAlign: 'center',
         },
+        closeBtn: {
+          position: 'absolute',
+          top: spacing.sm,
+          left: spacing.sm,
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: 'rgba(0,0,0,0.25)',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2,
+        },
+        closeBtnText: {
+          color: '#fff',
+          fontSize: 18,
+          fontWeight: '700',
+          lineHeight: 20,
+        },
+        closeLink: {
+          marginTop: spacing.md,
+          color: 'rgba(255,255,255,0.7)',
+          fontSize: 13,
+          fontWeight: '600',
+          textAlign: 'center',
+          alignSelf: 'center',
+        },
       }),
     [themeId, borderRadius, cardBorder]
   );
@@ -153,7 +184,7 @@ export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
     try {
       const res = await api.getFortuneWheel(kidId);
       setStatus(res.status);
-      setVisible(!!res.status.available);
+      setVisible(!!res.status.available && !isKidGiftDismissed('wheel'));
     } catch {
       setStatus(null);
       setVisible(false);
@@ -163,6 +194,8 @@ export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => subscribeKidGiftDismiss(load), [load]);
 
   const wheelStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
@@ -208,6 +241,12 @@ export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
     }
   };
 
+  const handleDismiss = () => {
+    if (spinning || celebrate) return;
+    dismissKidGift('wheel');
+    setVisible(false);
+  };
+
   const handleCelebrateDone = () => {
     setCelebrate(false);
     setVisible(false);
@@ -225,6 +264,15 @@ export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
           <Animated.View style={[styles.overlay, overlayStyle]}>
             <Animated.View style={[styles.card, enterStyle]}>
               <LinearGradient colors={[...heroGradient]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.inner}>
+                <Pressable
+                  style={styles.closeBtn}
+                  onPress={handleDismiss}
+                  disabled={spinning || celebrate}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('close')}
+                >
+                  <Text style={styles.closeBtnText}>✕</Text>
+                </Pressable>
                 <Text style={styles.title}>{t('fortuneWheel')}</Text>
                 <Text style={styles.hint}>{t('fortuneWheelHint')}</Text>
 
@@ -269,6 +317,10 @@ export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
                     <Text style={styles.spinBtnText}>{t('wheelSpin')}</Text>
                   )}
                 </BouncyPressable>
+
+                <Pressable onPress={handleDismiss} disabled={spinning || celebrate}>
+                  <Text style={styles.closeLink}>{t('close')}</Text>
+                </Pressable>
               </LinearGradient>
             </Animated.View>
           </Animated.View>

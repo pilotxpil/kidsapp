@@ -5,7 +5,7 @@ import { Family } from './models/Family';
 import { User } from './models/User';
 import { Task } from './models/Task';
 import { Reward } from './models/Reward';
-import { TASK_TEMPLATES, taskCategoryIcon, REWARD_TEMPLATES } from '@kidsapp/shared';
+import { TASK_TEMPLATES, taskCategoryIcon, REWARD_TEMPLATES, DEFAULT_KID_THEME_ID, DEFAULT_PARENT_THEME_ID } from '@kidsapp/shared';
 import { generateUniqueInviteCode } from './utils/inviteCode';
 
 dotenv.config();
@@ -29,6 +29,7 @@ async function seed() {
     passwordHash,
     familyId: new mongoose.Types.ObjectId(),
     avatar: '👨‍👩‍👧‍👦',
+    uiTheme: DEFAULT_PARENT_THEME_ID,
   });
 
   const inviteCode = await generateUniqueInviteCode();
@@ -49,6 +50,7 @@ async function seed() {
     username: 'yonatan',
     pinHash,
     avatar: '🦁',
+    uiTheme: DEFAULT_KID_THEME_ID,
     points: 150,
     level: 2,
     xp: 150,
@@ -63,6 +65,7 @@ async function seed() {
     username: 'itay',
     pinHash: kid2Pin,
     avatar: '🐯',
+    uiTheme: DEFAULT_KID_THEME_ID,
     points: 80,
     level: 1,
     xp: 80,

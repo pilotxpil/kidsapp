@@ -6,6 +6,7 @@ import { useTheme } from '../../lib/theme-context';
 import { RtlTabBar } from '../../components/RtlTabBar';
 import { t } from '../../lib/i18n';
 import { startBgm, stopBgm, resumeBgm, pauseBgm } from '../../lib/bgm';
+import { resetKidGiftDismissals } from '../../lib/kid-gift-dismiss';
 import { BadgeCelebrationProvider } from '../../lib/badge-celebration';
 
 const TAB_CONTENT_HEIGHT = 56;
@@ -33,6 +34,7 @@ export default function KidLayout() {
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
       if (appState.current.match(/inactive|background/) && next === 'active') {
+        resetKidGiftDismissals();
         void resumeBgm();
       } else if (next.match(/inactive|background/)) {
         void pauseBgm();

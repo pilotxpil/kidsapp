@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { UI_THEME_IDS, AVATARS, PARENT_AVATARS } from '@kidsapp/shared';
+import { UI_THEME_IDS, AVATARS, PARENT_AVATARS, DEFAULT_PARENT_THEME_ID } from '@kidsapp/shared';
 import { Family } from '../models/Family';
 import { User } from '../models/User';
 import { formatUser } from '../utils/format';
@@ -50,6 +50,7 @@ router.post('/parent/register', async (req: Request, res: Response) => {
         passwordHash,
         familyId: family._id,
         avatar: '👨‍👩‍👧‍👦',
+        uiTheme: DEFAULT_PARENT_THEME_ID,
       });
 
       const updated = await Family.findOneAndUpdate(
@@ -82,6 +83,7 @@ router.post('/parent/register', async (req: Request, res: Response) => {
       passwordHash,
       familyId: new (await import('mongoose')).Types.ObjectId(),
       avatar: '👨‍👩‍👧‍👦',
+      uiTheme: DEFAULT_PARENT_THEME_ID,
     });
 
     family = await Family.create({

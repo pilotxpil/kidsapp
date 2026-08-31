@@ -10,10 +10,12 @@ export const spacing = {
 export { getTheme, DEFAULT_THEME_ID, THEMES, UI_THEME_OPTIONS } from './themes';
 export type { AppTheme, ThemeColors } from './themes';
 
-/** Static Minecraft defaults for auth/parent screens (no dynamic theme) */
+/** Static Roblox defaults for parent auth screens (no dynamic theme yet). */
 import { getTheme } from './themes';
-const _mc = getTheme('minecraft');
-export const colors = _mc.colors;
-export const borderRadius = _mc.borderRadius;
-export const gradientBg = _mc.gradientBg;
-export const blockBorder = _mc.cardBorder;
+const _parent = getTheme('roblox');
+export const colors = _parent.colors;
+export const borderRadius = _parent.borderRadius;
+export const gradientBg = _parent.gradientBg;
+export const blockBorder = _parent.cardBorder;
+
+export const kidAuthTheme = getTheme('brawl');
