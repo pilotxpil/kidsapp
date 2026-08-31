@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { G, Path, Text as SvgText, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
-  ZoomIn,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -21,7 +20,8 @@ import { useTheme } from '../lib/theme-context';
 import { playSfx } from '../lib/sfx';
 import { t } from '../lib/i18n';
 import { Celebration } from './Celebration';
-import { Button } from './Button';
+import { useModalEnter } from './animations/modalEnter';
+import { BouncyPressable } from './animations/BouncyPressable';
 import { api } from '../lib/api';
 
 interface FortuneWheelProps {
@@ -68,6 +68,7 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
   onWonRef.current = onWon;
 
   const rotation = useSharedValue(0);
+  const { overlayStyle, cardStyle: enterStyle } = useModalEnter(visible);
 
   const styles = useMemo(
     () =>
@@ -90,7 +91,8 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
         inner: {
           paddingVertical: spacing.xl,
           paddingHorizontal: spacing.lg,
-          alignItems: 'center',
+          alignItems: 'stretch',
+          width: '100%',
         },
         closeBtn: {
           position: 'absolute',
@@ -110,6 +112,7 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
           fontSize: 22,
           fontWeight: '800',
           textAlign: 'center',
+          alignSelf: 'center',
         },
         hint: {
           color: 'rgba(255,255,255,0.9)',
@@ -117,12 +120,14 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
           marginTop: spacing.sm,
           marginBottom: spacing.md,
           textAlign: 'center',
+          alignSelf: 'center',
         },
         wheelWrap: {
           width: SIZE,
           height: SIZE,
           alignItems: 'center',
           justifyContent: 'center',
+          alignSelf: 'center',
         },
         pointer: {
           position: 'absolute',
@@ -137,12 +142,33 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
           borderRightColor: 'transparent',
           borderTopColor: '#FFD700',
         },
-        spinBtn: { marginTop: spacing.lg, minWidth: 160 },
+        spinBtn: {
+          marginTop: spacing.lg,
+          width: '100%',
+          minHeight: 52,
+          borderRadius: borderRadius.full,
+          backgroundColor: '#FFD700',
+          borderWidth: 2,
+          borderColor: '#FFF8B0',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: spacing.md,
+          paddingHorizontal: spacing.lg,
+        },
+        spinBtnDisabled: { opacity: 0.55 },
+        spinBtnText: {
+          color: '#1a1a2e',
+          fontSize: 18,
+          fontWeight: '800',
+          textAlign: 'center',
+        },
         devBadge: {
           marginTop: spacing.sm,
           color: 'rgba(255,255,255,0.65)',
           fontSize: 11,
           fontWeight: '700',
+          textAlign: 'center',
+          alignSelf: 'center',
         },
         reopenFab: {
           position: 'absolute',
@@ -261,10 +287,11 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
         </Pressable>
       ) : null}
 
-      <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+      <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
+        {visible ? (
         <View style={styles.modalRoot}>
-          <View style={styles.overlay}>
-            <Animated.View entering={ZoomIn.duration(260).springify().damping(14)} style={styles.card}>
+          <Animated.View style={[styles.overlay, overlayStyle]}>
+            <Animated.View style={[styles.card, enterStyle]}>
               <LinearGradient colors={[...heroGradient]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.inner}>
                 {status.unlimited ? (
                   <Pressable onPress={() => setVisible(false)} style={styles.closeBtn} hitSlop={8}>
@@ -305,18 +332,21 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
                   </Animated.View>
                 </View>
 
-                <Button
-                  title={spinning ? t('wheelSpinning') : t('wheelSpin')}
+                <BouncyPressable
                   onPress={handleSpin}
-                  loading={spinning}
                   disabled={spinning || celebrate}
-                  style={styles.spinBtn}
-                  sound={false}
-                />
+                  style={[styles.spinBtn, (spinning || celebrate) && styles.spinBtnDisabled]}
+                >
+                  {spinning ? (
+                    <ActivityIndicator color="#1a1a2e" />
+                  ) : (
+                    <Text style={styles.spinBtnText}>{t('wheelSpin')}</Text>
+                  )}
+                </BouncyPressable>
                 {status.unlimited ? <Text style={styles.devBadge}>{t('dailyStarDevMode')}</Text> : null}
               </LinearGradient>
             </Animated.View>
-          </View>
+          </Animated.View>
 
           <Celebration
             visible={celebrate}
@@ -325,6 +355,7 @@ export function FortuneWheel({ kidId, blocked = false, onWon }: FortuneWheelProp
             onDone={handleCelebrateDone}
           />
         </View>
+        ) : null}
       </Modal>
     </>
   );

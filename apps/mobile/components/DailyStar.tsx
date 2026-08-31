@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   FadeIn,
-  ZoomIn,
   useSharedValue,
   useAnimatedStyle,
   withSequence,
@@ -16,6 +15,7 @@ import { useTheme } from '../lib/theme-context';
 import { playSfx, playStarTapSfx } from '../lib/sfx';
 import { t } from '../lib/i18n';
 import { Celebration } from './Celebration';
+import { useModalEnter } from './animations/modalEnter';
 import { Star3D, type Star3DHandle } from './Star3D';
 import { api } from '../lib/api';
 
@@ -46,6 +46,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
 
   const flash = useSharedValue(0);
   const unlimited = !!status?.unlimited;
+  const { overlayStyle, cardStyle: enterStyle } = useModalEnter(visible);
 
   useEffect(() => {
     onOpenChangeRef.current?.(visible);
@@ -310,10 +311,11 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
         </Pressable>
       ) : null}
 
-      <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+      <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
+        {visible ? (
         <View style={styles.modalRoot}>
-          <View style={styles.overlay}>
-            <Animated.View entering={ZoomIn.duration(280).springify().damping(14)} style={styles.card}>
+          <Animated.View style={[styles.overlay, overlayStyle]}>
+            <Animated.View style={[styles.card, enterStyle]}>
               <LinearGradient colors={[...heroGradient]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.inner}>
                 {unlimited ? (
                   <Pressable
@@ -353,7 +355,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
                 {unlimited ? <Text style={styles.devBadge}>{t('dailyStarDevMode')}</Text> : null}
               </LinearGradient>
             </Animated.View>
-          </View>
+          </Animated.View>
 
           <Celebration
             visible={celebrate}
@@ -362,6 +364,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
             onDone={handleCelebrateDone}
           />
         </View>
+        ) : null}
       </Modal>
     </>
   );

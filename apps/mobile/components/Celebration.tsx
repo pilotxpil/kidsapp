@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { ZoomIn, FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { spacing } from '../constants/theme';
 import { useTheme } from '../lib/theme-context';
 import { playSfx, SfxName } from '../lib/sfx';
 import { Confetti } from './animations/Confetti';
+import { useModalEnter } from './animations/modalEnter';
 
 interface CelebrationProps {
   visible: boolean;
@@ -15,8 +16,9 @@ interface CelebrationProps {
 }
 
 export function Celebration({ visible, message = 'בוצע', sfx, onDone }: CelebrationProps) {
-  const { colors, borderRadius, cardBorder, celebrationKicker, heroGradient, sfx: themeSfx, icon } = useTheme();
+  const { borderRadius, cardBorder, celebrationKicker, heroGradient, sfx: themeSfx, icon } = useTheme();
   const playName = sfx === false ? null : (sfx ?? themeSfx);
+  const { overlayStyle, cardStyle: enterStyle } = useModalEnter(visible);
 
   useEffect(() => {
     if (!visible) return;
@@ -28,9 +30,9 @@ export function Celebration({ visible, message = 'בוצע', sfx, onDone }: Cele
   if (!visible) return null;
 
   return (
-    <View style={styles.overlay} pointerEvents="none">
+    <Animated.View style={[styles.overlay, overlayStyle]} pointerEvents="none">
       <Confetti active={visible} count={48} />
-      <Animated.View entering={ZoomIn.duration(220).springify().damping(14)}>
+      <Animated.View style={enterStyle}>
         <LinearGradient
           colors={[...heroGradient]}
           start={{ x: 0, y: 0 }}
@@ -46,19 +48,17 @@ export function Celebration({ visible, message = 'בוצע', sfx, onDone }: Cele
             },
           ]}
         >
-          <Animated.Text entering={FadeIn.delay(100)} style={styles.bigIcon}>
-            {icon}
-          </Animated.Text>
+          <Text style={styles.bigIcon}>{icon}</Text>
           <Text style={styles.kicker}>{celebrationKicker}</Text>
           <Text style={styles.message}>{message}</Text>
-          <View style={[styles.sparkRow]}>
+          <View style={styles.sparkRow}>
             {['✨', '⭐', '✨'].map((s, i) => (
               <Text key={i} style={styles.spark}>{s}</Text>
             ))}
           </View>
         </LinearGradient>
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 }
 

@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Modal, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
-  ZoomIn,
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
@@ -17,7 +16,8 @@ import { useTheme } from '../lib/theme-context';
 import { playSfx } from '../lib/sfx';
 import { t } from '../lib/i18n';
 import { Celebration } from './Celebration';
-import { Button } from './Button';
+import { useModalEnter } from './animations/modalEnter';
+import { BouncyPressable } from './animations/BouncyPressable';
 import { api } from '../lib/api';
 import { useFocusLoad } from '../hooks/useFocusLoad';
 
@@ -39,6 +39,7 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
 
   const pulse = useSharedValue(1);
   const shake = useSharedValue(0);
+  const { overlayStyle, cardStyle: enterStyle } = useModalEnter(modalOpen);
 
   const styles = useMemo(
     () =>
@@ -112,13 +113,15 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
         modalInner: {
           paddingVertical: spacing.xl,
           paddingHorizontal: spacing.lg,
-          alignItems: 'center',
+          alignItems: 'stretch',
+          width: '100%',
         },
         modalTitle: {
           color: '#fff',
           fontSize: 22,
           fontWeight: '800',
           textAlign: 'center',
+          alignSelf: 'center',
         },
         modalHint: {
           color: 'rgba(255,255,255,0.9)',
@@ -126,14 +129,35 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
           marginTop: spacing.sm,
           marginBottom: spacing.lg,
           textAlign: 'center',
+          alignSelf: 'center',
         },
-        bigChest: { fontSize: 88, marginBottom: spacing.md },
-        openBtn: { minWidth: 160 },
+        bigChest: { fontSize: 88, marginBottom: spacing.md, alignSelf: 'center' },
+        openBtn: {
+          width: '100%',
+          minHeight: 52,
+          borderRadius: borderRadius.full,
+          backgroundColor: '#FFD700',
+          borderWidth: 2,
+          borderColor: '#FFF8B0',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: spacing.md,
+          paddingHorizontal: spacing.lg,
+        },
+        openBtnDisabled: { opacity: 0.55 },
+        openBtnText: {
+          color: '#1a1a2e',
+          fontSize: 18,
+          fontWeight: '800',
+          textAlign: 'center',
+        },
         closeLink: {
           marginTop: spacing.md,
           color: 'rgba(255,255,255,0.7)',
           fontSize: 13,
           fontWeight: '600',
+          textAlign: 'center',
+          alignSelf: 'center',
         },
         mutedCard: {
           width: '100%',
@@ -274,10 +298,11 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
         </View>
       </Pressable>
 
-      <Modal visible={modalOpen} transparent animationType="fade" statusBarTranslucent>
+      <Modal visible={modalOpen} transparent animationType="none" statusBarTranslucent>
+        {modalOpen ? (
         <View style={styles.modalRoot}>
-          <View style={styles.overlay}>
-            <Animated.View entering={ZoomIn.duration(260).springify().damping(14)} style={styles.modalCard}>
+          <Animated.View style={[styles.overlay, overlayStyle]}>
+            <Animated.View style={[styles.modalCard, enterStyle]}>
               <LinearGradient
                 colors={[...heroGradient]}
                 start={{ x: 0, y: 0 }}
@@ -287,14 +312,17 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
                 <Text style={styles.modalTitle}>{t('treasureChest')}</Text>
                 <Text style={styles.modalHint}>{t('chestOpenHint')}</Text>
                 <Animated.Text style={[styles.bigChest, iconStyle]}>🎁</Animated.Text>
-                <Button
-                  title={opening ? t('chestOpening') : t('chestOpen')}
+                <BouncyPressable
                   onPress={handleOpen}
-                  loading={opening}
                   disabled={opening || celebrate}
-                  style={styles.openBtn}
-                  sound={false}
-                />
+                  style={[styles.openBtn, (opening || celebrate) && styles.openBtnDisabled]}
+                >
+                  {opening ? (
+                    <ActivityIndicator color="#1a1a2e" />
+                  ) : (
+                    <Text style={styles.openBtnText}>{t('chestOpen')}</Text>
+                  )}
+                </BouncyPressable>
                 {status.unlimited ? (
                   <Text style={styles.closeLink}>{t('dailyStarDevMode')}</Text>
                 ) : null}
@@ -303,7 +331,7 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
                 </Pressable>
               </LinearGradient>
             </Animated.View>
-          </View>
+          </Animated.View>
 
           <Celebration
             visible={celebrate}
@@ -315,6 +343,7 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
             }}
           />
         </View>
+        ) : null}
       </Modal>
     </>
   );
