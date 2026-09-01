@@ -15,6 +15,7 @@ import type {
   FortuneWheelSpinResult,
   TreasureChestStatus,
   TreasureChestOpenResult,
+  FamilyTaskTemplate,
 } from '@kidsapp/shared';
 
 const TOKEN_KEY = 'kidsapp_token';
@@ -127,11 +128,24 @@ export const api = {
     return request<{ tasks: Task[] }>(`/tasks${query}`);
   },
 
-  createTask(data: Omit<Partial<Task>, 'assignedTo'> & { assignedTo: string | string[] }) {
+  createTask(
+    data: Omit<Partial<Task>, 'assignedTo'> & {
+      assignedTo: string | string[];
+      saveAsTemplate?: boolean;
+    }
+  ) {
     return request<{ task: Task; tasks: Task[] }>('/tasks', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  },
+
+  getTaskTemplates() {
+    return request<{ templates: FamilyTaskTemplate[] }>('/tasks/templates');
+  },
+
+  deleteTaskTemplate(id: string) {
+    return request(`/tasks/templates/${id}`, { method: 'DELETE' });
   },
 
   updateTask(id: string, data: Partial<Task>) {

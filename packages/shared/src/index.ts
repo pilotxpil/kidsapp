@@ -317,6 +317,18 @@ export interface TaskTemplate {
   description: string;
   category: TaskCategory;
   points: number;
+  recurrence?: TaskRecurrence;
+}
+
+/** Parent-saved chore for the family's quick-task list. */
+export interface FamilyTaskTemplate {
+  _id: string;
+  familyId: string;
+  title: string;
+  description: string;
+  category: TaskCategory;
+  points: number;
+  recurrence: TaskRecurrence;
 }
 
 /** Ready-made tasks for quick parent setup (matches demo seed). */

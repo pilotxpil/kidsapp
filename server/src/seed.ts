@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { Family } from './models/Family';
 import { User } from './models/User';
 import { Task } from './models/Task';
+import { TaskTemplate } from './models/TaskTemplate';
 import { Reward } from './models/Reward';
 import { TASK_TEMPLATES, taskCategoryIcon, REWARD_TEMPLATES, DEFAULT_KID_THEME_ID, DEFAULT_PARENT_THEME_ID } from '@kidsapp/shared';
 import { generateUniqueInviteCode } from './utils/inviteCode';
@@ -18,6 +19,7 @@ async function seed() {
     User.deleteMany({}),
     Family.deleteMany({}),
     Task.deleteMany({}),
+    TaskTemplate.deleteMany({}),
     Reward.deleteMany({}),
   ]);
 
