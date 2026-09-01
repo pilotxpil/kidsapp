@@ -22,6 +22,14 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'KidsQuest API',
+    status: 'ok',
+    health: '/health',
+  });
+});
+
 app.use('/auth', authRoutes);
 app.use('/tasks', taskRoutes);
 app.use('/rewards', rewardRoutes);

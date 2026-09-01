@@ -1,6 +1,6 @@
 # KidsQuest — agent guide
 
-Read this before changing code. Human onboarding: [README.md](./README.md), [SETUP.md](./SETUP.md), [CONTRIBUTING.md](./CONTRIBUTING.md), [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
+Read this before changing code. Human onboarding: [README.md](./README.md), [SETUP.md](./SETUP.md), [CONTRIBUTING.md](./CONTRIBUTING.md), [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md). Deploy: [deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md).
 
 ## Stack (do not guess versions)
 
@@ -28,6 +28,7 @@ server/src/
   models/             Mongoose
   services/gamification.ts  Points, XP, streak, badges, daily gifts
 packages/shared/src/index.ts  Types + constants shared by both sides
+deploy/vm/                  Production: deploy.sh (API), deploy-web.sh (static web)
 ```
 
 ## Hard rules
@@ -37,7 +38,18 @@ packages/shared/src/index.ts  Types + constants shared by both sides
 3. **Themed UI.** Use `useTheme()` / `useThemedStyles`, `ThemedScreen`, `Button`, `Card`, `spacing`. No one-off color palettes.
 4. **RTL.** Use `rtl` helpers from `apps/mobile/lib/rtl.ts`. Do not `forceRTL`.
 5. **Auth.** JWT Bearer. Parent vs kid via `requireParent` / `requireKid`. Kids are scoped by `familyId`. Kid login needs `username` + PIN + **family invite code**.
-6. **No tests yet.** Verify by running `dev:server` + `dev:mobile` (web or Expo Go).
+6. **No tests yet.** Verify with `dev:server` + `dev:mobile` (web or Expo Go). Production: [deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md).
+
+## Production
+
+| Piece | Reality |
+|-------|---------|
+| Public URL | `https://kids.synaboard.com` (web + API; nginx routes `/auth`, `/tasks`, … to :3001) |
+| VM | `pilotxpil@instance-20251228-103624`, project `synaboard-482321`, pm2 `kidsquest-api` |
+| EAS | `@pilotx/kidsquest`; `EXPO_PUBLIC_API_URL=https://kids.synaboard.com` for builds |
+| Android | `com.kidsapp.quest` |
+
+Deploy API: `./deploy/vm/deploy.sh`. Deploy web: `npm run deploy:web`. Never `seed` on Atlas production. New top-level API path → update `deploy/vm/nginx-kidsquest.conf`.
 
 ## Typical change
 
@@ -55,4 +67,6 @@ npm run build -w @kidsapp/shared
 npm run seed -w server          # WIPEs DB
 npm run dev:server              # :3001
 npm run dev:mobile              # Expo
+npm run deploy:web              # static web → production
+./deploy/vm/deploy.sh           # API → production VM
 ```

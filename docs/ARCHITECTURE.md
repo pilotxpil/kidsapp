@@ -87,7 +87,7 @@ JWT ל-30 יום. Payload: `{ userId, role, familyId }`. כל שאילתה מס�
 
 ## API (קיצור)
 
-בסיס: `http://localhost:3001`. שגיאות: `{ error: "עברית" }`.
+בסיס בפיתוח: `http://localhost:3001`. בפרודקשן: `https://kids.synaboard.com`. שגיאות: `{ error: "עברית" }`.
 
 | קידומת | תפקיד |
 |--------|--------|
@@ -114,7 +114,23 @@ app/
 
 ניווט לפי תפקיד: `app/_layout.tsx`. טוקן ב-AsyncStorage (`kidsapp_token`).
 
-כתובת API בפיתוח: `apps/mobile/lib/config.ts` — `EXPO_PUBLIC_API_URL` או host של Expo או `10.0.2.2` באמולטור אנדרואיד.
+כתובת API: `apps/mobile/lib/config.ts` — `EXPO_PUBLIC_API_URL` או host של Expo (פיתוח). בפרודקשן: `https://kids.synaboard.com` (נאפית ב-EAS build ו-`expo export`).
+
+## פריסה (פרודקשן)
+
+```
+דפדפן / אנדרואיד          VM (nginx :443)              Atlas
+┌─────────────────┐      ┌──────────────────┐         ┌─────────┐
+│ Expo web static │ ───► │ kids.synaboard.com│         │ kidsapp │
+│ EAS Android APK │      │  / → web/         │         │   DB    │
+│ fetch → /auth…  │ ───► │  /auth… → :3001   │ ──────► │         │
+└─────────────────┘      │  pm2 kidsquest-api│         └─────────┘
+                         └──────────────────┘
+```
+
+אותה מכונה GCP כמו Synaboard / בטומטומים. פורטים: KidsQuest **3001**, Synaboard API **3000**, Synaboard web **8080**.
+
+פריסה: [deploy/vm/DEPLOY.md](../deploy/vm/DEPLOY.md) — `deploy.sh` (API), `deploy-web.sh` (ווב).
 
 ## UI
 

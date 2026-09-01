@@ -59,10 +59,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   } catch (err: unknown) {
     if (err instanceof Error) {
       if (err.name === 'AbortError') {
-        throw new Error('השרת לא מגיב — ודא שהשרת רץ והטלפון על אותה רשת WiFi');
+        throw new Error('השרת לא מגיב. בדקו את החיבור לאינטרנט ונסו שוב.');
       }
       if (err.message === 'Network request failed' || err.message.includes('Network')) {
-        throw new Error('לא ניתן להתחבר לשרת — ודא שהטלפון והמחשב על אותה רשת WiFi');
+        throw new Error('לא ניתן להתחבר לשרת. בדקו את החיבור לאינטרנט ונסו שוב.');
       }
     }
     throw err;

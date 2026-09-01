@@ -19,6 +19,10 @@ function resolveApiUrl(): string {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
+  if (!__DEV__) {
+    throw new Error('EXPO_PUBLIC_API_URL is required in production builds');
+  }
+
   const devHost = getDevMachineHost();
   if (devHost) {
     return `http://${devHost}:3001`;

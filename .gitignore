@@ -13,3 +13,5 @@ dist/
 *.mobileprovision
 web-build/
 apps/mobile/dist/
+release/*.apk
+release/*.aab

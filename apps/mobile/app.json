@@ -12,7 +12,9 @@
       "bundleIdentifier": "com.kidsapp.quest",
       "infoPlist": {
         "CFBundleDevelopmentRegion": "he",
-        "CFBundleLocalizations": ["he"]
+        "CFBundleLocalizations": [
+          "he"
+        ]
       }
     },
     "androidNavigationBar": {
@@ -22,6 +24,7 @@
     },
     "android": {
       "package": "com.kidsapp.quest",
+      "versionCode": 2,
       "supportsRTL": true,
       "usesCleartextTraffic": true,
       "edgeToEdgeEnabled": true,
@@ -62,8 +65,9 @@
       "typedRoutes": true
     },
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "kidsquest-app"
+        "projectId": "74d3a4bb-36ec-45fe-aaf6-01717fc7a067"
       }
     }
   }

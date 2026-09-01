@@ -1,13 +1,13 @@
 # תרומה ל-KidsQuest
 
-מדריך למי שמצטרף לפרויקט (בן אדם או סוכן). התקנה מלאה: [SETUP.md](./SETUP.md). איך המערכת בנויה: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
+מדריך למי שמצטרף לפרויקט (בן אדם או סוכן). התקנה מלאה: [SETUP.md](./SETUP.md). איך המערכת בנויה: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md). פריסה: [deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md).
 
 ## לפני הקוד הראשון
 
 1. Node.js 20+, Docker Desktop, ואופציונלי Expo Go.
 2. מהשורש: `npm install` → `npm run db:up` → `npm run build -w @kidsapp/shared` → `npm run seed -w server`.
 3. שני טרמינלים: `npm run dev:server` ו-`npm run dev:mobile` (או `npm run dev`).
-4. ווב: במסך Metro לחצו `w`. ממשק הורה אחרי התחברות: `/parent`.
+4. ווב מקומי: Metro → `w` או `npm run web`. פרודקשן: https://kids.synaboard.com (`npm run deploy:web`).
 
 `seed` **מוחק** משתמשים, משפחות, משימות ופרסים. אחרי הסיד מודפס **קוד המשפחה** — ילדים חייבים אותו בכניסה (יחד עם username ו-PIN).
 
@@ -22,7 +22,7 @@
 3. **לקוח** → מתודה ב-`apps/mobile/lib/api.ts`, אחר כך מסך תחת `app/(kid)` או `app/(parent)`.
 4. **מחרוזת למשתמש** → מפתח ב-`apps/mobile/lib/i18n.ts` ו-`t('key')`. שגיאות שרת בעברית.
 
-אין כרגע חבילת בדיקות. אחרי שינוי UI או זרימה — בדקו ידנית בווב ו/או ב-Expo Go (ילד + הורה אם נגעתם בשני הצדדים).
+אין כרגע חבילת בדיקות. אחרי שינוי UI או זרימה — בדקו ידנית בווב ו/או ב-Expo Go (ילד + הורה אם נגעתם בשני הצדדים). שינוי API → `./deploy/vm/deploy.sh`; שינוי UI לפרודקשן → `npm run deploy:web`.
 
 ## מוסכמות UI
 
@@ -48,4 +48,6 @@ npm run db:up
 npm run dev:server
 npm run dev:mobile
 npm run build -w @kidsapp/shared   # אחרי שינוי ב-shared
+npm run deploy:web                 # ווב פרודקשן
+./deploy/vm/deploy.sh              # API פרודקשן
 ```

@@ -42,10 +42,19 @@ Then UI:
 
 No automated tests. Run `dev:server` + `dev:mobile` and exercise parent and kid if the change crosses roles.
 
+If the change affects production:
+
+- New/changed API → `./deploy/vm/deploy.sh`
+- UI for live web → `npm run deploy:web`
+- Mobile binary (API URL or native) → new EAS build (`npm run build:android`)
+
+See skill `kidsquest-deploy` and [deploy/vm/DEPLOY.md](../../../deploy/vm/DEPLOY.md).
+
 ## Checklist
 
 - [ ] Type exported from `@kidsapp/shared` and built
 - [ ] Route scoped to `familyId` + correct role
+- [ ] New top-level API path added to `deploy/vm/nginx-kidsquest.conf` if mounted at server root
 - [ ] `api.ts` method added
 - [ ] Hebrew strings (UI + server errors)
 - [ ] Theme/RTL used on new UI (see skill `kidsquest-ui`)

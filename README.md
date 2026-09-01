@@ -9,6 +9,7 @@
 | התקנה והרצה | **[SETUP.md](./SETUP.md)** |
 | הצטרפות לקוד | **[CONTRIBUTING.md](./CONTRIBUTING.md)** |
 | איך המערכת בנויה | **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** |
+| פריסה (API, ווב, אנדרואיד) | **[deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md)** |
 | סוכן / Cursor | **[AGENTS.md](./AGENTS.md)** |
 
 ## מבנה הפרויקט
@@ -63,6 +64,23 @@ npm run dev:mobile
 
 הקוד מופיע גם במסך הילדים אצל ההורה (ואפשר לסרוק QR במקום להקליד).
 
+## פרודקשן (שרת חי)
+
+| | |
+|---|---|
+| **אפליקציה בווב** | https://kids.synaboard.com |
+| **כניסה הורה** | https://kids.synaboard.com/parent-login |
+| **API** | https://kids.synaboard.com/health |
+
+פריסה: API + ווב על VM Google (אותה מכונה כמו בטומטומים). מדריך: **[deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md)**.
+
+```bash
+./deploy/vm/deploy.sh       # עדכון API (pm2)
+npm run deploy:web          # עדכון אתר ווב (Expo export → nginx)
+```
+
+פיתוח מקומי (`npm run dev:mobile` / `npm run web`) — לא אותו מסלול; לבדיקה מהירה על המחשב.
+
 ## Expo Go על אנדרואיד
 
 הפרויקט משתמש ב-**Expo SDK 54** — תואם ל-Expo Go מה-Play Store שתומך ב-SDK 54.
@@ -82,18 +100,36 @@ EXPO_PUBLIC_API_URL=http://192.168.x.x:3001
 
 ## פלטפורמות
 
-- **אנדרואיד**: `cd apps/mobile && npm run android` (או Expo Go)
-- **ווב (מחשב)**: `cd apps/mobile && npm run web`
-- **ממשק הורה**: נגיש בווב בכתובת `/parent` אחרי התחברות
+- **אנדרואיד**: `cd apps/mobile && npm run android` (או Expo Go, או APK מ-EAS)
+- **ווב (פיתוח מקומי)**: `cd apps/mobile && npm run web` → `http://localhost:8081`
+- **ווב (פרודקשן)**: https://kids.synaboard.com — אחרי `npm run deploy:web`
+- **ממשק הורה (פיתוח)**: `/(parent)` אחרי התחברות; בפרודקשן: `/parent-login` → `/(parent)`
 
-## בניית APK לאנדרואיד
+## בניית אנדרואיד והעלאה ל-Play Store
+
+חנות Google Play מקבלת **AAB** בלבד. שרת פרודקשן: `https://kids.synaboard.com`.
 
 ```bash
+# פעם אחת: חשבון Expo + קישור לפרויקט
 cd apps/mobile
-npx eas-cli build --platform android --profile preview
+npx eas-cli login
+npx eas-cli init   # פרויקט: @pilotx/kidsquest
+
+# כתובת API (חובה לבילד production)
+npx eas-cli env:create --name EXPO_PUBLIC_API_URL \
+  --value https://kids.synaboard.com \
+  --environment production --visibility plaintext --scope project
+
+# בילד לחנות (AAB) — מהשורש:
+npm run build:android
+
+# העלאה ל-Play (internal/draft)
+npm run submit:android
 ```
 
-(נדרש חשבון Expo - `npx eas login`)
+APK לבדיקה על טלפון: `npm run build:android:preview` (EAS), או `release/kidsquest-1.0.0.apk` אם נוצר מ-AAB מקומית.
+
+פירוט (VM, nginx, Play Console): **[deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md)** ו-[SETUP.md](./SETUP.md).
 
 ## תכונות
 

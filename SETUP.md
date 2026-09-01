@@ -277,7 +277,17 @@ cd apps/mobile
 npm run web
 ```
 
-אחרי התחברות כהורה, ממשק ההורה נמצא בנתיב `/parent`.
+אחרי התחברות כהורה, ממשק ההורה בנתיב `/(parent)` (expo-router).
+
+### תרחיש: ווב בפרודקשן (שרת)
+
+לא Metro — אתר סטטי על `https://kids.synaboard.com` (אחרי פריסה):
+
+```bash
+npm run deploy:web
+```
+
+כניסה הורה: `/parent-login`. פירוט: [deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md).
 
 ### תרחיש: אמולטור
 
@@ -305,6 +315,89 @@ npx eas-cli build --platform android --profile preview
 
 ---
 
+## העלאה ל-Google Play
+
+החנות מקבלת **Android App Bundle ‏(.aab)** בלבד. הפרופיל `production` ב-`eas.json` מייצר AAB; `preview` נשאר APK לבדיקות.
+
+### מה חייב להיות מוכן לפני הבילד
+
+1. **שרת API ציבורי ב-HTTPS** — פריסה על VM Synaboard (כמו בטומטומים): **[deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md)** (`kids.synaboard.com`). MongoDB Atlas DB `kidsapp`. אל תריצו `seed` על דאטה אמיתי.
+2. **חשבון Expo** — [expo.dev](https://expo.dev) — לבילד בענן (EAS).
+3. **חשבון Google Play Developer** — תשלום חד-פעמי ב-[Play Console](https://play.google.com/console). צרו אפליקציה חדשה (שם תצוגה, עברית, חינמית).
+4. **מדיניות פרטיות ב-URL ציבורי** — חובה באפליקציה עם חשבונות ומצלמה (סריקת QR).
+5. **קהל יעד** — האפליקציה מיועדת לילדים. ב-Play Console יש שאלון גילאים ומדיניות Families. מלאו בכנות; אפליקציות לילדים כפופות לכללים מחמירים (פרסום, איסוף נתונים, הרשאות).
+
+מזהה החבילה קבוע: `com.kidsapp.quest`. אחרי ההעלאה הראשונה אי אפשר להחליף אותו.
+
+### שלב 1 — קישור EAS
+
+מתוך `apps/mobile` (לא משורש הריפו):
+
+```bash
+cd apps/mobile
+npx eas-cli login
+npx eas-cli init
+```
+
+`eas init` כותב `extra.eas.projectId` ל-`app.json`. אל תשנו ידנית את ה-UUID.
+
+### שלב 2 — כתובת API בבילד
+
+הבילד לפרודקשן **ייכשל** בלי משתנה הסביבה הזה:
+
+```bash
+npx eas-cli env:create --name EXPO_PUBLIC_API_URL --value https://kids.synaboard.com --environment production --visibility plaintext --scope project
+```
+
+בלי סלאש בסוף. לבילד preview (APK) הגדירו אותו גם בסביבת `preview`. אחרי שינוי הכתובת צריך בילד חדש — היא נאפית לתוך האפליקציה.
+
+### שלב 3 — בילד AAB
+
+```bash
+npx eas-cli build --platform android --profile production
+```
+
+EAS מייצר keystore בחתימה ומנהל אותו. בפעם הראשונה אשרו יצירת credentials. הבילד רץ בענן (~10–20 דקות). `versionCode` עולה אוטומטית (`autoIncrement`).
+
+בסיום: קישור להורדת ה-`.aab` מ-[expo.dev](https://expo.dev).
+
+### שלב 4 — יצירת האפליקציה ב-Play Console (פעם ראשונה)
+
+1. [Play Console](https://play.google.com/console) → Create app.
+2. שם, שפה ברירת מחדל עברית, אפליקציה (לא משחק אם זה לא משחק), חינמית.
+3. השלימו את משימות ה-Dashboard: דירוג תוכן, קהל יעד, מדיניות פרטיות, Data safety, נכסי חנות (אייקון, צילומי מסך, תיאור קצר/ארוך).
+4. **בדיקות פנימיות** → Create new release → בחתימה בחרו **Google-generated key** → העלו את ה-AAB.
+
+או אחרי שיש Service Account של Google Cloud עם גישה ל-Play Console:
+
+```bash
+npx eas-cli credentials --platform android
+# Google Service Account → Upload a Google Service Account Key
+
+npx eas-cli submit --platform android --profile production
+```
+
+הפרופיל `submit.production` מעלה למסלול **internal** כ**טיוטה**. אתם מפרסמים / מקדמים לייצור מתוך Play Console אחרי שהרשימה בחנות מלאה.
+
+מדריכי Expo (SDK 54 / EAS): [בילד פרודקשן לאנדרואיד](https://docs.expo.dev/tutorial/eas/android-production-build/), [העלאה ל-Play](https://docs.expo.dev/submit/android/), [העלאה ידנית בפעם הראשונה](https://docs.expo.dev/submit/android-manual/).
+
+---
+
+## פריסה לשרת (פרודקשן)
+
+מדריך מלא: **[deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md)**.
+
+| פקודה | מה מעדכן |
+|--------|-----------|
+| `./deploy/vm/deploy.sh` | API (Express) על VM — pm2 `kidsquest-api`, פורט 3001 |
+| `npm run deploy:web` | אתר ווב סטטי → `https://kids.synaboard.com` |
+
+דרישות: `gcloud auth login`, פרויקט `synaboard-482321`, SSH כ-`pilotxpil@instance-20251228-103624`. MongoDB: Atlas DB `kidsapp` ב-`server/.env` (לא commit).
+
+DNS: `kids.synaboard.com` → IP המכונה. nginx מפצל API (`/auth`, `/tasks`, …) וקבצי Expo (`/home/pilotxpil/kidsapp/web`).
+
+---
+
 ## פתרון תקלות נפוצות
 
 | תסמין | מה לבדוק |
@@ -316,12 +409,16 @@ npx eas-cli build --platform android --profile preview
 | שגיאות import מ-`@kidsapp/shared` | `npm run build -w @kidsapp/shared` ואז `npm install` בשורש |
 | `npm run seed` נכשל | Mongo חייב לרוץ קודם |
 | כניסת ילד נכשלת אחרי seed | חסר קוד משפחה — מופיע בפלט ה-seed ובמסך הילדים אצל ההורה |
+| `eas build` production נכשל על EXPO_PUBLIC_API_URL | חסר משתנה HTTPS בסביבת production ב-EAS |
+| `https://kids.synaboard.com/` מציג JSON או 404 | אחרי פריסת ווב: `npm run deploy:web`; API: `curl …/health` |
+| gcloud deploy נכשל Permission denied | השתמשו `pilotxpil@instance-20251228-103624` (לא משתמש ברירת מחדל) |
 
 ---
 
 ## המשך קריאה
 
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — איך לתרום לקוד
+- [deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md) — פריסה (API, ווב, EAS)
 - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — מבנה המערכת
 - [AGENTS.md](./AGENTS.md) — הנחיות לסוכן / Cursor
 - Expo SDK 54: https://docs.expo.dev/versions/v54.0.0/
@@ -339,4 +436,9 @@ npm run seed -w server              # נתוני דמו
 npm run dev:server                  # API על :3001
 npm run dev:mobile                  # Expo / Metro
 npm run dev                         # שרת + Expo יחד
+npm run build:android               # EAS AAB לחנות
+npm run build:android:preview       # EAS APK פנימי
+npm run submit:android              # העלאת AAB ל-Play (internal/draft)
+npm run deploy:web                  # ווב פרודקשן → kids.synaboard.com
+./deploy/vm/deploy.sh               # API פרודקשן → VM (pm2)
 ```

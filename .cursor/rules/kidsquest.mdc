@@ -12,4 +12,4 @@ Monorepo: `apps/mobile` (Expo **SDK 54**), `server` (Express :3001), `packages/s
 - New types/constants live in `packages/shared`, then `npm run build -w @kidsapp/shared`.
 - User-facing copy is Hebrew (`apps/mobile/lib/i18n.ts`, server `error` strings). RTL via `lib/rtl.ts`.
 - Kid login needs family invite code + username + PIN. Do not invent a different auth scheme.
-- No test suite; verify with `dev:server` + `dev:mobile`.
+- No test suite; verify with `dev:server` + `dev:mobile`. Production: [deploy/vm/DEPLOY.md](../../deploy/vm/DEPLOY.md).
