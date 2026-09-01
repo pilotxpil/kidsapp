@@ -1,0 +1,14 @@
+---
+description: Shared contract between server and mobile — types, constants, templates
+globs: packages/shared/**/*.ts
+alwaysApply: false
+---
+
+# @kidsapp/shared
+
+This package is the contract. Both `server` and `apps/mobile` import it.
+
+- Export types, unions, and constants from `src/index.ts`. Do not put Express or React code here.
+- After edits: `npm run build -w @kidsapp/shared` (or leave `npm run dev -w @kidsapp/shared` watching).
+- Consumers read `dist/` — a type that is not built will fail at runtime/import.
+- Keep gamification numbers here (`DAILY_STAR_*`, wheel segments, badges, XP curve) so UI and server stay in sync.

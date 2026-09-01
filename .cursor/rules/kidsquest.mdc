@@ -1,0 +1,15 @@
+---
+description: KidsQuest monorepo map, Expo SDK 54, Hebrew, shared types
+alwaysApply: true
+---
+
+# KidsQuest
+
+Monorepo: `apps/mobile` (Expo **SDK 54**), `server` (Express :3001), `packages/shared`.
+
+- Read [AGENTS.md](../../AGENTS.md) and [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) before structural changes.
+- Expo docs: https://docs.expo.dev/versions/v54.0.0/ — never unversioned or SDK 55+.
+- New types/constants live in `packages/shared`, then `npm run build -w @kidsapp/shared`.
+- User-facing copy is Hebrew (`apps/mobile/lib/i18n.ts`, server `error` strings). RTL via `lib/rtl.ts`.
+- Kid login needs family invite code + username + PIN. Do not invent a different auth scheme.
+- No test suite; verify with `dev:server` + `dev:mobile`.

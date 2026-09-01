@@ -1,0 +1,16 @@
+---
+description: Expo Router screens, themes, RTL, and Hebrew UI conventions
+globs: apps/mobile/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Mobile UI
+
+- Screens: wrap with `ThemedScreen`. Colors from `useTheme()` / `useThemedStyles` — no one-off palettes.
+- Primitives: `Button`, `Card`, `Input`, `spacing` from `constants/theme.ts`.
+- Strings: add a key to `lib/i18n.ts` and use `t('key')`.
+- Layout: `rtl` helpers in `lib/rtl.ts`. Do not call `I18nManager.forceRTL`.
+- Data: add HTTP methods in `lib/api.ts` only; load on focus with `useFocusLoad`.
+- Themes: `minecraft` | `brawl` | `roblox` | `sparkle` in `constants/themes.ts`. Depend styles on `theme.id`.
+- Kid tabs play BGM (`lib/bgm.ts`); keep SFX behind `playSfx`.
+- Expo APIs must exist in SDK 54. Routes live under `app/` (expo-router).

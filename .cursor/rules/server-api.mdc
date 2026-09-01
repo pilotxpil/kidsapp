@@ -1,0 +1,15 @@
+---
+description: Express routes, Mongoose models, JWT auth, gamification
+globs: server/**/*.ts
+alwaysApply: false
+---
+
+# Server
+
+- Mount new routers in `src/index.ts`. Keep family isolation: every query filters `familyId` from the JWT.
+- Auth: `authenticate`, then `requireParent` / `requireKid`. Errors: `{ error: 'עברית' }`.
+- Points/XP/streak/badges/daily gifts: `src/services/gamification.ts` — do not duplicate award/deduct logic in routes.
+- Task recurrence: `src/utils/taskAvailability.ts`.
+- User/family DTOs: `formatUser` in `src/utils/format.ts`. Types come from `@kidsapp/shared`.
+- Kid usernames are unique per family, not globally. Invite code is 6 digits (`src/utils/inviteCode.ts`).
+- `seed.ts` wipes users, families, tasks, and rewards — never point it at production data.

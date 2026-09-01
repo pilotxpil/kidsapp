@@ -6,7 +6,7 @@
 
 | חלק | תיקייה | תפקיד |
 |-----|--------|--------|
-| אפליקציה (ילד + הורה) | `apps/mobile` | Expo SDK 54 — אנדרואיד, iOS וווב |
+| אפליקציה (ילד + הורה) | `apps/mobile` | Expo **SDK 54** — אנדרואיד, iOS וווב |
 | API | `server` | Node.js (Express) על פורט **3001** |
 | טיפוסים משותפים | `packages/shared` | חבילה שנבנית ל-`dist` לפני הרצה |
 | MongoDB | Docker (local) או Atlas (production) | מסד נתונים — DB נפרד: `kidsapp` |
@@ -121,7 +121,10 @@ cp apps/mobile/.env.example apps/mobile/.env
 EXPO_PUBLIC_API_URL=http://192.168.1.5:3001
 ```
 
-(החליפו ב-IP האמיתי. ב-macOS: הגדרות מערכת → רשת, או `ipconfig getifaddr en0`.)
+(החליפו ב-IP האמיתי.)
+
+- **Windows:** `ipconfig` ב-PowerShell / CMD — חפשו `IPv4 Address` של ה-Wi‑Fi (למשל `192.168.1.5`).
+- **macOS:** הגדרות מערכת → רשת, או `ipconfig getifaddr en0`.
 
 אחרי שינוי `.env` במובייל צריך להפעיל מחדש את Expo (`Ctrl+C` ואז `npm run dev:mobile`).
 
@@ -175,13 +178,17 @@ npm run dev -w @kidsapp/shared
 npm run seed -w server
 ```
 
+**זהירות:** הסיד מוחק את כל המשתמשים, המשפחות, המשימות והפרסים במסד.
+
+בסוף מודפס **קוד המשפחה** (6 ספרות). ילד נכנס עם: קוד משפחה + שם משתמש + PIN. אותו קוד משמש גם להזמנת הורה שני.
+
 משתמשים שנוצרים:
 
 | תפקיד | התחברות | סיסמה |
 |-------|---------|--------|
 | הורה | `parent@test.com` | `parent123` |
-| ילד 1 | `yonatan` | `1234` |
-| ילד 2 | `itay` | `5678` |
+| ילד 1 | `yonatan` | `1234` + קוד המשפחה מהפלט |
+| ילד 2 | `itay` | `5678` + קוד המשפחה מהפלט |
 
 ---
 
@@ -308,6 +315,16 @@ npx eas-cli build --platform android --profile preview
 | התחברות מהטלפון נכשלת, ווב עובד | השרת רץ? IP נכון ב-`EXPO_PUBLIC_API_URL`? פורט 3001 פתוח בחומת האש |
 | שגיאות import מ-`@kidsapp/shared` | `npm run build -w @kidsapp/shared` ואז `npm install` בשורש |
 | `npm run seed` נכשל | Mongo חייב לרוץ קודם |
+| כניסת ילד נכשלת אחרי seed | חסר קוד משפחה — מופיע בפלט ה-seed ובמסך הילדים אצל ההורה |
+
+---
+
+## המשך קריאה
+
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — איך לתרום לקוד
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — מבנה המערכת
+- [AGENTS.md](./AGENTS.md) — הנחיות לסוכן / Cursor
+- Expo SDK 54: https://docs.expo.dev/versions/v54.0.0/
 
 ---
 
