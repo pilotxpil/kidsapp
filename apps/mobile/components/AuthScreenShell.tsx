@@ -18,7 +18,7 @@ import { spacing } from '../constants/theme';
 import { t } from '../lib/i18n';
 import type { UiThemeId } from '@kidsapp/shared';
 
-type AuthThemeId = Extract<UiThemeId, 'brawl' | 'roblox'>;
+type AuthThemeId = Extract<UiThemeId, 'ember' | 'brawl' | 'roblox'>;
 
 interface AuthScreenShellProps {
   themeId: AuthThemeId;
@@ -109,7 +109,9 @@ export function AuthScreenShell({
         style={styles.vignette}
         pointerEvents="none"
       />
-      <FloatingEmojis emojis={emojis} count={emojiCount} opacity={0.24} />
+      {theme.chrome !== 'vector' && (
+        <FloatingEmojis emojis={emojis} count={emojiCount} opacity={0.24} />
+      )}
       <SafeAreaView style={styles.safe}>
         {!scroll && onBack ? (
           <BouncyPressable onPress={onBack} style={styles.back}>

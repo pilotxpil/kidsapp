@@ -1,9 +1,13 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { spacing } from '../constants/theme';
+import { getThemeArt } from '../constants/theme-art';
 import { useTheme } from '../lib/theme-context';
+import { useType } from '../lib/typography';
 import { rtl } from '../lib/rtl';
+import { t } from '../lib/i18n';
+import { ThemeGlyph } from './icons/ThemeGlyph';
 
 interface AvatarFrameProps {
   avatar: string;
@@ -12,26 +16,44 @@ interface AvatarFrameProps {
 
 export function AvatarFrame({ avatar, size = 'md' }: AvatarFrameProps) {
   const { colors, borderRadius, cardBorder, heroGradient, id: themeId } = useTheme();
+  const art = getThemeArt(themeId);
+  const helm = art?.icons?.profile;
+  const ember = themeId === 'ember';
   const dim = size === 'lg' ? 88 : 64;
   const fontSize = size === 'lg' ? 48 : 36;
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        outer: {
-          width: dim + 12,
-          height: dim + 12,
-          borderRadius: borderRadius.lg,
-          padding: 4,
-          ...cardBorder(2),
-        },
+        outer: ember
+          ? {
+              width: dim + 10,
+              height: dim + 10,
+              borderRadius: 22,
+              padding: 3,
+              borderWidth: 1.5,
+              borderColor: colors.primaryLight,
+              shadowColor: colors.glow,
+              shadowOpacity: 0.8,
+              shadowRadius: 14,
+              elevation: 10,
+            }
+          : {
+              width: dim + 12,
+              height: dim + 12,
+              borderRadius: borderRadius.lg,
+              padding: 4,
+              ...cardBorder(2),
+            },
         inner: {
           flex: 1,
-          borderRadius: borderRadius.md,
+          borderRadius: ember ? 18 : borderRadius.md,
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
+          backgroundColor: ember ? '#0A0A0C' : undefined,
         },
+        art: { width: '100%', height: '100%' },
         emoji: { fontSize },
         ring: {
           position: 'absolute',
@@ -48,17 +70,23 @@ export function AvatarFrame({ avatar, size = 'md' }: AvatarFrameProps) {
         },
         ringText: { fontSize: 10 },
       }),
-    [themeId, colors, borderRadius, cardBorder, dim, fontSize]
+    [themeId, colors, borderRadius, cardBorder, dim, fontSize, ember]
   );
 
   return (
     <View style={styles.outer}>
       <LinearGradient colors={[...heroGradient]} style={styles.inner}>
-        <Text style={styles.emoji}>{avatar}</Text>
+        {ember && helm ? (
+          <Image source={helm} style={styles.art} resizeMode="cover" />
+        ) : (
+          <Text style={styles.emoji}>{avatar}</Text>
+        )}
       </LinearGradient>
-      <View style={styles.ring}>
-        <Text style={styles.ringText}>✦</Text>
-      </View>
+      {ember ? null : (
+        <View style={styles.ring}>
+          <Text style={styles.ringText}>✦</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -71,7 +99,11 @@ interface ThemedHeroProps {
 }
 
 export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroProps) {
-  const { borderRadius, cardBorder, heroGradient, heroEmoji, heroTagline, id: themeId } = useTheme();
+  const { borderRadius, cardBorder, heroGradient, heroEmoji, heroTagline, id: themeId, chrome, colors } =
+    useTheme();
+  const type = useType();
+  const art = getThemeArt(themeId);
+  const vector = chrome === 'vector';
 
   const styles = useMemo(
     () =>
@@ -82,7 +114,15 @@ export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroPro
           marginBottom: spacing.lg,
           ...cardBorder(3),
         },
-        gradient: { padding: spacing.lg, minHeight: 140 },
+        gradient: { padding: spacing.lg, minHeight: vector ? 168 : 140 },
+        heroImg: {
+          ...StyleSheet.absoluteFillObject,
+          width: '100%',
+          height: '100%',
+        },
+        scrim: {
+          ...StyleSheet.absoluteFillObject,
+        },
         decor: {
           position: 'absolute',
           top: 8,
@@ -100,18 +140,20 @@ export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroPro
         row: { alignItems: 'center', gap: spacing.md },
         textBlock: { flex: 1 },
         tagline: {
-          color: 'rgba(255,255,255,0.75)',
+          color: 'rgba(255,255,255,0.88)',
           fontSize: 12,
-          fontWeight: '600',
+          fontWeight: '700',
           marginBottom: 2,
+          ...type.ui,
         },
         name: {
           color: '#fff',
           fontSize: 26,
           fontWeight: '800',
-          textShadowColor: 'rgba(0,0,0,0.5)',
+          textShadowColor: 'rgba(0,0,0,0.65)',
           textShadowOffset: { width: 1, height: 2 },
-          textShadowRadius: 4,
+          textShadowRadius: 6,
+          ...type.display,
         },
         meta: {
           flexDirection: 'row',
@@ -120,21 +162,38 @@ export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroPro
           flexWrap: 'wrap',
         },
         pill: {
-          backgroundColor: 'rgba(0,0,0,0.35)',
+          backgroundColor: 'rgba(0,0,0,0.45)',
           paddingHorizontal: spacing.sm,
-          paddingVertical: 4,
+          paddingVertical: 5,
           borderRadius: borderRadius.full,
+          alignItems: 'center',
+          gap: 4,
         },
         pillText: { color: '#fff', fontSize: 12, fontWeight: '700' },
       }),
-    [themeId, borderRadius, cardBorder]
+    [themeId, borderRadius, cardBorder, vector, type.ui, type.display]
   );
 
   return (
     <View style={styles.wrap}>
       <LinearGradient colors={[...heroGradient]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
-        <Text style={styles.decor}>{heroEmoji}</Text>
-        <Text style={styles.decor2}>{heroEmoji}</Text>
+        {art?.hero ? (
+          <>
+            <Image source={art.hero} style={styles.heroImg} resizeMode="cover" />
+            <LinearGradient
+              colors={['rgba(8,2,28,0.25)', 'rgba(8,2,28,0.72)']}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={styles.scrim}
+            />
+          </>
+        ) : null}
+        {!vector ? (
+          <>
+            <Text style={styles.decor}>{heroEmoji}</Text>
+            <Text style={styles.decor2}>{heroEmoji}</Text>
+          </>
+        ) : null}
         <View style={[styles.row, rtl.row]}>
           <AvatarFrame avatar={avatar} size="lg" />
           <View style={styles.textBlock}>
@@ -142,13 +201,19 @@ export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroPro
             <Text style={[styles.name, rtl.text]}>{displayName}</Text>
             <View style={[styles.meta, rtl.row]}>
               {level != null && level > 0 && (
-                <View style={styles.pill}>
-                  <Text style={styles.pillText}>⚔️ רמה {level}</Text>
+                <View style={[styles.pill, rtl.row]}>
+                  {vector ? <ThemeGlyph name="level" size={12} color={colors.primary} /> : null}
+                  <Text style={styles.pillText}>
+                    {t('level')} {level}
+                  </Text>
                 </View>
               )}
               {streak > 0 && (
-                <View style={styles.pill}>
-                  <Text style={styles.pillText}>🔥 {streak} ימים</Text>
+                <View style={[styles.pill, rtl.row]}>
+                  {vector ? <ThemeGlyph name="streak" size={12} color={colors.streak} /> : null}
+                  <Text style={styles.pillText}>
+                    {streak} {t('days')}
+                  </Text>
                 </View>
               )}
             </View>
@@ -165,7 +230,9 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title, icon }: SectionHeaderProps) {
-  const { colors, borderRadius, id: themeId } = useTheme();
+  const { colors, borderRadius, id: themeId, chrome } = useTheme();
+  const type = useType();
+  const showIcon = Boolean(icon) && chrome !== 'vector';
 
   const styles = useMemo(
     () =>
@@ -175,23 +242,25 @@ export function SectionHeader({ title, icon }: SectionHeaderProps) {
         icon: { fontSize: 22 },
         title: {
           color: colors.text,
-          fontSize: 18,
+          fontSize: 20,
           fontWeight: '800',
           flex: 1,
+          letterSpacing: themeId === 'ember' ? 0.2 : 0,
+          ...type.display,
         },
         line: {
-          height: 3,
+          height: themeId === 'ember' ? 2 : 3,
           borderRadius: borderRadius.full,
           width: '100%',
         },
       }),
-    [themeId, colors, borderRadius]
+    [themeId, colors, borderRadius, type.display]
   );
 
   return (
     <View style={styles.wrap}>
       <View style={[styles.row, rtl.row]}>
-        {icon ? <Text style={styles.icon}>{icon}</Text> : null}
+        {showIcon ? <Text style={styles.icon}>{icon}</Text> : null}
         <Text style={[styles.title, rtl.text]}>{title}</Text>
       </View>
       <LinearGradient

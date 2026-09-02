@@ -1,23 +1,17 @@
 import { Tabs } from 'expo-router';
-import { Text, AppState } from 'react-native';
+import { AppState } from 'react-native';
 import { useEffect, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme-context';
+import { Heebo } from '../../lib/typography';
 import { RtlTabBar } from '../../components/RtlTabBar';
+import { ThemeTabIcon } from '../../components/icons/ThemeGlyph';
 import { t } from '../../lib/i18n';
 import { startBgm, stopBgm, resumeBgm, pauseBgm } from '../../lib/bgm';
 import { resetKidGiftDismissals } from '../../lib/kid-gift-dismiss';
 import { BadgeCelebrationProvider } from '../../lib/badge-celebration';
 
-const TAB_CONTENT_HEIGHT = 56;
-
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  return (
-    <Text style={{ fontSize: focused ? 24 : 20, opacity: focused ? 1 : 0.4, transform: [{ scale: focused ? 1.15 : 1 }] }}>
-      {emoji}
-    </Text>
-  );
-}
+const TAB_CONTENT_HEIGHT = 72;
 
 export default function KidLayout() {
   const insets = useSafeAreaInsets();
@@ -52,38 +46,61 @@ export default function KidLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.bgCard,
-          borderTopWidth: 3,
+          backgroundColor: themeId === 'ember' ? 'rgba(6,4,4,0.96)' : colors.bgCard,
+          borderTopWidth: themeId === 'ember' ? 1 : 3,
           borderTopColor: colors.primary,
           height: TAB_CONTENT_HEIGHT + insets.bottom,
-          paddingTop: 8,
+          paddingTop: themeId === 'ember' ? 8 : 6,
           paddingBottom: insets.bottom,
           shadowColor: colors.glow,
-          shadowOpacity: 0.3,
-          shadowRadius: 12,
+          shadowOpacity: themeId === 'ember' ? 0.8 : 0.45,
+          shadowRadius: 14,
           shadowOffset: { width: 0, height: -4 },
           elevation: 16,
         },
-        tabBarActiveTintColor: colors.accent,
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          ...(themeId === 'ember' ? { fontFamily: Heebo.semibold, fontWeight: 'normal' as const } : {}),
+        },
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ title: t('home'), tabBarIcon: ({ focused }) => <TabIcon emoji={tabIcons.home} focused={focused} /> }}
+        options={{
+          title: t('home'),
+          tabBarIcon: ({ focused }) => <ThemeTabIcon name="home" fallback={tabIcons.home} focused={focused} />,
+        }}
       />
       <Tabs.Screen
         name="tasks"
-        options={{ title: t('tasks'), tabBarIcon: ({ focused }) => <TabIcon emoji={tabIcons.tasks} focused={focused} /> }}
+        options={{
+          title: t('tasks'),
+          tabBarIcon: ({ focused }) => <ThemeTabIcon name="tasks" fallback={tabIcons.tasks} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="learn"
+        options={{
+          title: t('learn'),
+          tabBarIcon: ({ focused }) => <ThemeTabIcon name="learn" fallback={tabIcons.learn} focused={focused} />,
+        }}
       />
       <Tabs.Screen
         name="shop"
-        options={{ title: t('shop'), tabBarIcon: ({ focused }) => <TabIcon emoji={tabIcons.shop} focused={focused} /> }}
+        options={{
+          title: t('shop'),
+          tabBarIcon: ({ focused }) => <ThemeTabIcon name="shop" fallback={tabIcons.shop} focused={focused} />,
+        }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: t('profile'), tabBarIcon: ({ focused }) => <TabIcon emoji={tabIcons.profile} focused={focused} /> }}
+        options={{
+          title: t('profile'),
+          tabBarIcon: ({ focused }) => <ThemeTabIcon name="profile" fallback={tabIcons.profile} focused={focused} />,
+        }}
       />
     </Tabs>
     </BadgeCelebrationProvider>

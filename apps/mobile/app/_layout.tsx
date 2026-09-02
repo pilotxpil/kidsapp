@@ -3,13 +3,23 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { StatusBar, ActivityIndicator, View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
+import {
+  useFonts,
+  Heebo_400Regular,
+  Heebo_500Medium,
+  Heebo_600SemiBold,
+  Heebo_700Bold,
+  Heebo_800ExtraBold,
+  Heebo_900Black,
+} from '@expo-google-fonts/heebo';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { ThemeProvider, useTheme } from '../lib/theme-context';
-import { spacing } from '../constants/theme';
 import { initNativeRTL, rtl } from '../lib/rtl';
 import { initSfx } from '../lib/sfx';
 import { initBgm } from '../lib/bgm';
 
+SplashScreen.preventAutoHideAsync();
 initNativeRTL();
 initSfx();
 initBgm();
@@ -79,6 +89,25 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Heebo_400Regular,
+    Heebo_500Medium,
+    Heebo_600SemiBold,
+    Heebo_700Bold,
+    Heebo_800ExtraBold,
+    Heebo_900Black,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      void SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <SafeAreaProvider>
       <View style={rtl.root}>

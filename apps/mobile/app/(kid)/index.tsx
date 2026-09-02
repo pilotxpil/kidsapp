@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Image } from 'react-native';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
@@ -11,6 +11,7 @@ import { FortuneWheel } from '../../components/FortuneWheel';
 import { TreasureChest } from '../../components/TreasureChest';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { ThemedHero, SectionHeader } from '../../components/ThemedHero';
+import { EmberHome } from '../../components/EmberHome';
 import { FadeInUp } from '../../components/animations/FadeInUp';
 import type {
   Task,
@@ -20,6 +21,7 @@ import type {
   TreasureChestOpenResult,
 } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
+import { getThemeArt } from '../../constants/theme-art';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
@@ -29,6 +31,7 @@ export default function KidHomeScreen() {
   const { user } = useAuth();
   const celebrateBadges = useCelebrateBadges();
   const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
+  const art = getThemeArt(themeId);
   const userId = user?._id;
   const [profile, setProfile] = useState<KidProfile | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -53,6 +56,11 @@ export default function KidHomeScreen() {
         statsInner: {
           padding: spacing.lg,
           alignItems: 'center',
+        },
+        gemArt: {
+          width: 88,
+          height: 88,
+          marginBottom: spacing.sm,
         },
         pointsLabel: {
           color: colors.textMuted,
@@ -135,6 +143,18 @@ export default function KidHomeScreen() {
 
   return (
     <ThemedScreen tabs>
+      {themeId === 'ember' ? (
+        <EmberHome
+          displayName={user?.displayName ?? ''}
+          points={profile?.points ?? user?.points ?? 0}
+          profile={profile}
+          tasks={tasks}
+          completingId={completingId}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          onComplete={handleComplete}
+        />
+      ) : (
       <ScrollView
         contentContainerStyle={[styles.scroll, rtl.scrollContent]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
@@ -152,6 +172,9 @@ export default function KidHomeScreen() {
           <FadeInUp index={1}>
             <View style={styles.statsCard}>
               <View style={styles.statsInner}>
+                {art?.gem ? (
+                  <Image source={art.gem} style={styles.gemArt} resizeMode="contain" />
+                ) : null}
                 <Text style={styles.pointsLabel}>{t('points').toUpperCase()}</Text>
                 <PointsBadge points={profile?.points ?? user?.points ?? 0} size="lg" />
                 {profile && (
@@ -191,6 +214,7 @@ export default function KidHomeScreen() {
           )}
         </View>
       </ScrollView>
+      )}
 
       {userId ? (
         <>

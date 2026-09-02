@@ -22,7 +22,7 @@ apps/mobile/          Expo app (kid + parent), file-based routes
   app/(parent)/       Parent tabs: dashboard, tasks, rewards, kids, profile
   lib/api.ts          Only HTTP client — add new endpoints here
   lib/i18n.ts         All user-visible strings (`t('key')`)
-  constants/themes.ts Theme packs (minecraft / brawl / roblox / sparkle)
+  constants/themes.ts Theme packs (ember / minecraft / brawl / roblox / sparkle)
 server/src/
   routes/             Express routers
   models/             Mongoose

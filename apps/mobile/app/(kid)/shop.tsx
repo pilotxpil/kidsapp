@@ -43,7 +43,7 @@ export default function KidShopScreen() {
   useFocusLoad(load, !!user);
 
   const handleRedeem = (reward: Reward) => {
-    Alert.alert(t('confirmRedeem'), `${reward.title} · ${reward.cost} ${pointsEmoji}`, [
+    Alert.alert(t('confirmRedeem'), `${reward.title} · ${reward.cost} ${themeId === 'ember' ? t('emberFireStones') : pointsEmoji}`, [
       { text: t('no'), style: 'cancel' },
       {
         text: t('yes'),

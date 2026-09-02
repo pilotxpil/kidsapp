@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal, Pressable, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
@@ -10,10 +10,13 @@ import { ThemePicker } from '../../components/ThemePicker';
 import { AvatarPickerModal } from '../../components/AvatarPicker';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { AvatarFrame, SectionHeader } from '../../components/ThemedHero';
+import { PointsMark } from '../../components/icons/ThemeGlyph';
 import { BADGES, BADGE_REWARDS } from '@kidsapp/shared';
 import type { KidProfile } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
+import { getThemeArt } from '../../constants/theme-art';
 import { useTheme } from '../../lib/theme-context';
+import { useType } from '../../lib/typography';
 import { rtl } from '../../lib/rtl';
 import { isSfxMuted, setSfxMuted, playSfx } from '../../lib/sfx';
 import { isBgmMuted, setBgmMuted, startBgm } from '../../lib/bgm';
@@ -23,6 +26,9 @@ export default function KidProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
+  const type = useType();
+  const art = getThemeArt(themeId);
+  const ember = themeId === 'ember';
   const userId = user?._id;
   const [profile, setProfile] = useState<KidProfile | null>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -45,6 +51,7 @@ export default function KidProfileScreen() {
           marginBottom: spacing.md,
           width: '100%',
           textAlign: 'center',
+          ...type.display,
         },
         statsRow: { gap: spacing.md, marginBottom: spacing.md },
         levelWrap: { width: '100%' },
@@ -59,6 +66,7 @@ export default function KidProfileScreen() {
         badgeInner: { width: '100%', alignItems: 'center' },
         badgeLocked: { opacity: 0.4 },
         badgeIcon: { fontSize: 28, marginBottom: 4, textAlign: 'center' },
+        badgeArt: { width: 40, height: 40, marginBottom: 4 },
         badgeLabel: {
           color: colors.text,
           fontSize: 11,
@@ -66,14 +74,16 @@ export default function KidProfileScreen() {
           width: '100%',
           textAlign: 'center',
           writingDirection: 'rtl',
+          ...type.ui,
         },
         badgeLabelLocked: { color: colors.textMuted },
         lbRow: { alignItems: 'center', marginBottom: spacing.sm, gap: spacing.sm },
         lbHighlight: { borderTopColor: colors.primary, borderLeftColor: colors.primary },
-        lbRank: { color: colors.gold, fontWeight: '800', fontSize: 16, width: 30 },
+        lbRank: { color: colors.gold, fontWeight: '800', fontSize: 16, width: 30, ...type.title },
         lbAvatar: { fontSize: 24 },
-        lbName: { color: colors.text, flex: 1, fontWeight: '600', minWidth: 0 },
-        lbPoints: { color: colors.emerald, fontWeight: '700' },
+        lbHelm: { width: 32, height: 32 },
+        lbName: { color: colors.text, flex: 1, fontWeight: '600', minWidth: 0, ...type.heading },
+        lbPoints: { color: colors.emerald, fontWeight: '700', ...type.title },
         txRow: { alignItems: 'center', marginBottom: spacing.sm, gap: spacing.md },
         txAmount: { fontWeight: '800', fontSize: 16, width: 50, textAlign: 'center' },
         txPositive: { color: colors.success },
@@ -81,28 +91,40 @@ export default function KidProfileScreen() {
         txInfo: { flex: 1, minWidth: 0 },
         txDesc: { color: colors.text, fontWeight: '600' },
         txDate: { color: colors.textMuted, fontSize: 12 },
-        settingsRow: {
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          backgroundColor: colors.bgCard,
-          borderRadius: borderRadius.md,
-          padding: spacing.md,
-          marginTop: spacing.md,
-          width: '100%',
-          ...cardBorder(2),
-        },
-        settingsLabel: { color: colors.text, fontWeight: '600', flex: 1 },
-        settingsValue: { color: colors.primary, fontWeight: '700', flexShrink: 0 },
+        settingsRow: ember
+          ? {
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: 'rgba(12,8,6,0.72)',
+              borderRadius: 18,
+              padding: spacing.md,
+              marginTop: spacing.md,
+              width: '100%',
+              borderWidth: 1,
+              borderColor: 'rgba(255,138,61,0.32)',
+            }
+          : {
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: colors.bgCard,
+              borderRadius: borderRadius.md,
+              padding: spacing.md,
+              marginTop: spacing.md,
+              width: '100%',
+              ...cardBorder(2),
+            },
+        settingsLabel: { color: colors.text, fontWeight: '600', flex: 1, ...type.body },
+        settingsValue: { color: colors.primary, fontWeight: '700', flexShrink: 0, ...type.heading },
         avatarEditBtn: {
           marginTop: spacing.sm,
           marginBottom: spacing.md,
           paddingVertical: spacing.sm,
           paddingHorizontal: spacing.lg,
           borderRadius: borderRadius.full,
-          borderWidth: 2,
+          borderWidth: ember ? 1 : 2,
           borderColor: colors.primary,
         },
-        avatarEditText: { color: colors.primary, fontWeight: '700', fontSize: 14 },
+        avatarEditText: { color: colors.primary, fontWeight: '700', fontSize: 14, ...type.ui },
         logout: { marginTop: spacing.md, marginBottom: spacing.xl },
         badgeModalOverlay: {
           flex: 1,
@@ -111,22 +133,35 @@ export default function KidProfileScreen() {
           alignItems: 'center',
           padding: spacing.lg,
         },
-        badgeModalCard: {
-          backgroundColor: colors.bgCard,
-          borderRadius: borderRadius.lg,
-          padding: spacing.xl,
-          width: '100%',
-          maxWidth: 320,
-          alignItems: 'center',
-          ...cardBorder(3),
-        },
+        badgeModalCard: ember
+          ? {
+              backgroundColor: 'rgba(12,8,6,0.94)',
+              borderRadius: 24,
+              padding: spacing.xl,
+              width: '100%',
+              maxWidth: 320,
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: 'rgba(255,138,61,0.45)',
+            }
+          : {
+              backgroundColor: colors.bgCard,
+              borderRadius: borderRadius.lg,
+              padding: spacing.xl,
+              width: '100%',
+              maxWidth: 320,
+              alignItems: 'center',
+              ...cardBorder(3),
+            },
         badgeModalIcon: { fontSize: 56, marginBottom: spacing.md },
+        badgeModalArt: { width: 72, height: 72, marginBottom: spacing.md },
         badgeModalTitle: {
           color: colors.text,
           fontSize: 20,
           fontWeight: '800',
           textAlign: 'center',
           marginBottom: spacing.sm,
+          ...type.display,
         },
         badgeModalDesc: {
           color: colors.textMuted,
@@ -154,9 +189,9 @@ export default function KidProfileScreen() {
           paddingVertical: spacing.sm,
           paddingHorizontal: spacing.xl,
         },
-        badgeModalCloseText: { color: colors.primary, fontWeight: '700', fontSize: 16 },
+        badgeModalCloseText: { color: colors.primary, fontWeight: '700', fontSize: 16, ...type.heading },
       }),
-    [themeId, colors, borderRadius, cardBorder]
+    [themeId, colors, borderRadius, cardBorder, ember, type.display, type.ui, type.title, type.heading, type.body]
   );
 
   const load = useCallback(async () => {
@@ -252,7 +287,15 @@ export default function KidProfileScreen() {
               >
                 <Card style={{ width: '100%' }}>
                   <View style={styles.badgeInner}>
-                    <Text style={styles.badgeIcon}>{earned ? badge.icon : '🔒'}</Text>
+                    {ember && art?.gem ? (
+                      <Image
+                        source={art.gem}
+                        style={[styles.badgeArt, !earned && { opacity: 0.35 }]}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <Text style={styles.badgeIcon}>{earned ? badge.icon : '🔒'}</Text>
+                    )}
                     <Text style={[styles.badgeLabel, !earned && styles.badgeLabelLocked]}>{badge.label}</Text>
                   </View>
                 </Card>
@@ -266,9 +309,16 @@ export default function KidProfileScreen() {
           <Card key={entry._id} style={entry._id === user?._id ? styles.lbHighlight : undefined}>
             <View style={[styles.lbRow, rtl.row]}>
               <Text style={styles.lbRank}>#{entry.rank}</Text>
-              <Text style={styles.lbAvatar}>{entry.avatar}</Text>
+              {ember && art?.icons?.profile ? (
+                <Image source={art.icons.profile} style={styles.lbHelm} resizeMode="contain" />
+              ) : (
+                <Text style={styles.lbAvatar}>{entry.avatar}</Text>
+              )}
               <Text style={[styles.lbName, rtl.text]}>{entry.displayName}</Text>
-              <Text style={styles.lbPoints}>{entry.points} {pointsEmoji}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={styles.lbPoints}>{entry.points}</Text>
+                {ember ? <PointsMark size={14} /> : <Text style={styles.lbPoints}> {pointsEmoji}</Text>}
+              </View>
             </View>
           </Card>
         ))}
@@ -305,9 +355,17 @@ export default function KidProfileScreen() {
       <Modal visible={!!selectedBadgeData} transparent animationType="fade" onRequestClose={() => setSelectedBadge(null)}>
         <Pressable style={styles.badgeModalOverlay} onPress={() => setSelectedBadge(null)}>
           <Pressable style={styles.badgeModalCard} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.badgeModalIcon}>
-              {selectedEarned ? selectedBadgeData!.icon : '🔒'}
-            </Text>
+            {ember && art?.gem ? (
+              <Image
+                source={art.gem}
+                style={[styles.badgeModalArt, !selectedEarned && { opacity: 0.4 }]}
+                resizeMode="contain"
+              />
+            ) : (
+              <Text style={styles.badgeModalIcon}>
+                {selectedEarned ? selectedBadgeData!.icon : '🔒'}
+              </Text>
+            )}
             <Text style={styles.badgeModalTitle}>{selectedBadgeData?.label}</Text>
             {!selectedEarned && (
               <Text style={styles.badgeModalLocked}>{t('badgeHowToUnlock')}</Text>

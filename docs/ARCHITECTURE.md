@@ -134,7 +134,7 @@ app/
 
 ## UI
 
-- **ערכות נושא:** `minecraft` | `brawl` | `roblox` | `sparkle`. ברירת מחדל ילד: brawl; הורה: roblox. נשמר ב-`user.uiTheme`.
+- **ערכות נושא:** `ember` | `minecraft` | `brawl` | `roblox` | `sparkle`. ברירת מחדל ילד: ember; הורה: roblox. נשמר ב-`user.uiTheme`.
 - **מסך:** `ThemedScreen` + `useTheme()` / `useThemedStyles`.
 - **טקסט:** `t('key')` מ-`lib/i18n.ts` בלבד.
 - **כיוון:** `lib/rtl.ts` — בלי `forceRTL`.

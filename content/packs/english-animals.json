@@ -1,0 +1,59 @@
+{
+  "id": "english-animals",
+  "version": 1,
+  "title": { "he": "מילים על חיות", "en": "Animal Words" },
+  "category": "english",
+  "grade": 3,
+  "tags": ["vocabulary", "animals"],
+  "defaultPoints": 5,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה זה Dog?" },
+      "options": [
+        { "id": "a", "text": "חתול" },
+        { "id": "b", "text": "כלב" },
+        { "id": "c", "text": "ציפור" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "Dog = כלב" }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה זה Cat?" },
+      "options": [
+        { "id": "a", "text": "חתול" },
+        { "id": "b", "text": "דג" },
+        { "id": "c", "text": "סוס" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "Cat = חתול" }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה זה Bird?" },
+      "options": [
+        { "id": "a", "text": "דוב" },
+        { "id": "b", "text": "ארנב" },
+        { "id": "c", "text": "ציפור" }
+      ],
+      "answer": "c",
+      "explanation": { "he": "Bird = ציפור" }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה זה Fish?" },
+      "options": [
+        { "id": "a", "text": "דג" },
+        { "id": "b", "text": "פרפר" },
+        { "id": "c", "text": "עכבר" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "Fish = דג" }
+    }
+  ]
+}

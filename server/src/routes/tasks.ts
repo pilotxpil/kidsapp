@@ -1,10 +1,11 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { TaskCategory, taskCategoryIcon } from '@kidsapp/shared';
+import { TaskCategory, TaskRecurrence, taskCategoryIcon } from '@kidsapp/shared';
 import { authenticate, requireParent } from '../middleware/auth';
 import { User } from '../models/User';
 import { Task } from '../models/Task';
 import { TaskCompletion } from '../models/TaskCompletion';
+import { TaskTemplate } from '../models/TaskTemplate';
 import { formatUser } from '../utils/format';
 import {
   getTaskCompletionStatus,
@@ -12,6 +13,43 @@ import {
 } from '../utils/taskAvailability';
 
 const router = Router();
+
+function formatTaskTemplate(doc: InstanceType<typeof TaskTemplate>) {
+  return {
+    _id: doc._id.toString(),
+    familyId: doc.familyId.toString(),
+    title: doc.title,
+    description: doc.description,
+    category: doc.category,
+    points: doc.points,
+    recurrence: doc.recurrence as TaskRecurrence,
+  };
+}
+
+async function upsertFamilyTemplate(
+  familyId: string,
+  data: {
+    title: string;
+    description: string;
+    category: TaskCategory;
+    points: number;
+    recurrence: TaskRecurrence;
+  }
+) {
+  return TaskTemplate.findOneAndUpdate(
+    { familyId, title: data.title },
+    {
+      $set: {
+        description: data.description,
+        category: data.category,
+        points: data.points,
+        recurrence: data.recurrence,
+      },
+      $setOnInsert: { familyId, title: data.title },
+    },
+    { upsert: true, new: true }
+  );
+}
 
 router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
@@ -69,9 +107,54 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+router.get('/templates', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const templates = await TaskTemplate.find({ familyId: req.user!.familyId }).sort({ createdAt: -1 });
+    res.json({ templates: templates.map(formatTaskTemplate) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטעינת משימות מוכנות' });
+  }
+});
+
+router.post('/templates', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const { title, description, category, points, recurrence } = req.body;
+    if (!title || !category) {
+      return res.status(400).json({ error: 'חסרים שדות חובה' });
+    }
+
+    const template = await upsertFamilyTemplate(req.user!.familyId, {
+      title: String(title).trim(),
+      description: description || '',
+      category: category as TaskCategory,
+      points: Number(points) || 20,
+      recurrence: (recurrence || 'daily') as TaskRecurrence,
+    });
+
+    res.status(201).json({ template: formatTaskTemplate(template!) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בשמירת משימה מוכנה' });
+  }
+});
+
+router.delete('/templates/:id', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const deleted = await TaskTemplate.findOneAndDelete({
+      _id: req.params.id,
+      familyId: req.user!.familyId,
+    });
+    if (!deleted) return res.status(404).json({ error: 'משימה מוכנה לא נמצאה' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'שגיאה במחיקת משימה מוכנה' });
+  }
+});
+
 router.post('/', authenticate, requireParent, async (req: Request, res: Response) => {
   try {
-    const { title, description, category, points, recurrence, assignedTo, icon } = req.body;
+    const { title, description, category, points, recurrence, assignedTo, icon, saveAsTemplate } = req.body;
 
     if (!title || !category) {
       return res.status(400).json({ error: 'חסרים שדות חובה' });
@@ -111,6 +194,16 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
     const created = await Task.insertMany(
       kids.map((kid) => ({ ...payload, assignedTo: kid._id }))
     );
+
+    if (saveAsTemplate) {
+      await upsertFamilyTemplate(req.user!.familyId, {
+        title: payload.title,
+        description: payload.description,
+        category: payload.category as TaskCategory,
+        points: payload.points,
+        recurrence: payload.recurrence as TaskRecurrence,
+      });
+    }
 
     const tasks = created.map((task) => ({
       _id: task._id.toString(),

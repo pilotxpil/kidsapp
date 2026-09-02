@@ -1,3 +1,5 @@
+export * from './learning';
+
 export type UserRole = 'parent' | 'kid';
 
 export type TaskCategory = 'home' | 'school' | 'social' | 'hobby' | 'sport';
@@ -14,11 +16,11 @@ export type PointTransactionType = 'task' | 'redemption' | 'bonus' | 'streak' | 
 
 export type RewardCategory = 'gaming' | 'food' | 'screen' | 'privilege' | 'other';
 
-export type UiThemeId = 'minecraft' | 'brawl' | 'roblox' | 'sparkle';
+export type UiThemeId = 'ember' | 'minecraft' | 'brawl' | 'roblox' | 'sparkle';
 
-export const UI_THEME_IDS: UiThemeId[] = ['minecraft', 'brawl', 'roblox', 'sparkle'];
+export const UI_THEME_IDS: UiThemeId[] = ['ember', 'minecraft', 'brawl', 'roblox', 'sparkle'];
 
-export const DEFAULT_KID_THEME_ID: UiThemeId = 'brawl';
+export const DEFAULT_KID_THEME_ID: UiThemeId = 'ember';
 export const DEFAULT_PARENT_THEME_ID: UiThemeId = 'roblox';
 
 export function defaultUiThemeForRole(role: UserRole): UiThemeId {
@@ -317,6 +319,18 @@ export interface TaskTemplate {
   description: string;
   category: TaskCategory;
   points: number;
+  recurrence?: TaskRecurrence;
+}
+
+/** Parent-saved chore for the family's quick-task list. */
+export interface FamilyTaskTemplate {
+  _id: string;
+  familyId: string;
+  title: string;
+  description: string;
+  category: TaskCategory;
+  points: number;
+  recurrence: TaskRecurrence;
 }
 
 /** Ready-made tasks for quick parent setup (matches demo seed). */

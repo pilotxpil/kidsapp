@@ -1,0 +1,67 @@
+{
+  "id": "english-fox-tale",
+  "version": 1,
+  "title": { "he": "הסיפור על השועל", "en": "The Tale of the Fox" },
+  "category": "english",
+  "grade": 3,
+  "tags": ["reading", "comprehension", "story"],
+  "defaultPoints": 5,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "A clever fox walked through the forest. He was looking for food. What was the fox looking for?"
+      },
+      "options": [
+        { "id": "a", "text": "A friend" },
+        { "id": "b", "text": "Food" },
+        { "id": "c", "text": "A river" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "השועל חיפש אוכל — He was looking for food." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "The fox saw grapes high on a vine. He jumped again and again but could not reach them. How did the fox feel?"
+      },
+      "options": [
+        { "id": "a", "text": "Happy" },
+        { "id": "b", "text": "Sleepy" },
+        { "id": "c", "text": "Frustrated" }
+      ],
+      "answer": "c",
+      "explanation": { "he": "השועל לא הצליח להגיע לענבים — He felt frustrated." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "At last the fox said: \"Those grapes are probably sour anyway.\" What does this mean?"
+      },
+      "options": [
+        { "id": "a", "text": "The grapes are sweet" },
+        { "id": "b", "text": "The fox pretends he does not want them" },
+        { "id": "c", "text": "The fox found better food" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "השועל מעמיד פנים שהוא לא רוצה את הענבים — sour grapes fable." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "What is the moral of the story?"
+      },
+      "options": [
+        { "id": "a", "text": "Always share your food" },
+        { "id": "b", "text": "It is easy to dislike what you cannot have" },
+        { "id": "c", "text": "Foxes cannot jump" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "מי שלא מצליח משהו — לפעמים אומר שהוא לא רצה בכלל." }
+    }
+  ]
+}

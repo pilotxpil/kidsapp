@@ -1,0 +1,59 @@
+{
+  "id": "hebrew-letters",
+  "version": 1,
+  "title": { "he": "אותיות האלף-בית", "en": "Hebrew Letters" },
+  "category": "language",
+  "grade": 1,
+  "tags": ["letters", "reading"],
+  "defaultPoints": 5,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו אות היא \"א\"?" },
+      "options": [
+        { "id": "a", "text": "א" },
+        { "id": "b", "text": "ב" },
+        { "id": "c", "text": "ג" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "אלף — האות הראשונה באלף-בית" }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו אות היא \"ב\"?" },
+      "options": [
+        { "id": "a", "text": "א" },
+        { "id": "b", "text": "ב" },
+        { "id": "c", "text": "ד" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "בית — האות השנייה באלף-בית" }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה הצליל של האות \"מ\"?" },
+      "options": [
+        { "id": "a", "text": "מם" },
+        { "id": "b", "text": "נון" },
+        { "id": "c", "text": "למד" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "מם — האות מ' נקראת מם" }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו אות היא \"ש\"?" },
+      "options": [
+        { "id": "a", "text": "ס" },
+        { "id": "b", "text": "ש" },
+        { "id": "c", "text": "ת" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "שין — האות ש'" }
+    }
+  ]
+}
