@@ -37,13 +37,19 @@ export function RewardCard({ reward, userPoints, onRedeem, loading, pending, ind
         cardWrap: { width: '100%', alignSelf: 'stretch' },
         card: { marginBottom: spacing.md, alignSelf: 'stretch' },
         cardDisabled: { opacity: 0.6 },
-        header: { marginBottom: spacing.md, width: '100%' },
+        header: { marginBottom: spacing.md, width: '100%', maxWidth: '100%' },
         title: { color: colors.text, fontSize: 18, fontWeight: '700', ...type.title },
         description: { color: colors.textMuted, fontSize: 14, marginTop: 4, ...type.body },
-        costRow: { alignItems: 'center', marginTop: spacing.sm, gap: spacing.sm },
+        costRow: {
+          alignItems: 'flex-start',
+          marginTop: spacing.sm,
+          gap: spacing.sm,
+          flexWrap: 'wrap',
+          width: '100%',
+        },
         cost: { color: colors.emerald, fontWeight: '800', fontSize: 18, ...type.title },
         costDisabled: { color: colors.textMuted },
-        costPair: { alignItems: 'center', gap: 4 },
+        costPair: { gap: 4, alignSelf: 'flex-start', flexGrow: 0 },
         thumb: { width: 56, height: 56, marginBottom: spacing.sm },
         categoryBadge: ember
           ? {
@@ -53,30 +59,40 @@ export function RewardCard({ reward, userPoints, onRedeem, loading, pending, ind
               borderRadius: 999,
               borderWidth: 1,
               borderColor: 'rgba(255,138,61,0.35)',
+              alignSelf: 'flex-start',
+              flexGrow: 0,
+              flexShrink: 0,
             }
           : {
               backgroundColor: colors.bgCardLight,
               paddingHorizontal: spacing.sm,
               paddingVertical: 5,
               borderRadius: borderRadius.sm,
+              alignSelf: 'flex-start',
+              flexGrow: 0,
+              flexShrink: 0,
               ...cardBorder(1),
             },
         categoryText: { color: colors.text, fontSize: 12, fontWeight: '700', ...type.ui },
-        button: { marginTop: spacing.sm },
+        button: { marginTop: spacing.sm, alignSelf: 'stretch', width: '100%' },
         pendingBadge: ember
           ? {
               backgroundColor: 'rgba(107,58,24,0.7)',
-              padding: spacing.sm,
-              borderRadius: 14,
-              alignItems: 'center',
+              paddingHorizontal: spacing.md,
+              paddingVertical: spacing.sm,
+              borderRadius: 999,
+              alignSelf: 'flex-start',
+              flexGrow: 0,
               borderWidth: 1,
               borderColor: 'rgba(255,138,61,0.3)',
             }
           : {
               backgroundColor: colors.secondary,
-              padding: spacing.sm,
-              borderRadius: borderRadius.sm,
-              alignItems: 'center',
+              paddingHorizontal: spacing.md,
+              paddingVertical: spacing.sm,
+              borderRadius: borderRadius.full,
+              alignSelf: 'flex-start',
+              flexGrow: 0,
               ...cardBorder(1),
             },
         pendingText: { color: colors.text, fontWeight: '600', ...type.ui },
@@ -91,18 +107,20 @@ export function RewardCard({ reward, userPoints, onRedeem, loading, pending, ind
       <Card style={!canAfford ? [styles.card, styles.cardDisabled] : styles.card} glow={canAfford && !pending}>
         <View style={styles.header}>
           {ember && art?.chest ? <Image source={art.chest} style={styles.thumb} resizeMode="contain" /> : null}
-          <RtlText style={styles.title}>{reward.title}</RtlText>
+          <RtlText style={styles.title} numberOfLines={2}>
+            {reward.title}
+          </RtlText>
           {reward.description ? (
             <RtlText style={styles.description}>{reward.description}</RtlText>
           ) : null}
           <View style={[styles.costRow, rtl.row]}>
-            <View style={styles.categoryBadge}>
-              <Text style={[styles.categoryText, rtl.text]}>
+            <View style={[styles.categoryBadge, rtl.rowInline]}>
+              <Text style={styles.categoryText}>
                 {badgeIcon ? `${badgeIcon} ` : ''}
                 {cat?.label}
               </Text>
             </View>
-            <View style={[styles.costPair, rtl.row]}>
+            <View style={[styles.costPair, rtl.rowInline]}>
               <Text style={[styles.cost, !canAfford && styles.costDisabled]}>{reward.cost}</Text>
               <PointsMark size={16} />
             </View>

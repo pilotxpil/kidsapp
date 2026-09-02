@@ -11,7 +11,7 @@ import { startBgm, stopBgm, resumeBgm, pauseBgm } from '../../lib/bgm';
 import { resetKidGiftDismissals } from '../../lib/kid-gift-dismiss';
 import { BadgeCelebrationProvider } from '../../lib/badge-celebration';
 
-const TAB_CONTENT_HEIGHT = 72;
+const TAB_CONTENT_HEIGHT = 64;
 
 export default function KidLayout() {
   const insets = useSafeAreaInsets();
@@ -50,8 +50,9 @@ export default function KidLayout() {
           borderTopWidth: themeId === 'ember' ? 1 : 3,
           borderTopColor: colors.primary,
           height: TAB_CONTENT_HEIGHT + insets.bottom,
-          paddingTop: themeId === 'ember' ? 8 : 6,
+          paddingTop: themeId === 'ember' ? 4 : 6,
           paddingBottom: insets.bottom,
+          overflow: 'hidden',
           shadowColor: colors.glow,
           shadowOpacity: themeId === 'ember' ? 0.8 : 0.45,
           shadowRadius: 14,
@@ -60,9 +61,14 @@ export default function KidLayout() {
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarItemStyle: {
+          paddingVertical: 0,
+          overflow: 'hidden',
+        },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '600',
+          includeFontPadding: false,
           ...(themeId === 'ember' ? { fontFamily: Heebo.semibold, fontWeight: 'normal' as const } : {}),
         },
       }}

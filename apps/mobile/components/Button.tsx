@@ -76,7 +76,8 @@ export function Button({
           ? {
               borderRadius: 22,
               overflow: 'hidden' as const,
-              alignSelf: 'flex-start',
+              alignSelf: 'stretch',
+              maxWidth: '100%',
               shadowColor: colors.primary,
               shadowOpacity: variant === 'outline' ? 0 : 0.8,
               shadowRadius: 16,
@@ -86,7 +87,8 @@ export function Button({
           : {
               borderRadius: borderRadius.md,
               overflow: 'hidden' as const,
-              alignSelf: 'flex-start',
+              alignSelf: 'stretch',
+              maxWidth: '100%',
               ...cardBorder(2),
               borderBottomColor: colors.buttonShadow,
               borderRightColor: colors.buttonShadow,
@@ -98,6 +100,7 @@ export function Button({
             },
         fill: {
           width: '100%',
+          maxWidth: '100%',
           paddingVertical: ember ? 15 : spacing.md,
           paddingHorizontal: spacing.lg,
           alignItems: 'center' as const,
@@ -121,6 +124,7 @@ export function Button({
           textShadowColor: ember ? 'transparent' : 'rgba(0,0,0,0.4)',
           textShadowOffset: { width: 1, height: 1 },
           textShadowRadius: 0,
+          flexShrink: 1,
           ...type.title,
         },
         disabled: { opacity: 0.5 },
@@ -150,6 +154,9 @@ export function Button({
     <ActivityIndicator color={variant === 'outline' ? colors.primaryLight : ember ? colors.textDark : '#fff'} />
   ) : (
     <Text
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.75}
       style={[
         styles.text,
         variant === 'outline' && { color: ember ? colors.primaryLight : colors.primaryLight, textShadowRadius: 0 },

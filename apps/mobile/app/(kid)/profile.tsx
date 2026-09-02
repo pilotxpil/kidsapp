@@ -53,7 +53,7 @@ export default function KidProfileScreen() {
           textAlign: 'center',
           ...type.display,
         },
-        statsRow: { gap: spacing.md, marginBottom: spacing.md },
+        statsRow: { gap: spacing.md, marginBottom: spacing.md, flexWrap: 'wrap', justifyContent: 'center' },
         levelWrap: { width: '100%' },
         sectionHint: {
           color: colors.textMuted,
@@ -62,7 +62,7 @@ export default function KidProfileScreen() {
           width: '100%',
         },
         badgesGrid: { width: '100%', gap: spacing.sm },
-        badgeCard: { width: '30%', flexGrow: 0, flexShrink: 0 },
+        badgeCard: { width: '30%', flexGrow: 0, flexShrink: 1, maxWidth: '32%', overflow: 'hidden' },
         badgeInner: { width: '100%', alignItems: 'center' },
         badgeLocked: { opacity: 0.4 },
         badgeIcon: { fontSize: 28, marginBottom: 4, textAlign: 'center' },
@@ -296,7 +296,9 @@ export default function KidProfileScreen() {
                     ) : (
                       <Text style={styles.badgeIcon}>{earned ? badge.icon : '🔒'}</Text>
                     )}
-                    <Text style={[styles.badgeLabel, !earned && styles.badgeLabelLocked]}>{badge.label}</Text>
+                    <Text style={[styles.badgeLabel, !earned && styles.badgeLabelLocked]} numberOfLines={2}>
+                      {badge.label}
+                    </Text>
                   </View>
                 </Card>
               </TouchableOpacity>
@@ -314,7 +316,9 @@ export default function KidProfileScreen() {
               ) : (
                 <Text style={styles.lbAvatar}>{entry.avatar}</Text>
               )}
-              <Text style={[styles.lbName, rtl.text]}>{entry.displayName}</Text>
+              <Text style={[styles.lbName, rtl.text]} numberOfLines={1}>
+                {entry.displayName}
+              </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Text style={styles.lbPoints}>{entry.points}</Text>
                 {ember ? <PointsMark size={14} /> : <Text style={styles.lbPoints}> {pointsEmoji}</Text>}

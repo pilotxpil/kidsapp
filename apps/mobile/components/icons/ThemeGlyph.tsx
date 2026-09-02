@@ -243,7 +243,7 @@ export function ThemeTabIcon({ name, fallback, focused }: ThemeTabIconProps) {
   const painted = art?.icons?.[name];
 
   if (painted) {
-    const dim = focused ? 42 : 36;
+    const dim = focused ? 26 : 22;
     return (
       <View
         style={[
@@ -351,8 +351,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   tabArtWrap: {
-    width: 44,
-    height: 44,
+    width: 28,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },

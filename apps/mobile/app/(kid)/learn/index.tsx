@@ -43,10 +43,10 @@ export default function LearnIndexScreen() {
         header: { marginBottom: spacing.sm, alignItems: 'flex-start' },
         empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.xl },
         categoryBlock: { marginBottom: spacing.lg },
-        packCard: { marginBottom: spacing.sm },
-        packRow: { gap: spacing.md, alignItems: 'center', width: '100%' },
-        packInfo: { flex: 1, minWidth: 0 },
-        packTitle: { color: colors.text, fontSize: 17, fontWeight: '700', ...type.title },
+        packCard: { marginBottom: spacing.sm, maxWidth: '100%' },
+        packRow: { gap: spacing.md, alignItems: 'center', width: '100%', maxWidth: '100%' },
+        packInfo: { flex: 1, minWidth: 0, maxWidth: '100%' },
+        packTitle: { color: colors.text, fontSize: 17, fontWeight: '700', flexShrink: 1, ...type.title },
         packMeta: { color: colors.textMuted, fontSize: 13, marginTop: 4, ...type.body },
         progressBar: {
           height: 5,
@@ -133,11 +133,13 @@ export default function LearnIndexScreen() {
                       <Card style={styles.packCard} glow={pack.completed}>
                         <View style={[styles.packRow, rtl.row]}>
                           <View style={styles.packInfo}>
-                            <Text style={[styles.packTitle, rtl.text]}>{displayName}</Text>
+                            <Text style={[styles.packTitle, rtl.text]} numberOfLines={2}>
+                              {displayName}
+                            </Text>
                             {subtitle ? (
                               <Text style={[styles.packMeta, rtl.text]}>{subtitle}</Text>
                             ) : null}
-                            <View style={[styles.pointsMeta, rtl.row]}>
+                            <View style={[styles.pointsMeta, rtl.rowInline]}>
                               <Text style={[styles.packMeta, rtl.text, { marginTop: 0 }]}>
                                 {pack.activityCount} {t('questions')}
                                 {pack.grade ? ` · ${t('grade')} ${pack.grade}` : ''}

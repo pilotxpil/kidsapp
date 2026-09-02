@@ -55,6 +55,14 @@ export const rtl = {
     return { flexDirection: nativeRowDirection(), width: '100%' };
   },
 
+  /** Icon + label chip — hugs content. Do not use `row` (it stretches to 100%). */
+  get rowInline(): ViewStyle {
+    if (Platform.OS === 'web') {
+      return { flexDirection: 'row', alignItems: 'center' };
+    }
+    return { flexDirection: nativeRowDirection(), alignItems: 'center' };
+  },
+
   get rowBetween(): ViewStyle {
     if (Platform.OS === 'web') {
       return {

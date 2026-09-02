@@ -39,49 +39,65 @@ export function TaskCard({ task, onComplete, loading, index = 0 }: TaskCardProps
       StyleSheet.create({
         cardWrap: { width: '100%', alignSelf: 'stretch' },
         card: { marginBottom: spacing.md, alignSelf: 'stretch' },
-        header: { marginBottom: spacing.md, width: '100%' },
+        header: { marginBottom: spacing.md, width: '100%', maxWidth: '100%' },
         title: { color: colors.text, fontSize: 19, fontWeight: '800', ...type.title },
         description: { color: colors.textMuted, fontSize: 14, marginTop: 4, ...type.body },
-        meta: { alignItems: 'center', marginTop: spacing.sm, gap: spacing.sm },
+        meta: {
+          alignItems: 'flex-start',
+          marginTop: spacing.sm,
+          gap: spacing.sm,
+          flexWrap: 'wrap',
+          width: '100%',
+        },
         categoryBadge: ember
           ? {
               backgroundColor: 'rgba(255,90,0,0.12)',
               paddingHorizontal: spacing.sm,
               paddingVertical: 6,
               borderRadius: 999,
-              alignItems: 'center',
               gap: 4,
               borderWidth: 1,
               borderColor: 'rgba(255,138,61,0.32)',
+              alignSelf: 'flex-start',
+              flexGrow: 0,
+              flexShrink: 0,
             }
           : {
               backgroundColor: colors.bgCardLight,
               paddingHorizontal: spacing.sm,
               paddingVertical: 5,
               borderRadius: borderRadius.sm,
-              alignItems: 'center',
               gap: 4,
+              alignSelf: 'flex-start',
+              flexGrow: 0,
+              flexShrink: 0,
               ...cardBorder(1),
               shadowColor: colors.glow,
               shadowOpacity: 0.2,
               shadowRadius: 4,
             },
         points: { color: colors.gold, fontWeight: '800', fontSize: 15, ...type.title },
-        pointsRow: { alignItems: 'center', gap: 4 },
+        pointsRow: { gap: 4, alignSelf: 'flex-start', flexGrow: 0, flexShrink: 0 },
         categoryText: { color: colors.text, fontSize: 12, fontWeight: '700', ...type.ui },
-        button: { marginTop: spacing.sm },
+        button: { marginTop: spacing.sm, alignSelf: 'stretch', width: '100%' },
         statusBadge: ember
           ? {
-              padding: spacing.sm,
-              borderRadius: 14,
-              alignItems: 'center',
+              paddingHorizontal: spacing.md,
+              paddingVertical: spacing.sm,
+              borderRadius: 999,
+              gap: 6,
               borderWidth: 1,
               borderColor: 'rgba(255,138,61,0.28)',
+              alignSelf: 'flex-start',
+              flexGrow: 0,
             }
           : {
-              padding: spacing.sm,
-              borderRadius: borderRadius.sm,
-              alignItems: 'center',
+              paddingHorizontal: spacing.md,
+              paddingVertical: spacing.sm,
+              borderRadius: borderRadius.full,
+              gap: 6,
+              alignSelf: 'flex-start',
+              flexGrow: 0,
               ...cardBorder(1),
             },
         pendingBadge: {
@@ -99,35 +115,37 @@ export function TaskCard({ task, onComplete, loading, index = 0 }: TaskCardProps
     <FadeInUp index={index} style={styles.cardWrap}>
       <Card style={styles.card} glow={isPending}>
         <View style={styles.header}>
-          <RtlText style={styles.title}>{task.title}</RtlText>
+          <RtlText style={styles.title} numberOfLines={3}>
+            {task.title}
+          </RtlText>
           {task.description ? (
             <RtlText style={styles.description}>{task.description}</RtlText>
           ) : null}
           <View style={[styles.meta, rtl.row]}>
-            <View style={[styles.pointsRow, rtl.row]}>
+            <View style={[styles.pointsRow, rtl.rowInline]}>
               <Text style={styles.points}>+{task.points}</Text>
               <PointsMark size={14} />
             </View>
-            <View style={[styles.categoryBadge, rtl.row]}>
+            <View style={[styles.categoryBadge, rtl.rowInline]}>
               <CategoryGlyph category={task.category as TaskCategory} size={14} color={colors.accent} />
-              <Text style={[styles.categoryText, rtl.text]}>{cat?.label}</Text>
+              <Text style={styles.categoryText}>{cat?.label}</Text>
             </View>
             {task.recurrence === 'daily' ? (
-              <View style={styles.categoryBadge}>
-                <Text style={[styles.categoryText, rtl.text]}>{TASK_RECURRENCE.daily.label}</Text>
+              <View style={[styles.categoryBadge, rtl.rowInline]}>
+                <Text style={styles.categoryText}>{TASK_RECURRENCE.daily.label}</Text>
               </View>
             ) : null}
           </View>
         </View>
         {isPending ? (
-          <View style={[styles.statusBadge, styles.pendingBadge, rtl.row, { justifyContent: 'center', gap: 6 }]}>
+          <View style={[styles.statusBadge, styles.pendingBadge, rtl.rowInline]}>
             {chrome === 'vector' ? <ThemeGlyph name="pending" size={16} color={colors.text} /> : null}
-            <Text style={[styles.statusText, rtl.textCenter]}>{t('pending')}</Text>
+            <Text style={styles.statusText}>{t('pending')}</Text>
           </View>
         ) : isCompleted ? (
-          <View style={[styles.statusBadge, styles.completedBadge, rtl.row, { justifyContent: 'center', gap: 6 }]}>
+          <View style={[styles.statusBadge, styles.completedBadge, rtl.rowInline]}>
             {chrome === 'vector' ? <ThemeGlyph name="check" size={16} color={colors.success} /> : null}
-            <Text style={[styles.statusText, rtl.textCenter]}>{completedLabel(task.recurrence)}</Text>
+            <Text style={styles.statusText}>{completedLabel(task.recurrence)}</Text>
           </View>
         ) : (
           <Button
@@ -163,18 +181,22 @@ export function CategoryTabs({ selected, onSelect }: CategoryTabsProps) {
               paddingVertical: spacing.sm,
               borderRadius: 999,
               backgroundColor: 'rgba(12,8,6,0.7)',
-              alignItems: 'center',
               gap: 6,
               borderWidth: 1,
               borderColor: 'rgba(255,138,61,0.28)',
+              alignSelf: 'flex-start',
+              flexGrow: 0,
+              flexShrink: 0,
             }
           : {
               paddingHorizontal: spacing.md,
               paddingVertical: spacing.sm,
               borderRadius: borderRadius.sm,
               backgroundColor: colors.bgCard,
-              alignItems: 'center',
               gap: 6,
+              alignSelf: 'flex-start',
+              flexGrow: 0,
+              flexShrink: 0,
               ...cardBorder(1),
             },
         tabActive: ember
@@ -204,7 +226,7 @@ export function CategoryTabs({ selected, onSelect }: CategoryTabsProps) {
       {categories.map((cat) => (
         <TouchableOpacity
           key={cat}
-          style={[styles.tab, selected === cat && styles.tabActive, rtl.row]}
+          style={[styles.tab, selected === cat && styles.tabActive, rtl.rowInline]}
           onPress={() => onSelect(cat)}
         >
           <CategoryGlyph

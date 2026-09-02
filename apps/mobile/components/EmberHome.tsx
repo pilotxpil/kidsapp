@@ -75,7 +75,6 @@ export function EmberHome({
           ...type.body,
         },
         gemChip: {
-          flexDirection: 'row',
           alignItems: 'center',
           backgroundColor: 'rgba(8,6,4,0.72)',
           borderWidth: 1,
@@ -88,6 +87,8 @@ export function EmberHome({
           shadowOpacity: 0.7,
           shadowRadius: 12,
           elevation: 8,
+          flexGrow: 0,
+          flexShrink: 0,
         },
         gemImg: { width: 40, height: 40 },
         gemNums: { alignItems: 'flex-end' },
@@ -104,6 +105,9 @@ export function EmberHome({
           shadowOpacity: 0.4,
           shadowRadius: 18,
           elevation: 8,
+          overflow: 'hidden',
+          width: '100%',
+          maxWidth: '100%',
         },
         missionRow: { alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
         emblem: {
@@ -115,7 +119,7 @@ export function EmberHome({
           borderColor: 'rgba(255,179,0,0.55)',
         },
         emblemImg: { width: '100%', height: '100%' },
-        missionText: { flex: 1, minWidth: 0 },
+        missionText: { flex: 1, minWidth: 0, maxWidth: '100%' },
         missionTitle: { color: colors.accent, fontSize: 13, fontWeight: '800', letterSpacing: 0.6, ...type.ui },
         missionDesc: { color: colors.text, fontSize: 16, fontWeight: '600', marginTop: 4, ...type.title },
         barTrack: {
@@ -130,8 +134,8 @@ export function EmberHome({
         barFill: { height: '100%', borderRadius: borderRadius.full, overflow: 'hidden' },
         xpMeta: { color: colors.textMuted, fontSize: 12, fontWeight: '700', marginBottom: spacing.sm, ...type.ui },
         fullBtn: { alignSelf: 'stretch', width: '100%' },
-        tiles: { gap: spacing.sm, width: '100%' },
-        tile: { flex: 1, minWidth: 0 },
+        tiles: { gap: spacing.sm, width: '100%', maxWidth: '100%' },
+        tile: { width: '100%', maxWidth: '100%' },
         tileArt: { width: '100%', height: 108, marginBottom: spacing.sm },
         tileTitle: { color: colors.text, fontSize: 18, fontWeight: '800', ...type.display },
         tileSub: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.sm, marginTop: 2, ...type.body },
@@ -146,7 +150,7 @@ export function EmberHome({
     >
       <FadeInUp index={0}>
         <View style={[styles.header, rtl.headerSplit]}>
-          <View style={[styles.gemChip, rtl.row]}>
+          <View style={[styles.gemChip, rtl.rowInline]}>
             {art?.gem ? <Image source={art.gem} style={styles.gemImg} resizeMode="contain" /> : null}
             <View style={styles.gemNums}>
               <AnimatedCounter value={points} style={styles.gemCount} />
@@ -154,7 +158,7 @@ export function EmberHome({
             </View>
           </View>
           <View style={styles.greetBlock}>
-            <Text style={[styles.hello, rtl.text]}>
+            <Text style={[styles.hello, rtl.text]} numberOfLines={2}>
               {t('hello')}, {displayName}!
             </Text>
             <Text style={[styles.ready, rtl.text]}>{t('emberReady')}</Text>
@@ -206,17 +210,25 @@ export function EmberHome({
       </FadeInUp>
 
       <FadeInUp index={2}>
-        <View style={[styles.tiles, rtl.row]}>
+        <View style={styles.tiles}>
           <BouncyPressable style={[styles.panel, styles.tile]} onPress={() => router.push('/(kid)/shop')}>
             {art?.chest ? <Image source={art.chest} style={styles.tileArt} resizeMode="contain" /> : null}
-            <Text style={[styles.tileTitle, rtl.text]}>{t('shop')}</Text>
-            <Text style={[styles.tileSub, rtl.text]}>{t('upgradeCharacter')}</Text>
+            <Text style={[styles.tileTitle, rtl.text]} numberOfLines={1}>
+              {t('shop')}
+            </Text>
+            <Text style={[styles.tileSub, rtl.text]} numberOfLines={2}>
+              {t('upgradeCharacter')}
+            </Text>
             <Button title={t('toShop')} onPress={() => router.push('/(kid)/shop')} style={styles.fullBtn} />
           </BouncyPressable>
           <BouncyPressable style={[styles.panel, styles.tile]} onPress={() => router.push('/(kid)/tasks')}>
             {art?.map ? <Image source={art.map} style={styles.tileArt} resizeMode="contain" /> : null}
-            <Text style={[styles.tileTitle, rtl.text]}>{t('tasks')}</Text>
-            <Text style={[styles.tileSub, rtl.text]}>{t('pickNewMission')}</Text>
+            <Text style={[styles.tileTitle, rtl.text]} numberOfLines={1}>
+              {t('tasks')}
+            </Text>
+            <Text style={[styles.tileSub, rtl.text]} numberOfLines={2}>
+              {t('pickNewMission')}
+            </Text>
             <Button title={t('toTasks')} onPress={() => router.push('/(kid)/tasks')} style={styles.fullBtn} />
           </BouncyPressable>
         </View>

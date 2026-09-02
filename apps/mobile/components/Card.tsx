@@ -40,6 +40,7 @@ export function Card({ children, style, glow }: CardProps) {
               elevation: 8,
               alignSelf: 'stretch',
               width: '100%',
+              maxWidth: '100%',
               overflow: 'hidden',
             }
           : {
@@ -50,6 +51,7 @@ export function Card({ children, style, glow }: CardProps) {
               ...cardBorder(2),
               alignSelf: 'stretch',
               width: '100%',
+              maxWidth: '100%',
               overflow: 'hidden',
             },
         shine: {
@@ -60,7 +62,7 @@ export function Card({ children, style, glow }: CardProps) {
           height: 4,
           zIndex: 1,
         },
-        body: { zIndex: 2, width: '100%', alignSelf: 'stretch' },
+        body: { zIndex: 2, width: '100%', maxWidth: '100%', alignSelf: 'stretch' },
         glow: {
           borderTopColor: colors.accent,
           borderLeftColor: colors.accent,

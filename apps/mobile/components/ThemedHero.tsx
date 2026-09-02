@@ -138,7 +138,7 @@ export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroPro
           opacity: 0.2,
         },
         row: { alignItems: 'center', gap: spacing.md },
-        textBlock: { flex: 1 },
+        textBlock: { flex: 1, minWidth: 0 },
         tagline: {
           color: 'rgba(255,255,255,0.88)',
           fontSize: 12,
@@ -156,18 +156,19 @@ export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroPro
           ...type.display,
         },
         meta: {
-          flexDirection: 'row',
           marginTop: spacing.sm,
           gap: spacing.sm,
           flexWrap: 'wrap',
+          alignItems: 'flex-start',
         },
         pill: {
           backgroundColor: 'rgba(0,0,0,0.45)',
           paddingHorizontal: spacing.sm,
           paddingVertical: 5,
           borderRadius: borderRadius.full,
-          alignItems: 'center',
           gap: 4,
+          alignSelf: 'flex-start',
+          flexGrow: 0,
         },
         pillText: { color: '#fff', fontSize: 12, fontWeight: '700' },
       }),
@@ -201,7 +202,7 @@ export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroPro
             <Text style={[styles.name, rtl.text]}>{displayName}</Text>
             <View style={[styles.meta, rtl.row]}>
               {level != null && level > 0 && (
-                <View style={[styles.pill, rtl.row]}>
+                <View style={[styles.pill, rtl.rowInline]}>
                   {vector ? <ThemeGlyph name="level" size={12} color={colors.primary} /> : null}
                   <Text style={styles.pillText}>
                     {t('level')} {level}
@@ -209,7 +210,7 @@ export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroPro
                 </View>
               )}
               {streak > 0 && (
-                <View style={[styles.pill, rtl.row]}>
+                <View style={[styles.pill, rtl.rowInline]}>
                   {vector ? <ThemeGlyph name="streak" size={12} color={colors.streak} /> : null}
                   <Text style={styles.pillText}>
                     {streak} {t('days')}
