@@ -9,9 +9,20 @@ const { width: W, height: H } = Dimensions.get('window');
 /** Lightweight pattern — few orbs instead of hundreds of views */
 function StarPattern({ colors: [c1, c2, c3] }: { colors: [string, string, string] }) {
   const orbs = [
-    { size: 280, x: -80, y: -40, color: c1, opacity: 0.2 },
-    { size: 200, x: W * 0.5, y: H * 0.08, color: c2, opacity: 0.15 },
-    { size: 160, x: W * 0.1, y: H * 0.5, color: c3, opacity: 0.12 },
+    { size: 320, x: -90, y: -70, color: c1, opacity: 0.28 },
+    { size: 220, x: W * 0.48, y: H * 0.04, color: c2, opacity: 0.2 },
+    { size: 180, x: W * 0.08, y: H * 0.48, color: c3, opacity: 0.16 },
+    { size: 120, x: W * 0.72, y: H * 0.32, color: c1, opacity: 0.12 },
+  ];
+  const sparks = [
+    { x: W * 0.18, y: H * 0.12, s: 3 },
+    { x: W * 0.78, y: H * 0.18, s: 2 },
+    { x: W * 0.62, y: H * 0.08, s: 2 },
+    { x: W * 0.88, y: H * 0.42, s: 3 },
+    { x: W * 0.12, y: H * 0.36, s: 2 },
+    { x: W * 0.4, y: H * 0.22, s: 2 },
+    { x: W * 0.92, y: H * 0.7, s: 3 },
+    { x: W * 0.3, y: H * 0.62, s: 2 },
   ];
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -27,6 +38,21 @@ function StarPattern({ colors: [c1, c2, c3] }: { colors: [string, string, string
             borderRadius: o.size / 2,
             backgroundColor: o.color,
             opacity: o.opacity,
+          }}
+        />
+      ))}
+      {sparks.map((d, i) => (
+        <View
+          key={`s-${i}`}
+          style={{
+            position: 'absolute',
+            left: d.x,
+            top: d.y,
+            width: d.s,
+            height: d.s,
+            borderRadius: d.s / 2,
+            backgroundColor: '#fff',
+            opacity: 0.45,
           }}
         />
       ))}
@@ -93,7 +119,7 @@ function HeartPattern({ colors: [c1, c2, c3] }: { colors: [string, string, strin
 }
 
 export function ThemeBackground() {
-  const { gradientBg, decorEmojis, pattern, colors, id } = useTheme();
+  const { gradientBg, decorEmojis, pattern, colors, id, chrome } = useTheme();
 
   const emojiKey = useMemo(() => `${id}-${decorEmojis.join('')}`, [id, decorEmojis]);
 
@@ -107,8 +133,13 @@ export function ThemeBackground() {
       {pattern === 'hearts' && (
         <HeartPattern colors={[colors.primary, colors.secondary, colors.accent]} />
       )}
+      {pattern === 'embers' && (
+        <StarPattern colors={[colors.primary, colors.primaryLight, colors.gold]} />
+      )}
       {pattern === 'studs' && <GridPattern color={colors.textMuted} step={36} />}
-      <FloatingEmojis key={emojiKey} emojis={decorEmojis} count={10} opacity={0.18} />
+      {chrome !== 'vector' && (
+        <FloatingEmojis key={emojiKey} emojis={decorEmojis} count={10} opacity={0.18} />
+      )}
     </View>
   );
 }

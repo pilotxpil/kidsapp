@@ -47,12 +47,14 @@ export interface AppTheme {
   heroTagline: string;
   borderRadius: { sm: number; md: number; lg: number; xl: number; full: number };
   cardBorder: (width?: number) => ViewStyle;
-  tabIcons: { home: string; tasks: string; shop: string; profile: string };
+  tabIcons: { home: string; tasks: string; learn: string; shop: string; profile: string };
   taskCategoryIcons: Record<TaskCategory, string>;
   pointsEmoji: string;
   celebrationKicker: string;
   allCategoryIcon: string;
-  pattern: 'blocks' | 'stars' | 'studs' | 'hearts';
+  pattern: 'blocks' | 'stars' | 'studs' | 'hearts' | 'embers';
+  /** emoji = Unicode chrome; vector = SVG icons + illustrated art */
+  chrome: 'emoji' | 'vector';
 }
 
 function blockBorder(colors: ThemeColors, width = 3): ViewStyle {
@@ -77,6 +79,19 @@ function glowBorder(colors: ThemeColors, width = 2): ViewStyle {
     shadowOpacity: 0.65,
     shadowRadius: 14,
     elevation: 10,
+  };
+}
+
+/** Hairline glass — no 3D bevel. Ember only. */
+function emberPanel(colors: ThemeColors, _width = 1): ViewStyle {
+  return {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 138, 61, 0.38)',
+    shadowColor: colors.glow,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.28,
+    shadowRadius: 20,
+    elevation: 8,
   };
 }
 
@@ -135,7 +150,7 @@ const BRAWL_COLORS: ThemeColors = {
   danger: '#FF1744',
   success: '#76FF03',
   text: '#FFFFFF',
-  textMuted: '#CE93D8',
+  textMuted: '#E8D5F5',
   textDark: '#12082E',
   gradientStart: '#FFD54F',
   gradientEnd: '#1565C0',
@@ -212,7 +227,59 @@ const SPARKLE_COLORS: ThemeColors = {
   confetti: ['#FF6EC7', '#B388FF', '#FFD700', '#FF80AB', '#E1BEE7', '#FFFFFF'],
 };
 
+const EMBER_COLORS: ThemeColors = {
+  bg: '#0A0A0C',
+  bgDeep: '#050506',
+  bgCard: '#1A120E',
+  bgCardLight: '#2A1C14',
+  primary: '#FF5A00',
+  primaryLight: '#FF8A3D',
+  primaryDark: '#C43A00',
+  secondary: '#6B3A18',
+  accent: '#FFB300',
+  danger: '#FF3D00',
+  success: '#8BC34A',
+  text: '#FFF8F0',
+  textMuted: '#D4B8A0',
+  textDark: '#0A0A0C',
+  gradientStart: '#FF5A00',
+  gradientEnd: '#3D1208',
+  gold: '#FFB300',
+  emerald: '#FF8A3D',
+  diamond: '#FF8A3D',
+  streak: '#FF6D00',
+  border: '#5C3A22',
+  borderLight: '#8B5A32',
+  borderDark: '#0A0808',
+  buttonShadow: '#7A1F00',
+  glow: '#FF5A00',
+  cardShine: '#FF8A3D',
+  confetti: ['#FF5A00', '#FFB300', '#FF8A3D', '#FFF8F0', '#C43A00', '#8B4513'],
+};
+
 export const THEMES: Record<UiThemeId, AppTheme> = {
+  ember: {
+    id: 'ember',
+    name: 'אמבר',
+    subtitle: 'לבה וברזל',
+    icon: '🔥',
+    sfx: 'gem',
+    colors: EMBER_COLORS,
+    gradientBg: ['#1A0A06', '#0A0604', '#050304'],
+    heroGradient: ['#FF5A00', '#3D1208'],
+    decorEmojis: ['🔥', '🌋', '⚡', '🪨'],
+    heroEmoji: '🔥',
+    heroTagline: 'הצת, כבוש, הרווח!',
+    borderRadius: { sm: 14, md: 20, lg: 24, xl: 28, full: 999 },
+    cardBorder: (w) => emberPanel(EMBER_COLORS, w),
+    tabIcons: { home: '🔥', tasks: '🎯', learn: '📚', shop: '💎', profile: '🛡️' },
+    taskCategoryIcons: { home: '🏠', school: '📖', social: '🤝', hobby: '🎮', sport: '🏆' },
+    pointsEmoji: '🔶',
+    celebrationKicker: 'אמבר!',
+    allCategoryIcon: '🔥',
+    pattern: 'embers',
+    chrome: 'vector',
+  },
   minecraft: {
     id: 'minecraft',
     name: 'Minecraft',
@@ -227,12 +294,13 @@ export const THEMES: Record<UiThemeId, AppTheme> = {
     heroTagline: 'כרה, בנה, הרווח!',
     borderRadius: { sm: 2, md: 4, lg: 6, xl: 8, full: 999 },
     cardBorder: (w) => blockBorder(MC_COLORS, w),
-    tabIcons: { home: '🟩', tasks: '📜', shop: '💎', profile: '🛡️' },
+    tabIcons: { home: '🟩', tasks: '📜', learn: '📚', shop: '💎', profile: '🛡️' },
     taskCategoryIcons: { home: '🟩', school: '📖', social: '👨‍🌾', hobby: '🎣', sport: '🏹' },
     pointsEmoji: '💎',
     celebrationKicker: '💚 XP',
     allCategoryIcon: '🧱',
     pattern: 'blocks',
+    chrome: 'emoji',
   },
   brawl: {
     id: 'brawl',
@@ -248,12 +316,13 @@ export const THEMES: Record<UiThemeId, AppTheme> = {
     heroTagline: 'תכרה ג׳מס, תהיה אגדה!',
     borderRadius: { sm: 10, md: 16, lg: 22, xl: 30, full: 999 },
     cardBorder: (w) => glowBorder(BRAWL_COLORS, w),
-    tabIcons: { home: '⭐', tasks: '🎯', shop: '💎', profile: '👊' },
+    tabIcons: { home: '⭐', tasks: '🎯', learn: '📚', shop: '💎', profile: '👊' },
     taskCategoryIcons: { home: '⭐', school: '📖', social: '🤝', hobby: '🎮', sport: '🏆' },
     pointsEmoji: '💎',
     celebrationKicker: '💎 GEM!',
     allCategoryIcon: '⭐',
     pattern: 'stars',
+    chrome: 'vector',
   },
   roblox: {
     id: 'roblox',
@@ -269,12 +338,13 @@ export const THEMES: Record<UiThemeId, AppTheme> = {
     heroTagline: 'צבור Robux, שלוט בעולם!',
     borderRadius: { sm: 6, md: 10, lg: 14, xl: 18, full: 999 },
     cardBorder: (w) => flatBorder(ROBLOX_COLORS, w),
-    tabIcons: { home: '🏠', tasks: '📋', shop: '🪙', profile: '👤' },
+    tabIcons: { home: '🏠', tasks: '📋', learn: '📚', shop: '🪙', profile: '👤' },
     taskCategoryIcons: { home: '🧱', school: '📖', social: '👥', hobby: '🎮', sport: '⚡' },
     pointsEmoji: '🪙',
     celebrationKicker: '🪙 Robux!',
     allCategoryIcon: '🌐',
     pattern: 'studs',
+    chrome: 'emoji',
   },
   sparkle: {
     id: 'sparkle',
@@ -290,12 +360,13 @@ export const THEMES: Record<UiThemeId, AppTheme> = {
     heroTagline: 'זוהר, צבור, תאיר!',
     borderRadius: { sm: 12, md: 18, lg: 24, xl: 32, full: 999 },
     cardBorder: (w) => glowBorder(SPARKLE_COLORS, w),
-    tabIcons: { home: '✨', tasks: '📋', shop: '👑', profile: '💖' },
+    tabIcons: { home: '✨', tasks: '📋', learn: '📚', shop: '👑', profile: '💖' },
     taskCategoryIcons: { home: '🏰', school: '📖', social: '💕', hobby: '🎀', sport: '⭐' },
     pointsEmoji: '💖',
     celebrationKicker: '✨ Sparkle!',
     allCategoryIcon: '✨',
     pattern: 'hearts',
+    chrome: 'emoji',
   },
 };
 

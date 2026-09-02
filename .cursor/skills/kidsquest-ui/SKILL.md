@@ -44,7 +44,7 @@ export default function ExampleScreen() {
 
 ## Themes
 
-Ids: `minecraft` | `brawl` | `roblox` | `sparkle`. Source: `constants/themes.ts`. Persist with `setUiTheme`. Auth screens may use static `kidAuthTheme` / parent Roblox defaults from `constants/theme.ts`.
+Ids: `ember` | `minecraft` | `brawl` | `roblox` | `sparkle`. Source: `constants/themes.ts`. Persist with `setUiTheme`. Auth screens may use static `kidAuthTheme` / parent Roblox defaults from `constants/theme.ts`.
 
 ## Navigation
 

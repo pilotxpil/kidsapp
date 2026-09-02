@@ -4,7 +4,10 @@ import bcrypt from 'bcryptjs';
 import { Family } from './models/Family';
 import { User } from './models/User';
 import { Task } from './models/Task';
+import { TaskTemplate } from './models/TaskTemplate';
 import { Reward } from './models/Reward';
+import { LearningAssignment } from './models/LearningAssignment';
+import { LearningProgress } from './models/LearningProgress';
 import { TASK_TEMPLATES, taskCategoryIcon, REWARD_TEMPLATES, DEFAULT_KID_THEME_ID, DEFAULT_PARENT_THEME_ID } from '@kidsapp/shared';
 import { generateUniqueInviteCode } from './utils/inviteCode';
 
@@ -18,7 +21,10 @@ async function seed() {
     User.deleteMany({}),
     Family.deleteMany({}),
     Task.deleteMany({}),
+    TaskTemplate.deleteMany({}),
     Reward.deleteMany({}),
+    LearningAssignment.deleteMany({}),
+    LearningProgress.deleteMany({}),
   ]);
 
   const passwordHash = await bcrypt.hash('parent123', 10);
@@ -103,6 +109,23 @@ async function seed() {
 
   for (const r of rewards) {
     await Reward.create({ ...r, familyId: family._id });
+  }
+
+  const demoAssignments: { packId: string; kidId: typeof kid1._id }[] = [
+    { packId: 'math-addition-10', kidId: kid1._id },
+    { packId: 'math-multiply-12', kidId: kid1._id },
+    { packId: 'english-fox-tale', kidId: kid1._id },
+    { packId: 'hebrew-letters', kidId: kid1._id },
+    { packId: 'math-addition-10', kidId: kid2._id },
+    { packId: 'english-animals', kidId: kid2._id },
+  ];
+  for (const row of demoAssignments) {
+    await LearningAssignment.create({
+      familyId: family._id,
+      packId: row.packId,
+      kidId: row.kidId,
+      assignedBy: parent._id,
+    });
   }
 
   console.log('\n✅ Seed data created!\n');

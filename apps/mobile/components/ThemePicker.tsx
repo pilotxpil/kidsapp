@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, useWindowDimensions, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { UiThemeId } from '@kidsapp/shared';
 import { spacing } from '../constants/theme';
 import { UI_THEME_OPTIONS } from '../constants/themes';
+import { getThemeArt } from '../constants/theme-art';
 import { useTheme } from '../lib/theme-context';
+import { useType } from '../lib/typography';
 import { playSfx } from '../lib/sfx';
 import { BouncyPressable } from './animations/BouncyPressable';
 import { rtl } from '../lib/rtl';
@@ -15,6 +17,7 @@ const GRID_PADDING = spacing.lg;
 export function ThemePicker() {
   const { width: screenW } = useWindowDimensions();
   const { id: currentId, setUiTheme, borderRadius, colors } = useTheme();
+  const type = useType();
   const [saving, setSaving] = useState<UiThemeId | null>(null);
   const gap = spacing.sm;
   const cardWidth = Math.floor((screenW - GRID_PADDING * 2 - gap) / 2);
@@ -60,12 +63,18 @@ export function ThemePicker() {
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
                 <>
-                  <Text style={styles.bgDecor}>{opt.decorEmojis.slice(0, 3).join(' ')}</Text>
-                  <Text style={styles.icon}>{opt.icon}</Text>
-                  <Text style={styles.name} numberOfLines={1}>
+                  {getThemeArt(opt.id)?.gem ? (
+                    <Image source={getThemeArt(opt.id)!.gem} style={styles.gemArt} resizeMode="contain" />
+                  ) : (
+                    <>
+                      <Text style={styles.bgDecor}>{opt.decorEmojis.slice(0, 3).join(' ')}</Text>
+                      <Text style={styles.icon}>{opt.icon}</Text>
+                    </>
+                  )}
+                  <Text style={[styles.name, type.title]} numberOfLines={1}>
                     {opt.name}
                   </Text>
-                  <Text style={styles.sub} numberOfLines={1}>
+                  <Text style={[styles.sub, type.body]} numberOfLines={1}>
                     {opt.subtitle}
                   </Text>
                   {selected && (
@@ -105,6 +114,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   icon: { fontSize: 28, marginBottom: 4 },
+  gemArt: { width: 40, height: 40, marginBottom: 4 },
   name: { fontSize: 10, fontWeight: '800', textAlign: 'center', color: '#fff', width: '100%' },
   sub: {
     fontSize: 9,

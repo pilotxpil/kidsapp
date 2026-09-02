@@ -27,7 +27,7 @@ interface PortalButtonProps {
 }
 
 const themeMap: Record<PortalVariant, UiThemeId> = {
-  hero: 'brawl',
+  hero: 'ember',
   parent: 'roblox',
 };
 

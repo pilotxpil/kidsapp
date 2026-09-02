@@ -1,0 +1,71 @@
+{
+  "id": "math-addition-10",
+  "version": 1,
+  "title": { "he": "חיבור עד 10", "en": "Addition to 10" },
+  "category": "math",
+  "grade": 2,
+  "tags": ["addition", "grade-2"],
+  "defaultPoints": 5,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "3 + 4 = ?" },
+      "options": [
+        { "id": "a", "text": "6" },
+        { "id": "b", "text": "7" },
+        { "id": "c", "text": "8" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "3 + 4 = 7" }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "5 + 2 = ?" },
+      "options": [
+        { "id": "a", "text": "6" },
+        { "id": "b", "text": "7" },
+        { "id": "c", "text": "8" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "5 + 2 = 7" }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "1 + 9 = ?" },
+      "options": [
+        { "id": "a", "text": "9" },
+        { "id": "b", "text": "10" },
+        { "id": "c", "text": "11" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "1 + 9 = 10" }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "6 + 3 = ?" },
+      "options": [
+        { "id": "a", "text": "8" },
+        { "id": "b", "text": "9" },
+        { "id": "c", "text": "10" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "6 + 3 = 9" }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "4 + 4 = ?" },
+      "options": [
+        { "id": "a", "text": "7" },
+        { "id": "b", "text": "8" },
+        { "id": "c", "text": "9" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "4 + 4 = 8" }
+    }
+  ]
+}

@@ -15,7 +15,7 @@ import { getTheme } from '../constants/themes';
 import { spacing } from '../constants/theme';
 import type { UiThemeId } from '@kidsapp/shared';
 
-type AuthThemeId = Extract<UiThemeId, 'brawl' | 'roblox'>;
+type AuthThemeId = Extract<UiThemeId, 'ember' | 'brawl' | 'roblox'>;
 
 interface AuthFormCardProps {
   themeId: AuthThemeId;
@@ -69,9 +69,8 @@ export function AuthFormCard({ themeId, children, index = 3, style }: AuthFormCa
           ...StyleSheet.absoluteFillObject,
           borderRadius: theme.borderRadius.lg + 3,
           borderWidth: 1.5,
-          borderColor:
-            themeId === 'brawl' ? `${theme.colors.accent}44` : `${theme.colors.primary}55`,
-          shadowColor: themeId === 'brawl' ? theme.colors.glow : theme.colors.primary,
+          borderColor: `${theme.colors.primary}55`,
+          shadowColor: theme.colors.glow,
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.75,
           shadowRadius: 16,
@@ -108,7 +107,13 @@ export function AuthFormCard({ themeId, children, index = 3, style }: AuthFormCa
   );
 
   const gradientColors =
-    themeId === 'brawl'
+    themeId === 'ember'
+      ? ([
+          'rgba(10,6,4,0.94)',
+          'rgba(26,14,10,0.9)',
+          'rgba(5,4,4,0.96)',
+        ] as const)
+      : themeId === 'brawl'
       ? ([
           'rgba(20,8,46,0.92)',
           'rgba(42,21,104,0.88)',
@@ -120,10 +125,11 @@ export function AuthFormCard({ themeId, children, index = 3, style }: AuthFormCa
           'rgba(18,19,20,0.96)',
         ] as const);
 
-  const accentColors =
-    themeId === 'brawl'
-      ? ([theme.colors.primary, theme.colors.accent, theme.colors.primaryLight] as const)
-      : ([theme.colors.primary, '#ffffff66', theme.colors.primaryDark] as const);
+  const accentColors = [
+    theme.colors.primary,
+    theme.colors.accent,
+    theme.colors.primaryLight,
+  ] as const;
 
   return (
     <FadeInUp index={index}>

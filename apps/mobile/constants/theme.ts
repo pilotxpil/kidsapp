@@ -18,4 +18,4 @@ export const borderRadius = _parent.borderRadius;
 export const gradientBg = _parent.gradientBg;
 export const blockBorder = _parent.cardBorder;
 
-export const kidAuthTheme = getTheme('brawl');
+export const kidAuthTheme = getTheme('ember');

@@ -15,6 +15,12 @@ import type {
   FortuneWheelSpinResult,
   TreasureChestStatus,
   TreasureChestOpenResult,
+  FamilyTaskTemplate,
+  LearningPackSummary,
+  LearningPackDetail,
+  LearningCheckResult,
+  LearningCatalogItem,
+  LearningCategory,
 } from '@kidsapp/shared';
 
 const TOKEN_KEY = 'kidsapp_token';
@@ -127,11 +133,24 @@ export const api = {
     return request<{ tasks: Task[] }>(`/tasks${query}`);
   },
 
-  createTask(data: Omit<Partial<Task>, 'assignedTo'> & { assignedTo: string | string[] }) {
+  createTask(
+    data: Omit<Partial<Task>, 'assignedTo'> & {
+      assignedTo: string | string[];
+      saveAsTemplate?: boolean;
+    }
+  ) {
     return request<{ task: Task; tasks: Task[] }>('/tasks', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  },
+
+  getTaskTemplates() {
+    return request<{ templates: FamilyTaskTemplate[] }>('/tasks/templates');
+  },
+
+  deleteTaskTemplate(id: string) {
+    return request(`/tasks/templates/${id}`, { method: 'DELETE' });
   },
 
   updateTask(id: string, data: Partial<Task>) {
@@ -260,5 +279,38 @@ export const api = {
 
   getFamilyInvite() {
     return request<FamilyInviteInfo>('/family/invite');
+  },
+
+  getLearningPacks() {
+    return request<{ packs: LearningPackSummary[]; assignedOnly?: boolean }>('/learning/packs');
+  },
+
+  getLearningCatalog(params?: { search?: string; category?: LearningCategory; grade?: number }) {
+    const q = new URLSearchParams();
+    if (params?.search?.trim()) q.set('search', params.search.trim());
+    if (params?.category) q.set('category', params.category);
+    if (params?.grade != null) q.set('grade', String(params.grade));
+    const query = q.toString();
+    return request<{ items: LearningCatalogItem[] }>(
+      `/learning/catalog${query ? `?${query}` : ''}`
+    );
+  },
+
+  assignLearningPack(packId: string, kidIds: string[]) {
+    return request<{ packId: string; assignedKidIds: string[] }>('/learning/assign', {
+      method: 'POST',
+      body: JSON.stringify({ packId, kidIds }),
+    });
+  },
+
+  getLearningPack(packId: string) {
+    return request<LearningPackDetail>(`/learning/packs/${packId}`);
+  },
+
+  checkLearningAnswer(packId: string, activityId: string, answer: string) {
+    return request<LearningCheckResult>(`/learning/packs/${packId}/check`, {
+      method: 'POST',
+      body: JSON.stringify({ activityId, answer }),
+    });
   },
 };

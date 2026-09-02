@@ -116,14 +116,14 @@ export default function KidLoginScreen() {
   return (
     <>
       <AuthScreenShell
-        themeId="brawl"
-        emojis={['💎', '⭐', '✨', '🔥', '🏆', '👊', '💜', '🌟']}
-        emojiCount={20}
+        themeId="ember"
+        emojis={['🔥', '🌋', '⚡']}
+        emojiCount={0}
         onBack={() => router.back()}
       >
         <AuthBrand variant="kid" compact />
 
-        <AuthFormCard themeId="brawl">
+        <AuthFormCard themeId="ember">
           {Platform.OS !== 'web' ? (
             <View style={styles.scanRow}>
               <Pressable

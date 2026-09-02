@@ -1,0 +1,59 @@
+{
+  "id": "math-multiply-12",
+  "version": 1,
+  "title": { "he": "כפל ב-12", "en": "Multiply by 12" },
+  "category": "math",
+  "grade": 4,
+  "tags": ["multiplication", "times-tables"],
+  "defaultPoints": 5,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "12 × 1 = ?" },
+      "options": [
+        { "id": "a", "text": "11" },
+        { "id": "b", "text": "12" },
+        { "id": "c", "text": "13" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "12 × 1 = 12" }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "12 × 2 = ?" },
+      "options": [
+        { "id": "a", "text": "22" },
+        { "id": "b", "text": "24" },
+        { "id": "c", "text": "26" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "12 × 2 = 24" }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "12 × 5 = ?" },
+      "options": [
+        { "id": "a", "text": "50" },
+        { "id": "b", "text": "60" },
+        { "id": "c", "text": "70" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "12 × 5 = 60" }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "12 × 10 = ?" },
+      "options": [
+        { "id": "a", "text": "100" },
+        { "id": "b", "text": "110" },
+        { "id": "c", "text": "120" }
+      ],
+      "answer": "c",
+      "explanation": { "he": "12 × 10 = 120" }
+    }
+  ]
+}

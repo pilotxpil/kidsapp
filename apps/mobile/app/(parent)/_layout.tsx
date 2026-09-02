@@ -48,6 +48,10 @@ export default function ParentLayout() {
         options={{ title: t('manageTasks'), tabBarIcon: ({ focused }) => <TabIcon emoji={tabIcons.tasks} focused={focused} /> }}
       />
       <Tabs.Screen
+        name="learn"
+        options={{ title: t('manageLearning'), tabBarIcon: ({ focused }) => <TabIcon emoji={tabIcons.learn} focused={focused} /> }}
+      />
+      <Tabs.Screen
         name="rewards"
         options={{ title: t('manageRewards'), tabBarIcon: ({ focused }) => <TabIcon emoji={tabIcons.shop} focused={focused} /> }}
       />

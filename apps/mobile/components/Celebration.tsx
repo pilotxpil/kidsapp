@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated from 'react-native-reanimated';
 import { spacing } from '../constants/theme';
+import { getThemeArt } from '../constants/theme-art';
 import { useTheme } from '../lib/theme-context';
 import { playSfx, SfxName } from '../lib/sfx';
 import { Confetti } from './animations/Confetti';
 import { useModalEnter } from './animations/modalEnter';
+import { ThemeGlyph } from './icons/ThemeGlyph';
 
 interface CelebrationProps {
   visible: boolean;
@@ -25,10 +27,20 @@ export function Celebration({
   sfx,
   onDone,
 }: CelebrationProps) {
-  const { borderRadius, cardBorder, celebrationKicker, heroGradient, sfx: themeSfx, icon: themeIcon } = useTheme();
+  const {
+    borderRadius,
+    cardBorder,
+    celebrationKicker,
+    heroGradient,
+    sfx: themeSfx,
+    icon: themeIcon,
+    chrome,
+    id: themeId,
+  } = useTheme();
   const playName = sfx === false ? null : (sfx ?? themeSfx);
   const displayIcon = icon ?? themeIcon;
   const displayKicker = kicker ?? celebrationKicker;
+  const gemArt = getThemeArt(themeId)?.gem;
   const { overlayStyle, cardStyle: enterStyle } = useModalEnter(visible);
 
   useEffect(() => {
@@ -59,14 +71,15 @@ export function Celebration({
             },
           ]}
         >
-          <Text style={styles.bigIcon}>{displayIcon}</Text>
+          {chrome === 'vector' && gemArt && !icon ? (
+            <Image source={gemArt} style={styles.gem} resizeMode="contain" />
+          ) : chrome === 'vector' && !icon ? (
+            <ThemeGlyph name="gem" size={52} color="#fff" />
+          ) : (
+            <Text style={styles.bigIcon}>{displayIcon}</Text>
+          )}
           <Text style={styles.kicker}>{displayKicker}</Text>
           <Text style={styles.message}>{message}</Text>
-          <View style={styles.sparkRow}>
-            {['✨', '⭐', '✨'].map((s, i) => (
-              <Text key={i} style={styles.spark}>{s}</Text>
-            ))}
-          </View>
         </LinearGradient>
       </Animated.View>
     </Animated.View>
@@ -85,6 +98,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1000,
   },
+  gem: { width: 72, height: 72, marginBottom: spacing.sm },
   bigIcon: { fontSize: 52, marginBottom: spacing.sm },
   kicker: {
     color: '#fff',
@@ -105,6 +119,4 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
-  sparkRow: { flexDirection: 'row', gap: 12, marginTop: spacing.md },
-  spark: { fontSize: 18, opacity: 0.9 },
 });

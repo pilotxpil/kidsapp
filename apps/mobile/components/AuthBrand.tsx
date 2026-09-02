@@ -13,6 +13,7 @@ import { AuthLogo3D, type AuthLogoVariant } from './AuthLogo3D';
 import { getTheme } from '../constants/themes';
 import { spacing } from '../constants/theme';
 import { t } from '../lib/i18n';
+import { Heebo } from '../lib/typography';
 
 type AuthBrandVariant = 'welcome' | 'kid' | 'parent' | 'register';
 
@@ -22,7 +23,7 @@ interface AuthBrandProps {
 }
 
 export function AuthBrand({ variant, compact }: AuthBrandProps) {
-  const theme = variant === 'kid' ? getTheme('brawl') : getTheme('roblox');
+  const theme = variant === 'kid' ? getTheme('ember') : getTheme('roblox');
   const logoVariant: AuthLogoVariant =
     variant === 'kid' || variant === 'welcome' ? 'gem' : variant === 'register' ? 'shield' : 'coin';
   const logoSize = variant === 'welcome' && !compact ? 130 : compact ? 96 : 130;
@@ -56,7 +57,8 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
         },
         appName: {
           fontSize: compact ? 32 : 44,
-          fontWeight: '900',
+          fontWeight: variant === 'kid' ? 'normal' : '900',
+          fontFamily: variant === 'kid' ? Heebo.black : undefined,
           color: theme.colors.text,
           letterSpacing: compact ? 2 : 4,
           textAlign: 'center',
@@ -71,11 +73,13 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
           textAlign: 'center',
           marginTop: spacing.sm,
           marginBottom: compact ? spacing.lg : spacing.xl,
-          fontWeight: '700',
+          fontWeight: variant === 'kid' ? 'normal' : '700',
+          fontFamily: variant === 'kid' ? Heebo.bold : undefined,
         },
         heroTitle: {
           fontSize: 26,
-          fontWeight: '800',
+          fontWeight: variant === 'kid' ? 'normal' : '800',
+          fontFamily: variant === 'kid' ? Heebo.extrabold : undefined,
           color: theme.colors.text,
           textAlign: 'center',
           marginTop: spacing.xs,
@@ -86,9 +90,10 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
           textAlign: 'center',
           marginTop: spacing.xs,
           marginBottom: compact ? spacing.lg : spacing.xl,
+          fontFamily: variant === 'kid' ? Heebo.medium : undefined,
         },
       }),
-    [compact, theme, logoSize]
+    [compact, theme, logoSize, variant]
   );
 
   const nameParts = t('appName').split('Quest');

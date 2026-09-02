@@ -19,7 +19,7 @@ import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { TASK_CATEGORIES, TASK_TEMPLATES, TASK_RECURRENCE } from '@kidsapp/shared';
-import type { Task, TaskCategory, TaskRecurrence, TaskTemplate, User } from '@kidsapp/shared';
+import type { FamilyTaskTemplate, Task, TaskCategory, TaskRecurrence, TaskTemplate, User } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
@@ -82,6 +82,8 @@ export default function ParentTasksScreen() {
   const [category, setCategory] = useState<TaskCategory>('home');
   const [recurrence, setRecurrence] = useState<TaskRecurrence>('daily');
   const [assignedIds, setAssignedIds] = useState<string[]>([]);
+  const [saveAsTemplate, setSaveAsTemplate] = useState(true);
+  const [familyTemplates, setFamilyTemplates] = useState<FamilyTaskTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const savingRef = useRef(false);
 
@@ -192,9 +194,7 @@ export default function ParentTasksScreen() {
           backgroundColor: colors.bgCardLight,
           borderWidth: 1,
           borderColor: colors.border,
-          marginBottom: spacing.sm,
           alignItems: 'flex-end',
-          width: '100%',
         },
         templateTitle: {
           color: colors.text,
@@ -211,6 +211,30 @@ export default function ParentTasksScreen() {
           textAlign: 'right',
           writingDirection: 'rtl',
           width: '100%',
+        },
+        templateSection: {
+          color: colors.text,
+          fontSize: 15,
+          fontWeight: '800',
+          textAlign: 'right',
+          writingDirection: 'rtl',
+          width: '100%',
+          marginTop: spacing.sm,
+          marginBottom: spacing.sm,
+        },
+        templateRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.sm,
+          marginBottom: spacing.sm,
+          width: '100%',
+        },
+        templateBody: {
+          flex: 1,
+          minWidth: 0,
+        },
+        templateDelete: {
+          padding: spacing.sm,
         },
       }),
     [themeId, colors, borderRadius, cardBorder]
@@ -239,9 +263,20 @@ export default function ParentTasksScreen() {
     } else {
       setTasks([]);
     }
+    try {
+      const templatesRes = await api.getTaskTemplates();
+      setFamilyTemplates(templatesRes.templates);
+    } catch {
+      setFamilyTemplates([]);
+    }
   }, []);
 
   useFocusLoad(load);
+
+  const builtinTemplates = useMemo(
+    () => TASK_TEMPLATES.filter((tpl) => !familyTemplates.some((custom) => custom.title === tpl.title)),
+    [familyTemplates]
+  );
 
   const allSelected = kids.length > 0 && assignedIds.length === kids.length;
 
@@ -262,6 +297,7 @@ export default function ParentTasksScreen() {
     setCategory('home');
     setRecurrence('daily');
     setAssignedIds(kids[0] ? [kids[0]._id] : []);
+    setSaveAsTemplate(true);
     setEditingGroup(null);
   };
 
@@ -275,12 +311,13 @@ export default function ParentTasksScreen() {
     }
 
     setEditingGroup(null);
+    setSaveAsTemplate(true);
     if (template) {
       setTitle(template.title);
       setDescription(template.description);
       setPoints(String(template.points));
       setCategory(template.category);
-      setRecurrence('daily');
+      setRecurrence(template.recurrence ?? 'daily');
       const missing = kidsMissingTask(template.title);
       setAssignedIds(missing.length > 0 ? missing.map((k) => k._id) : [kids[0]._id]);
     } else {
@@ -356,7 +393,7 @@ export default function ParentTasksScreen() {
           await api.createTask({ ...payload, assignedTo: toAdd });
         }
       } else {
-        await api.createTask({ ...payload, assignedTo: assignedIds });
+        await api.createTask({ ...payload, assignedTo: assignedIds, saveAsTemplate });
       }
 
       closeModal();
@@ -372,6 +409,35 @@ export default function ParentTasksScreen() {
   const handleDelete = async (group: TaskGroup) => {
     await Promise.all(group.ids.map((id) => api.deleteTask(id)));
     await load();
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    await api.deleteTaskTemplate(id);
+    setFamilyTemplates((prev) => prev.filter((tpl) => tpl._id !== id));
+  };
+
+  const renderTemplateItem = (template: TaskTemplate & { _id?: string; recurrence?: TaskRecurrence }) => {
+    const missing = kidsMissingTask(template.title).length;
+    const rec = TASK_RECURRENCE[template.recurrence ?? 'daily'];
+    return (
+      <View key={template._id ?? template.title} style={[styles.templateRow, rtl.row]}>
+        <TouchableOpacity style={[styles.templateChip, styles.templateBody]} onPress={() => selectTemplate(template)}>
+          <Text style={styles.templateTitle}>
+            {categoryIcon(template.category)} {template.title}
+          </Text>
+          <Text style={styles.templateMeta}>{template.description}</Text>
+          <Text style={styles.templateMeta}>
+            +{template.points} {pointsEmoji} · {rec.icon} {rec.label}
+            {missing === 0 ? ` · ${t('taskExists')}` : ''}
+          </Text>
+        </TouchableOpacity>
+        {template._id ? (
+          <TouchableOpacity style={styles.templateDelete} onPress={() => handleDeleteTemplate(template._id!)}>
+            <Text style={styles.actionIcon}>🗑️</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+    );
   };
 
   const categories = Object.entries(TASK_CATEGORIES) as [TaskCategory, { label: string; icon: string }][];
@@ -443,28 +509,16 @@ export default function ParentTasksScreen() {
             <ScrollView contentContainerStyle={styles.modalScroll} showsVerticalScrollIndicator>
               <Text style={styles.modalTitle}>{t('quickTasks')}</Text>
               <Text style={styles.hint}>{t('quickTasksHint')}</Text>
-              {TASK_TEMPLATES.map((template) => {
-                const missing = kidsMissingTask(template.title).length;
-                return (
-                  <TouchableOpacity
-                    key={template.title}
-                    style={styles.templateChip}
-                    onPress={() => selectTemplate(template)}
-                  >
-                    <Text style={styles.templateTitle}>
-                      {categoryIcon(template.category)} {template.title}
-                    </Text>
-                    <Text style={styles.templateMeta}>
-                      {template.description}
-                    </Text>
-                    <Text style={styles.templateMeta}>
-                      +{template.points} {pointsEmoji} · {TASK_RECURRENCE.daily.icon}{' '}
-                      {TASK_RECURRENCE.daily.label}
-                      {missing === 0 ? ` · ${t('taskExists')}` : ''}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+              {familyTemplates.length > 0 && (
+                <>
+                  <Text style={styles.templateSection}>{t('customQuickTasks')}</Text>
+                  {familyTemplates.map(renderTemplateItem)}
+                  {builtinTemplates.length > 0 ? (
+                    <Text style={styles.templateSection}>{t('builtinQuickTasks')}</Text>
+                  ) : null}
+                </>
+              )}
+              {builtinTemplates.map(renderTemplateItem)}
             </ScrollView>
             <View style={styles.modalActions}>
               <Button title={t('cancel')} onPress={() => setTemplatesModalVisible(false)} variant="outline" />
@@ -568,6 +622,27 @@ export default function ParentTasksScreen() {
                   );
                 })}
               </View>
+
+              {!editingGroup && (
+                <>
+                  <Text style={styles.label}>{t('saveAsQuickTask')}</Text>
+                  <Text style={styles.hint}>{t('saveAsQuickTaskHint')}</Text>
+                  <View style={styles.chipRow}>
+                    <TouchableOpacity
+                      style={[styles.chip, saveAsTemplate && styles.chipActive]}
+                      onPress={() => setSaveAsTemplate((prev) => !prev)}
+                    >
+                      <View style={styles.chipContent}>
+                        {saveAsTemplate ? <Text style={styles.chipIcon}>✓</Text> : null}
+                        <Text style={styles.chipIcon}>📌</Text>
+                        <Text style={[styles.chipText, saveAsTemplate && styles.chipTextActive]}>
+                          {saveAsTemplate ? t('on') : t('off')}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
             </ScrollView>
 
             <View style={[styles.modalActions, rtl.row]}>
