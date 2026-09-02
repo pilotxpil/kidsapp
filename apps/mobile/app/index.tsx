@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { spacing } from '../constants/theme';
+import { colors, spacing } from '../constants/theme';
 import { AuthBrand } from '../components/AuthBrand';
 import { AuthScreenShell } from '../components/AuthScreenShell';
 import { PortalButton } from '../components/PortalButton';
+import { BouncyPressable } from '../components/animations/BouncyPressable';
+import { RtlText } from '../components/RtlText';
 import { t } from '../lib/i18n';
 import { FadeInUp } from '../components/animations/FadeInUp';
 
@@ -15,6 +17,8 @@ export default function WelcomeScreen() {
     () =>
       StyleSheet.create({
         buttons: { width: '100%', gap: spacing.lg, marginTop: spacing.sm },
+        privacy: { marginTop: spacing.md, alignItems: 'center' },
+        privacyText: { color: colors.primaryLight, fontSize: 13, fontWeight: '700' },
       }),
     []
   );
@@ -45,6 +49,13 @@ export default function WelcomeScreen() {
             subtitle={t('welcomeParentSub')}
             onPress={() => router.push('/parent-login')}
           />
+        </FadeInUp>
+        <FadeInUp index={5}>
+          <BouncyPressable onPress={() => router.push('/privacy')} style={styles.privacy}>
+            <RtlText style={styles.privacyText} wrap={false}>
+              {t('privacyPolicy')}
+            </RtlText>
+          </BouncyPressable>
         </FadeInUp>
       </View>
     </AuthScreenShell>

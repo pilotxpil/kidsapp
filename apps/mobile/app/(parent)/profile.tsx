@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { Input } from '../../components/Input';
@@ -16,6 +17,7 @@ import { t } from '../../lib/i18n';
 
 export default function ParentProfileScreen() {
   const { user, logout, refreshUser } = useAuth();
+  const router = useRouter();
   const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
   const [displayName, setDisplayName] = useState(user?.displayName ?? '');
   const [saving, setSaving] = useState(false);
@@ -110,6 +112,7 @@ export default function ParentProfileScreen() {
           <ThemePicker />
         </View>
 
+        <Button title={t('privacyPolicy')} variant="outline" onPress={() => router.push('/privacy')} />
         <Button title={t('logout')} onPress={logout} variant="danger" style={styles.logout} />
       </ScrollView>
 

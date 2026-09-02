@@ -145,6 +145,8 @@ export const he = {
   tapToCopy: 'לחץ להעתקה',
   familyFull: 'המשפחה מלאה — 2 הורים כבר מחוברים',
   back: 'חזרה',
+  privacyPolicy: 'מדיניות פרטיות',
+  privacyUpdated: 'עודכן לאחרונה',
   stats: 'סטטיסטיקות',
   totalTasks: 'משימות פעילות',
   totalRewards: 'פרסים בחנות',

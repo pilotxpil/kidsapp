@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
@@ -20,6 +21,7 @@ import { t } from '../../lib/i18n';
 
 export default function KidProfileScreen() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
   const userId = user?._id;
   const [profile, setProfile] = useState<KidProfile | null>(null);
@@ -296,6 +298,7 @@ export default function KidProfileScreen() {
           <Text style={[styles.settingsValue, rtl.text]}>{musicOn ? t('on') : t('off')}</Text>
         </TouchableOpacity>
 
+        <Button title={t('privacyPolicy')} variant="outline" onPress={() => router.push('/privacy')} />
         <Button title={t('logout')} onPress={handleLogout} variant="outline" style={styles.logout} sound={false} />
       </ScrollView>
 

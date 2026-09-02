@@ -324,7 +324,7 @@ npx eas-cli build --platform android --profile preview
 1. **שרת API ציבורי ב-HTTPS** — פריסה על VM Synaboard (כמו בטומטומים): **[deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md)** (`kids.synaboard.com`). MongoDB Atlas DB `kidsapp`. אל תריצו `seed` על דאטה אמיתי.
 2. **חשבון Expo** — [expo.dev](https://expo.dev) — לבילד בענן (EAS).
 3. **חשבון Google Play Developer** — תשלום חד-פעמי ב-[Play Console](https://play.google.com/console). צרו אפליקציה חדשה (שם תצוגה, עברית, חינמית).
-4. **מדיניות פרטיות ב-URL ציבורי** — חובה באפליקציה עם חשבונות ומצלמה (סריקת QR).
+4. **מדיניות פרטיות ב-URL ציבורי** — חובה באפליקציה עם חשבונות ומצלמה (סריקת QR). אחרי `npm run deploy:web`: `https://kids.synaboard.com/privacy-policy.html`
 5. **קהל יעד** — האפליקציה מיועדת לילדים. ב-Play Console יש שאלון גילאים ומדיניות Families. מלאו בכנות; אפליקציות לילדים כפופות לכללים מחמירים (פרסום, איסוף נתונים, הרשאות).
 
 מזהה החבילה קבוע: `com.kidsapp.quest`. אחרי ההעלאה הראשונה אי אפשר להחליף אותו.

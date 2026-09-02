@@ -29,6 +29,9 @@ function RootNavigator() {
       segments[0] === 'kid-login' ||
       segments[0] === 'parent-login' ||
       segments[0] === 'parent-register';
+    const inPublic = segments[0] === 'privacy';
+
+    if (inPublic) return;
 
     if (!user && (inKidGroup || inParentGroup)) {
       router.replace('/');
@@ -63,6 +66,7 @@ function RootNavigator() {
         <Stack.Screen name="kid-login" />
         <Stack.Screen name="parent-login" />
         <Stack.Screen name="parent-register" />
+        <Stack.Screen name="privacy" />
         <Stack.Protected guard={isKid}>
           <Stack.Screen name="(kid)" />
         </Stack.Protected>
