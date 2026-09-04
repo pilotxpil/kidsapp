@@ -2,12 +2,15 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User } from '@kidsapp/shared';
 import { api } from './api';
 
+type UserProgressPatch = Partial<Pick<User, 'points' | 'level' | 'xp' | 'streak' | 'badges'>>;
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (token: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  patchUser: (partial: UserProgressPatch) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -16,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: async () => {},
   refreshUser: async () => {},
+  patchUser: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -70,8 +74,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const patchUser = useCallback((partial: UserProgressPatch) => {
+    setUser((prev) => (prev ? { ...prev, ...partial } : prev));
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, patchUser }}>
       {children}
     </AuthContext.Provider>
   );

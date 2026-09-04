@@ -102,7 +102,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
           justifyContent: 'center',
         },
         flash: {
-          ...StyleSheet.absoluteFillObject,
+          ...StyleSheet.absoluteFill,
           backgroundColor: '#fff',
         },
         dots: {

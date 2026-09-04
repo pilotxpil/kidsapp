@@ -78,7 +78,7 @@ export default function ParentKidsScreen() {
           paddingHorizontal: spacing.lg,
           paddingVertical: spacing.md,
         },
-        modalBackdrop: { ...StyleSheet.absoluteFillObject },
+        modalBackdrop: { ...StyleSheet.absoluteFill },
         modal: {
           backgroundColor: colors.bgCard,
           borderRadius: borderRadius.xl,

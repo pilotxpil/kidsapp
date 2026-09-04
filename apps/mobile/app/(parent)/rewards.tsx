@@ -92,7 +92,7 @@ export default function ParentRewardsScreen() {
           paddingHorizontal: spacing.lg,
           paddingVertical: spacing.md,
         },
-        modalBackdrop: { ...StyleSheet.absoluteFillObject },
+        modalBackdrop: { ...StyleSheet.absoluteFill },
         modal: {
           backgroundColor: colors.bgCard,
           borderRadius: borderRadius.xl,

@@ -253,7 +253,7 @@ export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
     setStatus((prev) => (prev ? { ...prev, available: false } : prev));
   };
 
-  if (!status?.available && !visible) return null;
+  if (!status || (!status.available && !visible)) return null;
 
   const segments = status.segments;
 

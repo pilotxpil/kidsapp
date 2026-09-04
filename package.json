@@ -20,5 +20,13 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": "^20.19.4 || ^22.13.0 || >=24.3.0"
+  },
+  "overrides": {
+    "react-native": "0.86.3",
+    "react-native-reanimated": "4.5.1",
+    "react-native-worklets": "0.10.1"
   }
 }

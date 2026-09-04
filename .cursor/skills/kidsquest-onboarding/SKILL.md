@@ -70,4 +70,4 @@ Deploy: `./deploy/vm/deploy.sh` (API), `npm run deploy:web` (static web). MongoD
 
 ## Stack you must not guess
 
-Expo **SDK 54**, Express + Mongoose, MongoDB DB name `kidsapp`, JWT Bearer. Docs: https://docs.expo.dev/versions/v54.0.0/
+Expo **SDK 57**, Express + Mongoose, MongoDB DB name `kidsapp`, JWT Bearer. Docs: https://docs.expo.dev/versions/v57.0.0/

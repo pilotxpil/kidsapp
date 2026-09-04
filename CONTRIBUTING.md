@@ -4,7 +4,7 @@
 
 ## לפני הקוד הראשון
 
-1. Node.js 20+, Docker Desktop, ואופציונלי Expo Go.
+1. Node.js 22.13+, Docker Desktop, ואופציונלי Expo Go.
 2. מהשורש: `npm install` → `npm run db:up` → `npm run build -w @kidsapp/shared` → `npm run seed -w server`.
 3. שני טרמינלים: `npm run dev:server` ו-`npm run dev:mobile` (או `npm run dev`).
 4. ווב מקומי: Metro → `w` או `npm run web`. פרודקשן: https://kids.synaboard.com (`npm run deploy:web`).
@@ -30,13 +30,13 @@
 - כפתור/כרטיס/שדה: `Button`, `Card`, `Input`. ריווח: `spacing`.
 - RTL: `rtl` מ-`lib/rtl.ts`. טעינת מסך בפוקוס: `useFocusLoad`.
 - ערכת נושא: ארבע ערכות ב-`constants/themes.ts`. שינוי דרך `setUiTheme`.
-- Expo: רק APIs של **SDK 54** — https://docs.expo.dev/versions/v54.0.0/
+- Expo: רק APIs של **SDK 57** — https://docs.expo.dev/versions/v57.0.0/
 
 פירוט לסוכנים: [AGENTS.md](./AGENTS.md).
 
 ## מה לא לעשות
 
-- לא לעדכן את Expo ל-SDK אחר בלי החלטה מפורשת (התיעוד והתוספים תלויים ב-54).
+- לא לעדכן את Expo ל-SDK אחר בלי החלטה מפורשת (התיעוד והתוספים תלויים ב-57).
 - לא לכתוב טיפוסים כפולים בשרת ובמובייל — המקור הוא `@kidsapp/shared`.
 - לא לקומיט `server/.env` או `apps/mobile/.env`.
 - לא להריץ `seed` על בסיס עם נתונים אמיתיים.

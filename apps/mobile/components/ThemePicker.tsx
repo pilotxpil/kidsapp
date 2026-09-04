@@ -19,7 +19,7 @@ export function ThemePicker() {
   const { id: currentId, setUiTheme, borderRadius, colors } = useTheme();
   const type = useType();
   const [saving, setSaving] = useState<UiThemeId | null>(null);
-  const gap = spacing.sm;
+  const gap = spacing.md;
   const cardWidth = Math.floor((screenW - GRID_PADDING * 2 - gap) / 2);
 
   const handleSelect = async (themeId: UiThemeId, sfx: typeof UI_THEME_OPTIONS[0]['sfx']) => {
@@ -93,7 +93,7 @@ export function ThemePicker() {
 }
 
 const styles = StyleSheet.create({
-  grid: { gap: spacing.sm, width: '100%' },
+  grid: { gap: spacing.md, width: '100%' },
   cardOuter: { overflow: 'hidden' },
   card: {
     flex: 1,

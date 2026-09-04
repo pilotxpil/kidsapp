@@ -1,6 +1,4 @@
-const appJson = require('./app.json');
-
-module.exports = () => {
+module.exports = ({ config }) => {
   const profile = process.env.EAS_BUILD_PROFILE;
   const isProduction = profile === 'production';
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -16,13 +14,18 @@ module.exports = () => {
     }
   }
 
-  const expo = appJson.expo;
-
   return {
-    ...expo,
-    android: {
-      ...expo.android,
-      usesCleartextTraffic: !isProduction,
-    },
+    ...config,
+    plugins: [
+      ...(config.plugins ?? []),
+      [
+        'expo-build-properties',
+        {
+          android: {
+            usesCleartextTraffic: !isProduction,
+          },
+        },
+      ],
+    ],
   };
 };

@@ -36,9 +36,9 @@ export default function KidShopScreen() {
   );
 
   const load = useCallback(async () => {
-    const res = await api.getRewards();
+    const [, res] = await Promise.all([refreshUser(), api.getRewards()]);
     setRewards(res.rewards);
-  }, []);
+  }, [refreshUser]);
 
   useFocusLoad(load, !!user);
 

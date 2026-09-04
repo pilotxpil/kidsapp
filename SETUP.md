@@ -6,7 +6,7 @@
 
 | חלק | תיקייה | תפקיד |
 |-----|--------|--------|
-| אפליקציה (ילד + הורה) | `apps/mobile` | Expo **SDK 54** — אנדרואיד, iOS וווב |
+| אפליקציה (ילד + הורה) | `apps/mobile` | Expo **SDK 57** — אנדרואיד, iOS וווב |
 | API | `server` | Node.js (Express) על פורט **3001** |
 | טיפוסים משותפים | `packages/shared` | חבילה שנבנית ל-`dist` לפני הרצה |
 | MongoDB | Docker (local) או Atlas (production) | מסד נתונים — DB נפרד: `kidsapp` |
@@ -17,14 +17,14 @@
 
 ## מה להתקין מראש
 
-### 1. Node.js 20 ומעלה
+### 1. Node.js 22.13 ומעלה
 
-השרת והאפליקציה דורשים Node.js **20+**.
+השרת והאפליקציה דורשים Node.js **22.13+** (או 20.19.4+). Metro של SDK 57 לא תומך ב-22.11 ומטה.
 
 בדיקה:
 
 ```bash
-node -v   # לדוגמה v20.x או v22.x
+node -v   # לדוגמה v22.13 או v22.14
 npm -v
 ```
 
@@ -62,7 +62,7 @@ MONGODB_URI=mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/kidsapp?retryWrites=
 - **אנדרואיד:** [Expo Go ב-Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)
 - **iOS:** [Expo Go ב-App Store](https://apps.apple.com/app/expo-go/id982107779)
 
-הפרויקט על **Expo SDK 54**. Expo Go בחנות חייב להיות גרסה שתומכת ב-SDK 54. אם מופיעה שגיאת *Project is incompatible* — עדכנו את Expo Go והפעילו מחדש את שרת הפיתוח.
+הפרויקט על **Expo SDK 57**. Expo Go בחנות חייב להיות גרסה שתומכת ב-SDK 57. אם מופיעה שגיאת *Project is incompatible* — עדכנו את Expo Go (או [התקינו SDK 57](https://expo.dev/go?sdkVersion=57&platform=android&device=true)) והפעילו מחדש את שרת הפיתוח.
 
 חשבון Expo **לא חובה** להרצה מקומית. הוא נדרש רק לבניית APK בענן (EAS).
 
@@ -379,7 +379,7 @@ npx eas-cli submit --platform android --profile production
 
 הפרופיל `submit.production` מעלה למסלול **internal** כ**טיוטה**. אתם מפרסמים / מקדמים לייצור מתוך Play Console אחרי שהרשימה בחנות מלאה.
 
-מדריכי Expo (SDK 54 / EAS): [בילד פרודקשן לאנדרואיד](https://docs.expo.dev/tutorial/eas/android-production-build/), [העלאה ל-Play](https://docs.expo.dev/submit/android/), [העלאה ידנית בפעם הראשונה](https://docs.expo.dev/submit/android-manual/).
+מדריכי Expo (SDK 57 / EAS): [בילד פרודקשן לאנדרואיד](https://docs.expo.dev/tutorial/eas/android-production-build/), [העלאה ל-Play](https://docs.expo.dev/submit/android/), [העלאה ידנית בפעם הראשונה](https://docs.expo.dev/submit/android-manual/).
 
 ---
 
@@ -421,7 +421,7 @@ DNS: `kids.synaboard.com` → IP המכונה. nginx מפצל API (`/auth`, `/ta
 - [deploy/vm/DEPLOY.md](./deploy/vm/DEPLOY.md) — פריסה (API, ווב, EAS)
 - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — מבנה המערכת
 - [AGENTS.md](./AGENTS.md) — הנחיות לסוכן / Cursor
-- Expo SDK 54: https://docs.expo.dev/versions/v54.0.0/
+- Expo SDK 57: https://docs.expo.dev/versions/v57.0.0/
 
 ---
 

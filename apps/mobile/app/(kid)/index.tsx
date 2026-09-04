@@ -28,7 +28,7 @@ import { t } from '../../lib/i18n';
 import { useCelebrateBadges } from '../../lib/badge-celebration';
 
 export default function KidHomeScreen() {
-  const { user } = useAuth();
+  const { user, patchUser } = useAuth();
   const celebrateBadges = useCelebrateBadges();
   const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
   const art = getThemeArt(themeId);
@@ -85,7 +85,15 @@ export default function KidHomeScreen() {
     ]);
     setProfile(profileRes.profile);
     setTasks(tasksRes.tasks.slice(0, 5));
-  }, [userId]);
+    const p = profileRes.profile;
+    patchUser({
+      points: p.points,
+      level: p.level,
+      xp: p.xp,
+      streak: p.streak,
+      badges: p.badges,
+    });
+  }, [userId, patchUser]);
 
   useFocusLoad(load, !!userId);
 
@@ -98,6 +106,12 @@ export default function KidHomeScreen() {
   };
 
   const applyPoints = (result: { points: number; level: number; xp: number; streak?: number }) => {
+    patchUser({
+      points: result.points,
+      level: result.level,
+      xp: result.xp,
+      ...(result.streak != null ? { streak: result.streak } : {}),
+    });
     setProfile((prev) =>
       prev
         ? {

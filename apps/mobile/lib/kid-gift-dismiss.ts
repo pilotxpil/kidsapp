@@ -21,5 +21,7 @@ export function resetKidGiftDismissals() {
 
 export function subscribeKidGiftDismiss(listener: () => void) {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }

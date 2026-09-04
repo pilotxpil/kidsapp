@@ -6,13 +6,13 @@ Read this before changing code. Human onboarding: [README.md](./README.md), [SET
 
 | Piece | Reality |
 |-------|---------|
-| Mobile | Expo **SDK 54** (`expo ~54.0.0`), React Native 0.81, React 19, expo-router 6 |
+| Mobile | Expo **SDK 57** (`expo ~57.0.17`), React Native 0.86, React 19.2, expo-router 57 |
 | API | Express + TypeScript + Mongoose, port **3001** |
 | DB | MongoDB 7 (Docker) or Atlas DB name `kidsapp` |
 | Shared | `@kidsapp/shared` — types/constants; **build before run** |
 | UI language | Hebrew, RTL |
 
-Expo docs: https://docs.expo.dev/versions/v54.0.0/ — not v57, not unversioned.
+Expo docs: https://docs.expo.dev/versions/v57.0.0/ — not unversioned.
 
 ## Repo map
 

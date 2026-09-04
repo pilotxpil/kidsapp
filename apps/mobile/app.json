@@ -17,17 +17,9 @@
         ]
       }
     },
-    "androidNavigationBar": {
-      "backgroundColor": "#3a3a3a",
-      "barStyle": "light-content",
-      "enforceContrast": false
-    },
     "android": {
       "package": "com.kidsapp.quest",
       "versionCode": 2,
-      "supportsRTL": true,
-      "usesCleartextTraffic": true,
-      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "backgroundColor": "#1a1a1a",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -53,11 +45,18 @@
       ],
       "expo-font",
       "expo-web-browser",
-      "expo-av",
+      "expo-audio",
       [
         "expo-camera",
         {
           "cameraPermission": "נדרשת מצלמה לסריקת קוד כניסה לילדים"
+        }
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false,
+          "style": "light"
         }
       ]
     ],

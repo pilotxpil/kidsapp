@@ -116,12 +116,12 @@ export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroPro
         },
         gradient: { padding: spacing.lg, minHeight: vector ? 168 : 140 },
         heroImg: {
-          ...StyleSheet.absoluteFillObject,
+          ...StyleSheet.absoluteFill,
           width: '100%',
           height: '100%',
         },
         scrim: {
-          ...StyleSheet.absoluteFillObject,
+          ...StyleSheet.absoluteFill,
         },
         decor: {
           position: 'absolute',

@@ -111,7 +111,7 @@ export const api = {
   },
 
   kidLogin(username: string, pin: string, familyCode: string) {
-    return request<AuthResponse & { dailyStarAvailable?: boolean }>('/auth/kid/login', {
+    return request<AuthResponse & { dailyGiftAvailable?: boolean; dailyStarAvailable?: boolean }>('/auth/kid/login', {
       method: 'POST',
       body: JSON.stringify({ username, pin, familyCode }),
     });

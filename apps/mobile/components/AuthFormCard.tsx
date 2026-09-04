@@ -66,7 +66,7 @@ export function AuthFormCard({ themeId, children, index = 3, style }: AuthFormCa
           position: 'relative',
         },
         glow: {
-          ...StyleSheet.absoluteFillObject,
+          ...StyleSheet.absoluteFill,
           borderRadius: theme.borderRadius.lg + 3,
           borderWidth: 1.5,
           borderColor: `${theme.colors.primary}55`,

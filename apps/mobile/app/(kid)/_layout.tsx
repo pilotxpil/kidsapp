@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { AppState } from 'react-native';
 import { useEffect, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '../../lib/auth';
 import { useTheme } from '../../lib/theme-context';
 import { Heebo } from '../../lib/typography';
 import { RtlTabBar } from '../../components/RtlTabBar';
@@ -16,6 +17,7 @@ const TAB_CONTENT_HEIGHT = 64;
 export default function KidLayout() {
   const insets = useSafeAreaInsets();
   const { colors, tabIcons, id: themeId } = useTheme();
+  const { refreshUser } = useAuth();
   const appState = useRef(AppState.currentState);
 
   useEffect(() => {
@@ -30,13 +32,14 @@ export default function KidLayout() {
       if (appState.current.match(/inactive|background/) && next === 'active') {
         resetKidGiftDismissals();
         void resumeBgm();
+        void refreshUser();
       } else if (next.match(/inactive|background/)) {
         void pauseBgm();
       }
       appState.current = next;
     });
     return () => sub.remove();
-  }, []);
+  }, [refreshUser]);
 
   return (
     <BadgeCelebrationProvider>

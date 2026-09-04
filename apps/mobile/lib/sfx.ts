@@ -1,4 +1,4 @@
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type SfxName = 'tap' | 'complete' | 'gem' | 'coin' | 'error' | 'star1' | 'star2' | 'star3' | 'star4';
@@ -23,10 +23,10 @@ export async function initSfx() {
   try {
     const stored = await AsyncStorage.getItem(MUTE_KEY);
     muted = stored === '1';
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      allowsRecordingIOS: false,
-      staysActiveInBackground: false,
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: false,
+      interruptionMode: 'mixWithOthers',
     });
     ready = true;
   } catch {
@@ -48,12 +48,15 @@ export async function playSfx(name: SfxName, opts?: { volume?: number }) {
   try {
     if (!ready) await initSfx();
     const volume = opts?.volume ?? 0.65;
-    const { sound } = await Audio.Sound.createAsync(FILES[name], { shouldPlay: true, volume });
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        sound.unloadAsync();
+    const player = createAudioPlayer(FILES[name]);
+    player.volume = volume;
+    const sub = player.addListener('playbackStatusUpdate', (status) => {
+      if (status.didJustFinish) {
+        sub.remove();
+        player.release();
       }
     });
+    player.play();
   } catch {
     // Expo Go / web may skip playback
   }

@@ -23,7 +23,7 @@ import { isBgmMuted, setBgmMuted, startBgm } from '../../lib/bgm';
 import { t } from '../../lib/i18n';
 
 export default function KidProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const router = useRouter();
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
   const type = useType();
@@ -42,7 +42,9 @@ export default function KidProfileScreen() {
     () =>
       StyleSheet.create({
         scroll: { padding: spacing.lg },
-        avatarSection: { alignItems: 'center', marginBottom: spacing.lg },
+        section: { width: '100%', marginTop: spacing.lg },
+        stackCard: { marginBottom: spacing.md },
+        avatarSection: { alignItems: 'center' },
         name: {
           color: colors.text,
           fontSize: 24,
@@ -61,7 +63,7 @@ export default function KidProfileScreen() {
           marginBottom: spacing.md,
           width: '100%',
         },
-        badgesGrid: { width: '100%', gap: spacing.sm },
+        badgesGrid: { width: '100%', gap: spacing.md },
         badgeCard: { width: '30%', flexGrow: 0, flexShrink: 1, maxWidth: '32%', overflow: 'hidden' },
         badgeInner: { width: '100%', alignItems: 'center' },
         badgeLocked: { opacity: 0.4 },
@@ -77,14 +79,14 @@ export default function KidProfileScreen() {
           ...type.ui,
         },
         badgeLabelLocked: { color: colors.textMuted },
-        lbRow: { alignItems: 'center', marginBottom: spacing.sm, gap: spacing.sm },
+        lbRow: { alignItems: 'center', gap: spacing.sm },
         lbHighlight: { borderTopColor: colors.primary, borderLeftColor: colors.primary },
         lbRank: { color: colors.gold, fontWeight: '800', fontSize: 16, width: 30, ...type.title },
         lbAvatar: { fontSize: 24 },
         lbHelm: { width: 32, height: 32 },
         lbName: { color: colors.text, flex: 1, fontWeight: '600', minWidth: 0, ...type.heading },
         lbPoints: { color: colors.emerald, fontWeight: '700', ...type.title },
-        txRow: { alignItems: 'center', marginBottom: spacing.sm, gap: spacing.md },
+        txRow: { alignItems: 'center', gap: spacing.md },
         txAmount: { fontWeight: '800', fontSize: 16, width: 50, textAlign: 'center' },
         txPositive: { color: colors.success },
         txNegative: { color: colors.danger },
@@ -98,7 +100,6 @@ export default function KidProfileScreen() {
               backgroundColor: 'rgba(12,8,6,0.72)',
               borderRadius: 18,
               padding: spacing.md,
-              marginTop: spacing.md,
               width: '100%',
               borderWidth: 1,
               borderColor: 'rgba(255,138,61,0.32)',
@@ -109,7 +110,6 @@ export default function KidProfileScreen() {
               backgroundColor: colors.bgCard,
               borderRadius: borderRadius.md,
               padding: spacing.md,
-              marginTop: spacing.md,
               width: '100%',
               ...cardBorder(2),
             },
@@ -125,6 +125,7 @@ export default function KidProfileScreen() {
           borderColor: colors.primary,
         },
         avatarEditText: { color: colors.primary, fontWeight: '700', fontSize: 14, ...type.ui },
+        settingsStack: { width: '100%', marginTop: spacing.lg, gap: spacing.md },
         logout: { marginTop: spacing.md, marginBottom: spacing.xl },
         badgeModalOverlay: {
           flex: 1,
@@ -196,13 +197,14 @@ export default function KidProfileScreen() {
 
   const load = useCallback(async () => {
     if (!userId) return;
-    const [profileRes, lbRes] = await Promise.all([
+    const [, profileRes, lbRes] = await Promise.all([
+      refreshUser(),
       api.getKidProfile(userId),
       api.getLeaderboard(),
     ]);
     setProfile(profileRes.profile);
     setLeaderboard(lbRes.leaderboard);
-  }, [userId]);
+  }, [userId, refreshUser]);
 
   useFocusLoad(load, !!userId);
 
@@ -257,7 +259,7 @@ export default function KidProfileScreen() {
             <Text style={styles.avatarEditText}>{t('selectAvatar')}</Text>
           </TouchableOpacity>
           <View style={[styles.statsRow, rtl.row]}>
-            <PointsBadge points={user?.points || 0} />
+            <PointsBadge points={profile?.points ?? user?.points ?? 0} />
             <StreakBadge streak={user?.streak || 0} />
           </View>
           {profile && (
@@ -267,12 +269,15 @@ export default function KidProfileScreen() {
           )}
         </View>
 
-        <SectionHeader title={t('uiTheme')} icon="🎨" />
-        <Text style={[styles.sectionHint, rtl.textFull]}>{t('uiThemeHint')}</Text>
-        <ThemePicker />
+        <View style={styles.section}>
+          <SectionHeader title={t('uiTheme')} icon="🎨" />
+          <Text style={[styles.sectionHint, rtl.textFull]}>{t('uiThemeHint')}</Text>
+          <ThemePicker />
+        </View>
 
-        <SectionHeader title={t('badges')} icon="🏅" />
-        <View style={[styles.badgesGrid, rtl.tabs]}>
+        <View style={styles.section}>
+          <SectionHeader title={t('badges')} icon="🏅" />
+          <View style={[styles.badgesGrid, rtl.tabs]}>
           {Object.entries(BADGES).map(([key, badge]) => {
             const earned = user?.badges?.includes(key);
             return (
@@ -304,11 +309,16 @@ export default function KidProfileScreen() {
               </TouchableOpacity>
             );
           })}
+          </View>
         </View>
 
-        <SectionHeader title={t('leaderboard')} icon="🏆" />
-        {leaderboard.map((entry) => (
-          <Card key={entry._id} style={entry._id === user?._id ? styles.lbHighlight : undefined}>
+        <View style={styles.section}>
+          <SectionHeader title={t('leaderboard')} icon="🏆" />
+          {leaderboard.map((entry) => (
+            <Card
+              key={entry._id}
+              style={[styles.stackCard, entry._id === user?._id ? styles.lbHighlight : undefined]}
+            >
             <View style={[styles.lbRow, rtl.row]}>
               <Text style={styles.lbRank}>#{entry.rank}</Text>
               {ember && art?.icons?.profile ? (
@@ -325,11 +335,13 @@ export default function KidProfileScreen() {
               </View>
             </View>
           </Card>
-        ))}
+          ))}
+        </View>
 
-        <SectionHeader title={t('history')} icon="📜" />
-        {profile?.recentTransactions?.map((tx) => (
-          <Card key={tx._id}>
+        <View style={styles.section}>
+          <SectionHeader title={t('history')} icon="📜" />
+          {profile?.recentTransactions?.map((tx) => (
+            <Card key={tx._id} style={styles.stackCard}>
             <View style={[styles.txRow, rtl.row]}>
               <View style={styles.txInfo}>
                 <Text style={[styles.txDesc, rtl.textFull]}>{tx.description}</Text>
@@ -340,20 +352,23 @@ export default function KidProfileScreen() {
               </Text>
             </View>
           </Card>
-        ))}
+          ))}
+        </View>
 
-        <TouchableOpacity style={[styles.settingsRow, rtl.rowBetween]} onPress={toggleSound}>
-          <Text style={[styles.settingsLabel, rtl.textFull]}>{t('soundEffects')}</Text>
-          <Text style={[styles.settingsValue, rtl.text]}>{soundOn ? t('on') : t('off')}</Text>
-        </TouchableOpacity>
+        <View style={styles.settingsStack}>
+          <TouchableOpacity style={[styles.settingsRow, rtl.rowBetween]} onPress={toggleSound}>
+            <Text style={[styles.settingsLabel, rtl.textFull]}>{t('soundEffects')}</Text>
+            <Text style={[styles.settingsValue, rtl.text]}>{soundOn ? t('on') : t('off')}</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.settingsRow, rtl.rowBetween]} onPress={toggleMusic}>
-          <Text style={[styles.settingsLabel, rtl.textFull]}>{t('backgroundMusic')}</Text>
-          <Text style={[styles.settingsValue, rtl.text]}>{musicOn ? t('on') : t('off')}</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={[styles.settingsRow, rtl.rowBetween]} onPress={toggleMusic}>
+            <Text style={[styles.settingsLabel, rtl.textFull]}>{t('backgroundMusic')}</Text>
+            <Text style={[styles.settingsValue, rtl.text]}>{musicOn ? t('on') : t('off')}</Text>
+          </TouchableOpacity>
 
-        <Button title={t('privacyPolicy')} variant="outline" onPress={() => router.push('/privacy')} />
-        <Button title={t('logout')} onPress={handleLogout} variant="outline" style={styles.logout} sound={false} />
+          <Button title={t('privacyPolicy')} variant="outline" onPress={() => router.push('/privacy')} />
+          <Button title={t('logout')} onPress={handleLogout} variant="outline" style={styles.logout} sound={false} />
+        </View>
       </ScrollView>
 
       <Modal visible={!!selectedBadgeData} transparent animationType="fade" onRequestClose={() => setSelectedBadge(null)}>

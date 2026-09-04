@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   glowRing: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderWidth: 2,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,

@@ -77,7 +77,7 @@ export function Confetti({ active, count = 28 }: ConfettiProps) {
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 999,
   },
   piece: {

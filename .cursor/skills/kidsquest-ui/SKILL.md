@@ -52,4 +52,4 @@ expo-router file routes. Kid group `(kid)`, parent group `(parent)`, protected i
 
 ## Expo
 
-SDK **54** only: https://docs.expo.dev/versions/v54.0.0/
+SDK **57** only: https://docs.expo.dev/versions/v57.0.0/

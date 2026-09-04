@@ -16,7 +16,7 @@
 
 ```
 kidsapp/
-├── apps/mobile/     # Expo SDK 54 — אפליקציית ילד + ממשק הורה (אנדרואיד, iOS, ווב)
+├── apps/mobile/     # Expo SDK 57 — אפליקציית ילד + ממשק הורה (אנדרואיד, iOS, ווב)
 ├── packages/shared/ # טיפוסים וקבועים משותפים (@kidsapp/shared)
 ├── server/          # Node.js API + MongoDB (פורט 3001)
 └── docker-compose.yml
@@ -24,9 +24,9 @@ kidsapp/
 
 ## דרישות
 
-- Node.js 20+
+- Node.js 22.13+ (או 20.19.4+)
 - Docker (ל-MongoDB מקומי)
-- Expo Go (לבדיקה על טלפון) — גרסה שתומכת ב-**SDK 54**
+- Expo Go (לבדיקה על טלפון) — גרסה שתומכת ב-**SDK 57**
 
 מדריך מפורט (התקנות, Docker, הרצה יומיומית, Expo): **[SETUP.md](./SETUP.md)**
 
@@ -83,10 +83,10 @@ npm run deploy:web          # עדכון אתר ווב (Expo export → nginx)
 
 ## Expo Go על אנדרואיד
 
-הפרויקט משתמש ב-**Expo SDK 54** — תואם ל-Expo Go מה-Play Store שתומך ב-SDK 54.
+הפרויקט משתמש ב-**Expo SDK 57** — תואם ל-Expo Go מה-Play Store שתומך ב-SDK 57.
 
 אם מופיעה שגיאת "Project is incompatible":
-1. עדכן Expo Go מה-Play Store
+1. עדכן Expo Go מה-Play Store (או התקן מ-[expo.dev/go](https://expo.dev/go?sdkVersion=57&platform=android&device=true))
 2. עצור את שרת הפיתוח (`Ctrl+C`) והפעל מחדש: `npm run dev:mobile`
 3. סרוק שוב את ה-QR code
 

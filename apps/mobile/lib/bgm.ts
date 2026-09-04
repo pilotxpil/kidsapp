@@ -1,4 +1,4 @@
-import { Audio, AVPlaybackStatus } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BGM_FILE = require('../assets/bgm/quest-loop.mp3');
@@ -6,7 +6,7 @@ const MUTE_KEY = 'quest_bgm_muted';
 const VOLUME = 0.16;
 const FADE_MS = 800;
 
-let sound: Audio.Sound | null = null;
+let player: AudioPlayer | null = null;
 let muted = false;
 let starting = false;
 
@@ -14,6 +14,11 @@ export async function initBgm() {
   try {
     const stored = await AsyncStorage.getItem(MUTE_KEY);
     muted = stored === '1';
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: false,
+      interruptionMode: 'mixWithOthers',
+    });
   } catch {
     // ignore
   }
@@ -34,26 +39,29 @@ export async function setBgmMuted(value: boolean) {
 }
 
 async function fadeTo(target: number) {
-  if (!sound) return;
+  if (!player) return;
+  const start = player.volume;
   const steps = 8;
   const stepMs = FADE_MS / steps;
   for (let i = 1; i <= steps; i++) {
-    await sound.setVolumeAsync((target * i) / steps);
+    player.volume = start + ((target - start) * i) / steps;
     await sleep(stepMs);
   }
 }
 
 async function fadeOutAndStop() {
-  if (!sound) return;
+  if (!player) return;
+  const current = player;
+  const start = current.volume;
   const steps = 6;
   const stepMs = FADE_MS / steps;
   for (let i = steps - 1; i >= 0; i--) {
-    await sound.setVolumeAsync((VOLUME * i) / steps);
+    current.volume = (start * i) / steps;
     await sleep(stepMs);
   }
-  await sound.stopAsync();
-  await sound.unloadAsync();
-  sound = null;
+  current.pause();
+  current.release();
+  if (player === current) player = null;
 }
 
 function sleep(ms: number) {
@@ -61,24 +69,21 @@ function sleep(ms: number) {
 }
 
 export async function startBgm() {
-  if (muted || starting || sound) return;
+  if (muted || starting || player) return;
   starting = true;
   try {
     await initBgm();
     if (muted) return;
 
-    const { sound: s } = await Audio.Sound.createAsync(BGM_FILE, {
-      isLooping: true,
-      volume: 0,
-      shouldPlay: true,
-    });
-    sound = s;
+    const next = createAudioPlayer(BGM_FILE);
+    next.loop = true;
+    next.volume = 0;
+    player = next;
+    next.play();
     await fadeTo(VOLUME);
   } catch {
-    if (sound) {
-      await sound.unloadAsync().catch(() => {});
-      sound = null;
-    }
+    player?.release();
+    player = null;
   } finally {
     starting = false;
   }
@@ -86,29 +91,29 @@ export async function startBgm() {
 
 export async function stopBgm() {
   starting = false;
-  if (!sound) return;
+  if (!player) return;
   try {
     await fadeOutAndStop();
   } catch {
-    sound = null;
+    player?.release();
+    player = null;
   }
 }
 
 export async function pauseBgm() {
-  if (!sound) return;
+  if (!player) return;
   try {
-    await sound.pauseAsync();
+    player.pause();
   } catch {
     // ignore
   }
 }
 
 export async function resumeBgm() {
-  if (muted || !sound) return;
+  if (muted || !player) return;
   try {
-    const status = (await sound.getStatusAsync()) as AVPlaybackStatus;
-    if (status.isLoaded && !status.isPlaying) {
-      await sound.playAsync();
+    if (!player.playing) {
+      player.play();
     }
   } catch {
     // ignore

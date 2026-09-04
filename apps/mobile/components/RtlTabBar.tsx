@@ -1,5 +1,5 @@
 import React from 'react';
-import { BottomTabBar, BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { BottomTabBar, type BottomTabBarProps } from 'expo-router/js-tabs';
 
 /**
  * Bottom tab bar with Home/Dashboard on the physical right (Hebrew RTL).

@@ -28,7 +28,7 @@ function groupByCategory(packs: LearningPackSummary[]): Map<LearningCategory, Le
 }
 
 export default function LearnIndexScreen() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const router = useRouter();
   const { colors, borderRadius, id: themeId } = useTheme();
   const type = useType();
@@ -74,10 +74,10 @@ export default function LearnIndexScreen() {
   );
 
   const load = useCallback(async () => {
-    const res = await api.getLearningPacks();
+    const [, res] = await Promise.all([refreshUser(), api.getLearningPacks()]);
     setPacks(res.packs);
     setAssignedOnly(!!res.assignedOnly);
-  }, []);
+  }, [refreshUser]);
 
   useFocusLoad(load, !!user);
 

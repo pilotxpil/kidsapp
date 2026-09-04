@@ -45,7 +45,7 @@ export function AuthScreenShell({
     () =>
       StyleSheet.create({
         container: { flex: 1 },
-        vignette: { ...StyleSheet.absoluteFillObject, opacity: 0.5 },
+        vignette: { ...StyleSheet.absoluteFill, opacity: 0.5 },
         safe: { flex: 1 },
         flex: { flex: 1 },
         inner: {

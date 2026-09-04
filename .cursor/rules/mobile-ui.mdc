@@ -13,4 +13,4 @@ alwaysApply: false
 - Data: add HTTP methods in `lib/api.ts` only; load on focus with `useFocusLoad`.
 - Themes: `ember` | `minecraft` | `brawl` | `roblox` | `sparkle` in `constants/themes.ts`. Depend styles on `theme.id`.
 - Kid tabs play BGM (`lib/bgm.ts`); keep SFX behind `playSfx`.
-- Expo APIs must exist in SDK 54. Routes live under `app/` (expo-router).
+- Expo APIs must exist in SDK 57. Routes live under `app/` (expo-router).

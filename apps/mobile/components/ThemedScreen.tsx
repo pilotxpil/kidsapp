@@ -42,7 +42,7 @@ export function ThemedScreen({ children, tabs, style }: ThemedScreenProps) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   world: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
   },

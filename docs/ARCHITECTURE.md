@@ -19,7 +19,7 @@ KidsQuest (שם התצוגה: **Kids**) היא אפליקציית מוטיבצי
 טלפון / דפדפן                  מחשב פיתוח
 ┌─────────────────┐            ┌──────────────────┐
 │ apps/mobile     │  HTTP JSON │ server (:3001)   │
-│ Expo SDK 54     │ ─────────► │ Express + JWT    │
+│ Expo SDK 57     │ ─────────► │ Express + JWT    │
 │ expo-router     │            │ Mongoose         │
 └─────────────────┘            └────────┬─────────┘
          ▲                              │
