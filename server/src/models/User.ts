@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { UI_THEME_IDS } from '@kidsapp/shared';
 
 export interface IUser extends Document {
   role: 'parent' | 'kid';
@@ -35,7 +36,7 @@ const userSchema = new Schema<IUser>(
     streak: { type: Number, default: 0 },
     lastActiveDate: { type: String },
     badges: { type: [String], default: [] },
-    uiTheme: { type: String, enum: ['ember', 'minecraft', 'brawl', 'roblox', 'sparkle'] },
+    uiTheme: { type: String, enum: [...UI_THEME_IDS] },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

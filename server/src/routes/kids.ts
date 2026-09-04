@@ -178,6 +178,7 @@ router.post('/:id/daily-star/claim', authenticate, async (req: Request, res: Res
       points: result.points,
       level: result.level,
       xp: result.xp,
+      newBadges: result.newBadges,
     });
   } catch (err) {
     console.error(err);

@@ -132,6 +132,42 @@ async function recordDailyActivity(kid: IUser): Promise<number> {
   return streakBonus;
 }
 
+async function saveKidProgress(kid: IUser): Promise<void> {
+  kid.badges = Array.isArray(kid.badges) ? kid.badges : [];
+  try {
+    await kid.save({ validateModifiedOnly: true });
+  } catch (err) {
+    console.error('saveKidProgress document save failed, using updateOne', err);
+    await User.updateOne(
+      { _id: kid._id },
+      {
+        $set: {
+          points: kid.points,
+          xp: kid.xp,
+          level: kid.level,
+          streak: kid.streak,
+          lastActiveDate: kid.lastActiveDate,
+          badges: kid.badges,
+        },
+      }
+    );
+  }
+}
+
+function starClaimPayload(kid: IUser, dailyBonus: number, streakBonus: number, newBadges: BadgeUnlock[] = []) {
+  return {
+    ok: true as const,
+    dailyBonus,
+    streakBonus,
+    totalPoints: dailyBonus + streakBonus,
+    streak: kid.streak,
+    points: kid.points,
+    level: kid.level,
+    xp: kid.xp,
+    newBadges,
+  };
+}
+
 export async function getDailyStarStatus(kid: IUser) {
   const giftType = getDailyGiftType(kid._id);
   const claimedToday = await hasClaimedDailyStarToday(kid._id);
@@ -165,16 +201,31 @@ export async function claimDailyStar(kid: IUser) {
     return { ok: false as const, error: 'היום מתנה אחרת מחכה לך' };
   }
 
-  if (await hasClaimedDailyStarToday(kid._id)) {
-    return { ok: false as const, error: 'כבר פתחת את הכוכב היום' };
+  const today = todayString();
+  const existing = await PointTransaction.findOne({
+    kidId: kid._id,
+    type: 'daily',
+    createdAt: { $gte: startOfUtcDay() },
+  });
+
+  if (existing) {
+    if (kid.lastActiveDate !== today) {
+      const streakBonus = await recordDailyActivity(kid);
+      kid.points += existing.amount;
+      kid.xp += existing.amount;
+      const newBadges = await updateLevelAndBadges(kid);
+      await saveKidProgress(kid);
+      return starClaimPayload(kid, existing.amount, streakBonus, newBadges);
+    }
+    return starClaimPayload(kid, existing.amount, 0);
   }
 
   const streakBonus = await recordDailyActivity(kid);
-
   const dailyBonus = DAILY_STAR_BONUS;
   kid.points += dailyBonus;
   kid.xp += dailyBonus;
-
+  const newBadges = await updateLevelAndBadges(kid);
+  await saveKidProgress(kid);
   await PointTransaction.create({
     kidId: kid._id,
     familyId: kid.familyId,
@@ -183,20 +234,7 @@ export async function claimDailyStar(kid: IUser) {
     description: 'כוכב יומי',
   });
 
-  const newBadges = await updateLevelAndBadges(kid);
-  await kid.save();
-
-  return {
-    ok: true as const,
-    dailyBonus,
-    streakBonus,
-    totalPoints: dailyBonus + streakBonus,
-    streak: kid.streak,
-    points: kid.points,
-    level: kid.level,
-    xp: kid.xp,
-    newBadges,
-  };
+  return starClaimPayload(kid, dailyBonus, streakBonus, newBadges);
 }
 
 function pickWeightedSegment(): { index: number; segment: FortuneWheelSegment } {
@@ -235,7 +273,7 @@ export async function spinFortuneWheel(kid: IUser) {
   kid.points += segment.points;
   kid.xp += segment.points;
   const newBadges = await updateLevelAndBadges(kid);
-  await kid.save();
+  await saveKidProgress(kid);
 
   await PointTransaction.create({
     kidId: kid._id,
@@ -295,7 +333,7 @@ export async function awardPoints(
   kid.points += amount;
   kid.xp += amount;
   const newBadges = await updateLevelAndBadges(kid);
-  await kid.save();
+  await saveKidProgress(kid);
 
   await PointTransaction.create({
     kidId: kid._id,
@@ -311,7 +349,7 @@ export async function awardPoints(
 
 export async function deductPoints(kid: IUser, amount: number, description: string, referenceId?: string) {
   kid.points -= amount;
-  await kid.save();
+  await saveKidProgress(kid);
 
   await PointTransaction.create({
     kidId: kid._id,
@@ -326,6 +364,7 @@ export async function deductPoints(kid: IUser, amount: number, description: stri
 async function updateLevelAndBadges(kid: IUser): Promise<BadgeUnlock[]> {
   const { level } = calculateLevel(kid.xp);
   kid.level = level;
+  if (!Array.isArray(kid.badges)) kid.badges = [];
 
   const approvedCount = await TaskCompletion.countDocuments({
     kidId: kid._id,
