@@ -11,6 +11,9 @@ dist/
 *.p12
 *.key
 *.mobileprovision
+*-firebase-adminsdk-*.json
+*firebase-adminsdk*.json
+firebase-service-account*.json
 web-build/
 apps/mobile/dist/
 release/*.apk

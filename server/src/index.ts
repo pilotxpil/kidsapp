@@ -8,6 +8,8 @@ import rewardRoutes from './routes/rewards';
 import kidRoutes from './routes/kids';
 import familyRoutes from './routes/family';
 import learningRoutes from './routes/learning';
+import pushRoutes from './routes/push';
+import appRoutes from './routes/app';
 import { loadLearningPacks } from './services/learningPacks';
 import { migrateFamilies } from './utils/migrateFamilies';
 import { migrateUserIndexes } from './utils/migrateUserIndexes';
@@ -38,6 +40,8 @@ app.use('/rewards', rewardRoutes);
 app.use('/kids', kidRoutes);
 app.use('/family', familyRoutes);
 app.use('/learning', learningRoutes);
+app.use('/push', pushRoutes);
+app.use('/app', appRoutes);
 
 async function start() {
   try {

@@ -18,6 +18,7 @@ import { ThemeProvider, useTheme } from '../lib/theme-context';
 import { initNativeRTL, rtl } from '../lib/rtl';
 import { initSfx } from '../lib/sfx';
 import { initBgm } from '../lib/bgm';
+import { checkForStoreUpdate } from '../lib/appUpdate';
 
 SplashScreen.preventAutoHideAsync();
 initNativeRTL();
@@ -29,6 +30,10 @@ function RootNavigator() {
   const { colors } = useTheme();
   const segments = useSegments();
   const router = useRouter();
+
+  useEffect(() => {
+    void checkForStoreUpdate();
+  }, []);
 
   useEffect(() => {
     if (loading) return;

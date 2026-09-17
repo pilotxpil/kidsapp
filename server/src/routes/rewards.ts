@@ -157,6 +157,14 @@ router.post('/:id/redeem', authenticate, async (req: Request, res: Response) => 
       status: 'pending',
     });
 
+    const { pushRewardRedeemed } = await import('../services/push');
+    pushRewardRedeemed(
+      req.user!.familyId,
+      kid.displayName,
+      reward.title,
+      req.user!.role === 'parent' ? req.user!.userId : undefined
+    );
+
     res.status(201).json({
       redemption: {
         _id: redemption._id.toString(),
@@ -223,11 +231,15 @@ router.post('/redemptions/:id/approve', authenticate, requireParent, async (req:
 
     if (!redemption) return res.status(404).json({ error: 'בקשה לא נמצאה' });
 
+    const reward = redemption.rewardId as any;
+    const { pushRewardReviewed } = await import('../services/push');
+
     if (action === 'reject') {
       redemption.status = 'rejected';
       redemption.reviewedAt = new Date();
       redemption.reviewedBy = req.user!.userId as any;
       await redemption.save();
+      pushRewardReviewed(redemption.kidId.toString(), reward?.title || 'פרס', false);
       return res.json({ redemption });
     }
 
@@ -238,13 +250,14 @@ router.post('/redemptions/:id/approve', authenticate, requireParent, async (req:
       return res.status(400).json({ error: 'לילד אין מספיק נקודות' });
     }
 
-    const reward = redemption.rewardId as any;
     await deductPoints(kid, redemption.cost, `מימוש: ${reward.title}`, redemption._id.toString());
 
     redemption.status = 'fulfilled';
     redemption.reviewedAt = new Date();
     redemption.reviewedBy = req.user!.userId as any;
     await redemption.save();
+
+    pushRewardReviewed(kid._id.toString(), reward.title, true);
 
     res.json({ redemption, kid: formatUser(kid) });
   } catch (err) {

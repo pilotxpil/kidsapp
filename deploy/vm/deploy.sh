@@ -36,6 +36,9 @@ if grep -q 'kidsapp-dev-secret' "$REPO_ROOT/server/.env"; then
   echo "WARNING: JWT_SECRET in server/.env looks like dev default — change before production."
 fi
 
+echo "==> Syncing STORE_VERSION_* from apps/mobile/app.json..."
+bash "$SCRIPT_DIR/sync-store-version.sh"
+
 echo "==> Building shared + server locally (sanity check)..."
 cd "$REPO_ROOT"
 npm run build -w @kidsapp/shared

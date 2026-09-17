@@ -1,0 +1,15 @@
+---
+description: Bump KidsQuest app version before Android builds and API deploys; store versions sync automatically.
+globs:
+alwaysApply: true
+---
+
+# Version bumps (KidsQuest)
+
+Before **EAS Android build** or **production API deploy** for a user-facing release:
+
+1. Bump `apps/mobile/app.json` → `expo.version` (semver) and ensure `android.versionCode` will increase (EAS production has `autoIncrement`).
+2. Match `apps/mobile/package.json` `"version"` to the same semver.
+3. Deploy API with `./deploy/vm/deploy.sh` — it runs `deploy/vm/sync-store-version.sh` and writes `STORE_VERSION_ANDROID` / `STORE_VERSION_IOS` from `expo.version`. Never ask the user to set those env vars manually.
+
+Do not ship an Android build that adds update-check / push / native changes without a version bump.

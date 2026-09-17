@@ -411,3 +411,26 @@ export function calculateLevel(xp: number): { level: number; xpInLevel: number; 
   }
   return { level, xpInLevel: remaining, xpToNext: xpForLevel(level) };
 }
+
+/** Push notification event types (payload `data.type`). */
+export type PushNotificationType =
+  | 'task_assigned'
+  | 'task_submitted'
+  | 'task_approved'
+  | 'task_rejected'
+  | 'reward_redeemed'
+  | 'reward_approved'
+  | 'reward_rejected'
+  | 'learning_assigned';
+
+export type PushPlatform = 'ios' | 'android' | 'web' | 'unknown';
+
+export interface RegisterPushTokenRequest {
+  token: string;
+  platform?: PushPlatform;
+}
+
+export interface PushNotificationData {
+  type: PushNotificationType;
+  [key: string]: string;
+}

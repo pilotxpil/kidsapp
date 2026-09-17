@@ -114,6 +114,15 @@ router.post('/assign', authenticate, requireParent, async (req: Request, res: Re
       );
     }
 
+    if (kids.length > 0) {
+      const pack = getLearningPack(packId);
+      const { pushLearningAssigned } = await import('../services/push');
+      pushLearningAssigned(
+        kids.map((k) => k._id.toString()),
+        pack?.title?.he || 'שיעור חדש'
+      );
+    }
+
     res.json({
       packId,
       assignedKidIds: kids.map((k) => k._id.toString()),

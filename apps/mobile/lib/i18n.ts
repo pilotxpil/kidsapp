@@ -201,6 +201,10 @@ export const he = {
   toTasks: 'למשימות',
   upgradeCharacter: 'שדרג את הדמות שלך',
   pickNewMission: 'בחר משימה חדשה',
+  updateAvailableTitle: 'יש גרסה חדשה!',
+  updateAvailableBody: 'גרסה {store} זמינה בחנות (אצלכם מותקנת {current}). מומלץ לעדכן.',
+  updateNow: 'עדכון בחנות',
+  updateLater: 'מאוחר יותר',
 };
 
 export type TranslationKey = keyof typeof he;

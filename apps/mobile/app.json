@@ -2,7 +2,7 @@
   "expo": {
     "name": "KidsQuest",
     "slug": "kidsquest",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "kidsquest",
@@ -19,7 +19,8 @@
     },
     "android": {
       "package": "com.kidsapp.quest",
-      "versionCode": 4,
+      "versionCode": 8,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#1a1a1a",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -50,6 +51,14 @@
         "expo-camera",
         {
           "cameraPermission": "נדרשת מצלמה לסריקת קוד כניסה לילדים"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#FF6B35",
+          "defaultChannel": "default",
+          "enableBackgroundRemoteNotifications": false
         }
       ],
       [

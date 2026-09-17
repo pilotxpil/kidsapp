@@ -8,6 +8,7 @@ import { TaskTemplate } from './models/TaskTemplate';
 import { Reward } from './models/Reward';
 import { LearningAssignment } from './models/LearningAssignment';
 import { LearningProgress } from './models/LearningProgress';
+import { PushToken } from './models/PushToken';
 import { TASK_TEMPLATES, taskCategoryIcon, REWARD_TEMPLATES, DEFAULT_KID_THEME_ID, DEFAULT_PARENT_THEME_ID } from '@kidsapp/shared';
 import { generateUniqueInviteCode } from './utils/inviteCode';
 
@@ -25,6 +26,7 @@ async function seed() {
     Reward.deleteMany({}),
     LearningAssignment.deleteMany({}),
     LearningProgress.deleteMany({}),
+    PushToken.deleteMany({}),
   ]);
 
   const passwordHash = await bcrypt.hash('parent123', 10);

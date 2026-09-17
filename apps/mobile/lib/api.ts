@@ -21,6 +21,7 @@ import type {
   LearningCheckResult,
   LearningCatalogItem,
   LearningCategory,
+  PushPlatform,
 } from '@kidsapp/shared';
 
 const TOKEN_KEY = 'kidsapp_token';
@@ -311,6 +312,20 @@ export const api = {
     return request<LearningCheckResult>(`/learning/packs/${packId}/check`, {
       method: 'POST',
       body: JSON.stringify({ activityId, answer }),
+    });
+  },
+
+  registerPushToken(token: string, platform?: PushPlatform) {
+    return request<{ success: boolean }>('/push/register', {
+      method: 'POST',
+      body: JSON.stringify({ token, platform }),
+    });
+  },
+
+  unregisterPushToken(token: string) {
+    return request<{ success: boolean }>('/push/unregister', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
     });
   },
 };

@@ -7,6 +7,16 @@ description: Deploys KidsQuest API, web UI, or Android builds to production (GCP
 
 Full guide: [deploy/vm/DEPLOY.md](../../../deploy/vm/DEPLOY.md). Same GCP VM as batumtumim / Synaboard.
 
+## App version (required before release / deploy)
+
+**Always** bump the mobile version before an Android store build or API deploy that should advertise a new release:
+
+1. `apps/mobile/app.json` → `expo.version` (e.g. `1.1.0` → `1.1.1`) and bump `android.versionCode` if not relying on EAS `autoIncrement`
+2. Keep `apps/mobile/package.json` `version` in sync with `expo.version`
+3. Run `./deploy/vm/deploy.sh` — it **auto-syncs** `STORE_VERSION_ANDROID` / `STORE_VERSION_IOS` in `server/.env` from `expo.version` (do not set them by hand)
+
+Update-check in the app compares installed version to Play/App Store, with `/app/version` as fallback. If the API version is stale, users will not be prompted.
+
 ## Production URLs
 
 | | |
@@ -46,7 +56,8 @@ npm run build:android      # EAS production AAB (Play Store)
 
 Single domain: static Expo export at `/`, API paths proxied to `:3001`:
 
-`/auth`, `/tasks`, `/rewards`, `/kids`, `/family`, `/health`
+`/auth`, `/tasks`, `/rewards`, `/kids`, `/family`, `/learning`, `/push`, `/app`, `/health`
+
 
 Config template: `deploy/vm/nginx-kidsquest.conf`. New API top-level mount → update nginx regex + docs.
 

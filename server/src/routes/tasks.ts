@@ -219,6 +219,12 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
       createdAt: task.createdAt.toISOString(),
     }));
 
+    const { pushTaskAssigned } = await import('../services/push');
+    pushTaskAssigned(
+      kids.map((k) => k._id.toString()),
+      payload.title
+    );
+
     res.status(201).json({ task: tasks[0], tasks });
   } catch (err) {
     console.error(err);
@@ -309,6 +315,15 @@ router.post('/:id/complete', authenticate, async (req: Request, res: Response) =
       status: 'pending',
     });
 
+    const kid = await User.findById(kidId).select('displayName');
+    const { pushTaskSubmitted } = await import('../services/push');
+    pushTaskSubmitted(
+      req.user!.familyId,
+      kid?.displayName || 'ילד',
+      task.title,
+      req.user!.role === 'parent' ? req.user!.userId : undefined
+    );
+
     res.status(201).json({
       completion: {
         _id: completion._id.toString(),
@@ -373,15 +388,18 @@ router.post('/completions/:id/approve', authenticate, requireParent, async (req:
 
     if (!completion) return res.status(404).json({ error: 'בקשה לא נמצאה' });
 
+    const task = completion.taskId as any;
+    const { pushTaskReviewed } = await import('../services/push');
+
     if (action === 'reject') {
       completion.status = 'rejected';
       completion.reviewedAt = new Date();
       completion.reviewedBy = req.user!.userId as any;
       await completion.save();
+      pushTaskReviewed(completion.kidId.toString(), task?.title || 'משימה', false);
       return res.json({ completion });
     }
 
-    const task = completion.taskId as any;
     const kid = await User.findById(completion.kidId);
     if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
 
@@ -393,6 +411,8 @@ router.post('/completions/:id/approve', authenticate, requireParent, async (req:
     await completion.save();
 
     await awardPoints(kid, task.points, 'task', `משימה: ${task.title}`, completion._id.toString());
+
+    pushTaskReviewed(kid._id.toString(), task.title, true, task.points);
 
     const updatedKid = await User.findById(kid._id);
     res.json({ completion, kid: formatUser(updatedKid ?? kid) });

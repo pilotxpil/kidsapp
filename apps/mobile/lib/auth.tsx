@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { User } from '@kidsapp/shared';
 import { api } from './api';
+import { registerPushNotifications, unregisterPushNotifications } from './push';
 
 type UserProgressPatch = Partial<Pick<User, 'points' | 'level' | 'xp' | 'streak' | 'badges'>>;
 
@@ -33,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (token) {
           const { user } = await api.getMe();
           setUser(user);
+          void registerPushNotifications();
         }
       } catch {
         await api.clearToken();
@@ -45,9 +47,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (token: string, userData: User) => {
     await api.saveToken(token);
     setUser(userData);
+    void registerPushNotifications();
   }, []);
 
   const logout = useCallback(async () => {
+    await unregisterPushNotifications();
     await api.clearToken();
     setUser(null);
   }, []);

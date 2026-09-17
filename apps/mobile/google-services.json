@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "782554039022",
+    "project_id": "kids-quest-ac508",
+    "storage_bucket": "kids-quest-ac508.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:782554039022:android:71a06afb73f0175bade9ff",
+        "android_client_info": {
+          "package_name": "com.kidsapp.quest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsZRMu3SohOxbs2X4I2y4pY-ZtuzMFBBY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
