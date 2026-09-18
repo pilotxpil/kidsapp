@@ -10,6 +10,7 @@ import { ThemePicker } from '../../components/ThemePicker';
 import { FamilyInviteCard } from '../../components/FamilyInviteCard';
 import { AvatarPickerModal } from '../../components/AvatarPicker';
 import { SectionHeader } from '../../components/ThemedHero';
+import { AppVersionLabel } from '../../components/AppVersionLabel';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
@@ -114,6 +115,7 @@ export default function ParentProfileScreen() {
 
         <Button title={t('privacyPolicy')} variant="outline" onPress={() => router.push('/privacy')} />
         <Button title={t('logout')} onPress={logout} variant="danger" style={styles.logout} />
+        <AppVersionLabel />
       </ScrollView>
 
       <AvatarPickerModal visible={avatarOpen} onClose={() => setAvatarOpen(false)} />

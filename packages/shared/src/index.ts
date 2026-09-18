@@ -14,6 +14,9 @@ export type RedemptionStatus = 'pending' | 'approved' | 'rejected' | 'fulfilled'
 
 export type PointTransactionType = 'task' | 'redemption' | 'bonus' | 'streak' | 'daily';
 
+/** Max points a parent can award manually in one action. */
+export const MAX_MANUAL_BONUS_POINTS = 500;
+
 export type RewardCategory = 'gaming' | 'food' | 'screen' | 'privilege' | 'other';
 
 export type UiThemeId = 'ember' | 'minecraft' | 'brawl' | 'roblox' | 'sparkle';
@@ -421,7 +424,8 @@ export type PushNotificationType =
   | 'reward_redeemed'
   | 'reward_approved'
   | 'reward_rejected'
-  | 'learning_assigned';
+  | 'learning_assigned'
+  | 'bonus_awarded';
 
 export type PushPlatform = 'ios' | 'android' | 'web' | 'unknown';
 

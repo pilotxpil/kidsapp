@@ -9,8 +9,8 @@ const router = Router();
  */
 router.get('/version', (_req: Request, res: Response) => {
   res.json({
-    android: process.env.STORE_VERSION_ANDROID || '1.1.1',
-    ios: process.env.STORE_VERSION_IOS || '1.1.1',
+    android: process.env.STORE_VERSION_ANDROID || '1.1.2',
+    ios: process.env.STORE_VERSION_IOS || '1.1.2',
     packageId: 'com.kidsapp.quest',
   });
 });

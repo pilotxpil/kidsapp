@@ -19,6 +19,7 @@ import type {
   LearningPackSummary,
   LearningPackDetail,
   LearningCheckResult,
+  PointTransaction,
   LearningCatalogItem,
   LearningCategory,
   PushPlatform,
@@ -228,6 +229,13 @@ export const api = {
     });
   },
 
+  awardKidBonus(id: string, amount: number, reason?: string) {
+    return request<{ kid: User; amount: number; reason: string }>(`/kids/${id}/bonus`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, reason }),
+    });
+  },
+
   updateKid(
     id: string,
     data: { uiTheme?: UiThemeId; avatar?: string; displayName?: string; username?: string; pin?: string }
@@ -267,7 +275,7 @@ export const api = {
   },
 
   getTransactions(id: string) {
-    return request<{ transactions: any[] }>(`/kids/${id}/transactions`);
+    return request<{ transactions: PointTransaction[] }>(`/kids/${id}/transactions`);
   },
 
   getLeaderboard() {

@@ -10,6 +10,7 @@ import { ThemePicker } from '../../components/ThemePicker';
 import { AvatarPickerModal } from '../../components/AvatarPicker';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { AvatarFrame, SectionHeader } from '../../components/ThemedHero';
+import { AppVersionLabel } from '../../components/AppVersionLabel';
 import { PointsMark } from '../../components/icons/ThemeGlyph';
 import { BADGES, BADGE_REWARDS } from '@kidsapp/shared';
 import type { KidProfile } from '@kidsapp/shared';
@@ -368,6 +369,7 @@ export default function KidProfileScreen() {
 
           <Button title={t('privacyPolicy')} variant="outline" onPress={() => router.push('/privacy')} />
           <Button title={t('logout')} onPress={handleLogout} variant="outline" style={styles.logout} sound={false} />
+          <AppVersionLabel />
         </View>
       </ScrollView>
 

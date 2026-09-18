@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { UI_THEME_IDS, AVATARS, DEFAULT_KID_THEME_ID } from '@kidsapp/shared';
+import { UI_THEME_IDS, AVATARS, DEFAULT_KID_THEME_ID, MAX_MANUAL_BONUS_POINTS } from '@kidsapp/shared';
 import { authenticate, requireParent } from '../middleware/auth';
 import { User } from '../models/User';
 import { Task } from '../models/Task';
@@ -17,6 +17,7 @@ import {
   spinFortuneWheel,
   getTreasureChestStatus,
   openTreasureChest,
+  awardPoints,
 } from '../services/gamification';
 
 const router = Router();
@@ -58,6 +59,46 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'שגיאה ביצירת פרופיל ילד' });
+  }
+});
+
+router.post('/:id/bonus', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const amount = Number(req.body.amount);
+    if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < 1) {
+      return res.status(400).json({ error: 'יש להזין מספר נקודות חיובי שלם' });
+    }
+    if (amount > MAX_MANUAL_BONUS_POINTS) {
+      return res.status(400).json({
+        error: `ניתן להעניק עד ${MAX_MANUAL_BONUS_POINTS} נקודות בפעם אחת`,
+      });
+    }
+
+    const reasonRaw = typeof req.body.reason === 'string' ? req.body.reason.trim() : '';
+    const reason = reasonRaw.slice(0, 120) || 'בונוס מההורה';
+
+    const kid = await User.findOne({
+      _id: req.params.id,
+      familyId: req.user!.familyId,
+      role: 'kid',
+    });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+
+    const newBadges = await awardPoints(kid, amount, 'bonus', reason);
+    const updated = await User.findById(kid._id);
+
+    const { pushBonusAwarded } = await import('../services/push');
+    pushBonusAwarded(kid._id.toString(), amount, reason);
+
+    res.json({
+      kid: formatUser(updated ?? kid),
+      amount,
+      reason,
+      newBadges,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בהענקת נקודות' });
   }
 });
 
@@ -268,9 +309,23 @@ router.post('/:id/treasure-chest/open', authenticate, async (req: Request, res: 
 
 router.get('/:id/transactions', authenticate, async (req: Request, res: Response) => {
   try {
-    const transactions = await PointTransaction.find({ kidId: req.params.id })
+    const kid = await User.findOne({
+      _id: req.params.id,
+      familyId: req.user!.familyId,
+      role: 'kid',
+    });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+
+    if (req.user!.role === 'kid' && req.user!.userId !== kid._id.toString()) {
+      return res.status(403).json({ error: 'אין הרשאה' });
+    }
+
+    const transactions = await PointTransaction.find({
+      kidId: kid._id,
+      familyId: req.user!.familyId,
+    })
       .sort({ createdAt: -1 })
-      .limit(50);
+      .limit(100);
 
     res.json({
       transactions: transactions.map((t) => ({

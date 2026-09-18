@@ -170,3 +170,11 @@ export function pushLearningAssigned(kidIds: string[], packTitle: string): void 
     data: { type: 'learning_assigned' satisfies PushNotificationType },
   });
 }
+
+export function pushBonusAwarded(kidId: string, amount: number, reason: string): void {
+  pushToUsers([kidId], {
+    title: `קיבלת ${amount} נקודות! ⭐`,
+    body: reason,
+    data: { type: 'bonus_awarded' satisfies PushNotificationType },
+  });
+}

@@ -12,13 +12,14 @@ import {
   Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
-import { AVATARS } from '@kidsapp/shared';
+import { AVATARS, MAX_MANUAL_BONUS_POINTS } from '@kidsapp/shared';
 import type { User } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
@@ -26,8 +27,11 @@ import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 import { KidLoginQrModal } from '../../components/KidLoginQrModal';
 
+const BONUS_PRESETS = [10, 20, 50, 100];
+
 export default function ParentKidsScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
   const [kids, setKids] = useState<User[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -38,6 +42,10 @@ export default function ParentKidsScreen() {
   const [avatar, setAvatar] = useState(AVATARS[0]);
   const [loading, setLoading] = useState(false);
   const [qrKid, setQrKid] = useState<User | null>(null);
+  const [bonusKid, setBonusKid] = useState<User | null>(null);
+  const [bonusAmount, setBonusAmount] = useState('20');
+  const [bonusReason, setBonusReason] = useState('');
+  const [bonusLoading, setBonusLoading] = useState(false);
   const savingRef = useRef(false);
 
   const modalMaxHeight = Dimensions.get('window').height - insets.top - insets.bottom - spacing.lg * 2;
@@ -71,6 +79,27 @@ export default function ParentKidsScreen() {
         editIcon: { fontSize: 20 },
         qrBtn: { padding: spacing.xs, flexShrink: 0 },
         qrIcon: { fontSize: 20 },
+        historyBtn: { marginTop: spacing.sm, alignSelf: 'stretch' },
+        actionRow: { marginTop: spacing.sm, gap: spacing.sm, width: '100%' },
+        actionBtn: { flex: 1 },
+        presetRow: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: spacing.sm,
+          justifyContent: 'flex-end',
+          marginBottom: spacing.md,
+          width: '100%',
+        },
+        presetChip: {
+          paddingVertical: spacing.sm,
+          paddingHorizontal: spacing.md,
+          borderRadius: borderRadius.full,
+          backgroundColor: colors.bgCardLight,
+          borderWidth: 2,
+          borderColor: colors.border,
+        },
+        presetChipActive: { borderColor: colors.primary },
+        presetText: { color: colors.text, fontWeight: '700' },
         modalOverlay: {
           flex: 1,
           backgroundColor: 'rgba(0,0,0,0.7)',
@@ -214,6 +243,38 @@ export default function ParentKidsScreen() {
     }
   };
 
+  const closeBonusModal = () => {
+    setBonusKid(null);
+    setBonusAmount('20');
+    setBonusReason('');
+  };
+
+  const openBonus = (kid: User) => {
+    setBonusKid(kid);
+    setBonusAmount('20');
+    setBonusReason('');
+  };
+
+  const handleAwardBonus = async () => {
+    if (!bonusKid || bonusLoading) return;
+    const amount = Number(bonusAmount);
+    if (!Number.isInteger(amount) || amount < 1 || amount > MAX_MANUAL_BONUS_POINTS) {
+      alert(t('awardBonusInvalid').replace('{max}', String(MAX_MANUAL_BONUS_POINTS)));
+      return;
+    }
+    setBonusLoading(true);
+    try {
+      await api.awardKidBonus(bonusKid._id, amount, bonusReason.trim() || undefined);
+      closeBonusModal();
+      await load();
+      alert(t('awardBonusSuccess'));
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setBonusLoading(false);
+    }
+  };
+
   return (
     <ThemedScreen tabs>
       <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
@@ -249,6 +310,21 @@ export default function ParentKidsScreen() {
                 <TouchableOpacity style={styles.editBtn} onPress={() => openEdit(kid)}>
                   <Text style={styles.editIcon}>✏️</Text>
                 </TouchableOpacity>
+              </View>
+              <View style={[styles.actionRow, rtl.row]}>
+                <Button
+                  title={t('awardBonus')}
+                  style={styles.actionBtn}
+                  onPress={() => openBonus(kid)}
+                />
+                <Button
+                  title={t('viewPointsHistory')}
+                  variant="outline"
+                  style={styles.actionBtn}
+                  onPress={() =>
+                    router.push({ pathname: '/(parent)/kid-history', params: { kidId: kid._id } })
+                  }
+                />
               </View>
             </Card>
           ))
@@ -307,6 +383,77 @@ export default function ParentKidsScreen() {
       </Modal>
 
       <KidLoginQrModal kid={qrKid} visible={!!qrKid} onClose={() => setQrKid(null)} />
+
+      <Modal
+        visible={!!bonusKid}
+        animationType="slide"
+        transparent
+        onRequestClose={closeBonusModal}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={closeBonusModal} />
+          <View style={[styles.modal, { maxHeight: modalMaxHeight }]}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.modalScroll}
+              showsVerticalScrollIndicator
+            >
+              <Text style={styles.modalTitle}>
+                {t('awardBonusTitle')}
+                {bonusKid ? ` · ${bonusKid.displayName}` : ''}
+              </Text>
+
+              <Text style={styles.label}>{t('awardBonusAmount')}</Text>
+              <View style={styles.presetRow}>
+                {BONUS_PRESETS.map((n) => {
+                  const active = bonusAmount === String(n);
+                  return (
+                    <TouchableOpacity
+                      key={n}
+                      style={[styles.presetChip, active && styles.presetChipActive]}
+                      onPress={() => setBonusAmount(String(n))}
+                    >
+                      <Text style={styles.presetText}>
+                        +{n} {pointsEmoji}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <Input
+                value={bonusAmount}
+                onChangeText={(v) => setBonusAmount(v.replace(/\D/g, '').slice(0, 3))}
+                keyboardType="number-pad"
+                placeholder="20"
+              />
+              <Input
+                label={t('awardBonusReason')}
+                value={bonusReason}
+                onChangeText={setBonusReason}
+                placeholder={t('awardBonusReasonPlaceholder')}
+              />
+            </ScrollView>
+
+            <View style={[styles.modalActions, rtl.row]}>
+              <Button
+                title={t('awardBonusSubmit')}
+                onPress={handleAwardBonus}
+                loading={bonusLoading}
+                style={{ flex: 1 }}
+              />
+              <Button
+                title={t('cancel')}
+                onPress={closeBonusModal}
+                variant="outline"
+                style={{ flex: 1 }}
+              />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </ThemedScreen>
   );
 }
