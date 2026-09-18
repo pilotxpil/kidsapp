@@ -15,8 +15,16 @@ export interface IUser extends Document {
   xp: number;
   streak: number;
   lastActiveDate?: string;
+  learningStreak: number;
+  lastLearningDate?: string;
   badges: string[];
   uiTheme?: 'ember' | 'minecraft' | 'brawl' | 'roblox' | 'sparkle';
+  ownedCosmetics: string[];
+  equippedFrame?: string;
+  equippedEffect?: string;
+  goalRewardId?: Types.ObjectId;
+  /** Kid school grade 1–6 (כיתה א–ו). */
+  grade?: number;
   createdAt: Date;
 }
 
@@ -35,8 +43,15 @@ const userSchema = new Schema<IUser>(
     xp: { type: Number, default: 0 },
     streak: { type: Number, default: 0 },
     lastActiveDate: { type: String },
+    learningStreak: { type: Number, default: 0 },
+    lastLearningDate: { type: String },
     badges: { type: [String], default: [] },
     uiTheme: { type: String, enum: [...UI_THEME_IDS] },
+    ownedCosmetics: { type: [String], default: [] },
+    equippedFrame: { type: String },
+    equippedEffect: { type: String },
+    goalRewardId: { type: Schema.Types.ObjectId, ref: 'Reward' },
+    grade: { type: Number, min: 1, max: 6 },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

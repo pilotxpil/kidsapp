@@ -1,0 +1,83 @@
+{
+  "id": "science-electricity-6",
+  "version": 1,
+  "title": { "he": "חשמל — יסודות", "en": "Electricity basics" },
+  "category": "science",
+  "grade": 6,
+  "tags": ["electricity", "physics", "grade-6"],
+  "defaultPoints": 6,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה צריך כדי שמעגל חשמלי יעבוד?" },
+      "options": [
+        { "id": "a", "text": "מעגל פתוח בלבד" },
+        { "id": "b", "text": "מקור מתח ומעגל סגור" },
+        { "id": "c", "text": "רק חוט בלי סוללה" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "צריך מקור אנרגיה (סוללה) ומסלול סגור לזרם." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזה חומר הוא מוליך טוב של חשמל?" },
+      "options": [
+        { "id": "a", "text": "גומי" },
+        { "id": "b", "text": "נחושת" },
+        { "id": "c", "text": "פלסטיק" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "מתכות כמו נחושת מוליכות חשמל היטב." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "למה עטיפת חוטי חשמל עשויה מפלסטיק?" },
+      "options": [
+        { "id": "a", "text": "כי פלסטיק יפה" },
+        { "id": "b", "text": "כי פלסטיק מבודד ומונע התחשמלות" },
+        { "id": "c", "text": "כי פלסטיק מוליך יותר ממתכת" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "פלסטיק הוא מבודד — הזרם לא עובר דרכו בקלות." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה מודדים בוולט (V)?" },
+      "options": [
+        { "id": "a", "text": "מתח חשמלי" },
+        { "id": "b", "text": "מסה" },
+        { "id": "c", "text": "טמפרטורה" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "וולט הוא יחידת מידה למתח." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה קורה לנורה במעגל כשהמעגל נפתח (מתג כבוי)?" },
+      "options": [
+        { "id": "a", "text": "היא נדלקת חזק יותר" },
+        { "id": "b", "text": "היא כבה כי הזרם נעצר" },
+        { "id": "c", "text": "שום דבר לא משתנה" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "במעגל פתוח אין מסלול לזרם — הנורה כבה." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו פעולה בטוחה ליד חשמל?" },
+      "options": [
+        { "id": "a", "text": "לגעת בשקע בידיים רטובות" },
+        { "id": "b", "text": "לא להכניס חפצים לשקעים ולבקש עזרת מבוגר" },
+        { "id": "c", "text": "לחבר הרבה מכשירים לשקע אחד בלי בדיקה" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "מים וחשמל מסוכנים; נזהרים ולא משחקים בשקעים." }
+    }
+  ]
+}

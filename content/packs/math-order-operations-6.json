@@ -1,0 +1,95 @@
+{
+  "id": "math-order-operations-6",
+  "version": 1,
+  "title": { "he": "סדר פעולות חשבון", "en": "Order of operations" },
+  "category": "math",
+  "grade": 6,
+  "tags": ["order-of-operations", "pemdas", "grade-6"],
+  "defaultPoints": 7,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה התוצאה של 3 + 4 × 2?" },
+      "options": [
+        { "id": "a", "text": "14" },
+        { "id": "b", "text": "11" },
+        { "id": "c", "text": "10" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "קודם כפל: 4×2=8, ואז 3+8=11." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה התוצאה של (3 + 4) × 2?" },
+      "options": [
+        { "id": "a", "text": "14" },
+        { "id": "b", "text": "11" },
+        { "id": "c", "text": "9" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "קודם בסוגריים: 3+4=7, ואז 7×2=14." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה התוצאה של 20 − 8 ÷ 4?" },
+      "options": [
+        { "id": "a", "text": "3" },
+        { "id": "b", "text": "18" },
+        { "id": "c", "text": "12" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "קודם חילוק: 8÷4=2, ואז 20−2=18." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה התוצאה של 5²?" },
+      "options": [
+        { "id": "a", "text": "10" },
+        { "id": "b", "text": "25" },
+        { "id": "c", "text": "52" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "5² = 5×5 = 25." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה התוצאה של 2 + 3²?" },
+      "options": [
+        { "id": "a", "text": "25" },
+        { "id": "b", "text": "11" },
+        { "id": "c", "text": "10" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "קודם חזקה: 3²=9, ואז 2+9=11." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו פעולה מבצעים קודם?" },
+      "options": [
+        { "id": "a", "text": "חיבור לפני כפל" },
+        { "id": "b", "text": "כפל וחילוק לפני חיבור וחיסור" },
+        { "id": "c", "text": "תמיד משמאל לימין בלי סדר" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "סדר: סוגריים → חזקות → כפל/חילוק → חיבור/חיסור." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה התוצאה של 12 ÷ 3 × 2?" },
+      "options": [
+        { "id": "a", "text": "2" },
+        { "id": "b", "text": "8" },
+        { "id": "c", "text": "18" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "כפל וחילוק באותה רמה — משמאל לימין: 12÷3=4, 4×2=8." }
+    }
+  ]
+}

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, Image } from 'react
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
-import { PointsBadge, LevelBar } from '../../components/Card';
+import { PointsBadge, LevelBar, Card } from '../../components/Card';
 import { TaskCard } from '../../components/TaskCard';
 import { Celebration } from '../../components/Celebration';
 import { DailyStar } from '../../components/DailyStar';
@@ -19,6 +19,8 @@ import type {
   DailyStarClaimResult,
   FortuneWheelSpinResult,
   TreasureChestOpenResult,
+  FamilyChallenge,
+  PersonalGoal,
 } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { getThemeArt } from '../../constants/theme-art';
@@ -26,6 +28,7 @@ import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 import { useCelebrateBadges } from '../../lib/badge-celebration';
+import { ProgressBar } from '../../components/ProgressBar';
 
 export default function KidHomeScreen() {
   const { user, patchUser } = useAuth();
@@ -35,6 +38,8 @@ export default function KidHomeScreen() {
   const userId = user?._id;
   const [profile, setProfile] = useState<KidProfile | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [challenge, setChallenge] = useState<FamilyChallenge | null>(null);
+  const [goal, setGoal] = useState<PersonalGoal | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -79,12 +84,16 @@ export default function KidHomeScreen() {
 
   const load = useCallback(async () => {
     if (!userId) return;
-    const [profileRes, tasksRes] = await Promise.all([
+    const [profileRes, tasksRes, ch, goalRes] = await Promise.all([
       api.getKidProfile(userId),
       api.getTasks(userId),
+      api.getFamilyChallenge().catch(() => null),
+      api.getPersonalGoal().catch(() => ({ goal: null })),
     ]);
     setProfile(profileRes.profile);
     setTasks(tasksRes.tasks.slice(0, 5));
+    if (ch) setChallenge(ch.challenge);
+    setGoal(goalRes.goal);
     const p = profileRes.profile;
     patchUser({
       points: p.points,
@@ -92,6 +101,7 @@ export default function KidHomeScreen() {
       xp: p.xp,
       streak: p.streak,
       badges: p.badges,
+      learningStreak: p.learningStreak,
     });
   }, [userId, patchUser]);
 
@@ -200,17 +210,58 @@ export default function KidHomeScreen() {
                     />
                   </View>
                 )}
+                {(profile?.learningStreak ?? user?.learningStreak ?? 0) > 0 ? (
+                  <Text style={{ color: colors.textMuted, marginTop: spacing.sm, writingDirection: 'rtl' }}>
+                    📚 {t('learningStreak')}: {profile?.learningStreak ?? user?.learningStreak} {t('days')}
+                  </Text>
+                ) : null}
               </View>
             </View>
           </FadeInUp>
 
-          {userId ? (
+          {challenge ? (
             <FadeInUp index={2}>
+              <Card style={{ marginBottom: spacing.md }}>
+                <Text style={{ color: colors.text, fontWeight: '700', writingDirection: 'rtl', marginBottom: spacing.sm }}>
+                  {t('familyChallenge')}: {challenge.title}
+                </Text>
+                <ProgressBar
+                  progress={challenge.targetCount > 0 ? challenge.progress / challenge.targetCount : 0}
+                />
+                <Text style={{ color: colors.textMuted, marginTop: spacing.sm, writingDirection: 'rtl' }}>
+                  {challenge.completed
+                    ? t('familyChallengeDone')
+                    : t('familyChallengeProgress')
+                        .replace('{current}', String(challenge.progress))
+                        .replace('{target}', String(challenge.targetCount))}
+                </Text>
+              </Card>
+            </FadeInUp>
+          ) : null}
+
+          {goal ? (
+            <FadeInUp index={3}>
+              <Card style={{ marginBottom: spacing.md }}>
+                <Text style={{ color: colors.text, fontWeight: '700', writingDirection: 'rtl', marginBottom: spacing.sm }}>
+                  {goal.rewardIcon} {t('personalGoal')}: {goal.rewardTitle}
+                </Text>
+                <ProgressBar progress={goal.progress} />
+                <Text style={{ color: colors.textMuted, marginTop: spacing.sm, writingDirection: 'rtl' }}>
+                  {t('goalProgress')
+                    .replace('{current}', String(goal.currentPoints))
+                    .replace('{cost}', String(goal.rewardCost))}
+                </Text>
+              </Card>
+            </FadeInUp>
+          ) : null}
+
+          {userId ? (
+            <FadeInUp index={4}>
               <TreasureChest kidId={userId} refreshKey={chestKey} onOpened={handleChestOpened} />
             </FadeInUp>
           ) : null}
 
-          <FadeInUp index={3}>
+          <FadeInUp index={5}>
             <SectionHeader title={t('tasks')} icon="📜" />
           </FadeInUp>
           {tasks.length === 0 ? (

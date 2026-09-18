@@ -54,6 +54,12 @@
         }
       ],
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "נדרשת גישה לתמונות לצירוף הוכחה למשימה"
+        }
+      ],
+      [
         "expo-notifications",
         {
           "color": "#FF6B35",

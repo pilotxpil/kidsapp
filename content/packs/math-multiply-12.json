@@ -1,59 +1,107 @@
 {
   "id": "math-multiply-12",
-  "version": 1,
-  "title": { "he": "כפל ב-12", "en": "Multiply by 12" },
+  "version": 2,
+  "title": { "he": "כפל וחילוק — אתגר", "en": "Multiplication challenge" },
   "category": "math",
   "grade": 4,
-  "tags": ["multiplication", "times-tables"],
-  "defaultPoints": 5,
+  "tags": ["multiplication", "division", "word-problems", "grade-4"],
+  "defaultPoints": 8,
   "activities": [
     {
       "id": "q1",
       "type": "multiple_choice",
-      "prompt": { "text": "12 × 1 = ?" },
+      "prompt": { "text": "47 × 6 = ?" },
       "options": [
-        { "id": "a", "text": "11" },
-        { "id": "b", "text": "12" },
-        { "id": "c", "text": "13" }
+        { "id": "a", "text": "272" },
+        { "id": "b", "text": "282" },
+        { "id": "c", "text": "292" }
       ],
       "answer": "b",
-      "explanation": { "he": "12 × 1 = 12" }
+      "explanation": { "he": "40×6=240, 7×6=42 → 282." }
     },
     {
       "id": "q2",
       "type": "multiple_choice",
-      "prompt": { "text": "12 × 2 = ?" },
+      "prompt": { "text": "384 ÷ 8 = ?" },
       "options": [
-        { "id": "a", "text": "22" },
-        { "id": "b", "text": "24" },
-        { "id": "c", "text": "26" }
+        { "id": "a", "text": "46" },
+        { "id": "b", "text": "48" },
+        { "id": "c", "text": "52" }
       ],
       "answer": "b",
-      "explanation": { "he": "12 × 2 = 24" }
+      "explanation": { "he": "8×48=384." }
     },
     {
       "id": "q3",
       "type": "multiple_choice",
-      "prompt": { "text": "12 × 5 = ?" },
+      "prompt": { "text": "מה התוצאה של 25 × 12?" },
       "options": [
-        { "id": "a", "text": "50" },
-        { "id": "b", "text": "60" },
-        { "id": "c", "text": "70" }
+        { "id": "a", "text": "250" },
+        { "id": "b", "text": "300" },
+        { "id": "c", "text": "325" }
       ],
       "answer": "b",
-      "explanation": { "he": "12 × 5 = 60" }
+      "explanation": { "he": "25×10=250, 25×2=50 → 300. או 25×12=(100÷4)×12=300." }
     },
     {
       "id": "q4",
       "type": "multiple_choice",
-      "prompt": { "text": "12 × 10 = ?" },
+      "prompt": { "text": "בקופסה 36 עפרונות. חילקו אותם שווה בשווה ל־9 ילדים. כמה קיבל כל ילד?" },
       "options": [
-        { "id": "a", "text": "100" },
-        { "id": "b", "text": "110" },
+        { "id": "a", "text": "3" },
+        { "id": "b", "text": "4" },
+        { "id": "c", "text": "6" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "36÷9=4." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "חשבו: 15 × 8 − 40 = ?" },
+      "options": [
+        { "id": "a", "text": "80" },
+        { "id": "b", "text": "100" },
         { "id": "c", "text": "120" }
       ],
-      "answer": "c",
-      "explanation": { "he": "12 × 10 = 120" }
+      "answer": "a",
+      "explanation": { "he": "קודם כפל: 15×8=120, אחר כך 120−40=80." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "מספר כפול 7 הוא 196. מהו המספר?" },
+      "options": [
+        { "id": "a", "text": "26" },
+        { "id": "b", "text": "28" },
+        { "id": "c", "text": "32" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "196÷7=28." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "חבילה עולה 18 ₪. כמה עולות 7 חבילות?" },
+      "options": [
+        { "id": "a", "text": "116 ₪" },
+        { "id": "b", "text": "126 ₪" },
+        { "id": "c", "text": "136 ₪" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "18×7=126." }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה השארית בחילוק 53 ÷ 7?" },
+      "options": [
+        { "id": "a", "text": "3" },
+        { "id": "b", "text": "4" },
+        { "id": "c", "text": "5" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "7×7=49; 53−49=4 שארית." }
     }
   ]
 }

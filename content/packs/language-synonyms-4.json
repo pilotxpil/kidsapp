@@ -1,0 +1,107 @@
+{
+  "id": "language-synonyms-4",
+  "version": 2,
+  "title": { "he": "אוצר מילים — נרדפות והקשר", "en": "Vocabulary in context" },
+  "category": "language",
+  "grade": 4,
+  "tags": ["vocabulary", "synonyms", "context", "grade-4"],
+  "defaultPoints": 7,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "״הילד השיב במהירות לשאלה.״ איזו מילה יכולה להחליף את ״השיב״ בלי לשנות את המשמעות?" },
+      "options": [
+        { "id": "a", "text": "ענה" },
+        { "id": "b", "text": "שאל" },
+        { "id": "c", "text": "התעלם" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "השיב וענה קרובים במשמעות בהקשר הזה." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו מילה קרובה ביותר ל״להסס״?" },
+      "options": [
+        { "id": "a", "text": "להחליט מיד" },
+        { "id": "b", "text": "להתלבט" },
+        { "id": "c", "text": "לרוץ" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "להסס = להתלבט, לא להיות בטוח." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "״הנוף היה מרהיב.״ מהו ניגוד מתאים ל״מרהיב״?" },
+      "options": [
+        { "id": "a", "text": "מדהים" },
+        { "id": "b", "text": "משעמם" },
+        { "id": "c", "text": "צבעוני" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "מרהיב = מרשים ויפה; ניגוד: משעמם / לא מרשים." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "במשפט ״המורה דרשה מהתלמידים להיות מדויקים״ — מה משמעות ״דרשה״?" },
+      "options": [
+        { "id": "a", "text": "ביקשה בעדינות בלבד" },
+        { "id": "b", "text": "דרשה / חייבה" },
+        { "id": "c", "text": "סיפרה סיפור" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "לדרוש = לבקש בתוקף, לצפות שיתקיים." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו מילה מתאימה ביותר במקום ״נדיר״: ״זהו אירוע ___ בכיתה״?" },
+      "options": [
+        { "id": "a", "text": "שכיח" },
+        { "id": "b", "text": "יוצא דופן" },
+        { "id": "c", "text": "רגיל תמיד" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "נדיר = לא קורה הרבה; יוצא דופן קרוב במשמעות." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "״הספר תיאר את המסע בפרטי פרטים.״ איזו מילה קרובה ל״תיאר״?" },
+      "options": [
+        { "id": "a", "text": "הסתיר" },
+        { "id": "b", "text": "סיפר / הציג במילים" },
+        { "id": "c", "text": "מחק" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "לתאר = לספר איך משהו נראה או קרה." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו זוג מילים הן הפכים?" },
+      "options": [
+        { "id": "a", "text": "שקט — דממה" },
+        { "id": "b", "text": "להרחיב — לצמצם" },
+        { "id": "c", "text": "לשמור — לשמר" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "להרחיב וצמצם הם ניגודים; הזוגות האחרים נרדפים." }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": { "text": "״הוא דיבר בביטחון.״ איזו מילה הכי קרובה ל״ביטחון״ כאן?" },
+      "options": [
+        { "id": "a", "text": "פחד" },
+        { "id": "b", "text": "ביטחון עצמי / ודאות" },
+        { "id": "c", "text": "עייפות" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "דיבור בביטחון = בלי היסוס, בביטחון עצמי." }
+    }
+  ]
+}

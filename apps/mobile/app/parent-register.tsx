@@ -90,8 +90,26 @@ export default function ParentRegisterScreen() {
           />
         )}
         <Input label={t('displayName')} value={displayName} onChangeText={setDisplayName} placeholder="אבא" />
-        <Input label={t('email')} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-        <Input label={t('password')} value={password} onChangeText={setPassword} secureTextEntry />
+        <Input
+          label={t('email')}
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="emailAddress"
+          autoComplete="email"
+        />
+        <Input
+          label={t('password')}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="newPassword"
+          autoComplete="new-password"
+        />
         <Button title={t('createAccount')} onPress={handleRegister} loading={loading} />
         <BouncyPressable onPress={() => setMode(mode === 'create' ? 'join' : 'create')} style={styles.link}>
           <RtlText style={styles.linkText} wrap={false}>

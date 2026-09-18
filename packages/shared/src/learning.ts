@@ -1,3 +1,13 @@
+export type LearningDifficulty = 'easy' | 'medium' | 'hard';
+
+export const LEARNING_DIFFICULTIES: LearningDifficulty[] = ['easy', 'medium', 'hard'];
+
+export const LEARNING_DIFFICULTY_LABELS: Record<LearningDifficulty, string> = {
+  easy: 'קל',
+  medium: 'בינוני',
+  hard: 'קשה',
+};
+
 export type LearningCategory = 'language' | 'math' | 'english' | 'science' | 'general';
 
 /** @deprecated Use LearningCategory */
@@ -53,7 +63,7 @@ export type LearningActivity = MultipleChoiceActivity | FillBlankActivity | Flas
 
 export interface LearningPack {
   id: string;
-  version: 1;
+  version: number;
   /** Display name inside the category, e.g. "Multiply by 12" or "The Tale of the Fox" */
   title: LocalizedText;
   category: LearningCategory;
@@ -74,6 +84,9 @@ export interface LearningPackSummary {
   tags: string[];
   activityCount: number;
   defaultPoints: number;
+  /** Effective points per activity (family override or pack default). */
+  pointsPerActivity: number;
+  difficulty: LearningDifficulty;
   completedCount: number;
   completed: boolean;
 }
@@ -87,7 +100,16 @@ export interface LearningCatalogItem {
   tags: string[];
   activityCount: number;
   defaultPoints: number;
+  /** Family override — points awarded per correct activity. */
+  pointsPerActivity?: number;
+  difficulty?: LearningDifficulty;
   assignedKidIds: string[];
+}
+
+export interface LearningPackSettings {
+  packId: string;
+  pointsPerActivity: number;
+  difficulty: LearningDifficulty;
 }
 
 export interface LearningCatalogFilters {
@@ -121,6 +143,8 @@ export interface LearningPackDetail {
     category: LearningCategory;
     grade?: number;
     defaultPoints: number;
+    pointsPerActivity: number;
+    difficulty: LearningDifficulty;
     activities: PublicLearningActivity[];
   };
   completedActivityIds: string[];
@@ -144,7 +168,7 @@ export const LEARNING_CATEGORIES: Record<
   LearningCategory,
   { label: string; icon: string; order: number }
 > = {
-  language: { label: 'שפה', icon: '🇮🇱', order: 0 },
+  language: { label: 'עברית', icon: '🇮🇱', order: 0 },
   math: { label: 'חשבון', icon: '🔢', order: 1 },
   english: { label: 'אנגלית', icon: '🇬🇧', order: 2 },
   science: { label: 'מדעים', icon: '🔬', order: 3 },
@@ -165,13 +189,38 @@ export const LEARNING_CATEGORY_ORDER: LearningCategory[] = (
 
 export const LEARNING_PACK_VERSION = 1 as const;
 
-/** Primary label for a pack in lists (prefers English title when set). */
-export function packDisplayTitle(title: LocalizedText, locale: 'en' | 'he' = 'en'): string {
-  if (locale === 'he') return title.he;
-  return title.en || title.he;
+/** Israeli elementary grades: 1=א … 6=ו (stored as numbers in pack JSON). */
+export const GRADE_LETTERS: Record<number, string> = {
+  1: 'א',
+  2: 'ב',
+  3: 'ג',
+  4: 'ד',
+  5: 'ה',
+  6: 'ו',
+};
+
+export const GRADE_OPTIONS = [1, 2, 3, 4, 5, 6] as const;
+
+/** Display grade as Hebrew letter (e.g. 2 → "ב"). Falls back to the number. */
+export function formatGrade(grade: number | null | undefined): string {
+  if (grade == null || !Number.isFinite(grade)) return '';
+  return GRADE_LETTERS[grade] ?? String(grade);
 }
 
-export function packDisplaySubtitle(title: LocalizedText): string | undefined {
-  if (title.en && title.he !== title.en) return title.he;
+/** Label like "כיתה ב". */
+export function formatGradeLabel(grade: number | null | undefined, gradeWord = 'כיתה'): string {
+  const letter = formatGrade(grade);
+  if (!letter) return '';
+  return `${gradeWord} ${letter}`;
+}
+
+/** Primary label for a pack in lists (Hebrew UI by default). */
+export function packDisplayTitle(title: LocalizedText, locale: 'en' | 'he' = 'he'): string {
+  if (locale === 'en') return title.en || title.he;
+  return title.he;
+}
+
+/** Optional secondary label — unused in Hebrew UI (kept for API compatibility). */
+export function packDisplaySubtitle(_title: LocalizedText): string | undefined {
   return undefined;
 }

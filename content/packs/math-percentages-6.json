@@ -1,0 +1,95 @@
+{
+  "id": "math-percentages-6",
+  "version": 1,
+  "title": { "he": "אחוזים", "en": "Percentages" },
+  "category": "math",
+  "grade": 6,
+  "tags": ["percentages", "grade-6"],
+  "defaultPoints": 7,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "מהו 50% מ־80?" },
+      "options": [
+        { "id": "a", "text": "30" },
+        { "id": "b", "text": "40" },
+        { "id": "c", "text": "50" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "50% = חצי → 80÷2 = 40." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "מהו 25% מ־200?" },
+      "options": [
+        { "id": "a", "text": "25" },
+        { "id": "b", "text": "50" },
+        { "id": "c", "text": "75" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "25% = רבע → 200÷4 = 50." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "איך כותבים 0.3 כאחוזים?" },
+      "options": [
+        { "id": "a", "text": "3%" },
+        { "id": "b", "text": "30%" },
+        { "id": "c", "text": "300%" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "מכפילים ב־100: 0.3 × 100 = 30%." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "חולצה עולה 100 ₪ ויש הנחה של 10%. כמה משלמים?" },
+      "options": [
+        { "id": "a", "text": "90 ₪" },
+        { "id": "b", "text": "10 ₪" },
+        { "id": "c", "text": "110 ₪" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "10% מ־100 = 10, ואחרי הנחה: 100−10 = 90." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "מהו 10% מ־350?" },
+      "options": [
+        { "id": "a", "text": "35" },
+        { "id": "b", "text": "3.5" },
+        { "id": "c", "text": "3500" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "10% = עשירית → 350÷10 = 35." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "מתוך 40 תלמידים, 8 נעדרו. איזה אחוז נעדר?" },
+      "options": [
+        { "id": "a", "text": "8%" },
+        { "id": "b", "text": "20%" },
+        { "id": "c", "text": "32%" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "8/40 = 0.2 = 20%." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "100% ממספר כלשהו שווה ל…?" },
+      "options": [
+        { "id": "a", "text": "חצי מהמספר" },
+        { "id": "b", "text": "המספר כולו" },
+        { "id": "c", "text": "כפליים מהמספר" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "100% = השלם כולו." }
+    }
+  ]
+}

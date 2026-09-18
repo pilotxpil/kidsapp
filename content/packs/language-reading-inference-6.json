@@ -1,0 +1,83 @@
+{
+  "id": "language-reading-inference-6",
+  "version": 1,
+  "title": { "he": "הבנת הנקרא — הסקה", "en": "Reading inference" },
+  "category": "language",
+  "grade": 6,
+  "tags": ["reading", "comprehension", "grade-6"],
+  "defaultPoints": 6,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "״דני סגר את המעיל ושם כפפות.״ מה אפשר להסיק?" },
+      "options": [
+        { "id": "a", "text": "חם מאוד בחוץ" },
+        { "id": "b", "text": "כנראה קר בחוץ" },
+        { "id": "c", "text": "דני הולך לשחות" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "מעיל וכפפות מרמזים על קור — זו הסקה מהטקסט." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "מהי מטרת פסקה שמסבירה שלב אחרי שלב איך להכין עוגה?" },
+      "options": [
+        { "id": "a", "text": "לשכנע לקנות עוגה" },
+        { "id": "b", "text": "להדריך / להסביר תהליך" },
+        { "id": "c", "text": "לספר בדיחה" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "טקסט הוראות נועד להדריך את הקורא." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "״הכלב כשכש בזנב כשנועה נכנסה.״ איך הכלב מרגיש?" },
+      "options": [
+        { "id": "a", "text": "מפוחד" },
+        { "id": "b", "text": "שמח / נרגש" },
+        { "id": "c", "text": "רעב בלבד" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "כשכוש זנב בדרך כלל מסמן שמחה." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה ההבדל בין עובדה לדעה?" },
+      "options": [
+        { "id": "a", "text": "אין הבדל" },
+        { "id": "b", "text": "עובדה ניתנת לבדיקה; דעה היא עמדה אישית" },
+        { "id": "c", "text": "דעה תמיד נכונה יותר" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "עובדה אפשר לאמת; דעה מבטאת מה חושבים." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו משפט היא דעה?" },
+      "options": [
+        { "id": "a", "text": "ירושלים היא בירת ישראל." },
+        { "id": "b", "text": "הפיצה הזו היא הכי טעימה בעולם." },
+        { "id": "c", "text": "למים נקודת רתיחה של 100 מעלות (בלחץ רגיל)." }
+      ],
+      "answer": "b",
+      "explanation": { "he": "״הכי טעימה״ תלוי בטעם אישי — זו דעה." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "כשכותבים סיכום של סיפור, חשוב…" },
+      "options": [
+        { "id": "a", "text": "להעתיק את כל המשפטים" },
+        { "id": "b", "text": "לכלול רק את הרעיונות המרכזיים במילים שלנו" },
+        { "id": "c", "text": "להוסיף סוף חדש שלא היה בסיפור" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "סיכום = עיקר הדברים, בקצרה ובמילים שלנו." }
+    }
+  ]
+}

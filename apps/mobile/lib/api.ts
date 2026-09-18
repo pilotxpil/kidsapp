@@ -166,18 +166,21 @@ export const api = {
     return request(`/tasks/${id}`, { method: 'DELETE' });
   },
 
-  completeTask(id: string) {
-    return request(`/tasks/${id}/complete`, { method: 'POST' });
+  completeTask(id: string, proofPhoto?: string) {
+    return request(`/tasks/${id}/complete`, {
+      method: 'POST',
+      body: JSON.stringify(proofPhoto ? { proofPhoto } : {}),
+    });
   },
 
   getPendingCompletions() {
     return request<{ completions: any[] }>('/tasks/completions/pending');
   },
 
-  approveCompletion(id: string, action: 'approve' | 'reject') {
+  approveCompletion(id: string, action: 'approve' | 'reject', rejectNote?: string) {
     return request(`/tasks/completions/${id}/approve`, {
       method: 'POST',
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action, rejectNote }),
     });
   },
 
@@ -222,7 +225,13 @@ export const api = {
     return request<{ kids: User[] }>('/kids');
   },
 
-  createKid(data: { displayName: string; username: string; pin: string; avatar: string }) {
+  createKid(data: {
+    displayName: string;
+    username: string;
+    pin: string;
+    avatar: string;
+    grade?: number;
+  }) {
     return request<{ kid: User }>('/kids', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -238,7 +247,14 @@ export const api = {
 
   updateKid(
     id: string,
-    data: { uiTheme?: UiThemeId; avatar?: string; displayName?: string; username?: string; pin?: string }
+    data: {
+      uiTheme?: UiThemeId;
+      avatar?: string;
+      displayName?: string;
+      username?: string;
+      pin?: string;
+      grade?: number | null;
+    }
   ) {
     return request<{ kid: User }>(`/kids/${id}`, {
       method: 'PATCH',
@@ -305,10 +321,24 @@ export const api = {
     );
   },
 
-  assignLearningPack(packId: string, kidIds: string[]) {
-    return request<{ packId: string; assignedKidIds: string[] }>('/learning/assign', {
+  assignLearningPack(
+    packId: string,
+    kidIds: string[],
+    options?: { pointsPerActivity?: number; difficulty?: import('@kidsapp/shared').LearningDifficulty }
+  ) {
+    return request<{
+      packId: string;
+      assignedKidIds: string[];
+      pointsPerActivity: number;
+      difficulty: import('@kidsapp/shared').LearningDifficulty;
+    }>('/learning/assign', {
       method: 'POST',
-      body: JSON.stringify({ packId, kidIds }),
+      body: JSON.stringify({
+        packId,
+        kidIds,
+        pointsPerActivity: options?.pointsPerActivity,
+        difficulty: options?.difficulty,
+      }),
     });
   },
 
@@ -335,5 +365,75 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ token }),
     });
+  },
+
+  getFamilyChallenge() {
+    return request<{ challenge: import('@kidsapp/shared').FamilyChallenge }>('/family/challenge');
+  },
+
+  updateFamilyChallenge(data: {
+    title?: string;
+    targetCount?: number;
+    rewardTitle?: string;
+    rewardPoints?: number;
+  }) {
+    return request<{ challenge: import('@kidsapp/shared').FamilyChallenge }>('/family/challenge', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  getFamilyAchievements() {
+    return request<{
+      achievements: import('@kidsapp/shared').FamilyAchievementEntry[];
+      weekKingCount: number;
+    }>('/family/achievements');
+  },
+
+  getPersonalGoal(kidId?: string) {
+    const query = kidId ? `?kidId=${kidId}` : '';
+    return request<{ goal: import('@kidsapp/shared').PersonalGoal | null }>(`/kids/goal${query}`);
+  },
+
+  setPersonalGoal(rewardId: string | null, kidId?: string) {
+    return request<{ goal: import('@kidsapp/shared').PersonalGoal | null }>('/kids/goal', {
+      method: 'PUT',
+      body: JSON.stringify({ rewardId, kidId }),
+    });
+  },
+
+  getCosmetics(kidId?: string) {
+    const query = kidId ? `?kidId=${kidId}` : '';
+    return request<{
+      items: import('@kidsapp/shared').CosmeticItem[];
+      owned: string[];
+      equippedFrame?: string;
+      equippedEffect?: string;
+      avatar: string;
+      points: number;
+    }>(`/kids/cosmetics${query}`);
+  },
+
+  buyCosmetic(itemId: string, kidId?: string) {
+    return request<{ kid: User; item: import('@kidsapp/shared').CosmeticItem }>(
+      `/kids/cosmetics/${itemId}/buy`,
+      {
+        method: 'POST',
+        body: JSON.stringify(kidId ? { kidId } : {}),
+      }
+    );
+  },
+
+  equipCosmetic(itemId: string, kidId?: string) {
+    return request<{ kid: User }>(`/kids/cosmetics/${itemId}/equip`, {
+      method: 'POST',
+      body: JSON.stringify(kidId ? { kidId } : {}),
+    });
+  },
+
+  getLearningMistakes(kidId: string) {
+    return request<{ mistakes: import('@kidsapp/shared').LearningMistakeEntry[] }>(
+      `/learning/mistakes?kidId=${kidId}`
+    );
   },
 };

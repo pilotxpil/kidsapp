@@ -1,0 +1,107 @@
+{
+  "id": "english-numbers-days-4",
+  "version": 2,
+  "title": { "he": "אנגלית — זמן ומספרים", "en": "Time and numbers" },
+  "category": "english",
+  "grade": 4,
+  "tags": ["english", "numbers", "time", "days", "grade-4"],
+  "defaultPoints": 7,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "איך כותבים באנגלית את המספר 15?" },
+      "options": [
+        { "id": "a", "text": "fifty" },
+        { "id": "b", "text": "fifteen" },
+        { "id": "c", "text": "fifth" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "fifteen = 15; fifty = 50; fifth = חמישי." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה בא אחרי Wednesday?" },
+      "options": [
+        { "id": "a", "text": "Tuesday" },
+        { "id": "b", "text": "Thursday" },
+        { "id": "c", "text": "Sunday" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "אחרי יום רביעי (Wednesday) בא יום חמישי (Thursday)." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "\"The movie starts at half past four.\" באיזו שעה?" },
+      "options": [
+        { "id": "a", "text": "4:00" },
+        { "id": "b", "text": "4:30" },
+        { "id": "c", "text": "5:30" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "half past four = ארבע וחצי = 4:30." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "איך אומרים ״החודש הבא״?" },
+      "options": [
+        { "id": "a", "text": "last month" },
+        { "id": "b", "text": "next month" },
+        { "id": "c", "text": "every month" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "next = הבא; last = הקודם." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה המשמעות של \"twenty-one\"?" },
+      "options": [
+        { "id": "a", "text": "12" },
+        { "id": "b", "text": "21" },
+        { "id": "c", "text": "31" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "twenty = 20, twenty-one = 21." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "השלימו: Today is Monday. Tomorrow is ___." },
+      "options": [
+        { "id": "a", "text": "Sunday" },
+        { "id": "b", "text": "Tuesday" },
+        { "id": "c", "text": "Friday" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "tomorrow = מחר; אחרי Monday בא Tuesday." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו צורה נכונה לשעה 7:15?" },
+      "options": [
+        { "id": "a", "text": "a quarter past seven" },
+        { "id": "b", "text": "a quarter to seven" },
+        { "id": "c", "text": "half past eight" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "quarter past = ורבע; quarter to = פחות רבע." }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": { "text": "\"How many days are there in a week?\" התשובה:" },
+      "options": [
+        { "id": "a", "text": "Five" },
+        { "id": "b", "text": "Seven" },
+        { "id": "c", "text": "Twelve" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "בשבוע יש 7 ימים — seven." }
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "id": "english-vocab-school-6",
+  "version": 1,
+  "title": { "he": "אנגלית — בית ספר", "en": "English — school vocab" },
+  "category": "english",
+  "grade": 6,
+  "tags": ["english", "vocabulary", "school", "grade-6"],
+  "defaultPoints": 6,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה המשמעות של המילה homework?" },
+      "options": [
+        { "id": "a", "text": "שיעורי בית" },
+        { "id": "b", "text": "חופש גדול" },
+        { "id": "c", "text": "ארוחת בוקר" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "homework = שיעורי בית." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו משפט נכון באנגלית?" },
+      "options": [
+        { "id": "a", "text": "She go to school every day." },
+        { "id": "b", "text": "She goes to school every day." },
+        { "id": "c", "text": "She going to school every day." }
+      ],
+      "answer": "b",
+      "explanation": { "he": "בגוף שלישי יחיד בהווה מוסיפים s לפועל: goes." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה ההפך של difficult?" },
+      "options": [
+        { "id": "a", "text": "hard" },
+        { "id": "b", "text": "easy" },
+        { "id": "c", "text": "heavy" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "difficult = קשה, easy = קל." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה המשמעות של library?" },
+      "options": [
+        { "id": "a", "text": "ספרייה" },
+        { "id": "b", "text": "מעבדה" },
+        { "id": "c", "text": "מגרש ספורט" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "library = ספרייה." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה הצורה בעבר של הפועל write?" },
+      "options": [
+        { "id": "a", "text": "writed" },
+        { "id": "b", "text": "wrote" },
+        { "id": "c", "text": "writtened" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "write → wrote (פועל לא־רגולרי)." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "איך אומרים ״מורה״ באנגלית?" },
+      "options": [
+        { "id": "a", "text": "student" },
+        { "id": "b", "text": "teacher" },
+        { "id": "c", "text": "principal" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "teacher = מורה." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "השלימו: I ___ hungry. (בהווה)" },
+      "options": [
+        { "id": "a", "text": "is" },
+        { "id": "b", "text": "am" },
+        { "id": "c", "text": "are" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "עם I משתמשים ב־am." }
+    }
+  ]
+}

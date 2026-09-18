@@ -1,0 +1,107 @@
+{
+  "id": "math-fractions-basics-4",
+  "version": 2,
+  "title": { "he": "שברים — השוואה וחישוב", "en": "Fractions — compare and compute" },
+  "category": "math",
+  "grade": 4,
+  "tags": ["fractions", "grade-4", "equivalent"],
+  "defaultPoints": 8,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזה שבר שקול ל־⅔?" },
+      "options": [
+        { "id": "a", "text": "4/6" },
+        { "id": "b", "text": "3/6" },
+        { "id": "c", "text": "2/5" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "מכפילים מונה ומכנה ב־2: ⅔ = 4/6." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "מהו השבר המצומצם של 8/12?" },
+      "options": [
+        { "id": "a", "text": "4/6" },
+        { "id": "b", "text": "⅔" },
+        { "id": "c", "text": "¾" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "מחלקים מונה ומכנה ב־4: 8/12 = ⅔." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזה שבר גדול יותר: ⅗ או ⅝?" },
+      "options": [
+        { "id": "a", "text": "⅗" },
+        { "id": "b", "text": "⅝" },
+        { "id": "c", "text": "הם שווים" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "מכנה משותף 40: ⅗=24/40, ⅝=25/40 → ⅝ גדול יותר." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "⅚ − ½ = ?" },
+      "options": [
+        { "id": "a", "text": "⅓" },
+        { "id": "b", "text": "2/6" },
+        { "id": "c", "text": "4/6" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "½=3/6; ⅚−3/6=2/6=⅓." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "יש 24 תלמידים בכיתה. ⅜ מהם בחרו חוג רובוטיקה. כמה תלמידים בחרו?" },
+      "options": [
+        { "id": "a", "text": "8" },
+        { "id": "b", "text": "9" },
+        { "id": "c", "text": "12" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "⅜ מ־24 = (24÷8)×3 = 9." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "איך כותבים כשבר מעורב את 11/4?" },
+      "options": [
+        { "id": "a", "text": "2¾" },
+        { "id": "b", "text": "3¼" },
+        { "id": "c", "text": "2¼" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "11÷4 = 2 עם שארית 3 → 2¾." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "¾ מעוגה + ⅛ מעוגה = כמה מהעוגה?" },
+      "options": [
+        { "id": "a", "text": "⅞" },
+        { "id": "b", "text": "4/8" },
+        { "id": "c", "text": "1" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "¾=6/8; 6/8+1/8=⅞." }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": { "text": "סדרו מהקטן לגדול: ½, ⅖, ⅗" },
+      "options": [
+        { "id": "a", "text": "⅖ → ½ → ⅗" },
+        { "id": "b", "text": "½ → ⅖ → ⅗" },
+        { "id": "c", "text": "⅗ → ½ → ⅖" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "מכנה 10: ⅖=4/10, ½=5/10, ⅗=6/10." }
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import appRoutes from './routes/app';
 import { loadLearningPacks } from './services/learningPacks';
 import { migrateFamilies } from './utils/migrateFamilies';
 import { migrateUserIndexes } from './utils/migrateUserIndexes';
+import { startScheduledJobs } from './services/cron';
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
@@ -50,6 +51,7 @@ async function start() {
     await migrateFamilies();
     await migrateUserIndexes();
     loadLearningPacks();
+    startScheduledJobs();
 
     app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`Server running on http://0.0.0.0:${PORT}`);

@@ -19,7 +19,7 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
-import { AVATARS, MAX_MANUAL_BONUS_POINTS } from '@kidsapp/shared';
+import { AVATARS, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS, formatGradeLabel } from '@kidsapp/shared';
 import type { User } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
@@ -40,6 +40,7 @@ export default function ParentKidsScreen() {
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
   const [avatar, setAvatar] = useState(AVATARS[0]);
+  const [grade, setGrade] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [qrKid, setQrKid] = useState<User | null>(null);
   const [bonusKid, setBonusKid] = useState<User | null>(null);
@@ -155,6 +156,18 @@ export default function ParentKidsScreen() {
         },
         avatarActive: { borderColor: colors.primary },
         avatarEmoji: { fontSize: 24 },
+        gradeChip: {
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm,
+          borderRadius: borderRadius.md,
+          backgroundColor: colors.bgCardLight,
+          borderWidth: 2,
+          borderColor: 'transparent',
+        },
+        gradeChipActive: { borderColor: colors.primary, backgroundColor: colors.primary + '33' },
+        gradeChipText: { color: colors.textMuted, fontWeight: '600', fontSize: 14 },
+        gradeChipTextActive: { color: colors.text },
+        hint: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.sm, writingDirection: 'rtl', textAlign: 'right', width: '100%' },
         modalActions: {
           gap: spacing.sm,
           padding: spacing.lg,
@@ -179,6 +192,7 @@ export default function ParentKidsScreen() {
     setUsername('');
     setPin('');
     setAvatar(AVATARS[0]);
+    setGrade(null);
   };
 
   const openCreate = () => {
@@ -192,6 +206,7 @@ export default function ParentKidsScreen() {
     setUsername(kid.username ?? '');
     setPin('');
     setAvatar(kid.avatar || AVATARS[0]);
+    setGrade(kid.grade ?? null);
     setModalVisible(true);
   };
 
@@ -223,18 +238,23 @@ export default function ParentKidsScreen() {
           displayName: displayName.trim(),
           username: username.trim(),
           avatar,
+          grade,
           ...(pin.length > 0 ? { pin } : {}),
         });
+        closeModal();
+        await load();
       } else {
-        await api.createKid({
+        const res = await api.createKid({
           displayName: displayName.trim(),
           username: username.trim(),
           pin,
           avatar,
+          ...(grade != null ? { grade } : {}),
         });
+        closeModal();
+        await load();
+        setQrKid(res.kid);
       }
-      closeModal();
-      await load();
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -297,6 +317,11 @@ export default function ParentKidsScreen() {
                 <View style={styles.kidInfo}>
                   <Text style={[styles.kidName, rtl.textFull]}>{kid.displayName}</Text>
                   <Text style={[styles.kidUsername, rtl.textFull]}>@{kid.username}</Text>
+                  {kid.grade ? (
+                    <Text style={[styles.kidUsername, rtl.textFull]}>
+                      {formatGradeLabel(kid.grade, t('kidGrade'))}
+                    </Text>
+                  ) : null}
                   <View style={[styles.kidStats, rtl.row]}>
                     <Text style={styles.kidStat}>{kid.points} {pointsEmoji}</Text>
                     <Text style={styles.kidStat}>רמה {kid.level}</Text>
@@ -304,8 +329,12 @@ export default function ParentKidsScreen() {
                   </View>
                 </View>
                 <Text style={styles.kidAvatar}>{kid.avatar}</Text>
-                <TouchableOpacity style={styles.qrBtn} onPress={() => setQrKid(kid)}>
-                  <Text style={styles.qrIcon}>📷</Text>
+                <TouchableOpacity
+                  style={styles.qrBtn}
+                  onPress={() => setQrKid(kid)}
+                  accessibilityLabel={t('showKidLoginQr')}
+                >
+                  <Text style={styles.qrIcon}>📤</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.editBtn} onPress={() => openEdit(kid)}>
                   <Text style={styles.editIcon}>✏️</Text>
@@ -350,6 +379,7 @@ export default function ParentKidsScreen() {
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
+                autoCorrect={false}
                 placeholder="yonatan"
               />
               <Input
@@ -359,6 +389,30 @@ export default function ParentKidsScreen() {
                 keyboardType="number-pad"
                 maxLength={4}
               />
+
+              <Text style={styles.label}>{t('kidGrade')}</Text>
+              <Text style={styles.hint}>{t('kidGradeHint')}</Text>
+              <View style={styles.chipRow}>
+                <TouchableOpacity
+                  style={[styles.gradeChip, grade === null && styles.gradeChipActive]}
+                  onPress={() => setGrade(null)}
+                >
+                  <Text style={[styles.gradeChipText, grade === null && styles.gradeChipTextActive]}>
+                    {t('noGrade')}
+                  </Text>
+                </TouchableOpacity>
+                {GRADE_OPTIONS.map((g) => (
+                  <TouchableOpacity
+                    key={g}
+                    style={[styles.gradeChip, grade === g && styles.gradeChipActive]}
+                    onPress={() => setGrade(g)}
+                  >
+                    <Text style={[styles.gradeChipText, grade === g && styles.gradeChipTextActive]}>
+                      {formatGradeLabel(g, t('kidGrade'))}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
               <Text style={styles.label}>{t('selectAvatar')}</Text>
               <View style={styles.chipRow}>

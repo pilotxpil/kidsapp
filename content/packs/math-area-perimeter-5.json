@@ -1,0 +1,107 @@
+{
+  "id": "math-area-perimeter-5",
+  "version": 2,
+  "title": { "he": "שטח והיקף — אתגר", "en": "Area and perimeter challenge" },
+  "category": "math",
+  "grade": 5,
+  "tags": ["geometry", "area", "perimeter", "composite", "grade-5"],
+  "defaultPoints": 8,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "מלבן באורך 12 ס״מ ורוחב 7 ס״מ. מה ההיקף?" },
+      "options": [
+        { "id": "a", "text": "38 ס״מ" },
+        { "id": "b", "text": "84 ס״מ" },
+        { "id": "c", "text": "19 ס״מ" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "2×(12+7)=2×19=38." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "היקף ריבוע הוא 36 מ׳. מה שטח הריבוע?" },
+      "options": [
+        { "id": "a", "text": "36 מ״ר" },
+        { "id": "b", "text": "81 מ״ר" },
+        { "id": "c", "text": "9 מ״ר" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "צלע = 36÷4 = 9; שטח = 9×9 = 81." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "שטח מלבן 48 סמ״ר, הרוחב 6 ס״מ. מה האורך?" },
+      "options": [
+        { "id": "a", "text": "8 ס״מ" },
+        { "id": "b", "text": "42 ס״מ" },
+        { "id": "c", "text": "12 ס״מ" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "אורך = שטח÷רוחב = 48÷6 = 8." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "משולש עם בסיס 10 ס״מ וגובה 6 ס״מ — מה השטח?" },
+      "options": [
+        { "id": "a", "text": "60 סמ״ר" },
+        { "id": "b", "text": "30 סמ״ר" },
+        { "id": "c", "text": "16 סמ״ר" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "שטח משולש = (בסיס×גובה)÷2 = 60÷2 = 30." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "צורת L מורכבת ממלבן 8×3 וממלבן 4×3 (באותן יחידות, בלי חפיפה). מה השטח הכולל?" },
+      "options": [
+        { "id": "a", "text": "36" },
+        { "id": "b", "text": "24" },
+        { "id": "c", "text": "48" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "8×3=24, 4×3=12; סה״כ 36." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "גדר מסביב לגינה מרובעת באורך צלע 15 מ׳. כמה מטר גדר צריך (בלי שער)?" },
+      "options": [
+        { "id": "a", "text": "30 מ׳" },
+        { "id": "b", "text": "60 מ׳" },
+        { "id": "c", "text": "225 מ׳" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "היקף = 4×15 = 60 מ׳." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "ריבוע ששטחו 64 סמ״ר. מה היקפו?" },
+      "options": [
+        { "id": "a", "text": "16 ס״מ" },
+        { "id": "b", "text": "32 ס״מ" },
+        { "id": "c", "text": "64 ס״מ" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "צלע = √64 = 8; היקף = 4×8 = 32." }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": { "text": "מלבן ומרובע בעלי אותו היקף 40 ס״מ. לריבוע צלע 10. האם ייתכן מלבן שאינו ריבוע עם היקף זה?" },
+      "options": [
+        { "id": "a", "text": "לא, רק ריבוע אפשרי" },
+        { "id": "b", "text": "כן, למשל 12×8" },
+        { "id": "c", "text": "כן, רק אם השטח זהה תמיד" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "2×(12+8)=40. מלבנים שונים יכולים לחלוק אותו היקף." }
+    }
+  ]
+}

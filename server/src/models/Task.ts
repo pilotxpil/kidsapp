@@ -10,6 +10,7 @@ export interface ITask extends Document {
   assignedTo: Types.ObjectId;
   icon: string;
   isActive: boolean;
+  learningPackId?: string;
   createdAt: Date;
 }
 
@@ -28,6 +29,7 @@ const taskSchema = new Schema<ITask>(
     assignedTo: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     icon: { type: String, default: '⭐' },
     isActive: { type: Boolean, default: true },
+    learningPackId: { type: String },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

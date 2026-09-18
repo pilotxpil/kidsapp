@@ -3,7 +3,9 @@ import type { User } from '@kidsapp/shared';
 import { api } from './api';
 import { registerPushNotifications, unregisterPushNotifications } from './push';
 
-type UserProgressPatch = Partial<Pick<User, 'points' | 'level' | 'xp' | 'streak' | 'badges'>>;
+type UserProgressPatch = Partial<
+  Pick<User, 'points' | 'level' | 'xp' | 'streak' | 'badges' | 'learningStreak' | 'avatar' | 'ownedCosmetics' | 'equippedFrame' | 'equippedEffect'>
+>;
 
 interface AuthContextType {
   user: User | null;

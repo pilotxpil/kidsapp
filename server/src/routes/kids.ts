@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { UI_THEME_IDS, AVATARS, DEFAULT_KID_THEME_ID, MAX_MANUAL_BONUS_POINTS } from '@kidsapp/shared';
+import { UI_THEME_IDS, AVATARS, DEFAULT_KID_THEME_ID, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS } from '@kidsapp/shared';
 import { authenticate, requireParent } from '../middleware/auth';
 import { User } from '../models/User';
 import { Task } from '../models/Task';
@@ -31,9 +31,19 @@ router.get('/', authenticate, requireParent, async (req: Request, res: Response)
   }
 });
 
+function parseKidGrade(raw: unknown): number | null | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === null || raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || !(GRADE_OPTIONS as readonly number[]).includes(n)) {
+    return undefined; // signal invalid — caller checks
+  }
+  return n;
+}
+
 router.post('/', authenticate, requireParent, async (req: Request, res: Response) => {
   try {
-    const { displayName, username, pin, avatar } = req.body;
+    const { displayName, username, pin, avatar, grade } = req.body;
 
     if (!displayName || !username || !pin) {
       return res.status(400).json({ error: 'חסרים שדות חובה' });
@@ -42,6 +52,15 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
     const existing = await User.findOne({ username, familyId: req.user!.familyId });
     if (existing) {
       return res.status(400).json({ error: 'שם משתמש כבר קיים' });
+    }
+
+    let gradeVal: number | undefined;
+    if (grade !== undefined && grade !== null && grade !== '') {
+      const parsed = parseKidGrade(grade);
+      if (parsed === undefined) {
+        return res.status(400).json({ error: 'כיתה לא תקינה (א–ו)' });
+      }
+      gradeVal = parsed ?? undefined;
     }
 
     const pinHash = await bcrypt.hash(pin, 10);
@@ -53,6 +72,7 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
       pinHash,
       avatar: avatar || '🐷',
       uiTheme: DEFAULT_KID_THEME_ID,
+      ...(gradeVal != null ? { grade: gradeVal } : {}),
     });
 
     res.status(201).json({ kid: formatUser(kid) });
@@ -112,7 +132,7 @@ router.patch('/:id', authenticate, async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'אין הרשאה' });
     }
 
-    const { uiTheme, avatar, displayName, username, pin } = req.body;
+    const { uiTheme, avatar, displayName, username, pin, grade } = req.body;
 
     if (uiTheme !== undefined) {
       if (!UI_THEME_IDS.includes(uiTheme)) {
@@ -157,10 +177,23 @@ router.patch('/:id', authenticate, async (req: Request, res: Response) => {
         }
         kid.pinHash = await bcrypt.hash(String(pin), 10);
       }
+      if (grade !== undefined) {
+        if (grade === null || grade === '') {
+          kid.grade = undefined;
+          await User.updateOne({ _id: kid._id }, { $unset: { grade: 1 } });
+        } else {
+          const parsed = parseKidGrade(grade);
+          if (parsed === undefined || parsed === null) {
+            return res.status(400).json({ error: 'כיתה לא תקינה (א–ו)' });
+          }
+          kid.grade = parsed;
+        }
+      }
     }
 
     await kid.save();
-    res.json({ kid: formatUser(kid) });
+    const fresh = await User.findById(kid._id);
+    res.json({ kid: formatUser(fresh ?? kid) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'שגיאה בעדכון פרופיל' });
@@ -348,7 +381,7 @@ router.get('/leaderboard', authenticate, async (req: Request, res: Response) => 
   try {
     const kids = await User.find({ familyId: req.user!.familyId, role: 'kid' })
       .sort({ points: -1 })
-      .select('displayName avatar points level streak badges');
+      .select('displayName avatar points level streak learningStreak badges equippedFrame equippedEffect');
 
     res.json({
       leaderboard: kids.map((k, i) => ({
@@ -359,11 +392,205 @@ router.get('/leaderboard', authenticate, async (req: Request, res: Response) => 
         points: k.points,
         level: k.level,
         streak: k.streak,
+        learningStreak: k.learningStreak ?? 0,
         badges: k.badges,
+        equippedFrame: k.equippedFrame,
+        equippedEffect: k.equippedEffect,
       })),
     });
   } catch (err) {
     res.status(500).json({ error: 'שגיאה בטעינת לידרבורד' });
+  }
+});
+
+router.get('/cosmetics', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { COSMETIC_ITEMS } = await import('@kidsapp/shared');
+    const targetKidId = req.user!.role === 'kid' ? req.user!.userId : (req.query.kidId as string);
+    if (!targetKidId) return res.status(400).json({ error: 'נדרש kidId' });
+
+    const kid = await User.findOne({
+      _id: targetKidId,
+      familyId: req.user!.familyId,
+      role: 'kid',
+    });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    if (req.user!.role === 'kid' && req.user!.userId !== targetKidId) {
+      return res.status(403).json({ error: 'אין הרשאה' });
+    }
+
+    res.json({
+      items: COSMETIC_ITEMS,
+      owned: kid.ownedCosmetics ?? [],
+      equippedFrame: kid.equippedFrame,
+      equippedEffect: kid.equippedEffect,
+      avatar: kid.avatar,
+      points: kid.points,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטעינת חנות הדמות' });
+  }
+});
+
+router.post('/cosmetics/:itemId/buy', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { COSMETIC_ITEMS } = await import('@kidsapp/shared');
+    const { deductPoints } = await import('../services/gamification');
+    const kidId = req.user!.role === 'kid' ? req.user!.userId : req.body.kidId;
+    if (!kidId) return res.status(400).json({ error: 'נדרש kidId' });
+    if (req.user!.role === 'kid' && req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'אין הרשאה' });
+    }
+
+    const item = COSMETIC_ITEMS.find((c) => c.id === req.params.itemId);
+    if (!item) return res.status(404).json({ error: 'פריט לא נמצא' });
+
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+
+    const owned = kid.ownedCosmetics ?? [];
+    if (owned.includes(item.id)) {
+      return res.status(400).json({ error: 'הפריט כבר בבעלותך' });
+    }
+    if (kid.points < item.cost) {
+      return res.status(400).json({ error: 'אין מספיק נקודות' });
+    }
+
+    await deductPoints(kid, item.cost, `קנייה: ${item.label}`, item.id);
+    kid.ownedCosmetics = [...owned, item.id];
+    if (item.type === 'avatar') {
+      kid.avatar = item.icon;
+    }
+    await kid.save();
+
+    res.json({ kid: formatUser(kid), item });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message || 'שגיאה בקניית פריט' });
+  }
+});
+
+router.post('/cosmetics/:itemId/equip', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { COSMETIC_ITEMS } = await import('@kidsapp/shared');
+    const kidId = req.user!.role === 'kid' ? req.user!.userId : req.body.kidId;
+    if (!kidId) return res.status(400).json({ error: 'נדרש kidId' });
+    if (req.user!.role === 'kid' && req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'אין הרשאה' });
+    }
+
+    const item = COSMETIC_ITEMS.find((c) => c.id === req.params.itemId);
+    if (!item) return res.status(404).json({ error: 'פריט לא נמצא' });
+
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    if (!(kid.ownedCosmetics ?? []).includes(item.id)) {
+      return res.status(400).json({ error: 'יש לקנות את הפריט קודם' });
+    }
+
+    if (item.type === 'avatar') kid.avatar = item.icon;
+    if (item.type === 'frame') kid.equippedFrame = item.id;
+    if (item.type === 'effect') kid.equippedEffect = item.id;
+    await kid.save();
+
+    res.json({ kid: formatUser(kid) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בציוד פריט' });
+  }
+});
+
+router.get('/goal', authenticate, async (req: Request, res: Response) => {
+  try {
+    const targetKidId = req.user!.role === 'kid' ? req.user!.userId : (req.query.kidId as string);
+    if (!targetKidId) return res.status(400).json({ error: 'נדרש kidId' });
+
+    const kid = await User.findOne({
+      _id: targetKidId,
+      familyId: req.user!.familyId,
+      role: 'kid',
+    });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    if (req.user!.role === 'kid' && req.user!.userId !== targetKidId) {
+      return res.status(403).json({ error: 'אין הרשאה' });
+    }
+
+    if (!kid.goalRewardId) {
+      return res.json({ goal: null });
+    }
+
+    const reward = await Reward.findOne({
+      _id: kid.goalRewardId,
+      familyId: req.user!.familyId,
+      isActive: true,
+    });
+    if (!reward) {
+      kid.goalRewardId = undefined;
+      await kid.save();
+      return res.json({ goal: null });
+    }
+
+    const progress = reward.cost > 0 ? Math.min(1, kid.points / reward.cost) : 1;
+    res.json({
+      goal: {
+        rewardId: reward._id.toString(),
+        rewardTitle: reward.title,
+        rewardCost: reward.cost,
+        rewardIcon: reward.icon,
+        currentPoints: kid.points,
+        progress,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטעינת מטרה' });
+  }
+});
+
+router.put('/goal', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.user!.role === 'kid' ? req.user!.userId : req.body.kidId;
+    if (!kidId) return res.status(400).json({ error: 'נדרש kidId' });
+    if (req.user!.role === 'kid' && req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'אין הרשאה' });
+    }
+
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+
+    const { rewardId } = req.body;
+    if (rewardId === null || rewardId === '') {
+      kid.goalRewardId = undefined;
+      await kid.save();
+      return res.json({ goal: null, kid: formatUser(kid) });
+    }
+
+    const reward = await Reward.findOne({
+      _id: rewardId,
+      familyId: req.user!.familyId,
+      isActive: true,
+    });
+    if (!reward) return res.status(404).json({ error: 'פרס לא נמצא' });
+
+    kid.goalRewardId = reward._id;
+    await kid.save();
+
+    const progress = reward.cost > 0 ? Math.min(1, kid.points / reward.cost) : 1;
+    res.json({
+      goal: {
+        rewardId: reward._id.toString(),
+        rewardTitle: reward.title,
+        rewardCost: reward.cost,
+        rewardIcon: reward.icon,
+        currentPoints: kid.points,
+        progress,
+      },
+      kid: formatUser(kid),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בשמירת מטרה' });
   }
 });
 
@@ -394,6 +621,8 @@ router.get('/dashboard', authenticate, requireParent, async (req: Request, res: 
           kidId: c.kidId.toString(),
           status: c.status,
           submittedAt: c.submittedAt.toISOString(),
+          proofPhoto: c.proofPhoto,
+          rejectNote: c.rejectNote,
           task: c.taskId && typeof c.taskId === 'object' ? {
             title: (c.taskId as any).title,
             points: (c.taskId as any).points,

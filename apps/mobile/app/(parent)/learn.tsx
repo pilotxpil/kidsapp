@@ -20,16 +20,23 @@ import { SectionHeader } from '../../components/ThemedHero';
 import {
   LEARNING_CATEGORIES,
   LEARNING_CATEGORY_ORDER,
+  LEARNING_DIFFICULTIES,
+  LEARNING_DIFFICULTY_LABELS,
+  GRADE_OPTIONS,
+  formatGradeLabel,
   packDisplayTitle,
   packDisplaySubtitle,
 } from '@kidsapp/shared';
-import type { LearningCatalogItem, LearningCategory, User } from '@kidsapp/shared';
+import type {
+  LearningCatalogItem,
+  LearningCategory,
+  LearningDifficulty,
+  User,
+} from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
-
-const GRADE_OPTIONS = [1, 2, 3, 4, 5, 6];
 
 function groupByCategory(items: LearningCatalogItem[]): Map<LearningCategory, LearningCatalogItem[]> {
   const map = new Map<LearningCategory, LearningCatalogItem[]>();
@@ -50,7 +57,12 @@ export default function ParentLearnScreen() {
   const [gradeFilter, setGradeFilter] = useState<number | null>(null);
   const [assignItem, setAssignItem] = useState<LearningCatalogItem | null>(null);
   const [assignedIds, setAssignedIds] = useState<string[]>([]);
+  const [assignPoints, setAssignPoints] = useState('5');
+  const [assignDifficulty, setAssignDifficulty] = useState<LearningDifficulty>('medium');
   const [saving, setSaving] = useState(false);
+  const [mistakesKidId, setMistakesKidId] = useState<string | null>(null);
+  const [mistakes, setMistakes] = useState<import('@kidsapp/shared').LearningMistakeEntry[]>([]);
+  const [mistakesLoading, setMistakesLoading] = useState(false);
 
   const styles = useMemo(
     () =>
@@ -123,6 +135,7 @@ export default function ParentLearnScreen() {
   const loadKids = useCallback(async () => {
     const res = await api.getKids();
     setKids(res.kids);
+    setMistakesKidId((prev) => prev || res.kids[0]?._id || null);
   }, []);
 
   const loadCatalog = useCallback(async () => {
@@ -143,11 +156,36 @@ export default function ParentLearnScreen() {
     return () => clearTimeout(timer);
   }, [loadCatalog]);
 
+  useEffect(() => {
+    if (!mistakesKidId) {
+      setMistakes([]);
+      return;
+    }
+    let cancelled = false;
+    setMistakesLoading(true);
+    api
+      .getLearningMistakes(mistakesKidId)
+      .then((res) => {
+        if (!cancelled) setMistakes(res.mistakes);
+      })
+      .catch(() => {
+        if (!cancelled) setMistakes([]);
+      })
+      .finally(() => {
+        if (!cancelled) setMistakesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mistakesKidId]);
+
   const grouped = useMemo(() => groupByCategory(items), [items]);
 
   const openAssign = (item: LearningCatalogItem) => {
     setAssignItem(item);
     setAssignedIds([...item.assignedKidIds]);
+    setAssignPoints(String(item.pointsPerActivity ?? item.defaultPoints));
+    setAssignDifficulty(item.difficulty ?? 'medium');
   };
 
   const toggleKid = (kidId: string) => {
@@ -158,9 +196,17 @@ export default function ParentLearnScreen() {
 
   const saveAssign = async () => {
     if (!assignItem || saving) return;
+    const points = parseInt(assignPoints, 10);
+    if (!Number.isFinite(points) || points < 1 || points > 100) {
+      alert(t('learningPointsInvalid'));
+      return;
+    }
     setSaving(true);
     try {
-      await api.assignLearningPack(assignItem.id, assignedIds);
+      await api.assignLearningPack(assignItem.id, assignedIds, {
+        pointsPerActivity: points,
+        difficulty: assignDifficulty,
+      });
       setAssignItem(null);
       await loadCatalog();
     } catch (err: unknown) {
@@ -178,6 +224,41 @@ export default function ParentLearnScreen() {
       <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
         <SectionHeader title={t('learningCatalog')} icon="📚" />
         <Text style={[styles.hint, rtl.text]}>{t('learningCatalogHint')}</Text>
+
+        {kids.length > 0 ? (
+          <View style={{ marginBottom: spacing.lg }}>
+            <SectionHeader title={t('learningMistakes')} icon="📝" />
+            <Text style={[styles.hint, rtl.text]}>{t('learningMistakesHint')}</Text>
+            <View style={styles.chipRow}>
+              {kids.map((kid) => (
+                <TouchableOpacity
+                  key={kid._id}
+                  style={[styles.chip, mistakesKidId === kid._id && styles.chipActive]}
+                  onPress={() => setMistakesKidId(kid._id)}
+                >
+                  <Text style={[styles.chipText, mistakesKidId === kid._id && styles.chipTextActive]}>
+                    {kid.avatar} {kid.displayName}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {mistakesLoading ? (
+              <Text style={styles.empty}>...</Text>
+            ) : mistakes.length === 0 ? (
+              <Text style={[styles.empty, rtl.text]}>{t('noLearningMistakes')}</Text>
+            ) : (
+              mistakes.slice(0, 15).map((m) => (
+                <Card key={`${m.packId}:${m.activityId}`} style={styles.packCard}>
+                  <Text style={[styles.packTitle, rtl.text]}>{m.packTitle}</Text>
+                  <Text style={[styles.packMeta, rtl.text]}>{m.questionPreview}</Text>
+                  <Text style={[styles.packMeta, rtl.text]}>
+                    {t('mistakeCount').replace('{n}', String(m.mistakeCount))}
+                  </Text>
+                </Card>
+              ))
+            )}
+          </View>
+        ) : null}
 
         <Input
           label={t('searchLearning')}
@@ -227,7 +308,7 @@ export default function ParentLearnScreen() {
                 onPress={() => setGradeFilter(gradeFilter === g ? null : g)}
               >
                 <Text style={[styles.chipText, gradeFilter === g && styles.chipTextActive]}>
-                  {t('grade')} {g}
+                  {formatGradeLabel(g, t('grade'))}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -257,8 +338,11 @@ export default function ParentLearnScreen() {
                       ) : null}
                       <Text style={[styles.packMeta, rtl.text]}>
                         {item.activityCount} {t('questions')}
-                        {item.grade ? ` · ${t('grade')} ${item.grade}` : ''}
-                        {` · ${item.defaultPoints} ${pointsEmoji}`}
+                        {item.grade ? ` · ${formatGradeLabel(item.grade, t('grade'))}` : ''}
+                        {` · ${item.pointsPerActivity ?? item.defaultPoints} ${pointsEmoji}`}
+                        {item.difficulty
+                          ? ` · ${LEARNING_DIFFICULTY_LABELS[item.difficulty]}`
+                          : ''}
                       </Text>
                       <View style={[styles.assignRow, rtl.row, { flexWrap: 'wrap' }]}>
                         {item.assignedKidIds.length > 0 ? (
@@ -292,6 +376,37 @@ export default function ParentLearnScreen() {
               <Text style={[styles.modalTitle, rtl.text]}>
                 {assignItem ? packDisplayTitle(assignItem.title) : ''}
               </Text>
+
+              <Input
+                label={t('learningPointsPerQuestion')}
+                value={assignPoints}
+                onChangeText={setAssignPoints}
+                keyboardType="number-pad"
+                placeholder={String(assignItem?.defaultPoints ?? 5)}
+              />
+
+              <Text style={[styles.packMeta, rtl.text, { marginBottom: spacing.sm }]}>
+                {t('learningDifficulty')}
+              </Text>
+              <View style={[styles.chipRow, { marginBottom: spacing.md }]}>
+                {LEARNING_DIFFICULTIES.map((level) => (
+                  <TouchableOpacity
+                    key={level}
+                    style={[styles.chip, assignDifficulty === level && styles.chipActive]}
+                    onPress={() => setAssignDifficulty(level)}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        assignDifficulty === level && styles.chipTextActive,
+                      ]}
+                    >
+                      {LEARNING_DIFFICULTY_LABELS[level]}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
               <Text style={[styles.packMeta, rtl.text, { marginBottom: spacing.md }]}>
                 {t('selectKidsToAssign')}
               </Text>

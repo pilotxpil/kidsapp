@@ -62,8 +62,20 @@ export default function ParentLoginScreen() {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="username"
+          autoComplete="email"
         />
-        <Input label={t('password')} value={password} onChangeText={setPassword} secureTextEntry />
+        <Input
+          label={t('password')}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="password"
+          autoComplete="password"
+        />
         <Button title={t('login')} onPress={handleLogin} loading={loading} />
         <BouncyPressable onPress={() => router.push('/parent-register')} style={styles.link}>
           <RtlText style={styles.linkText} wrap={false}>

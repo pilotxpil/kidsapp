@@ -8,6 +8,8 @@ export interface ITaskCompletion extends Document {
   submittedAt: Date;
   reviewedAt?: Date;
   reviewedBy?: Types.ObjectId;
+  proofPhoto?: string;
+  rejectNote?: string;
 }
 
 const taskCompletionSchema = new Schema<ITaskCompletion>({
@@ -18,6 +20,8 @@ const taskCompletionSchema = new Schema<ITaskCompletion>({
   submittedAt: { type: Date, default: Date.now },
   reviewedAt: { type: Date },
   reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  proofPhoto: { type: String },
+  rejectNote: { type: String },
 });
 
 export const TaskCompletion = mongoose.model<ITaskCompletion>('TaskCompletion', taskCompletionSchema);

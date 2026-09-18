@@ -8,7 +8,7 @@ import { Card } from '../../../components/Card';
 import { PointsBadge } from '../../../components/Card';
 import { ThemedScreen } from '../../../components/ThemedScreen';
 import { SectionHeader } from '../../../components/ThemedHero';
-import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, packDisplayTitle, packDisplaySubtitle } from '@kidsapp/shared';
+import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, LEARNING_DIFFICULTY_LABELS, packDisplayTitle, packDisplaySubtitle, formatGradeLabel } from '@kidsapp/shared';
 import type { LearningPackSummary, LearningCategory } from '@kidsapp/shared';
 import { spacing } from '../../../constants/theme';
 import { useTheme } from '../../../lib/theme-context';
@@ -142,9 +142,9 @@ export default function LearnIndexScreen() {
                             <View style={[styles.pointsMeta, rtl.rowInline]}>
                               <Text style={[styles.packMeta, rtl.text, { marginTop: 0 }]}>
                                 {pack.activityCount} {t('questions')}
-                                {pack.grade ? ` · ${t('grade')} ${pack.grade}` : ''}
-                                {' · '}
-                                {pack.defaultPoints}
+                                {pack.grade ? ` · ${formatGradeLabel(pack.grade, t('grade'))}` : ''}
+                                {` · ${LEARNING_DIFFICULTY_LABELS[pack.difficulty]} · `}
+                                {pack.pointsPerActivity}
                               </Text>
                               <PointsMark size={14} />
                             </View>

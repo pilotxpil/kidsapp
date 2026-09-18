@@ -146,18 +146,63 @@ export interface KidLoginQrPayload {
   displayName?: string;
 }
 
-export function buildKidLoginQrPayload(
+/** Public web origin for kid login links (production). */
+export const KID_LOGIN_WEB_ORIGIN = 'https://kids.synaboard.com';
+
+function kidLoginQuery(
   familyCode: string,
   username: string,
   displayName?: string
 ): string {
-  const payload: KidLoginQrPayload = {
+  const params = new URLSearchParams({
+    code: familyCode.trim(),
+    user: username.trim(),
+  });
+  if (displayName?.trim()) params.set('name', displayName.trim());
+  return params.toString();
+}
+
+/** HTTPS link the kid can open (web or phone) — fills family code + username. */
+export function buildKidLoginShareLink(
+  familyCode: string,
+  username: string,
+  displayName?: string,
+  origin: string = KID_LOGIN_WEB_ORIGIN
+): string {
+  const base = origin.replace(/\/$/, '');
+  return `${base}/kid-login?${kidLoginQuery(familyCode, username, displayName)}`;
+}
+
+/** App-scheme deep link for installed clients. */
+export function buildKidLoginDeepLink(
+  familyCode: string,
+  username: string,
+  displayName?: string
+): string {
+  return `kidsquest://kid-login?${kidLoginQuery(familyCode, username, displayName)}`;
+}
+
+/** QR / share payload — prefer HTTPS so camera scan opens the login page. */
+export function buildKidLoginQrPayload(
+  familyCode: string,
+  username: string,
+  displayName?: string,
+  origin: string = KID_LOGIN_WEB_ORIGIN
+): string {
+  return buildKidLoginShareLink(familyCode, username, displayName, origin);
+}
+
+function payloadFromParams(params: URLSearchParams): KidLoginQrPayload | null {
+  const familyCode = (params.get('code') ?? params.get('familyCode') ?? '').trim();
+  const username = (params.get('user') ?? params.get('username') ?? '').trim();
+  if (!familyCode || !username) return null;
+  const name = params.get('name') ?? params.get('displayName');
+  return {
     v: 1,
-    familyCode: familyCode.trim(),
-    username: username.trim(),
-    ...(displayName ? { displayName } : {}),
+    familyCode,
+    username,
+    displayName: name?.trim() || undefined,
   };
-  return JSON.stringify(payload);
 }
 
 export function parseKidLoginQr(raw: string): KidLoginQrPayload | null {
@@ -165,14 +210,15 @@ export function parseKidLoginQr(raw: string): KidLoginQrPayload | null {
   if (!trimmed) return null;
 
   try {
-    if (trimmed.startsWith('kidsquest://')) {
-      const query = trimmed.includes('?') ? trimmed.split('?')[1] : '';
-      const params = new URLSearchParams(query);
-      const familyCode = params.get('code') ?? params.get('familyCode') ?? '';
-      const username = params.get('user') ?? params.get('username') ?? '';
-      if (familyCode && username) {
-        return { v: 1, familyCode, username, displayName: params.get('name') ?? undefined };
-      }
+    if (
+      trimmed.startsWith('kidsquest://') ||
+      trimmed.startsWith('http://') ||
+      trimmed.startsWith('https://') ||
+      trimmed.includes('/kid-login')
+    ) {
+      const query = trimmed.includes('?') ? trimmed.split('?')[1].split('#')[0] : '';
+      const fromUrl = payloadFromParams(new URLSearchParams(query));
+      if (fromUrl) return fromUrl;
     }
 
     const data = JSON.parse(trimmed) as Partial<KidLoginQrPayload>;
@@ -204,8 +250,16 @@ export interface User {
   xp: number;
   streak: number;
   lastActiveDate?: string;
+  learningStreak: number;
+  lastLearningDate?: string;
   badges: string[];
   uiTheme?: UiThemeId;
+  ownedCosmetics: string[];
+  equippedFrame?: string;
+  equippedEffect?: string;
+  goalRewardId?: string;
+  /** Kid school grade 1–6 (כיתה א–ו). */
+  grade?: number;
   createdAt: string;
 }
 
@@ -220,6 +274,8 @@ export interface Task {
   assignedTo: string;
   icon: string;
   isActive: boolean;
+  /** When set, completing the linked learning pack auto-approves this homework task. */
+  learningPackId?: string;
   createdAt: string;
   completionStatus?: TaskCompletionStatus;
 }
@@ -233,6 +289,10 @@ export interface TaskCompletion {
   submittedAt: string;
   reviewedAt?: string;
   reviewedBy?: string;
+  /** Optional kid proof photo (data URL or path). */
+  proofPhoto?: string;
+  /** Parent note when rejecting. */
+  rejectNote?: string;
   task?: Task;
   kid?: User;
 }
@@ -425,7 +485,9 @@ export type PushNotificationType =
   | 'reward_approved'
   | 'reward_rejected'
   | 'learning_assigned'
-  | 'bonus_awarded';
+  | 'bonus_awarded'
+  | 'tasks_incomplete_evening'
+  | 'family_challenge_complete';
 
 export type PushPlatform = 'ios' | 'android' | 'web' | 'unknown';
 
@@ -438,3 +500,77 @@ export interface PushNotificationData {
   type: PushNotificationType;
   [key: string]: string;
 }
+
+export type CosmeticType = 'avatar' | 'frame' | 'effect';
+
+export interface CosmeticItem {
+  id: string;
+  type: CosmeticType;
+  cost: number;
+  icon: string;
+  label: string;
+  /** Optional theme affinity for shop grouping. */
+  themes?: UiThemeId[];
+}
+
+/** Cosmetics kids can buy with points (avatars / frames / effects). */
+export const COSMETIC_ITEMS: CosmeticItem[] = [
+  { id: 'avatar_robot', type: 'avatar', cost: 80, icon: '🤖', label: 'רובוט', themes: ['roblox'] },
+  { id: 'avatar_creeper', type: 'avatar', cost: 100, icon: '🟩', label: 'קריפר', themes: ['minecraft'] },
+  { id: 'avatar_brawler', type: 'avatar', cost: 100, icon: '💥', label: 'בראולר', themes: ['brawl'] },
+  { id: 'avatar_sparkle', type: 'avatar', cost: 90, icon: '✨', label: 'נוצץ', themes: ['sparkle'] },
+  { id: 'avatar_phoenix', type: 'avatar', cost: 120, icon: '🔥', label: 'עוף חול', themes: ['ember'] },
+  { id: 'frame_gold', type: 'frame', cost: 150, icon: '🖼️', label: 'מסגרת זהב' },
+  { id: 'frame_pixel', type: 'frame', cost: 120, icon: '🧱', label: 'מסגרת פיקסלים', themes: ['minecraft', 'roblox'] },
+  { id: 'frame_rainbow', type: 'frame', cost: 180, icon: '🌈', label: 'מסגרת קשת', themes: ['sparkle'] },
+  { id: 'effect_sparkles', type: 'effect', cost: 200, icon: '⭐', label: 'אפקט ניצוצות' },
+  { id: 'effect_fire', type: 'effect', cost: 220, icon: '🔥', label: 'אפקט אש', themes: ['ember', 'brawl'] },
+  { id: 'effect_leaves', type: 'effect', cost: 160, icon: '🍃', label: 'אפקט עלים', themes: ['minecraft'] },
+];
+
+export const DEFAULT_FAMILY_CHALLENGE_TARGET = 20;
+export const DEFAULT_FAMILY_CHALLENGE_REWARD_POINTS = 50;
+
+export interface FamilyChallenge {
+  _id: string;
+  familyId: string;
+  weekKey: string;
+  title: string;
+  targetCount: number;
+  progress: number;
+  rewardTitle: string;
+  rewardPoints: number;
+  completed: boolean;
+  claimedAt?: string;
+}
+
+export interface PersonalGoal {
+  rewardId: string;
+  rewardTitle: string;
+  rewardCost: number;
+  rewardIcon: string;
+  currentPoints: number;
+  progress: number;
+}
+
+export interface FamilyAchievementEntry {
+  id: string;
+  label: string;
+  icon: string;
+  description: string;
+  kidId?: string;
+  kidName?: string;
+  kidAvatar?: string;
+  earnedAt?: string;
+}
+
+export interface LearningMistakeEntry {
+  packId: string;
+  packTitle: string;
+  activityId: string;
+  questionPreview: string;
+  mistakeCount: number;
+}
+
+/** Max base64 proof photo length stored on a completion (~300KB). */
+export const MAX_PROOF_PHOTO_CHARS = 400_000;

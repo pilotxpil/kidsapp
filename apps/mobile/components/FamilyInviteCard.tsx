@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Share, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Share, Alert, TouchableOpacity, Linking, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import type { FamilyInviteInfo } from '@kidsapp/shared';
 import { Card } from './Card';
@@ -10,6 +10,10 @@ import { useTheme } from '../lib/theme-context';
 import { spacing } from '../constants/theme';
 import { rtl } from '../lib/rtl';
 import { t } from '../lib/i18n';
+
+function inviteMessage(code: string) {
+  return `הצטרף/י למשפחה שלנו ב-QUEST!\nקוד הזמנה: ${code}`;
+}
 
 export function FamilyInviteCard() {
   const { colors, borderRadius } = useTheme();
@@ -53,8 +57,8 @@ export function FamilyInviteCard() {
         },
         parents: { color: colors.textMuted, fontSize: 14, marginBottom: spacing.md },
         full: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
-        actions: { gap: spacing.sm, width: '100%' },
-        actionBtn: { flex: 1 },
+        actions: { gap: spacing.sm, width: '100%', flexWrap: 'wrap' },
+        actionBtn: { flexGrow: 1, flexBasis: '45%' },
       }),
     [colors, borderRadius]
   );
@@ -73,9 +77,26 @@ export function FamilyInviteCard() {
   const handleShare = async () => {
     if (!info?.inviteCode) return;
     try {
-      await Share.share({
-        message: `הצטרף/י למשפחה שלנו ב-QUEST!\nקוד הזמנה: ${info.inviteCode}`,
-      });
+      await Share.share({ message: inviteMessage(info.inviteCode) });
+    } catch {
+      Alert.alert(t('inviteCode'), info.inviteCode);
+    }
+  };
+
+  const handleWhatsApp = async () => {
+    if (!info?.inviteCode) return;
+    const text = encodeURIComponent(inviteMessage(info.inviteCode));
+    const url =
+      Platform.OS === 'web'
+        ? `https://wa.me/?text=${text}`
+        : `whatsapp://send?text=${text}`;
+    try {
+      const can = await Linking.canOpenURL(url);
+      if (can || Platform.OS === 'web') {
+        await Linking.openURL(url);
+      } else {
+        await Linking.openURL(`https://wa.me/?text=${text}`);
+      }
     } catch {
       Alert.alert(t('inviteCode'), info.inviteCode);
     }
@@ -101,6 +122,12 @@ export function FamilyInviteCard() {
           </Text>
           <View style={[styles.actions, rtl.row]}>
             <Button title={t('copyInviteCode')} onPress={handleCopy} style={styles.actionBtn} />
+            <Button
+              title={t('shareWhatsApp')}
+              onPress={handleWhatsApp}
+              variant="secondary"
+              style={styles.actionBtn}
+            />
             <Button
               title={t('shareInviteCode')}
               onPress={handleShare}

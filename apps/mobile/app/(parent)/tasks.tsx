@@ -35,10 +35,11 @@ type TaskGroup = {
   points: number;
   recurrence: TaskRecurrence;
   icon: string;
+  learningPackId?: string;
 };
 
-function taskGroupKey(task: Pick<Task, 'title' | 'description' | 'category' | 'points' | 'recurrence' | 'icon'>) {
-  return [task.title, task.description, task.category, task.points, task.recurrence, task.icon].join('|');
+function taskGroupKey(task: Pick<Task, 'title' | 'description' | 'category' | 'points' | 'recurrence' | 'icon' | 'learningPackId'>) {
+  return [task.title, task.description, task.category, task.points, task.recurrence, task.icon, task.learningPackId || ''].join('|');
 }
 
 function groupTasks(tasks: Task[]): TaskGroup[] {
@@ -62,6 +63,7 @@ function groupTasks(tasks: Task[]): TaskGroup[] {
         points: task.points,
         recurrence: task.recurrence,
         icon: task.icon,
+        learningPackId: task.learningPackId,
       });
     }
   }
@@ -84,6 +86,8 @@ export default function ParentTasksScreen() {
   const [assignedIds, setAssignedIds] = useState<string[]>([]);
   const [saveAsTemplate, setSaveAsTemplate] = useState(true);
   const [familyTemplates, setFamilyTemplates] = useState<FamilyTaskTemplate[]>([]);
+  const [learningPackId, setLearningPackId] = useState<string | null>(null);
+  const [learningPacks, setLearningPacks] = useState<{ id: string; title: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const savingRef = useRef(false);
 
@@ -269,6 +273,17 @@ export default function ParentTasksScreen() {
     } catch {
       setFamilyTemplates([]);
     }
+    try {
+      const catalog = await api.getLearningCatalog();
+      setLearningPacks(
+        catalog.items.slice(0, 40).map((item) => ({
+          id: item.id,
+          title: item.title.he || item.id,
+        }))
+      );
+    } catch {
+      setLearningPacks([]);
+    }
   }, []);
 
   useFocusLoad(load);
@@ -298,6 +313,7 @@ export default function ParentTasksScreen() {
     setRecurrence('daily');
     setAssignedIds(kids[0] ? [kids[0]._id] : []);
     setSaveAsTemplate(true);
+    setLearningPackId(null);
     setEditingGroup(null);
   };
 
@@ -334,6 +350,7 @@ export default function ParentTasksScreen() {
     setCategory(group.category);
     setRecurrence(group.recurrence);
     setAssignedIds([...group.assignedTo]);
+    setLearningPackId(group.learningPackId || null);
     setModalVisible(true);
   };
 
@@ -364,6 +381,7 @@ export default function ParentTasksScreen() {
         category,
         recurrence,
         icon: TASK_CATEGORIES[category].icon,
+        learningPackId: learningPackId || undefined,
       };
 
       if (editingGroup) {
@@ -581,6 +599,38 @@ export default function ParentTasksScreen() {
                       <Text style={styles.chipIcon}>{val.icon}</Text>
                       <Text style={[styles.chipText, recurrence === key && styles.chipTextActive]}>
                         {val.label}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.label}>{t('homeworkPack')}</Text>
+              <Text style={styles.hint}>{t('homeworkPackHint')}</Text>
+              <View style={styles.chipRow}>
+                <TouchableOpacity
+                  style={[styles.chip, !learningPackId && styles.chipActive]}
+                  onPress={() => setLearningPackId(null)}
+                >
+                  <View style={styles.chipContent}>
+                    <Text style={[styles.chipText, !learningPackId && styles.chipTextActive]}>
+                      {t('noHomeworkPack')}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                {learningPacks.map((pack) => (
+                  <TouchableOpacity
+                    key={pack.id}
+                    style={[styles.chip, learningPackId === pack.id && styles.chipActive]}
+                    onPress={() => setLearningPackId(pack.id)}
+                  >
+                    <View style={styles.chipContent}>
+                      <Text style={styles.chipIcon}>📚</Text>
+                      <Text
+                        style={[styles.chipText, learningPackId === pack.id && styles.chipTextActive]}
+                        numberOfLines={1}
+                      >
+                        {pack.title}
                       </Text>
                     </View>
                   </TouchableOpacity>

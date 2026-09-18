@@ -1,0 +1,107 @@
+{
+  "id": "english-home-opposites-5",
+  "version": 2,
+  "title": { "he": "אנגלית — בית ותיאורים", "en": "Home and descriptions" },
+  "category": "english",
+  "grade": 5,
+  "tags": ["english", "vocabulary", "opposites", "prepositions", "grade-5"],
+  "defaultPoints": 7,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "השלימו: The keys are ___ the drawer." },
+      "options": [
+        { "id": "a", "text": "in" },
+        { "id": "b", "text": "on" },
+        { "id": "c", "text": "between" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "in the drawer = בתוך המגירה." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה ההפך של \"expensive\"?" },
+      "options": [
+        { "id": "a", "text": "cheap" },
+        { "id": "b", "text": "heavy" },
+        { "id": "c", "text": "narrow" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "expensive = יקר; cheap = זול." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "\"The upstairs bedroom is above the kitchen.\" מה נכון?" },
+      "options": [
+        { "id": "a", "text": "חדר השינה מתחת למטבח" },
+        { "id": "b", "text": "חדר השינה מעל המטבח" },
+        { "id": "c", "text": "אין מטבח בבית" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "above = מעל; upstairs = בקומה העליונה." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "איך אומרים ״שכנים״?" },
+      "options": [
+        { "id": "a", "text": "neighbours / neighbors" },
+        { "id": "b", "text": "strangers only" },
+        { "id": "c", "text": "ceilings" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "neighbours (UK) / neighbors (US) = שכנים." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו משפט מתארת נכון: המנורה על השולחן?" },
+      "options": [
+        { "id": "a", "text": "The lamp is under the table." },
+        { "id": "b", "text": "The lamp is on the table." },
+        { "id": "c", "text": "The lamp is between the table." }
+      ],
+      "answer": "b",
+      "explanation": { "he": "on = על; under = מתחת." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה המשמעות של \"tidy\"?" },
+      "options": [
+        { "id": "a", "text": "מבולגן" },
+        { "id": "b", "text": "מסודר / נקי" },
+        { "id": "c", "text": "שבור" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "tidy = מסודר; messy = מבולגן." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "השלימו: Please turn ___ the light when you leave." },
+      "options": [
+        { "id": "a", "text": "on" },
+        { "id": "b", "text": "off" },
+        { "id": "c", "text": "up the" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "turn off = לכבות; turn on = להדליק. כשיוצאים — מכבים." }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": { "text": "\"Our flat has a balcony facing the park.\" מה יש בדירה?" },
+      "options": [
+        { "id": "a", "text": "מרפסת הפונה לפארק" },
+        { "id": "b", "text": "רק מרתף בלי חלונות" },
+        { "id": "c", "text": "בריכה על הגג בלבד" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "balcony = מרפסת; facing = פונה אל." }
+    }
+  ]
+}

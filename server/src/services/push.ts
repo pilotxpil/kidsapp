@@ -123,13 +123,16 @@ export function pushTaskReviewed(
   kidId: string,
   taskTitle: string,
   approved: boolean,
-  points?: number
+  points?: number,
+  rejectNote?: string
 ): void {
   pushToUsers([kidId], {
     title: approved ? 'משימה אושרה! 🎉' : 'משימה לא אושרה',
     body: approved
       ? `${taskTitle} — קיבלת ${points ?? 0} נקודות`
-      : `${taskTitle} — נסו שוב`,
+      : rejectNote?.trim()
+        ? `${taskTitle}: ${rejectNote.trim()}`
+        : `${taskTitle} — נסו שוב`,
     data: {
       type: (approved ? 'task_approved' : 'task_rejected') satisfies PushNotificationType,
     },

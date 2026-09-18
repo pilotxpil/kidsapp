@@ -7,7 +7,7 @@ import type {
   LearningPackSummary,
 } from '@kidsapp/shared';
 import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER } from '@kidsapp/shared';
-import type { LearningCategory, LearningCatalogFilters } from '@kidsapp/shared';
+import type { LearningCategory, LearningCatalogFilters, LearningDifficulty } from '@kidsapp/shared';
 import { ILearningProgress } from '../models/LearningProgress';
 
 const CATEGORIES = new Set<string>(Object.keys(LEARNING_CATEGORIES));
@@ -45,7 +45,7 @@ function validatePack(raw: unknown): LearningPack | null {
   const p = raw as Record<string, unknown>;
 
   if (typeof p.id !== 'string' || !p.id) return null;
-  if (p.version !== 1) return null;
+  if (typeof p.version !== 'number' || p.version < 1) return null;
   if (!p.title || typeof (p.title as { he?: string }).he !== 'string') return null;
   const category = resolveCategory(p);
   if (!category) return null;
@@ -137,7 +137,8 @@ export function toPublicActivity(activity: LearningActivity): PublicLearningActi
 
 export function packToSummary(
   pack: LearningPack,
-  progress?: ILearningProgress | null
+  progress?: ILearningProgress | null,
+  settings?: { pointsPerActivity?: number; difficulty?: LearningDifficulty } | null
 ): LearningPackSummary {
   const completedIds = progress?.completedActivityIds ?? [];
   const completed = completedIds.length >= pack.activities.length;
@@ -149,6 +150,8 @@ export function packToSummary(
     tags: pack.tags ?? [],
     activityCount: pack.activities.length,
     defaultPoints: pack.defaultPoints,
+    pointsPerActivity: settings?.pointsPerActivity ?? pack.defaultPoints,
+    difficulty: settings?.difficulty ?? 'medium',
     completedCount: completedIds.length,
     completed,
   };
@@ -169,7 +172,14 @@ export function checkAnswer(activity: LearningActivity, answer: string): boolean
   return false;
 }
 
-export function activityPoints(pack: LearningPack, activity: LearningActivity): number {
+export function activityPoints(
+  pack: LearningPack,
+  activity: LearningActivity,
+  pointsOverride?: number | null
+): number {
+  if (typeof pointsOverride === 'number' && pointsOverride >= 1) {
+    return pointsOverride;
+  }
   return activity.points ?? pack.defaultPoints;
 }
 
@@ -203,7 +213,8 @@ export function filterCatalogPacks(
 
 export function packToCatalogItem(
   pack: LearningPack,
-  assignedKidIds: string[] = []
+  assignedKidIds: string[] = [],
+  settings?: { pointsPerActivity?: number; difficulty?: LearningDifficulty } | null
 ) {
   return {
     id: pack.id,
@@ -213,6 +224,8 @@ export function packToCatalogItem(
     tags: pack.tags ?? [],
     activityCount: pack.activities.length,
     defaultPoints: pack.defaultPoints,
+    pointsPerActivity: settings?.pointsPerActivity,
+    difficulty: settings?.difficulty,
     assignedKidIds,
   };
 }

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Text, StyleSheet, Alert, Platform, View, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { Celebration } from '../components/Celebration';
@@ -18,6 +18,13 @@ import { resetKidGiftDismissals } from '../lib/kid-gift-dismiss';
 import { getSavedFamilyCode, saveFamilyCode } from '../lib/kid-login-storage';
 
 export default function KidLoginScreen() {
+  const params = useLocalSearchParams<{
+    code?: string;
+    user?: string;
+    name?: string;
+    familyCode?: string;
+    username?: string;
+  }>();
   const [familyCode, setFamilyCode] = useState('');
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
@@ -31,9 +38,19 @@ export default function KidLoginScreen() {
 
   useEffect(() => {
     void getSavedFamilyCode().then((code) => {
-      if (code) setFamilyCode(code);
+      if (code) setFamilyCode((prev) => prev || code);
     });
   }, []);
+
+  useEffect(() => {
+    const code = (params.code || params.familyCode || '').replace(/\D/g, '').slice(0, 6);
+    const user = (params.user || params.username || '').trim();
+    if (code) {
+      setFamilyCode(code);
+      void saveFamilyCode(code);
+    }
+    if (user) setUsername(user);
+  }, [params.code, params.familyCode, params.user, params.username]);
 
   const applyScan = useCallback((payload: { familyCode: string; username: string }) => {
     setFamilyCode(payload.familyCode);
@@ -152,6 +169,9 @@ export default function KidLoginScreen() {
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="username"
+            autoComplete="username"
           />
           <Input
             label={t('pin')}

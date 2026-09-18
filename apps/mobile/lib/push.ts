@@ -1,20 +1,12 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
+import { isRunningInExpoGo } from 'expo';
 import type { PushPlatform } from '@kidsapp/shared';
 import { api } from './api';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
-
 let cachedToken: string | null = null;
+let handlerReady = false;
 
 function resolvePlatform(): PushPlatform {
   if (Platform.OS === 'ios') return 'ios';
@@ -31,12 +23,34 @@ function getProjectId(): string | undefined {
   );
 }
 
+function canUsePush(): boolean {
+  // Importing expo-notifications in Expo Go (Android) throws at module init.
+  return Platform.OS !== 'web' && !isRunningInExpoGo() && Device.isDevice;
+}
+
+async function loadNotifications() {
+  if (!canUsePush()) return null;
+  const Notifications = await import('expo-notifications');
+  if (!handlerReady) {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+    handlerReady = true;
+  }
+  return Notifications;
+}
+
 /** Request permission, get Expo push token, and register with the API. */
 export async function registerPushNotifications(): Promise<string | null> {
-  if (Platform.OS === 'web') return null;
-  if (!Device.isDevice) return null;
-
   try {
+    const Notifications = await loadNotifications();
+    if (!Notifications) return null;
+
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'KidsQuest',
@@ -74,10 +88,11 @@ export async function unregisterPushNotifications(): Promise<void> {
   let token = cachedToken;
   cachedToken = null;
 
-  if (!token && Platform.OS !== 'web' && Device.isDevice) {
+  if (!token && canUsePush()) {
     try {
+      const Notifications = await loadNotifications();
       const projectId = getProjectId();
-      if (projectId) {
+      if (Notifications && projectId) {
         const result = await Notifications.getExpoPushTokenAsync({ projectId });
         token = result.data;
       }

@@ -1,0 +1,107 @@
+{
+  "id": "english-colors-food-4",
+  "version": 2,
+  "title": { "he": "אנגלית — אוכל במשפטים", "en": "Food in sentences" },
+  "category": "english",
+  "grade": 4,
+  "tags": ["english", "vocabulary", "sentences", "grade-4"],
+  "defaultPoints": 7,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה המשמעות של: \"I would like some vegetables, please\"?" },
+      "options": [
+        { "id": "a", "text": "אני רוצה קצת ירקות, בבקשה" },
+        { "id": "b", "text": "אני לא אוהב בשר" },
+        { "id": "c", "text": "אני שותה מיץ" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "would like = רוצה בנימוס; vegetables = ירקות." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "השלימו: There ___ three apples on the table." },
+      "options": [
+        { "id": "a", "text": "is" },
+        { "id": "b", "text": "are" },
+        { "id": "c", "text": "be" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "עם רבים (three apples) משתמשים ב־are." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו מילה היא ההפך של hungry?" },
+      "options": [
+        { "id": "a", "text": "thirsty" },
+        { "id": "b", "text": "full / not hungry" },
+        { "id": "c", "text": "delicious" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "hungry = רעב; ההפך: שבע (full)." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו משפט נכונה?" },
+      "options": [
+        { "id": "a", "text": "She don't like cheese." },
+        { "id": "b", "text": "She doesn't like cheese." },
+        { "id": "c", "text": "She not likes cheese." }
+      ],
+      "answer": "b",
+      "explanation": { "he": "עם she בשלילה: doesn't + פועל בבסיס." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה המשמעות של breakfast?" },
+      "options": [
+        { "id": "a", "text": "ארוחת צהריים" },
+        { "id": "b", "text": "ארוחת בוקר" },
+        { "id": "c", "text": "ארוחת ערב" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "breakfast = ארוחת בוקר; lunch = צהריים; dinner = ערב." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "השלימו: An ___ a day keeps the doctor away. (פתגם)" },
+      "options": [
+        { "id": "a", "text": "orange" },
+        { "id": "b", "text": "apple" },
+        { "id": "c", "text": "onion" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "הפתגם הקלאסי: An apple a day…" }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "איך אומרים ברבים: \"child\"?" },
+      "options": [
+        { "id": "a", "text": "childs" },
+        { "id": "b", "text": "children" },
+        { "id": "c", "text": "childes" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "child → children (רבים לא־רגולרי)." }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": { "text": "קראו: \"Tom bought milk, bread and a dozen eggs.\" מה Tom קנה?" },
+      "options": [
+        { "id": "a", "text": "רק חלב" },
+        { "id": "b", "text": "חלב, לחם ו־12 ביצים" },
+        { "id": "c", "text": "רק פירות" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "a dozen = תריסר = 12; milk, bread, eggs." }
+    }
+  ]
+}

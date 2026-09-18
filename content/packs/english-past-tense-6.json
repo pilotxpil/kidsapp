@@ -1,0 +1,95 @@
+{
+  "id": "english-past-tense-6",
+  "version": 1,
+  "title": { "he": "אנגלית — עבר פשוט", "en": "Past simple" },
+  "category": "english",
+  "grade": 6,
+  "tags": ["english", "grammar", "past-tense", "grade-6"],
+  "defaultPoints": 6,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה הצורה בעבר של go?" },
+      "options": [
+        { "id": "a", "text": "goed" },
+        { "id": "b", "text": "went" },
+        { "id": "c", "text": "gone" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "go → went (לא־רגולרי)." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "השלימו: Yesterday I ___ a book." },
+      "options": [
+        { "id": "a", "text": "read" },
+        { "id": "b", "text": "reads" },
+        { "id": "c", "text": "reading" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "read בעבר נכתב אותו דבר (read) — עם yesterday." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו משפט בעבר נכונה?" },
+      "options": [
+        { "id": "a", "text": "She buyed a gift." },
+        { "id": "b", "text": "She bought a gift." },
+        { "id": "c", "text": "She buy a gift yesterday." }
+      ],
+      "answer": "b",
+      "explanation": { "he": "buy → bought." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "איך אומרים בשלילה בעבר: ״לא ראיתי״?" },
+      "options": [
+        { "id": "a", "text": "I didn't see" },
+        { "id": "b", "text": "I don't saw" },
+        { "id": "c", "text": "I wasn't see" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "בעבר בשלילה: didn't + פועל בבסיס (see)." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה הצורה בעבר של eat?" },
+      "options": [
+        { "id": "a", "text": "eated" },
+        { "id": "b", "text": "ate" },
+        { "id": "c", "text": "eaten" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "eat → ate." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה המשמעות של ״We visited grandma״?" },
+      "options": [
+        { "id": "a", "text": "אנחנו מבקרים את סבתא" },
+        { "id": "b", "text": "ביקרנו את סבתא" },
+        { "id": "c", "text": "נסתכל אצל סבתא מחר" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "visited = ביקרנו (עבר)." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "איך שואלים בעבר: ״האם הלכת?״" },
+      "options": [
+        { "id": "a", "text": "Did you go?" },
+        { "id": "b", "text": "Do you went?" },
+        { "id": "c", "text": "Were you go?" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "שאלה בעבר: Did + נושא + פועל בבסיס." }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal, Pressable, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
@@ -38,6 +38,31 @@ export default function KidProfileScreen() {
   const [musicOn, setMusicOn] = useState(true);
   const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
   const [avatarOpen, setAvatarOpen] = useState(false);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const historySectionY = useRef(0);
+
+  const HISTORY_PREVIEW = 5;
+  const allTransactions = profile?.recentTransactions ?? [];
+  const visibleTransactions = historyExpanded
+    ? allTransactions
+    : allTransactions.slice(0, HISTORY_PREVIEW);
+  const hasMoreHistory = allTransactions.length > HISTORY_PREVIEW;
+
+  const toggleHistoryExpanded = () => {
+    playSfx('tap');
+    const collapsing = historyExpanded;
+    setHistoryExpanded(!historyExpanded);
+    if (collapsing) {
+      // Content shortens; keep the history section on screen so collapse is visible.
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, historySectionY.current - spacing.md),
+          animated: true,
+        });
+      });
+    }
+  };
 
   const styles = useMemo(
     () =>
@@ -64,17 +89,41 @@ export default function KidProfileScreen() {
           marginBottom: spacing.md,
           width: '100%',
         },
-        badgesGrid: { width: '100%', gap: spacing.md },
-        badgeCard: { width: '30%', flexGrow: 0, flexShrink: 1, maxWidth: '32%', overflow: 'hidden' },
-        badgeInner: { width: '100%', alignItems: 'center' },
+        badgesGrid: {
+          width: '100%',
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          rowGap: spacing.sm,
+        },
+        badgeCard: {
+          width: '33.333%',
+          paddingHorizontal: spacing.xs,
+          paddingBottom: spacing.sm,
+          flexGrow: 0,
+          flexShrink: 0,
+          overflow: 'hidden',
+        },
+        badgeCardInner: {
+          width: '100%',
+          minHeight: 96,
+          justifyContent: 'center',
+        },
+        badgeInner: {
+          width: '100%',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          minHeight: 72,
+        },
         badgeLocked: { opacity: 0.4 },
-        badgeIcon: { fontSize: 28, marginBottom: 4, textAlign: 'center' },
+        badgeIcon: { fontSize: 28, marginBottom: 4, textAlign: 'center', height: 32, lineHeight: 32 },
         badgeArt: { width: 40, height: 40, marginBottom: 4 },
         badgeLabel: {
           color: colors.text,
           fontSize: 11,
           fontWeight: '600',
           width: '100%',
+          height: 28,
+          lineHeight: 14,
           textAlign: 'center',
           writingDirection: 'rtl',
           ...type.ui,
@@ -239,6 +288,7 @@ export default function KidProfileScreen() {
   return (
     <ThemedScreen tabs>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.scroll, rtl.scrollContent]}
         refreshControl={
           <RefreshControl
@@ -278,7 +328,7 @@ export default function KidProfileScreen() {
 
         <View style={styles.section}>
           <SectionHeader title={t('badges')} icon="🏅" />
-          <View style={[styles.badgesGrid, rtl.tabs]}>
+          <View style={styles.badgesGrid}>
           {Object.entries(BADGES).map(([key, badge]) => {
             const earned = user?.badges?.includes(key);
             return (
@@ -291,7 +341,7 @@ export default function KidProfileScreen() {
                 }}
                 style={earned ? styles.badgeCard : [styles.badgeCard, styles.badgeLocked]}
               >
-                <Card style={{ width: '100%' }}>
+                <Card style={styles.badgeCardInner}>
                   <View style={styles.badgeInner}>
                     {ember && art?.gem ? (
                       <Image
@@ -302,7 +352,10 @@ export default function KidProfileScreen() {
                     ) : (
                       <Text style={styles.badgeIcon}>{earned ? badge.icon : '🔒'}</Text>
                     )}
-                    <Text style={[styles.badgeLabel, !earned && styles.badgeLabelLocked]} numberOfLines={2}>
+                    <Text
+                      style={[styles.badgeLabel, !earned && styles.badgeLabelLocked]}
+                      numberOfLines={2}
+                    >
                       {badge.label}
                     </Text>
                   </View>
@@ -339,21 +392,57 @@ export default function KidProfileScreen() {
           ))}
         </View>
 
-        <View style={styles.section}>
+        <View
+          style={styles.section}
+          onLayout={(e) => {
+            historySectionY.current = e.nativeEvent.layout.y;
+          }}
+        >
           <SectionHeader title={t('history')} icon="📜" />
-          {profile?.recentTransactions?.map((tx) => (
-            <Card key={tx._id} style={styles.stackCard}>
-            <View style={[styles.txRow, rtl.row]}>
-              <View style={styles.txInfo}>
-                <Text style={[styles.txDesc, rtl.textFull]}>{tx.description}</Text>
-                <Text style={[styles.txDate, rtl.textFull]}>{new Date(tx.createdAt).toLocaleDateString('he-IL')}</Text>
-              </View>
-              <Text style={[styles.txAmount, tx.amount > 0 ? styles.txPositive : styles.txNegative]}>
-                {tx.amount > 0 ? '+' : ''}{tx.amount}
-              </Text>
-            </View>
-          </Card>
-          ))}
+          {allTransactions.length === 0 ? (
+            <Text style={[styles.sectionHint, rtl.textFull]}>{t('historyEmpty')}</Text>
+          ) : (
+            <>
+              {hasMoreHistory ? (
+                <Button
+                  title={historyExpanded ? t('showLessHistory') : t('showMoreHistory')}
+                  variant="outline"
+                  onPress={toggleHistoryExpanded}
+                  style={{ marginBottom: spacing.md }}
+                  sound={false}
+                />
+              ) : null}
+              {visibleTransactions.map((tx) => (
+                <Card key={tx._id} style={styles.stackCard}>
+                  <View style={[styles.txRow, rtl.row]}>
+                    <View style={styles.txInfo}>
+                      <Text style={[styles.txDesc, rtl.textFull]}>{tx.description}</Text>
+                      <Text style={[styles.txDate, rtl.textFull]}>
+                        {new Date(tx.createdAt).toLocaleDateString('he-IL')}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.txAmount,
+                        tx.amount > 0 ? styles.txPositive : styles.txNegative,
+                      ]}
+                    >
+                      {tx.amount > 0 ? '+' : ''}
+                      {tx.amount}
+                    </Text>
+                  </View>
+                </Card>
+              ))}
+              {hasMoreHistory && historyExpanded ? (
+                <Button
+                  title={t('showLessHistory')}
+                  variant="outline"
+                  onPress={toggleHistoryExpanded}
+                  sound={false}
+                />
+              ) : null}
+            </>
+          )}
         </View>
 
         <View style={styles.settingsStack}>

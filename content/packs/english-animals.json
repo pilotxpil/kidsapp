@@ -1,59 +1,83 @@
 {
   "id": "english-animals",
   "version": 1,
-  "title": { "he": "מילים על חיות", "en": "Animal Words" },
+  "title": { "he": "אנגלית — חיות", "en": "Animal Words" },
   "category": "english",
   "grade": 3,
-  "tags": ["vocabulary", "animals"],
+  "tags": ["vocabulary", "animals", "english"],
   "defaultPoints": 5,
   "activities": [
     {
       "id": "q1",
       "type": "multiple_choice",
-      "prompt": { "text": "מה זה Dog?" },
+      "prompt": { "text": "מה המשמעות של Dog?" },
       "options": [
         { "id": "a", "text": "חתול" },
         { "id": "b", "text": "כלב" },
         { "id": "c", "text": "ציפור" }
       ],
       "answer": "b",
-      "explanation": { "he": "Dog = כלב" }
+      "explanation": { "he": "Dog = כלב." }
     },
     {
       "id": "q2",
       "type": "multiple_choice",
-      "prompt": { "text": "מה זה Cat?" },
+      "prompt": { "text": "מה המשמעות של Cat?" },
       "options": [
         { "id": "a", "text": "חתול" },
         { "id": "b", "text": "דג" },
         { "id": "c", "text": "סוס" }
       ],
       "answer": "a",
-      "explanation": { "he": "Cat = חתול" }
+      "explanation": { "he": "Cat = חתול." }
     },
     {
       "id": "q3",
       "type": "multiple_choice",
-      "prompt": { "text": "מה זה Bird?" },
+      "prompt": { "text": "איך אומרים ״ציפור״ באנגלית?" },
       "options": [
-        { "id": "a", "text": "דוב" },
-        { "id": "b", "text": "ארנב" },
-        { "id": "c", "text": "ציפור" }
+        { "id": "a", "text": "bear" },
+        { "id": "b", "text": "rabbit" },
+        { "id": "c", "text": "bird" }
       ],
       "answer": "c",
-      "explanation": { "he": "Bird = ציפור" }
+      "explanation": { "he": "bird = ציפור." }
     },
     {
       "id": "q4",
       "type": "multiple_choice",
-      "prompt": { "text": "מה זה Fish?" },
+      "prompt": { "text": "מה המשמעות של Fish?" },
       "options": [
         { "id": "a", "text": "דג" },
         { "id": "b", "text": "פרפר" },
         { "id": "c", "text": "עכבר" }
       ],
       "answer": "a",
-      "explanation": { "he": "Fish = דג" }
+      "explanation": { "he": "Fish = דג." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "איך אומרים ״סוס״ באנגלית?" },
+      "options": [
+        { "id": "a", "text": "horse" },
+        { "id": "b", "text": "house" },
+        { "id": "c", "text": "mouse" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "horse = סוס." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה המשמעות של Lion?" },
+      "options": [
+        { "id": "a", "text": "נמר" },
+        { "id": "b", "text": "אריה" },
+        { "id": "c", "text": "פיל" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "Lion = אריה." }
     }
   ]
 }

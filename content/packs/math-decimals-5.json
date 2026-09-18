@@ -1,0 +1,107 @@
+{
+  "id": "math-decimals-5",
+  "version": 2,
+  "title": { "he": "שברים עשרוניים — חישובים", "en": "Decimals — calculations" },
+  "category": "math",
+  "grade": 5,
+  "tags": ["decimals", "place-value", "grade-5"],
+  "defaultPoints": 8,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "מהו ערך המקום של הספרה 6 במספר 4.068?" },
+      "options": [
+        { "id": "a", "text": "6 מאיות" },
+        { "id": "b", "text": "6 אלפיות" },
+        { "id": "c", "text": "6 עשיריות" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "4.068: אחרי הנקודה — עשיריות (0), מאיות (6), אלפיות (8). הספרה 6 במאיות." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "3.7 × 10 = ?" },
+      "options": [
+        { "id": "a", "text": "3.70" },
+        { "id": "b", "text": "37" },
+        { "id": "c", "text": "0.37" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "כפל ב־10 מזיז את הנקודה ספרה אחת ימינה: 37." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזה מספר גדול יותר: 0.809 או 0.81?" },
+      "options": [
+        { "id": "a", "text": "0.809" },
+        { "id": "b", "text": "0.81" },
+        { "id": "c", "text": "הם שווים" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "0.81=0.810 > 0.809." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "5.06 − 2.4 = ?" },
+      "options": [
+        { "id": "a", "text": "2.66" },
+        { "id": "b", "text": "3.02" },
+        { "id": "c", "text": "2.66 או 3.02 — תלוי" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "5.06−2.40=2.66." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "0.25 × 8 = ?" },
+      "options": [
+        { "id": "a", "text": "2" },
+        { "id": "b", "text": "0.2" },
+        { "id": "c", "text": "20" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "0.25=¼; ¼×8=2." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "12.6 ÷ 100 = ?" },
+      "options": [
+        { "id": "a", "text": "1.26" },
+        { "id": "b", "text": "0.126" },
+        { "id": "c", "text": "1260" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "חילוק ב־100 מזיז את הנקודה שתי ספרות שמאלה." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "חבילת גבינה שוקלת 0.75 ק\"ג. כמה שוקלות 4 חבילות?" },
+      "options": [
+        { "id": "a", "text": "2.5 ק\"ג" },
+        { "id": "b", "text": "3 ק\"ג" },
+        { "id": "c", "text": "3.5 ק\"ג" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "0.75×4=3." }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזה שבר שקול ל־0.125?" },
+      "options": [
+        { "id": "a", "text": "⅛" },
+        { "id": "b", "text": "⅕" },
+        { "id": "c", "text": "1/12" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "0.125=125/1000=1/8." }
+    }
+  ]
+}

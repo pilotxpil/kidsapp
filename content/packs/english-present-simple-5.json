@@ -1,0 +1,107 @@
+{
+  "id": "english-present-simple-5",
+  "version": 2,
+  "title": { "he": "אנגלית — הווה פשוט מתקדם", "en": "Present simple advanced" },
+  "category": "english",
+  "grade": 5,
+  "tags": ["english", "grammar", "present-simple", "adverbs", "grade-5"],
+  "defaultPoints": 8,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "השלימו: She ___ to school by bus every day." },
+      "options": [
+        { "id": "a", "text": "go" },
+        { "id": "b", "text": "goes" },
+        { "id": "c", "text": "going" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "גוף שלישי יחיד בהווה: goes." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "איפה שמים בדרך כלל את usually במשפט?" },
+      "options": [
+        { "id": "a", "text": "He plays usually football." },
+        { "id": "b", "text": "He usually plays football." },
+        { "id": "c", "text": "Usually he play football." }
+      ],
+      "answer": "b",
+      "explanation": { "he": "תארי תדירות (usually/always/often) באים לפני הפועל הראשי." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו שאלה נכונה לגוף שלישי?" },
+      "options": [
+        { "id": "a", "text": "Does he live in Haifa?" },
+        { "id": "b", "text": "Do he lives in Haifa?" },
+        { "id": "c", "text": "Is he live in Haifa?" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "Does + he/she/it + פועל בבסיס (live)." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "השלימו בשלילה: The shop ___ open on Saturdays." },
+      "options": [
+        { "id": "a", "text": "don't" },
+        { "id": "b", "text": "doesn't" },
+        { "id": "c", "text": "isn't opens" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "The shop = it → doesn't + open." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "קראו: \"Maya never eats meat, but she sometimes drinks milk.\" מה נכון?" },
+      "options": [
+        { "id": "a", "text": "Maya תמיד אוכלת בשר" },
+        { "id": "b", "text": "Maya לא אוכלת בשר, ולפעמים שותה חלב" },
+        { "id": "c", "text": "Maya אף פעם לא שותה חלב" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "never = אף פעם; sometimes = לפעמים." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו צורה נכונה?" },
+      "options": [
+        { "id": "a", "text": "He has two sisters." },
+        { "id": "b", "text": "He have two sisters." },
+        { "id": "c", "text": "He haves two sisters." }
+      ],
+      "answer": "a",
+      "explanation": { "he": "have בגוף שלישי: has." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "השלימו: ___ your parents work nearby?" },
+      "options": [
+        { "id": "a", "text": "Does" },
+        { "id": "b", "text": "Do" },
+        { "id": "c", "text": "Is" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "parents = they → Do." }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": { "text": "מה המשמעות של \"We study English twice a week\"?" },
+      "options": [
+        { "id": "a", "text": "לומדים אנגלית פעמיים בשבוע" },
+        { "id": "b", "text": "לומדים אנגלית פעמיים ביום" },
+        { "id": "c", "text": "לא לומדים אנגלית" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "twice a week = פעמיים בשבוע." }
+    }
+  ]
+}

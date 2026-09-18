@@ -10,10 +10,22 @@ interface InputProps extends TextInputProps {
   containerStyle?: ViewStyle;
 }
 
-export function Input({ label, containerStyle, style, ...props }: InputProps) {
+export function Input({
+  label,
+  containerStyle,
+  style,
+  autoCapitalize,
+  autoCorrect,
+  secureTextEntry,
+  ...props
+}: InputProps) {
   const { colors, borderRadius, id: themeId } = useTheme();
   const type = useType();
   const ember = themeId === 'ember';
+  // Credentials / username-style fields: open keyboard in lowercase by default.
+  const resolvedAutoCapitalize =
+    autoCapitalize ?? (secureTextEntry ? 'none' : undefined);
+  const resolvedAutoCorrect = autoCorrect ?? (secureTextEntry ? false : undefined);
 
   const styles = useMemo(
     () =>
@@ -62,6 +74,9 @@ export function Input({ label, containerStyle, style, ...props }: InputProps) {
       <TextInput
         style={[styles.input, rtl.text, style]}
         placeholderTextColor={colors.textMuted}
+        secureTextEntry={secureTextEntry}
+        autoCapitalize={resolvedAutoCapitalize}
+        autoCorrect={resolvedAutoCorrect}
         {...props}
       />
     </View>

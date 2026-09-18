@@ -1,0 +1,107 @@
+{
+  "id": "language-grammar-5",
+  "version": 2,
+  "title": { "he": "תחביר וזמנים", "en": "Syntax and tenses" },
+  "category": "language",
+  "grade": 5,
+  "tags": ["grammar", "hebrew", "syntax", "grade-5"],
+  "defaultPoints": 7,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "״הילדות שיחקו בחצר.״ מה הנשוא?" },
+      "options": [
+        { "id": "a", "text": "הילדות" },
+        { "id": "b", "text": "שיחקו" },
+        { "id": "c", "text": "בחצר" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "הנשוא מספר מה הנושא עושה — כאן הפועל ״שיחקו״." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזה משפט מתאים להסכמה במין ובמספר?" },
+      "options": [
+        { "id": "a", "text": "הילדים רצה הביתה" },
+        { "id": "b", "text": "הילדים רצו הביתה" },
+        { "id": "c", "text": "הילד רצו הביתה" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "נושא ברבים (ילדים) דורש פועל ברבים (רצו)." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "במשפט ״מחר נסייר במוזיאון״ — באיזה זמן הפועל?" },
+      "options": [
+        { "id": "a", "text": "עבר" },
+        { "id": "b", "text": "הווה" },
+        { "id": "c", "text": "עתיד" }
+      ],
+      "answer": "c",
+      "explanation": { "he": "״נסייר״ + ״מחר״ = פעולה שתקרה — עתיד." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו מילה היא תואר־פועל (מתארת איך מתבצעת הפעולה)?" },
+      "options": [
+        { "id": "a", "text": "מהר" },
+        { "id": "b", "text": "כיסא" },
+        { "id": "c", "text": "גבוה (כמו ילד גבוה)" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "״רץ מהר״ — מהר מתאר את הפועל (תואר־פועל)." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "״הספר שקראתי היה מרתק.״ מה תפקיד ״שקראתי״?" },
+      "options": [
+        { "id": "a", "text": "משפט עצמאי נפרד" },
+        { "id": "b", "text": "פסוקית זיקה המתארת את הספר" },
+        { "id": "c", "text": "מילת קריאה" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "״ש…״ פותחת פסוקית שמתארת שם־עצם (הספר)." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזה משפט בגוף ראשון יחיד בעבר?" },
+      "options": [
+        { "id": "a", "text": "כתבנו מכתב" },
+        { "id": "b", "text": "כתבתי מכתב" },
+        { "id": "c", "text": "יכתוב מכתב" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "״כתבתי״ = אני, עבר; ״כתבנו״ = אנחנו." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "מהו המושא במשפט ״התלמיד פתר את החידה״?" },
+      "options": [
+        { "id": "a", "text": "התלמיד" },
+        { "id": "b", "text": "פתר" },
+        { "id": "c", "text": "את החידה" }
+      ],
+      "answer": "c",
+      "explanation": { "he": "המושא = על מה הפעולה פועלת — החידה." }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו מילה היא מילת קישור מתאימה: ״רציתי לצאת, ___ ירד גשם״?" },
+      "options": [
+        { "id": "a", "text": "אבל" },
+        { "id": "b", "text": "מפני שכבר" },
+        { "id": "c", "text": "וכן גם" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "״אבל״ מבטא ניגוד בין הרצון לבין הגשם." }
+    }
+  ]
+}
