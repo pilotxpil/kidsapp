@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   ScrollView,
   StyleProp,
@@ -30,6 +31,25 @@ interface AuthScreenShellProps {
   contentStyle?: StyleProp<ViewStyle>;
 }
 
+export function useKeyboardOpen() {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setOpen(true)
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setOpen(false)
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  return open;
+}
+
 export function AuthScreenShell({
   themeId,
   emojis,
@@ -40,6 +60,14 @@ export function AuthScreenShell({
   contentStyle,
 }: AuthScreenShellProps) {
   const theme = getTheme(themeId);
+  const keyboardOpen = useKeyboardOpen();
+  const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    if (keyboardOpen) {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    }
+  }, [keyboardOpen]);
 
   const styles = useMemo(
     () =>
@@ -50,8 +78,10 @@ export function AuthScreenShell({
         flex: { flex: 1 },
         inner: {
           flexGrow: 1,
-          padding: spacing.lg,
-          justifyContent: 'center',
+          paddingHorizontal: spacing.lg,
+          paddingBottom: spacing.lg,
+          paddingTop: keyboardOpen && !scroll ? spacing.xl + spacing.lg : spacing.lg,
+          justifyContent: keyboardOpen ? 'flex-start' : 'center',
         },
         back: {
           position: 'absolute',
@@ -86,7 +116,7 @@ export function AuthScreenShell({
           alignSelf: 'center',
         },
       }),
-    [theme]
+    [theme, keyboardOpen, scroll]
   );
 
   const content = (
@@ -120,18 +150,21 @@ export function AuthScreenShell({
             </RtlText>
           </BouncyPressable>
         ) : null}
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-          {scroll ? (
-            <ScrollView
-              contentContainerStyle={styles.inner}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              {content}
-            </ScrollView>
-          ) : (
-            <View style={styles.inner}>{content}</View>
-          )}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.flex}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? spacing.sm : 0}
+        >
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={styles.inner}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            showsVerticalScrollIndicator={false}
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          >
+            {content}
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>

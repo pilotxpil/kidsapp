@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useKeyboardOpen } from './AuthScreenShell';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -23,6 +24,7 @@ interface AuthBrandProps {
 }
 
 export function AuthBrand({ variant, compact }: AuthBrandProps) {
+  const keyboardOpen = useKeyboardOpen();
   const theme = variant === 'kid' ? getTheme('ember') : getTheme('roblox');
   const logoVariant: AuthLogoVariant =
     variant === 'kid' || variant === 'welcome' ? 'gem' : variant === 'register' ? 'shield' : 'coin';
@@ -97,6 +99,8 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
   );
 
   const nameParts = t('appName').split('Quest');
+
+  if (keyboardOpen) return null;
 
   return (
     <View style={styles.wrap}>

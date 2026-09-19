@@ -52,6 +52,7 @@ export default function ParentLoginScreen() {
       emojis={['🪙', '🧱', '🌐', '🎮', '⭐', '🔴']}
       emojiCount={18}
       onBack={() => router.back()}
+      scroll
     >
       <AuthBrand variant="parent" compact />
 

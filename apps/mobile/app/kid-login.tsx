@@ -137,6 +137,7 @@ export default function KidLoginScreen() {
         emojis={['🔥', '🌋', '⚡']}
         emojiCount={0}
         onBack={() => router.back()}
+        scroll
       >
         <AuthBrand variant="kid" compact />
 
