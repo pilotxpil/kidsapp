@@ -78,7 +78,9 @@ export function loadLearningPacks(): LearningPack[] {
     return cachedPacks;
   }
 
-  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.json') && !f.startsWith('._'));
   const packs: LearningPack[] = [];
 
   for (const file of files) {

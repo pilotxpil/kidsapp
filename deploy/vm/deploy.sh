@@ -47,16 +47,19 @@ npm run build -w server
 TMP_TAR="$(mktemp /tmp/kidsapp-deploy.XXXXXX.tgz)"
 trap 'rm -f "$TMP_TAR"' EXIT
 
-echo "==> Packaging (server + shared, no mobile)..."
-tar -czf "$TMP_TAR" \
+echo "==> Packaging (server + shared + content packs, no mobile)..."
+COPYFILE_DISABLE=1 tar -czf "$TMP_TAR" \
   -C "$REPO_ROOT" \
   --exclude='node_modules' \
   --exclude='dist' \
   --exclude='.expo' \
   --exclude='.git' \
+  --exclude='._*' \
+  --exclude='.DS_Store' \
   package.json \
   package-lock.json \
   packages/shared \
+  content \
   server \
   deploy/vm
 
