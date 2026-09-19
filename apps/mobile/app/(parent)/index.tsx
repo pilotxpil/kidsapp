@@ -15,6 +15,7 @@ import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
+import { KidAvatar } from '../../components/KidAvatar';
 import { Button } from '../../components/Button';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { ProgressBar } from '../../components/ProgressBar';
@@ -379,7 +380,7 @@ export default function ParentDashboardScreen() {
           {dashboard?.kids.map((kid) => (
             <Card key={kid._id} style={styles.kidCard}>
               <View style={styles.kidInner}>
-                <Text style={styles.kidAvatar}>{kid.avatar}</Text>
+                <KidAvatar avatar={kid.avatar} size={40} />
                 <Text style={styles.kidName}>{kid.displayName}</Text>
                 <Text style={styles.kidPoints}>{kid.points} XP</Text>
                 <Text style={styles.kidLevel}>

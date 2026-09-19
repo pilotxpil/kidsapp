@@ -8,6 +8,8 @@ import { useType } from '../lib/typography';
 import { rtl } from '../lib/rtl';
 import { t } from '../lib/i18n';
 import { ThemeGlyph } from './icons/ThemeGlyph';
+import { KidAvatar } from './KidAvatar';
+import { shopAvatarImage } from '../lib/avatar-images';
 
 interface AvatarFrameProps {
   avatar: string;
@@ -76,7 +78,9 @@ export function AvatarFrame({ avatar, size = 'md' }: AvatarFrameProps) {
   return (
     <View style={styles.outer}>
       <LinearGradient colors={[...heroGradient]} style={styles.inner}>
-        {ember && helm ? (
+        {shopAvatarImage(avatar) ? (
+          <KidAvatar avatar={avatar} size={dim} style={styles.art} />
+        ) : ember && helm ? (
           <Image source={helm} style={styles.art} resizeMode="cover" />
         ) : (
           <Text style={styles.emoji}>{avatar}</Text>

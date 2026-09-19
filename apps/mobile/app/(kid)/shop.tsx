@@ -10,16 +10,20 @@ import { ThemedScreen } from '../../components/ThemedScreen';
 import { SectionHeader } from '../../components/ThemedHero';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Button } from '../../components/Button';
+import { KidAvatar } from '../../components/KidAvatar';
+import { RtlText } from '../../components/RtlText';
 import { sfxForRewardTitle, playSfx, SfxName } from '../../lib/sfx';
 import type { Reward, CosmeticItem, PersonalGoal } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
+import { useType } from '../../lib/typography';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 
 export default function KidShopScreen() {
   const { user, refreshUser, patchUser } = useAuth();
   const { colors, pointsEmoji, sfx: themeSfx, id: themeId, borderRadius, cardBorder } = useTheme();
+  const type = useType();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [cosmetics, setCosmetics] = useState<CosmeticItem[]>([]);
   const [owned, setOwned] = useState<string[]>([]);
@@ -41,16 +45,25 @@ export default function KidShopScreen() {
         goalCard: { marginBottom: spacing.md },
         goalTitle: { color: colors.text, fontSize: 16, fontWeight: '700', writingDirection: 'rtl' },
         goalMeta: { color: colors.textMuted, fontSize: 13, marginTop: spacing.sm, writingDirection: 'rtl' },
-        cosmeticCard: { marginBottom: spacing.sm },
-        cosmeticRow: { alignItems: 'center', gap: spacing.md, width: '100%' },
-        cosmeticIcon: { fontSize: 36 },
-        cosmeticInfo: { flex: 1, minWidth: 0 },
-        cosmeticLabel: { color: colors.text, fontWeight: '700', writingDirection: 'rtl' },
-        cosmeticCost: { color: colors.gold, marginTop: 2, writingDirection: 'rtl' },
+        cosmeticCard: { marginBottom: spacing.sm, width: '100%' },
+        cosmeticTop: { alignItems: 'center', gap: spacing.md, width: '100%' },
+        cosmeticInfo: { flex: 1, minWidth: 0, justifyContent: 'center' },
+        cosmeticLabel: { color: colors.text, fontWeight: '800', fontSize: 18, ...type.title },
+        cosmeticCost: { color: colors.gold, marginTop: 4, fontSize: 15, fontWeight: '700', ...type.ui },
+        cosmeticCostLocked: { color: colors.textMuted },
+        cosmeticAction: { marginTop: spacing.md, minHeight: 48, width: '100%', justifyContent: 'center' },
+        cosmeticBtn: { alignSelf: 'stretch', width: '100%' },
+        cosmeticLocked: {
+          color: colors.textMuted,
+          fontSize: 14,
+          fontWeight: '700',
+          textAlign: 'center',
+          ...type.ui,
+        },
         goalPick: { marginTop: spacing.sm },
         goalPickBtn: { marginTop: spacing.xs },
       }),
-    [themeId, colors, borderRadius, cardBorder]
+    [themeId, colors, borderRadius, cardBorder, type.title, type.ui]
   );
 
   const load = useCallback(async () => {
@@ -62,7 +75,7 @@ export default function KidShopScreen() {
     ]);
     setRewards(res.rewards);
     if (cos) {
-      setCosmetics(cos.items);
+      setCosmetics([...cos.items].sort((a, b) => a.cost - b.cost));
       setOwned(cos.owned);
     }
     setGoal(goalRes.goal);
@@ -113,6 +126,9 @@ export default function KidShopScreen() {
   };
 
   const handleCosmetic = async (item: CosmeticItem) => {
+    const canAfford = (user?.points || 0) >= item.cost;
+    const isOwned = owned.includes(item.id);
+    if (!isOwned && !canAfford) return;
     setBusyCosmetic(item.id);
     try {
       if (owned.includes(item.id)) {
@@ -158,48 +174,65 @@ export default function KidShopScreen() {
 
         {goal ? (
           <Card style={styles.goalCard}>
-            <Text style={styles.goalTitle}>
+            <RtlText style={styles.goalTitle}>
               {goal.rewardIcon} {t('personalGoal')}: {goal.rewardTitle}
-            </Text>
+            </RtlText>
             <ProgressBar progress={goal.progress} />
-            <Text style={styles.goalMeta}>
+            <RtlText style={styles.goalMeta}>
               {t('goalProgress')
                 .replace('{current}', String(goal.currentPoints))
                 .replace('{cost}', String(goal.rewardCost))}
-            </Text>
+            </RtlText>
             <Button title={t('clearPersonalGoal')} onPress={clearGoal} variant="secondary" style={styles.goalPickBtn} />
           </Card>
         ) : null}
 
-        <Text style={[styles.section, { color: colors.text, fontWeight: '700', writingDirection: 'rtl' }]}>
+        <RtlText style={[styles.section, { color: colors.text, fontWeight: '700', fontSize: 18 }]}>
           {t('cosmeticShop')}
-        </Text>
+        </RtlText>
         {cosmetics.map((item) => {
           const isOwned = owned.includes(item.id);
+          const canAfford = (user?.points || 0) >= item.cost;
           return (
             <Card key={item.id} style={styles.cosmeticCard}>
-              <View style={[styles.cosmeticRow, rtl.row]}>
-                <Text style={styles.cosmeticIcon}>{item.icon}</Text>
+              <View style={[styles.cosmeticTop, rtl.row]}>
+                <KidAvatar avatar={item.id} size={72} />
                 <View style={styles.cosmeticInfo}>
-                  <Text style={styles.cosmeticLabel}>{item.label}</Text>
-                  <Text style={styles.cosmeticCost}>
+                  <RtlText style={styles.cosmeticLabel} numberOfLines={1}>
+                    {item.label}
+                  </RtlText>
+                  <RtlText style={[styles.cosmeticCost, !isOwned && !canAfford && styles.cosmeticCostLocked]}>
                     {isOwned ? t('ownedCosmetic') : `${item.cost} ${pointsEmoji}`}
-                  </Text>
+                  </RtlText>
                 </View>
-                <Button
-                  title={isOwned ? t('equipCosmetic') : t('buyCosmetic')}
-                  onPress={() => handleCosmetic(item)}
-                  loading={busyCosmetic === item.id}
-                  variant={isOwned ? 'secondary' : 'primary'}
-                />
+              </View>
+              <View style={styles.cosmeticAction}>
+                {isOwned ? (
+                  <Button
+                    title={t('equipCosmetic')}
+                    onPress={() => handleCosmetic(item)}
+                    loading={busyCosmetic === item.id}
+                    variant="secondary"
+                    style={styles.cosmeticBtn}
+                  />
+                ) : canAfford ? (
+                  <Button
+                    title={t('buyCosmetic')}
+                    onPress={() => handleCosmetic(item)}
+                    loading={busyCosmetic === item.id}
+                    style={styles.cosmeticBtn}
+                  />
+                ) : (
+                  <RtlText style={styles.cosmeticLocked}>{t('notEnoughPoints')}</RtlText>
+                )}
               </View>
             </Card>
           );
         })}
 
-        <Text style={[styles.section, { color: colors.text, fontWeight: '700', writingDirection: 'rtl' }]}>
+        <RtlText style={[styles.section, { color: colors.text, fontWeight: '700', fontSize: 18 }]}>
           {t('manageRewards')}
-        </Text>
+        </RtlText>
         {rewards.length === 0 ? (
           <Text style={styles.empty}>{t('noRewards')}</Text>
         ) : (
@@ -214,9 +247,7 @@ export default function KidShopScreen() {
                 pending={pendingIds.has(reward._id)}
               />
               <TouchableOpacity onPress={() => setAsGoal(reward)} style={styles.goalPick}>
-                <Text style={{ color: colors.primaryLight, textAlign: 'right', writingDirection: 'rtl' }}>
-                  {t('setPersonalGoal')}
-                </Text>
+                <RtlText style={{ color: colors.primaryLight }}>{t('setPersonalGoal')}</RtlText>
               </TouchableOpacity>
             </View>
           ))

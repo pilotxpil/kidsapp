@@ -16,10 +16,12 @@ import { useRouter } from 'expo-router';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
+import { KidAvatar } from '../../components/KidAvatar';
+import { ShopAvatarGrid } from '../../components/ShopAvatarGrid';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
-import { AVATARS, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS, formatGradeLabel } from '@kidsapp/shared';
+import { DEFAULT_SHOP_AVATAR_ID, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS, formatGradeLabel } from '@kidsapp/shared';
 import type { User } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
@@ -39,7 +41,7 @@ export default function ParentKidsScreen() {
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
-  const [avatar, setAvatar] = useState(AVATARS[0]);
+  const [avatar, setAvatar] = useState(DEFAULT_SHOP_AVATAR_ID);
   const [grade, setGrade] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [qrKid, setQrKid] = useState<User | null>(null);
@@ -144,18 +146,7 @@ export default function ParentKidsScreen() {
           justifyContent: 'flex-end',
           width: '100%',
         },
-        avatarBtn: {
-          width: 48,
-          height: 48,
-          borderRadius: borderRadius.md,
-          backgroundColor: colors.bgCardLight,
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderWidth: 2,
-          borderColor: 'transparent',
-        },
-        avatarActive: { borderColor: colors.primary },
-        avatarEmoji: { fontSize: 24 },
+        avatarGrid: { width: '100%', marginBottom: spacing.md },
         gradeChip: {
           paddingHorizontal: spacing.md,
           paddingVertical: spacing.sm,
@@ -191,7 +182,7 @@ export default function ParentKidsScreen() {
     setDisplayName('');
     setUsername('');
     setPin('');
-    setAvatar(AVATARS[0]);
+    setAvatar(DEFAULT_SHOP_AVATAR_ID);
     setGrade(null);
   };
 
@@ -205,7 +196,7 @@ export default function ParentKidsScreen() {
     setDisplayName(kid.displayName);
     setUsername(kid.username ?? '');
     setPin('');
-    setAvatar(kid.avatar || AVATARS[0]);
+    setAvatar(kid.avatar || DEFAULT_SHOP_AVATAR_ID);
     setGrade(kid.grade ?? null);
     setModalVisible(true);
   };
@@ -328,7 +319,7 @@ export default function ParentKidsScreen() {
                     <Text style={styles.kidStat}>🔥 {kid.streak}</Text>
                   </View>
                 </View>
-                <Text style={styles.kidAvatar}>{kid.avatar}</Text>
+                <KidAvatar avatar={kid.avatar} size={48} />
                 <TouchableOpacity
                   style={styles.qrBtn}
                   onPress={() => setQrKid(kid)}
@@ -415,16 +406,8 @@ export default function ParentKidsScreen() {
               </View>
 
               <Text style={styles.label}>{t('selectAvatar')}</Text>
-              <View style={styles.chipRow}>
-                {AVATARS.map((a) => (
-                  <TouchableOpacity
-                    key={a}
-                    style={[styles.avatarBtn, avatar === a && styles.avatarActive]}
-                    onPress={() => setAvatar(a)}
-                  >
-                    <Text style={styles.avatarEmoji}>{a}</Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.avatarGrid}>
+                <ShopAvatarGrid selected={avatar} onSelect={setAvatar} />
               </View>
             </ScrollView>
 

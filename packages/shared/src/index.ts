@@ -513,20 +513,37 @@ export interface CosmeticItem {
   themes?: UiThemeId[];
 }
 
-/** Cosmetics kids can buy with points (avatars / frames / effects). */
+/** Cosmetics kids can buy with points (avatars / frames / effects). Sorted cheap → expensive. */
 export const COSMETIC_ITEMS: CosmeticItem[] = [
-  { id: 'avatar_robot', type: 'avatar', cost: 80, icon: '🤖', label: 'רובוט', themes: ['roblox'] },
-  { id: 'avatar_creeper', type: 'avatar', cost: 100, icon: '🟩', label: 'קריפר', themes: ['minecraft'] },
-  { id: 'avatar_brawler', type: 'avatar', cost: 100, icon: '💥', label: 'בראולר', themes: ['brawl'] },
-  { id: 'avatar_sparkle', type: 'avatar', cost: 90, icon: '✨', label: 'נוצץ', themes: ['sparkle'] },
-  { id: 'avatar_phoenix', type: 'avatar', cost: 120, icon: '🔥', label: 'עוף חול', themes: ['ember'] },
-  { id: 'frame_gold', type: 'frame', cost: 150, icon: '🖼️', label: 'מסגרת זהב' },
-  { id: 'frame_pixel', type: 'frame', cost: 120, icon: '🧱', label: 'מסגרת פיקסלים', themes: ['minecraft', 'roblox'] },
-  { id: 'frame_rainbow', type: 'frame', cost: 180, icon: '🌈', label: 'מסגרת קשת', themes: ['sparkle'] },
-  { id: 'effect_sparkles', type: 'effect', cost: 200, icon: '⭐', label: 'אפקט ניצוצות' },
-  { id: 'effect_fire', type: 'effect', cost: 220, icon: '🔥', label: 'אפקט אש', themes: ['ember', 'brawl'] },
-  { id: 'effect_leaves', type: 'effect', cost: 160, icon: '🍃', label: 'אפקט עלים', themes: ['minecraft'] },
+  { id: 'classic-noob', type: 'avatar', cost: 20, icon: 'classic-noob', label: 'נוב קלאסי' },
+  { id: 'guest-blank', type: 'avatar', cost: 20, icon: 'guest-blank', label: '404 לא נמצא' },
+  { id: 'poop-rocket', type: 'avatar', cost: 20, icon: 'poop-rocket', label: 'קקי דחוף' },
+  { id: 'fried-brain', type: 'avatar', cost: 20, icon: 'fried-brain', label: 'מוח מטוגן' },
+  { id: 'ban-hammer', type: 'avatar', cost: 30, icon: 'ban-hammer', label: 'האמר באן' },
+  { id: 'cam-flush', type: 'avatar', cost: 40, icon: 'cam-flush', label: 'מצלמת הדחה' },
+  { id: 'obby-ninja', type: 'avatar', cost: 50, icon: 'obby-ninja', label: 'גרין נינג׳ה' },
+  { id: 'visor-666', type: 'avatar', cost: 50, icon: 'visor-666', label: 'דארק בוי' },
+  { id: 'ice-stare', type: 'avatar', cost: 50, icon: 'ice-stare', label: 'אייס מן' },
+  { id: 'robux-tank', type: 'avatar', cost: 100, icon: 'robux-tank', label: 'גולד דיגר' },
+  { id: 'glitch-hoodie', type: 'avatar', cost: 100, icon: 'glitch-hoodie', label: 'סייבר גיק' },
+  { id: 'bowl-head', type: 'avatar', cost: 100, icon: 'bowl-head', label: 'ראש-אסלה' },
+  { id: 'drip-poop', type: 'avatar', cost: 100, icon: 'drip-poop', label: 'קקי מזוקקי' },
+  { id: 'stink-king', type: 'avatar', cost: 100, icon: 'stink-king', label: 'מלך הפוקים' },
+  { id: 'skibidi-sigma', type: 'avatar', cost: 100, icon: 'skibidi-sigma', label: 'סקיבידי סיגמה' },
+  { id: 'pizza-face', type: 'avatar', cost: 100, icon: 'pizza-face', label: 'פיצה פייס' },
 ];
+
+export const SHOP_AVATAR_IDS = COSMETIC_ITEMS.filter((c) => c.type === 'avatar').map((c) => c.id);
+
+export const DEFAULT_SHOP_AVATAR_ID = SHOP_AVATAR_IDS[0];
+
+export function isAllowedKidAvatar(avatar: string): boolean {
+  return AVATARS.includes(avatar) || SHOP_AVATAR_IDS.includes(avatar);
+}
+
+export function isAllowedParentAvatar(avatar: string): boolean {
+  return PARENT_AVATARS.includes(avatar) || SHOP_AVATAR_IDS.includes(avatar);
+}
 
 export const DEFAULT_FAMILY_CHALLENGE_TARGET = 20;
 export const DEFAULT_FAMILY_CHALLENGE_REWARD_POINTS = 50;

@@ -10,6 +10,7 @@ import { ThemePicker } from '../../components/ThemePicker';
 import { AvatarPickerModal } from '../../components/AvatarPicker';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { AvatarFrame, SectionHeader } from '../../components/ThemedHero';
+import { KidAvatar } from '../../components/KidAvatar';
 import { AppVersionLabel } from '../../components/AppVersionLabel';
 import { PointsMark } from '../../components/icons/ThemeGlyph';
 import { BADGES, BADGE_REWARDS } from '@kidsapp/shared';
@@ -375,11 +376,7 @@ export default function KidProfileScreen() {
             >
             <View style={[styles.lbRow, rtl.row]}>
               <Text style={styles.lbRank}>#{entry.rank}</Text>
-              {ember && art?.icons?.profile ? (
-                <Image source={art.icons.profile} style={styles.lbHelm} resizeMode="contain" />
-              ) : (
-                <Text style={styles.lbAvatar}>{entry.avatar}</Text>
-              )}
+              <KidAvatar avatar={entry.avatar ?? '🎮'} size={32} />
               <Text style={[styles.lbName, rtl.text]} numberOfLines={1}>
                 {entry.displayName}
               </Text>

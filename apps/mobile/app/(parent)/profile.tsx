@@ -9,6 +9,7 @@ import { ThemedScreen } from '../../components/ThemedScreen';
 import { ThemePicker } from '../../components/ThemePicker';
 import { FamilyInviteCard } from '../../components/FamilyInviteCard';
 import { AvatarPickerModal } from '../../components/AvatarPicker';
+import { KidAvatar } from '../../components/KidAvatar';
 import { SectionHeader } from '../../components/ThemedHero';
 import { AppVersionLabel } from '../../components/AppVersionLabel';
 import { spacing } from '../../constants/theme';
@@ -33,7 +34,6 @@ export default function ParentProfileScreen() {
       StyleSheet.create({
         scroll: { padding: spacing.lg, maxWidth: 600, alignSelf: 'center', width: '100%' },
         avatarSection: { alignItems: 'center', marginBottom: spacing.lg },
-        avatar: { fontSize: 72, textAlign: 'center' },
         avatarBtn: {
           marginTop: spacing.sm,
           paddingVertical: spacing.sm,
@@ -86,7 +86,7 @@ export default function ParentProfileScreen() {
         <SectionHeader title={t('profile')} icon="🛡️" />
 
         <View style={styles.avatarSection}>
-          <Text style={styles.avatar}>{user?.avatar ?? '👨‍👩‍👧‍👦'}</Text>
+          <KidAvatar avatar={user?.avatar ?? '👨‍👩‍👧‍👦'} size={88} />
           <TouchableOpacity style={styles.avatarBtn} onPress={() => setAvatarOpen(true)}>
             <Text style={[styles.avatarBtnText, rtl.textCenter]}>{t('selectAvatar')}</Text>
           </TouchableOpacity>
@@ -118,7 +118,7 @@ export default function ParentProfileScreen() {
         <AppVersionLabel />
       </ScrollView>
 
-      <AvatarPickerModal visible={avatarOpen} onClose={() => setAvatarOpen(false)} />
+      <AvatarPickerModal visible={avatarOpen} onClose={() => setAvatarOpen(false)} mode="parent" />
     </ThemedScreen>
   );
 }

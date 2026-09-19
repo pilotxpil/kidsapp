@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { UI_THEME_IDS, AVATARS, PARENT_AVATARS, DEFAULT_PARENT_THEME_ID } from '@kidsapp/shared';
+import { UI_THEME_IDS, AVATARS, DEFAULT_PARENT_THEME_ID, isAllowedParentAvatar } from '@kidsapp/shared';
 import { Family } from '../models/Family';
 import { User } from '../models/User';
 import { formatUser } from '../utils/format';
@@ -208,8 +208,7 @@ router.patch('/me', authenticate, async (req: Request, res: Response) => {
     }
 
     if (avatar !== undefined) {
-      const allowed = user.role === 'parent' ? PARENT_AVATARS : AVATARS;
-      if (!allowed.includes(avatar)) {
+      if (user.role === 'parent' ? !isAllowedParentAvatar(avatar) : !AVATARS.includes(avatar)) {
         return res.status(400).json({ error: 'אווטאר לא תקין' });
       }
       user.avatar = avatar;

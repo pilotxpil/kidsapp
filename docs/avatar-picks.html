@@ -1,0 +1,310 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>בחירת אווטארים — KidsQuest</title>
+  <style>
+    :root {
+      --bg: #121014;
+      --card: #1c1917;
+      --line: #3f322c;
+      --text: #f5efe8;
+      --muted: #b7a79a;
+      --accent: #ff8a3d;
+      --ok: #3dd68c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Heebo, "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #1a1512;
+      border-bottom: 1px solid var(--line);
+      padding: 14px 20px;
+    }
+    header .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    .hint { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+    .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .count {
+      background: #2a211c;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 700;
+    }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .primary { background: var(--accent); color: #1a0e08; }
+    .ghost { background: #2a211c; color: var(--text); border: 1px solid var(--line); }
+    main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .pack { margin-bottom: 28px; }
+    .pack h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 99px; display: inline-block; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      display: grid;
+      grid-template-columns: 22px 140px 1fr;
+      gap: 12px;
+      align-items: start;
+      background: var(--card);
+      border: 2px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .card.on { border-color: var(--ok); background: #1b2420; }
+    .art {
+      width: 140px;
+      height: 140px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #0e0c0b;
+    }
+    .art img { width: 140px; height: 140px; object-fit: cover; display: block; }
+    .name { font-weight: 800; margin-bottom: 4px; }
+    .look { color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .num { color: var(--accent); font-size: 12px; font-weight: 700; }
+    .price {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .price span { color: var(--muted); font-size: 13px; font-weight: 700; white-space: nowrap; }
+    .price input,
+    .name-input {
+      background: #0e0c0b;
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-family: inherit;
+    }
+    .price input {
+      width: 88px;
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .name-input {
+      width: 100%;
+      font-size: 16px;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+    .price input:disabled,
+    .name-input:disabled { opacity: 0.35; }
+    input[type="checkbox"] { width: 18px; height: 18px; margin-top: 6px; accent-color: var(--ok); }
+    .picked {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      max-width: 1100px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #copied { display: none; color: var(--ok); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <div>
+        <h1>50 אווטארים — סמני מה להוסיף</h1>
+        <p class="hint">סמני אווטארים לחנות, שנה שם ומחיר XP לכל אחד שנבחר.</p>
+      </div>
+      <div class="actions">
+        <span class="count">נבחרו <span id="n">0</span></span>
+        <button class="ghost" id="clear">נקה</button>
+        <button class="primary" id="copy">העתק רשימה</button>
+        <span id="copied">הועתק</span>
+      </div>
+    </div>
+    <p class="picked" id="picked"></p>
+  </header>
+  <main id="app"></main>
+  <script>
+    const PACKS = [
+      { id: "roblox", title: "רחוב רובלוקס", color: "#f5c542", blurb: "נובים, האמרים ודריפ" },
+      { id: "toilet", title: "אסלות וקקי", color: "#d4a574", blurb: "שירותים מדברים וקקי עם נעליים" },
+      { id: "sigma", title: "סיגמה 67", color: "#a78bfa", blurb: "ג'רזי 67, אאורה וריז" },
+      { id: "pets", title: "חיות מדברות", color: "#4ade80", blurb: "חתול רחוב, כלב בום, אוגר" },
+      { id: "gross", title: "מגעיל-מגניב", color: "#fb7185", blurb: "סליים, בננה, צ'יקן ג'וקי" },
+    ];
+    const AVATARS = [
+      { id: "classic-noob", n: 1, pack: "roblox", name: "נוב קלאסי", look: "ראש צהוב, חולצה כחולה, מכנסיים ירוקים." },
+      { id: "bacon-swirl", n: 2, pack: "roblox", name: "בייקון סווירל", look: "שיער חום מסולסל, קפוצ'ון, שרשרת זהב." },
+      { id: "guest-blank", n: 3, pack: "roblox", name: "אורח ריק", look: "דמות אפורה בלי פנים, ויזור זוהר." },
+      { id: "fedora-flex", n: 4, pack: "roblox", name: "פדורה פלקס", look: "פדורה אדומה, משקפי שמש, חליפה." },
+      { id: "ban-hammer", n: 5, pack: "roblox", name: "האמר באן", look: "ילד עם פטיש באן ענק." },
+      { id: "obby-ninja", n: 6, pack: "roblox", name: "נינג'ת אובי", look: "מסיכת ניאון ירוקה וחליפה שחורה." },
+      { id: "stud-builder", n: 7, pack: "roblox", name: "בנאי סטאד", look: "קסדה צהובה ולבנת לגו." },
+      { id: "robux-tank", n: 8, pack: "roblox", name: "טנק רובוקס", look: "דמות זהב עם מטבע ענק." },
+      { id: "stop-sign", n: 9, pack: "roblox", name: "סטופ סיין", look: "ראש תמרור עצור." },
+      { id: "glitch-hoodie", n: 10, pack: "roblox", name: "גליץ' הודי", look: "קפוצ'ון אדום ועין זוהרת." },
+      { id: "visor-666", n: 11, pack: "roblox", name: "ויזור אפל", look: "אורח כהה עם משקף אדום." },
+      { id: "tiny-top-hat", n: 12, pack: "roblox", name: "כובע זעיר", look: "צילינדר קטן על ראש ענק." },
+      { id: "bowl-head", n: 13, pack: "toilet", name: "ראש-אסלה", look: "ראש יוצא מאסלה, משקפי טייס." },
+      { id: "cam-flush", n: 14, pack: "toilet", name: "מצלמת הדחה", look: "אסלה עם ראש מצלמה." },
+      { id: "drip-poop", n: 15, pack: "toilet", name: "קקי דריפ", look: "קקי עם נעליים, שרשרת ומשקפיים." },
+      { id: "tp-ninja", n: 16, pack: "toilet", name: "נינג'ת נייר", look: "עטוף בנייר טואלט עם חרב." },
+      { id: "stink-king", n: 17, pack: "toilet", name: "מלך הסירחון", look: "ענן ירוק עם כתר." },
+      { id: "gold-throne", n: 18, pack: "toilet", name: "כס הזהב", look: "מלך על אסלה מוזהבת." },
+      { id: "poop-rocket", n: 19, pack: "toilet", name: "קקי-רקטה", look: "קקי עם סילון ולהבות." },
+      { id: "plunger-hero", n: 20, pack: "toilet", name: "גיבור פומפה", look: "אינסטלטור עם פומפה ענקית." },
+      { id: "drain-mutant", n: 21, pack: "toilet", name: "מוטנט ביוב", look: "יצור ירוק מחור ניקוז." },
+      { id: "toilet-kart", n: 22, pack: "toilet", name: "אסלה על גלגלים", look: "אסלה שהפכה לקארטינג." },
+      { id: "laser-bidet", n: 23, pack: "toilet", name: "בידה לייזר", look: "אסלה עם עיני לייזר." },
+      { id: "soap-rage", n: 24, pack: "toilet", name: "סבון זועם", look: "מתקן סבון שרירי." },
+      { id: "sigma-jersey", n: 25, pack: "sigma", name: "סיגמה 67", look: "ג'רזי שחור עם 67 ואאורה." },
+      { id: "six-seven-duo", n: 26, pack: "sigma", name: "שישה-שבע", look: "שני גופים: 6 ו-7 רוקדים." },
+      { id: "rizz-chin", n: 27, pack: "sigma", name: "ריז צ'ין", look: "סנטר ענק ומשקפיים זעירים." },
+      { id: "ohio-core", n: 28, pack: "sigma", name: "אוהיו קור", look: "ליבה מסתובבת בחזה." },
+      { id: "fried-brain", n: 29, pack: "sigma", name: "מוח מטוגן", look: "מוח עם אוזניות גיימינג." },
+      { id: "boom-67", n: 30, pack: "sigma", name: "בום 67", look: "ראש רמקול עם 67." },
+      { id: "mega-scream", n: 31, pack: "sigma", name: "מגה-67", look: "פה-מגאפון שצועק." },
+      { id: "ice-stare", n: 32, pack: "sigma", name: "מבט קרח", look: "מעיל פרווה ומבט ריק." },
+      { id: "mid-stamp", n: 33, pack: "sigma", name: "מיד סטמפ", look: "חותמת MID על המצח." },
+      { id: "aura-farm", n: 34, pack: "sigma", name: "אורא פארם", look: "הילה זוהרת סביב הראש." },
+      { id: "skibidi-sigma", n: 35, pack: "sigma", name: "סקיבידי סיגמה", look: "חצי אסלה, חצי ג'רזי 67." },
+      { id: "no-rizz", n: 36, pack: "sigma", name: "נול ריז", look: "ראש קירח עם L על המצח." },
+      { id: "talk-cat-street", n: 37, pack: "pets", name: "חתול רחוב", look: "חתול עומד עם טלפון וג'ינס." },
+      { id: "bling-cat", n: 38, pack: "pets", name: "חתול בלינג", look: "חתול זהוב עם שרשרת וכובע." },
+      { id: "boom-dog", n: 39, pack: "pets", name: "כלב בום", look: "כלב עם זנב דינמיט." },
+      { id: "gym-hamster", n: 40, pack: "pets", name: "אוגר חדר כושר", look: "אוגר עם משקולות." },
+      { id: "gamer-parrot", n: 41, pack: "pets", name: "תוכי גיימר", look: "תוכי עם אוזניות." },
+      { id: "slime-frog", n: 42, pack: "pets", name: "צפרדע סליים", look: "צפרדע נוטפת ג'ל." },
+      { id: "noob-penguin", n: 43, pack: "pets", name: "פינגווין נוב", look: "פינגווין בחולצה כחולה-צהובה." },
+      { id: "tub-shark", n: 44, pack: "pets", name: "כריש באמבט", look: "כריש בגלגל ברווז." },
+      { id: "peel-ninja", n: 45, pack: "gross", name: "נינג'ת קליפה", look: "קליפת בננה כחליפת נינג'ה." },
+      { id: "chicken-jock", n: 46, pack: "gross", name: "צ'יקן ג'וקי", look: "אפרוח רוכב על זומבי." },
+      { id: "slime-crown", n: 47, pack: "gross", name: "מלך סליים", look: "סליים ירוק עם כתר." },
+      { id: "pizza-face", n: 48, pack: "gross", name: "פיצה פייס", look: "פרוסת פיצה כפנים." },
+      { id: "gum-bubble", n: 49, pack: "gross", name: "בועת מסטיק", look: "ראש בתוך בועה ורודה." },
+      { id: "spit-seed", n: 50, pack: "gross", name: "גרעין אבטיח", look: "גרעין שחור עם פס אדום." },
+    ];
+
+    const KEY = "kidsquest-avatar-picks";
+    const PRICE_KEY = "kidsquest-avatar-prices";
+    const NAME_KEY = "kidsquest-avatar-names";
+    const DEFAULT_COST = { roblox: 100, toilet: 130, sigma: 110, pets: 90, gross: 100 };
+    const selected = new Set(JSON.parse(localStorage.getItem(KEY) || "[]"));
+    const prices = JSON.parse(localStorage.getItem(PRICE_KEY) || "{}");
+    const customNames = JSON.parse(localStorage.getItem(NAME_KEY) || "{}");
+
+    function costOf(a) {
+      const n = Number(prices[a.id]);
+      return Number.isFinite(n) && n > 0 ? n : DEFAULT_COST[a.pack];
+    }
+
+    function nameOf(a) {
+      const n = (customNames[a.id] || "").trim();
+      return n || a.name;
+    }
+
+    function save() {
+      localStorage.setItem(KEY, JSON.stringify([...selected]));
+      localStorage.setItem(PRICE_KEY, JSON.stringify(prices));
+      localStorage.setItem(NAME_KEY, JSON.stringify(customNames));
+      document.getElementById("n").textContent = selected.size;
+      const names = AVATARS.filter((a) => selected.has(a.id)).map((a) => `${nameOf(a)} (${costOf(a)} XP)`);
+      document.getElementById("picked").textContent = names.length ? "לחנות: " + names.join(" · ") : "";
+      document.querySelectorAll("div.card").forEach((el) => {
+        const on = selected.has(el.dataset.id);
+        el.classList.toggle("on", on);
+        el.querySelectorAll(".price input, .name-input").forEach((inp) => {
+          inp.disabled = !on;
+        });
+      });
+    }
+
+    const app = document.getElementById("app");
+    PACKS.forEach((pack) => {
+      const items = AVATARS.filter((a) => a.pack === pack.id);
+      const sec = document.createElement("section");
+      sec.className = "pack";
+      sec.innerHTML = `<h2><span class="dot" style="background:${pack.color}"></span>${pack.title}</h2>
+        <p class="hint">${pack.blurb}</p><div class="grid"></div>`;
+      const grid = sec.querySelector(".grid");
+      items.forEach((a) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.id = a.id;
+        const on = selected.has(a.id);
+        card.innerHTML = `<input type="checkbox" ${on ? "checked" : ""} />
+          <div class="art"><img src="avatars/avatar-${a.id}.png" alt="${a.name}" /></div>
+          <div>
+            <div class="num">#${a.n}</div>
+            <input class="name-input" type="text" value="${nameOf(a).replace(/"/g, "&quot;")}" ${on ? "" : "disabled"} />
+            <div class="look">${a.look}</div>
+            <div class="price">
+              <span>מחיר XP</span>
+              <input type="number" min="1" step="10" value="${costOf(a)}" ${on ? "" : "disabled"} />
+            </div>
+          </div>`;
+        card.querySelector("input[type=checkbox]").addEventListener("change", (e) => {
+          if (e.target.checked) selected.add(a.id);
+          else selected.delete(a.id);
+          save();
+        });
+        card.querySelector(".name-input").addEventListener("input", (e) => {
+          customNames[a.id] = e.target.value;
+          save();
+        });
+        card.querySelector(".price input").addEventListener("input", (e) => {
+          const n = Number(e.target.value);
+          if (Number.isFinite(n) && n > 0) prices[a.id] = n;
+          save();
+        });
+        grid.appendChild(card);
+      });
+      app.appendChild(sec);
+    });
+
+    document.getElementById("clear").onclick = () => {
+      selected.clear();
+      document.querySelectorAll("input[type=checkbox]").forEach((i) => (i.checked = false));
+      save();
+    };
+    document.getElementById("copy").onclick = async () => {
+      const rows = AVATARS.filter((a) => selected.has(a.id)).map((a) => `${a.n}. ${nameOf(a)} (${a.id}) — ${costOf(a)} XP`);
+      const text = rows.length ? rows.join("\n") : "לא נבחר כלום";
+      await navigator.clipboard.writeText(text);
+      const el = document.getElementById("copied");
+      el.style.display = "inline";
+      setTimeout(() => (el.style.display = "none"), 1500);
+    };
+    save();
+  </script>
+</body>
+</html>

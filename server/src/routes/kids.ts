@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { UI_THEME_IDS, AVATARS, DEFAULT_KID_THEME_ID, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS } from '@kidsapp/shared';
+import { UI_THEME_IDS, DEFAULT_KID_THEME_ID, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS, DEFAULT_SHOP_AVATAR_ID, isAllowedKidAvatar } from '@kidsapp/shared';
 import { authenticate, requireParent } from '../middleware/auth';
 import { User } from '../models/User';
 import { Task } from '../models/Task';
@@ -63,6 +63,10 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
       gradeVal = parsed ?? undefined;
     }
 
+    if (avatar && !isAllowedKidAvatar(String(avatar))) {
+      return res.status(400).json({ error: 'אווטאר לא תקין' });
+    }
+
     const pinHash = await bcrypt.hash(pin, 10);
     const kid = await User.create({
       role: 'kid',
@@ -70,7 +74,7 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
       displayName,
       username,
       pinHash,
-      avatar: avatar || '🐷',
+      avatar: avatar || DEFAULT_SHOP_AVATAR_ID,
       uiTheme: DEFAULT_KID_THEME_ID,
       ...(gradeVal != null ? { grade: gradeVal } : {}),
     });
@@ -142,7 +146,7 @@ router.patch('/:id', authenticate, async (req: Request, res: Response) => {
     }
 
     if (avatar !== undefined) {
-      if (!AVATARS.includes(avatar)) {
+      if (!isAllowedKidAvatar(avatar)) {
         return res.status(400).json({ error: 'אווטאר לא תקין' });
       }
       kid.avatar = avatar;
@@ -460,7 +464,7 @@ router.post('/cosmetics/:itemId/buy', authenticate, async (req: Request, res: Re
     await deductPoints(kid, item.cost, `קנייה: ${item.label}`, item.id);
     kid.ownedCosmetics = [...owned, item.id];
     if (item.type === 'avatar') {
-      kid.avatar = item.icon;
+      kid.avatar = item.id;
     }
     await kid.save();
 
@@ -489,7 +493,7 @@ router.post('/cosmetics/:itemId/equip', authenticate, async (req: Request, res: 
       return res.status(400).json({ error: 'יש לקנות את הפריט קודם' });
     }
 
-    if (item.type === 'avatar') kid.avatar = item.icon;
+    if (item.type === 'avatar') kid.avatar = item.id;
     if (item.type === 'frame') kid.equippedFrame = item.id;
     if (item.type === 'effect') kid.equippedEffect = item.id;
     await kid.save();
