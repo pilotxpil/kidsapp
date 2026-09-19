@@ -18,6 +18,8 @@ export const he = {
   pin: 'PIN (4 ספרות)',
   email: 'אימייל',
   password: 'סיסמה',
+  showPassword: 'הצגת הסיסמה',
+  hidePassword: 'הסתרת הסיסמה',
   displayName: 'שם תצוגה',
   familyName: 'שם המשפחה',
   login: 'התחברות',

@@ -99,6 +99,7 @@ export default function ParentRegisterScreen() {
           autoCorrect={false}
           textContentType="emailAddress"
           autoComplete="email"
+          ltr
         />
         <Input
           label={t('password')}
@@ -109,6 +110,7 @@ export default function ParentRegisterScreen() {
           autoCorrect={false}
           textContentType="newPassword"
           autoComplete="new-password"
+          ltr
         />
         <Button title={t('createAccount')} onPress={handleRegister} loading={loading} />
         <BouncyPressable onPress={() => setMode(mode === 'create' ? 'join' : 'create')} style={styles.link}>

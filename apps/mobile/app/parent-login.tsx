@@ -65,6 +65,7 @@ export default function ParentLoginScreen() {
           autoCorrect={false}
           textContentType="username"
           autoComplete="email"
+          ltr
         />
         <Input
           label={t('password')}
@@ -75,6 +76,7 @@ export default function ParentLoginScreen() {
           autoCorrect={false}
           textContentType="password"
           autoComplete="password"
+          ltr
         />
         <Button title={t('login')} onPress={handleLogin} loading={loading} />
         <BouncyPressable onPress={() => router.push('/parent-register')} style={styles.link}>
