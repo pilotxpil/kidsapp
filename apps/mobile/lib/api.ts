@@ -342,15 +342,58 @@ export const api = {
     });
   },
 
+  createCustomLearningPack(pack: import('@kidsapp/shared').LearningPackInput) {
+    return request<{ pack: import('@kidsapp/shared').LearningPack }>('/learning/custom-packs', {
+      method: 'POST',
+      body: JSON.stringify(pack),
+    });
+  },
+
+  updateCustomLearningPack(packId: string, pack: import('@kidsapp/shared').LearningPackInput) {
+    return request<{ pack: import('@kidsapp/shared').LearningPack }>(
+      `/learning/custom-packs/${encodeURIComponent(packId)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(pack),
+      }
+    );
+  },
+
+  deleteCustomLearningPack(packId: string) {
+    return request<{ success: boolean; packId: string }>(
+      `/learning/custom-packs/${encodeURIComponent(packId)}`,
+      { method: 'DELETE' }
+    );
+  },
+
+  importLearningPacks(payload: unknown) {
+    return request<{
+      packs: import('@kidsapp/shared').LearningPack[];
+      errors?: string[];
+    }>('/learning/custom-packs/import', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  exportLearningPack(packId: string) {
+    return request<{ pack: import('@kidsapp/shared').LearningPack }>(
+      `/learning/custom-packs/${encodeURIComponent(packId)}/export`
+    );
+  },
+
   getLearningPack(packId: string) {
-    return request<LearningPackDetail>(`/learning/packs/${packId}`);
+    return request<LearningPackDetail>(`/learning/packs/${encodeURIComponent(packId)}`);
   },
 
   checkLearningAnswer(packId: string, activityId: string, answer: string) {
-    return request<LearningCheckResult>(`/learning/packs/${packId}/check`, {
-      method: 'POST',
-      body: JSON.stringify({ activityId, answer }),
-    });
+    return request<LearningCheckResult>(
+      `/learning/packs/${encodeURIComponent(packId)}/check`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ activityId, answer }),
+      }
+    );
   },
 
   registerPushToken(token: string, platform?: PushPlatform) {
@@ -434,6 +477,12 @@ export const api = {
   getLearningMistakes(kidId: string) {
     return request<{ mistakes: import('@kidsapp/shared').LearningMistakeEntry[] }>(
       `/learning/mistakes?kidId=${kidId}`
+    );
+  },
+
+  getLearningResults(kidId: string) {
+    return request<{ results: import('@kidsapp/shared').LearningAnswerReview[] }>(
+      `/learning/results?kidId=${kidId}`
     );
   },
 };

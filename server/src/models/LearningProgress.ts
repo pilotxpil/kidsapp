@@ -5,6 +5,13 @@ export interface ILearningMistake {
   count: number;
 }
 
+export interface ILearningAnswer {
+  activityId: string;
+  selectedAnswer: string;
+  correct: boolean;
+  answeredAt: Date;
+}
+
 export interface ILearningProgress extends Document {
   kidId: Types.ObjectId;
   familyId: Types.ObjectId;
@@ -12,6 +19,7 @@ export interface ILearningProgress extends Document {
   completedActivityIds: string[];
   totalPointsEarned: number;
   mistakes: ILearningMistake[];
+  answers: ILearningAnswer[];
   completedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +37,17 @@ const learningProgressSchema = new Schema<ILearningProgress>(
         {
           activityId: { type: String, required: true },
           count: { type: Number, default: 0 },
+        },
+      ],
+      default: [],
+    },
+    answers: {
+      type: [
+        {
+          activityId: { type: String, required: true },
+          selectedAnswer: { type: String, required: true },
+          correct: { type: Boolean, required: true },
+          answeredAt: { type: Date, default: Date.now },
         },
       ],
       default: [],

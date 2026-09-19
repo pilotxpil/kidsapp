@@ -1,18 +1,22 @@
 {
   "id": "english-fox-tale",
-  "version": 1,
+  "version": 2,
   "title": { "he": "אנגלית — סיפור השועל", "en": "The Tale of the Fox" },
   "category": "english",
+  "kind": "reading",
   "grade": 3,
   "tags": ["reading", "comprehension", "story", "english"],
-  "defaultPoints": 5,
+  "defaultPoints": 6,
+  "passageTitle": { "he": "The Fox and the Grapes", "en": "The Fox and the Grapes" },
+  "passage": {
+    "he": "A clever fox walked through the forest. He was looking for food.\n\nThe fox saw grapes high on a vine. He jumped again and again but could not reach them.\n\nAt last the fox said: \"Those grapes are probably sour anyway.\" Then he walked away.",
+    "en": "A clever fox walked through the forest..."
+  },
   "activities": [
     {
       "id": "q1",
       "type": "multiple_choice",
-      "prompt": {
-        "text": "קראו: \"A clever fox walked through the forest. He was looking for food.\"\nמה השועל חיפש?"
-      },
+      "prompt": { "text": "מה השועל חיפש ביער?" },
       "options": [
         { "id": "a", "text": "חבר" },
         { "id": "b", "text": "אוכל" },
@@ -24,37 +28,31 @@
     {
       "id": "q2",
       "type": "multiple_choice",
-      "prompt": {
-        "text": "קראו: \"The fox saw grapes high on a vine. He jumped again and again but could not reach them.\"\nאיך הרגיש השועל?"
-      },
+      "prompt": { "text": "למה לא הצליח השועל לקחת את הענבים?" },
       "options": [
-        { "id": "a", "text": "שמח" },
-        { "id": "b", "text": "עייף וישנוני" },
-        { "id": "c", "text": "מתוסכל" }
+        { "id": "a", "text": "כי הם היו חמוצים מדי" },
+        { "id": "b", "text": "כי הם היו גבוהים מדי והוא לא הגיע" },
+        { "id": "c", "text": "כי שועל אחר לקח אותם קודם" }
       ],
-      "answer": "c",
-      "explanation": { "he": "הוא לא הצליח להגיע לענבים — מתוסכל (frustrated)." }
+      "answer": "b",
+      "explanation": { "he": "He jumped again and again but could not reach them." }
     },
     {
       "id": "q3",
       "type": "multiple_choice",
-      "prompt": {
-        "text": "השועל אמר: \"Those grapes are probably sour anyway.\"\nמה הכוונה?"
-      },
+      "prompt": { "text": "מה אמר השועל על הענבים בסוף?" },
       "options": [
-        { "id": "a", "text": "הענבים מתוקים מאוד" },
-        { "id": "b", "text": "השועל מעמיד פנים שהוא לא רוצה אותם" },
-        { "id": "c", "text": "השועל מצא אוכל טוב יותר" }
+        { "id": "a", "text": "שהם כנראה חמוצים ממילא" },
+        { "id": "b", "text": "שהם הכי מתוקים ביער" },
+        { "id": "c", "text": "שהוא יחזור מחר" }
       ],
-      "answer": "b",
-      "explanation": { "he": "זו משל הענבים החמוצים — מעמידים פנים שלא רצינו מה שלא השגנו." }
+      "answer": "a",
+      "explanation": { "he": "\"Those grapes are probably sour anyway.\"" }
     },
     {
       "id": "q4",
       "type": "multiple_choice",
-      "prompt": {
-        "text": "מה המסר של הסיפור?"
-      },
+      "prompt": { "text": "מה המסר של הסיפור?" },
       "options": [
         { "id": "a", "text": "תמיד צריך לחלוק אוכל" },
         { "id": "b", "text": "קל לזלזל במה שלא מצליחים להשיג" },

@@ -48,10 +48,11 @@ export function MultipleChoice({
         },
         optionCorrect: {
           borderColor: colors.success,
-          backgroundColor: colors.bgCardLight,
+          backgroundColor: colors.success + '33',
         },
         optionWrong: {
           borderColor: colors.danger,
+          backgroundColor: colors.danger + '33',
         },
         optionText: {
           color: colors.text,

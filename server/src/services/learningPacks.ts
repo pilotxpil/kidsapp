@@ -6,7 +6,7 @@ import type {
   PublicLearningActivity,
   LearningPackSummary,
 } from '@kidsapp/shared';
-import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER } from '@kidsapp/shared';
+import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, resolvePackKind } from '@kidsapp/shared';
 import type { LearningCategory, LearningCatalogFilters, LearningDifficulty } from '@kidsapp/shared';
 import { ILearningProgress } from '../models/LearningProgress';
 
@@ -40,17 +40,27 @@ function packsDir(): string {
   return path.resolve(__dirname, '../../../content/packs');
 }
 
-function validatePack(raw: unknown): LearningPack | null {
+/** Parse & validate a pack JSON object (built-in files or parent import). */
+export function parseLearningPack(raw: unknown): LearningPack | null {
   if (!raw || typeof raw !== 'object') return null;
   const p = raw as Record<string, unknown>;
 
   if (typeof p.id !== 'string' || !p.id) return null;
-  if (typeof p.version !== 'number' || p.version < 1) return null;
+  if (typeof p.version !== 'number' || p.version < 1) {
+    // Allow omitting version on import — treat as 1
+    if (p.version !== undefined) return null;
+  }
   if (!p.title || typeof (p.title as { he?: string }).he !== 'string') return null;
   const category = resolveCategory(p);
   if (!category) return null;
   if (typeof p.defaultPoints !== 'number' || p.defaultPoints < 1) return null;
   if (!Array.isArray(p.activities) || p.activities.length === 0) return null;
+
+  const kind = resolvePackKind(typeof p.kind === 'string' ? p.kind : undefined);
+  if (kind === 'reading') {
+    const passage = p.passage as { he?: string } | undefined;
+    if (!passage || typeof passage.he !== 'string' || !passage.he.trim()) return null;
+  }
 
   for (const act of p.activities) {
     if (!act || typeof act !== 'object') return null;
@@ -60,10 +70,21 @@ function validatePack(raw: unknown): LearningPack | null {
     if (!a.prompt || typeof (a.prompt as { text?: string }).text !== 'string') return null;
     if (!Array.isArray(a.options) || a.options.length < 2) return null;
     if (typeof a.answer !== 'string' || !a.answer) return null;
+    const opts = a.options as { id?: string }[];
+    if (!opts.some((o) => o && o.id === a.answer)) return null;
   }
 
-  const normalized = { ...(p as object), category } as LearningPack;
-  return normalized;
+  const version = typeof p.version === 'number' && p.version >= 1 ? p.version : 1;
+  return {
+    ...(p as object),
+    version,
+    category,
+    kind,
+  } as LearningPack;
+}
+
+function validatePack(raw: unknown): LearningPack | null {
+  return parseLearningPack(raw);
 }
 
 let cachedPacks: LearningPack[] | null = null;
@@ -111,6 +132,71 @@ export function getLearningPack(packId: string): LearningPack | undefined {
   return loadLearningPacks().find((p) => p.id === packId);
 }
 
+export function familyDocToPack(doc: {
+  packId: string;
+  version: number;
+  title: LearningPack['title'];
+  category: LearningPack['category'];
+  kind?: LearningPack['kind'];
+  passage?: LearningPack['passage'];
+  passageTitle?: LearningPack['passageTitle'];
+  grade?: number;
+  tags?: string[];
+  defaultPoints: number;
+  activities: unknown;
+}): LearningPack {
+  return {
+    id: doc.packId,
+    version: doc.version || 1,
+    title: doc.title,
+    category: doc.category,
+    kind: resolvePackKind(doc.kind),
+    passage: doc.passage,
+    passageTitle: doc.passageTitle,
+    grade: doc.grade,
+    tags: doc.tags ?? [],
+    defaultPoints: doc.defaultPoints,
+    activities: doc.activities as LearningPack['activities'],
+  };
+}
+
+export async function getLearningPackForFamily(
+  packId: string,
+  familyId: string
+): Promise<LearningPack | undefined> {
+  const { FamilyHiddenLearningPack } = await import('../models/FamilyHiddenLearningPack');
+  const hidden = await FamilyHiddenLearningPack.findOne({ familyId, packId }).lean();
+  if (hidden) return undefined;
+
+  const { FamilyLearningPack } = await import('../models/FamilyLearningPack');
+  const doc = await FamilyLearningPack.findOne({ familyId, packId });
+  if (doc) return familyDocToPack(doc);
+  return getLearningPack(packId);
+}
+
+export async function loadFamilyCustomPacks(familyId: string): Promise<LearningPack[]> {
+  const { FamilyLearningPack } = await import('../models/FamilyLearningPack');
+  const rows = await FamilyLearningPack.find({ familyId });
+  return rows.map((doc) => familyDocToPack(doc));
+}
+
+export async function loadAllPacksForFamily(familyId: string): Promise<LearningPack[]> {
+  const { FamilyHiddenLearningPack } = await import('../models/FamilyHiddenLearningPack');
+  const hiddenRows = await FamilyHiddenLearningPack.find({ familyId }).select('packId').lean();
+  const hidden = new Set(hiddenRows.map((r) => r.packId));
+
+  const builtin = loadLearningPacks().filter((p) => !hidden.has(p.id));
+  const custom = (await loadFamilyCustomPacks(familyId)).filter((p) => !hidden.has(p.id));
+  const byId = new Map<string, LearningPack>();
+  for (const p of builtin) byId.set(p.id, p);
+  for (const p of custom) byId.set(p.id, p);
+  return Array.from(byId.values()).sort((a, b) => {
+    const cat = categorySortIndex(a.category) - categorySortIndex(b.category);
+    if (cat !== 0) return cat;
+    return a.title.he.localeCompare(b.title.he, 'he');
+  });
+}
+
 export function toPublicActivity(activity: LearningActivity): PublicLearningActivity {
   if (activity.type === 'multiple_choice') {
     return {
@@ -148,6 +234,7 @@ export function packToSummary(
     id: pack.id,
     title: pack.title,
     category: pack.category,
+    kind: resolvePackKind(pack.kind),
     grade: pack.grade,
     tags: pack.tags ?? [],
     activityCount: pack.activities.length,
@@ -156,6 +243,7 @@ export function packToSummary(
     difficulty: settings?.difficulty ?? 'medium',
     completedCount: completedIds.length,
     completed,
+    isCustom: pack.id.startsWith('custom_'),
   };
 }
 
@@ -222,6 +310,7 @@ export function packToCatalogItem(
     id: pack.id,
     title: pack.title,
     category: pack.category,
+    kind: resolvePackKind(pack.kind),
     grade: pack.grade,
     tags: pack.tags ?? [],
     activityCount: pack.activities.length,
@@ -229,5 +318,6 @@ export function packToCatalogItem(
     pointsPerActivity: settings?.pointsPerActivity,
     difficulty: settings?.difficulty,
     assignedKidIds,
+    isCustom: pack.id.startsWith('custom_'),
   };
 }

@@ -1,0 +1,108 @@
+{
+  "id": "language-opposites-4",
+  "version": 1,
+  "title": { "he": "מילים נרדפות והפכים", "en": "Synonyms and opposites" },
+  "category": "language",
+  "kind": "quiz",
+  "grade": 4,
+  "tags": ["vocabulary", "synonyms", "antonyms", "grade-4"],
+  "defaultPoints": 7,
+  "activities": [
+    {
+      "id": "q1",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו מילה קרובה ביותר ל״שמח״?" },
+      "options": [
+        { "id": "a", "text": "עצוב" },
+        { "id": "b", "text": "עליז" },
+        { "id": "c", "text": "עייף" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "עליז ושמח קרובים במשמעות; עצוב הוא הפך." }
+    },
+    {
+      "id": "q2",
+      "type": "multiple_choice",
+      "prompt": { "text": "מהו ההפך של ״גבוה״?" },
+      "options": [
+        { "id": "a", "text": "רחב" },
+        { "id": "b", "text": "נמוך" },
+        { "id": "c", "text": "ארוך" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "גבוה ↔ נמוך." }
+    },
+    {
+      "id": "q3",
+      "type": "multiple_choice",
+      "prompt": { "text": "״הילדה דיברה בקול רם.״ איזו מילה היא הפך ל״רם״?" },
+      "options": [
+        { "id": "a", "text": "חזק" },
+        { "id": "b", "text": "שקט" },
+        { "id": "c", "text": "ברור" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "רם = חזק/גבוה; ההפך הוא שקט / חלש." }
+    },
+    {
+      "id": "q4",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזו מילה יכולה להחליף את ״להתחיל״ בלי לשנות את המשמעות?" },
+      "options": [
+        { "id": "a", "text": "לסיים" },
+        { "id": "b", "text": "לפתוח / להתחיל" },
+        { "id": "c", "text": "לעצור" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "לפתוח (פעילות/שיעור) קרוב ל״להתחיל״; לסיים הוא הפך." }
+    },
+    {
+      "id": "q5",
+      "type": "multiple_choice",
+      "prompt": { "text": "איזה זוג מילים הן הפכים?" },
+      "options": [
+        { "id": "a", "text": "חם — חמים" },
+        { "id": "b", "text": "מלא — ריק" },
+        { "id": "c", "text": "גדול — ענק" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "מלא וריק הם ניגודים; הזוגות האחרים דומים במשמעות." }
+    },
+    {
+      "id": "q6",
+      "type": "multiple_choice",
+      "prompt": { "text": "״הוא ענה במהירות.״ איזו מילה קרובה ל״במהירות״?" },
+      "options": [
+        { "id": "a", "text": "לאט" },
+        { "id": "b", "text": "בזריזות" },
+        { "id": "c", "text": "בזהירות רבה" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "במהירות ≈ בזריזות; לאט הוא הפך." }
+    },
+    {
+      "id": "q7",
+      "type": "multiple_choice",
+      "prompt": { "text": "מהו ההפך של ״להיכנס״?" },
+      "options": [
+        { "id": "a", "text": "לצאת" },
+        { "id": "b", "text": "לעלות" },
+        { "id": "c", "text": "לשבת" }
+      ],
+      "answer": "a",
+      "explanation": { "he": "להיכנס ↔ לצאת." }
+    },
+    {
+      "id": "q8",
+      "type": "multiple_choice",
+      "prompt": { "text": "״החדר היה מסודר.״ איזו מילה היא הפך ל״מסודר״?" },
+      "options": [
+        { "id": "a", "text": "נקי" },
+        { "id": "b", "text": "מבולגן" },
+        { "id": "c", "text": "יפה" }
+      ],
+      "answer": "b",
+      "explanation": { "he": "מסודר ↔ מבולגן." }
+    }
+  ]
+}

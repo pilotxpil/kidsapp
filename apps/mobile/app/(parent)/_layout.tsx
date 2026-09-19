@@ -64,6 +64,10 @@ export default function ParentLayout() {
         options={{ href: null, title: t('pointsHistory') }}
       />
       <Tabs.Screen
+        name="learn-pack-edit"
+        options={{ href: null, title: t('createLearningPack') }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{ title: t('profile'), tabBarIcon: ({ focused }) => <TabIcon emoji={tabIcons.profile} focused={focused} /> }}
       />

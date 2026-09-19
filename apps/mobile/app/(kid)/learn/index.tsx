@@ -8,7 +8,7 @@ import { Card } from '../../../components/Card';
 import { PointsBadge } from '../../../components/Card';
 import { ThemedScreen } from '../../../components/ThemedScreen';
 import { SectionHeader } from '../../../components/ThemedHero';
-import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, LEARNING_DIFFICULTY_LABELS, packDisplayTitle, packDisplaySubtitle, formatGradeLabel } from '@kidsapp/shared';
+import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, LEARNING_DIFFICULTY_LABELS, LEARNING_PACK_KIND_LABELS, packDisplayTitle, packDisplaySubtitle, formatGradeLabel } from '@kidsapp/shared';
 import type { LearningPackSummary, LearningCategory } from '@kidsapp/shared';
 import { spacing } from '../../../constants/theme';
 import { useTheme } from '../../../lib/theme-context';
@@ -141,6 +141,8 @@ export default function LearnIndexScreen() {
                             ) : null}
                             <View style={[styles.pointsMeta, rtl.rowInline]}>
                               <Text style={[styles.packMeta, rtl.text, { marginTop: 0 }]}>
+                                {LEARNING_PACK_KIND_LABELS[pack.kind]}
+                                {' · '}
                                 {pack.activityCount} {t('questions')}
                                 {pack.grade ? ` · ${formatGradeLabel(pack.grade, t('grade'))}` : ''}
                                 {` · ${LEARNING_DIFFICULTY_LABELS[pack.difficulty]} · `}

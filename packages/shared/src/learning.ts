@@ -13,6 +13,19 @@ export type LearningCategory = 'language' | 'math' | 'english' | 'science' | 'ge
 /** @deprecated Use LearningCategory */
 export type LearningSubject = LearningCategory;
 
+/**
+ * Pack learning format — extend as new formats are added
+ * (e.g. listening, matching, open_response).
+ */
+export type LearningPackKind = 'quiz' | 'reading';
+
+export const LEARNING_PACK_KINDS: LearningPackKind[] = ['quiz', 'reading'];
+
+export const LEARNING_PACK_KIND_LABELS: Record<LearningPackKind, string> = {
+  quiz: 'שאלות',
+  reading: 'קריאה והבנה',
+};
+
 export type ActivityType = 'multiple_choice' | 'fill_blank' | 'flashcard';
 
 export interface LocalizedText {
@@ -69,6 +82,11 @@ export interface LearningPack {
   category: LearningCategory;
   /** @deprecated Use category */
   subject?: LearningCategory;
+  /** Defaults to quiz when omitted. */
+  kind?: LearningPackKind;
+  /** Short story/passage for reading-comprehension packs. */
+  passage?: LocalizedText;
+  passageTitle?: LocalizedText;
   grade?: number;
   tags?: string[];
   defaultPoints: number;
@@ -80,6 +98,7 @@ export interface LearningPackSummary {
   id: string;
   title: LocalizedText;
   category: LearningCategory;
+  kind: LearningPackKind;
   grade?: number;
   tags: string[];
   activityCount: number;
@@ -89,6 +108,7 @@ export interface LearningPackSummary {
   difficulty: LearningDifficulty;
   completedCount: number;
   completed: boolean;
+  isCustom?: boolean;
 }
 
 /** Full catalog entry for parents (no kid progress). */
@@ -96,6 +116,7 @@ export interface LearningCatalogItem {
   id: string;
   title: LocalizedText;
   category: LearningCategory;
+  kind: LearningPackKind;
   grade?: number;
   tags: string[];
   activityCount: number;
@@ -104,6 +125,37 @@ export interface LearningCatalogItem {
   pointsPerActivity?: number;
   difficulty?: LearningDifficulty;
   assignedKidIds: string[];
+  /** True when the pack was created by the family (not built-in). */
+  isCustom?: boolean;
+}
+
+/** Prefix for family-authored pack ids stored in MongoDB. */
+export const CUSTOM_LEARNING_PACK_PREFIX = 'custom_' as const;
+
+export function isCustomLearningPackId(packId: string): boolean {
+  return packId.startsWith(CUSTOM_LEARNING_PACK_PREFIX);
+}
+
+export function makeCustomLearningPackId(suffix?: string): string {
+  const raw =
+    suffix?.trim() ||
+    `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  const cleaned = raw.replace(/^custom[_:]?/i, '').replace(/[^a-zA-Z0-9_-]/g, '');
+  return `${CUSTOM_LEARNING_PACK_PREFIX}${cleaned || Date.now().toString(36)}`;
+}
+
+/** Payload parents send when creating/updating a custom pack (id optional on create). */
+export interface LearningPackInput {
+  id?: string;
+  title: LocalizedText;
+  category: LearningCategory;
+  kind?: LearningPackKind;
+  passage?: LocalizedText;
+  passageTitle?: LocalizedText;
+  grade?: number;
+  tags?: string[];
+  defaultPoints: number;
+  activities: LearningActivity[];
 }
 
 export interface LearningPackSettings {
@@ -141,6 +193,9 @@ export interface LearningPackDetail {
     id: string;
     title: LocalizedText;
     category: LearningCategory;
+    kind: LearningPackKind;
+    passage?: LocalizedText;
+    passageTitle?: LocalizedText;
     grade?: number;
     defaultPoints: number;
     pointsPerActivity: number;
@@ -151,17 +206,42 @@ export interface LearningPackDetail {
   completed: boolean;
 }
 
+export function resolvePackKind(kind?: LearningPackKind | string | null): LearningPackKind {
+  if (kind === 'reading') return 'reading';
+  return 'quiz';
+}
+
 export interface LearningCheckResult {
-  correct: boolean;
-  correctOptionId?: string;
-  explanation?: LocalizedText;
-  pointsAwarded: number;
-  alreadyCompleted: boolean;
+  submitted: boolean;
+  alreadyAnswered: boolean;
+  packCompleted: boolean;
   points: number;
   level: number;
   xp: number;
+  learningStreak?: number;
   newBadges?: { id: string; xpAwarded: number }[];
-  packCompleted: boolean;
+  /** Total points earned in this pack — set when the pack is completed. */
+  packPointsEarned?: number;
+  correct: boolean;
+  /** Shown when wrong so the kid can see the right option. */
+  correctOptionId?: string;
+  explanation?: LocalizedText;
+  pointsAwarded?: number;
+}
+
+/** Parent review of a single kid answer. */
+export interface LearningAnswerReview {
+  packId: string;
+  packTitle: string;
+  activityId: string;
+  questionPreview: string;
+  options: { id: string; text: string }[];
+  selectedAnswer: string;
+  selectedText: string;
+  correctAnswer: string;
+  correctText: string;
+  correct: boolean;
+  answeredAt: string;
 }
 
 export const LEARNING_CATEGORIES: Record<

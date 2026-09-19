@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../../../lib/auth';
@@ -9,9 +9,10 @@ import { Card } from '../../../components/Card';
 import { Celebration } from '../../../components/Celebration';
 import { ThemedScreen } from '../../../components/ThemedScreen';
 import { MultipleChoice } from '../../../components/learning/MultipleChoice';
+import { ReadingPassage } from '../../../components/learning/ReadingPassage';
 import { useCelebrateBadges } from '../../../lib/badge-celebration';
 import type { LearningPackDetail, PublicLearningActivity } from '@kidsapp/shared';
-import { packDisplayTitle, packDisplaySubtitle } from '@kidsapp/shared';
+import { packDisplayTitle, packDisplaySubtitle, resolvePackKind } from '@kidsapp/shared';
 import { spacing } from '../../../constants/theme';
 import { useTheme } from '../../../lib/theme-context';
 import { rtl } from '../../../lib/rtl';
@@ -30,11 +31,16 @@ export default function LearnPackScreen() {
   const [activityIndex, setActivityIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [correctId, setCorrectId] = useState<string | null>(null);
-  const [explanation, setExplanation] = useState<string | null>(null);
-  const [checking, setChecking] = useState(false);
+  const [answeredCorrect, setAnsweredCorrect] = useState<boolean | null>(null);
+  const [packCompletedAfterAnswer, setPackCompletedAfterAnswer] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const [celebrateMsg, setCelebrateMsg] = useState('');
+  const [pendingBadges, setPendingBadges] = useState<{ id: string; xpAwarded: number }[]>([]);
   const [finished, setFinished] = useState(false);
+  const [showPassageIntro, setShowPassageIntro] = useState(false);
+  const [passageExpanded, setPassageExpanded] = useState(false);
 
   const styles = useMemo(
     () =>
@@ -57,13 +63,37 @@ export default function LearnPackScreen() {
         feedbackCorrect: { backgroundColor: colors.success + '33' },
         feedbackWrong: { backgroundColor: colors.danger + '33' },
         feedbackText: { color: colors.text, fontSize: 15, textAlign: 'center', fontWeight: '600' },
+        errorBox: {
+          marginTop: spacing.md,
+          padding: spacing.md,
+          borderRadius: 12,
+          width: '100%',
+          backgroundColor: colors.danger + '33',
+        },
+        errorText: { color: colors.text, fontSize: 15, textAlign: 'center', fontWeight: '600' },
         actions: { marginTop: spacing.lg, gap: spacing.sm },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
         doneTitle: { color: colors.text, fontSize: 24, fontWeight: '800', textAlign: 'center' },
         doneSub: { color: colors.textMuted, fontSize: 16, textAlign: 'center', marginTop: spacing.sm },
+        introHint: {
+          color: colors.textMuted,
+          fontSize: 14,
+          textAlign: 'center',
+          marginTop: spacing.md,
+          marginBottom: spacing.lg,
+        },
+        passageToggleWrap: { marginBottom: spacing.md },
       }),
     [themeId, colors]
   );
+
+  const resetQuestionState = () => {
+    setSelectedId(null);
+    setCorrectId(null);
+    setAnsweredCorrect(null);
+    setPackCompletedAfterAnswer(false);
+    setSubmitError(null);
+  };
 
   const load = useCallback(async () => {
     if (!packId) return;
@@ -73,11 +103,17 @@ export default function LearnPackScreen() {
       setDetail(res);
       if (res.completed) {
         setFinished(true);
+        setShowPassageIntro(false);
       } else {
+        const kind = resolvePackKind(res.pack.kind);
+        const needsIntro =
+          kind === 'reading' && !!res.pack.passage?.he && res.completedActivityIds.length === 0;
+        setShowPassageIntro(needsIntro);
         const firstIncomplete = res.pack.activities.findIndex(
           (a) => !res.completedActivityIds.includes(a.id)
         );
         setActivityIndex(firstIncomplete >= 0 ? firstIncomplete : 0);
+        resetQuestionState();
       }
     } finally {
       setLoading(false);
@@ -86,72 +122,88 @@ export default function LearnPackScreen() {
 
   useFocusLoad(load, !!user && !!packId);
 
+  useEffect(() => {
+    setPassageExpanded(false);
+    setShowPassageIntro(false);
+    resetQuestionState();
+  }, [packId]);
+
   const activities = detail?.pack.activities ?? [];
   const current: PublicLearningActivity | undefined = activities[activityIndex];
-  const completedIds = detail?.completedActivityIds ?? [];
+  const packKind = resolvePackKind(detail?.pack.kind);
+  const passageText = detail?.pack.passage?.he;
+  const passageTitle = detail?.pack.passageTitle?.he;
+  const locked = correctId !== null || submitting;
 
-  const resetQuestionState = () => {
-    setSelectedId(null);
-    setCorrectId(null);
-    setExplanation(null);
-  };
+  const handleSelect = async (optionId: string) => {
+    if (!packId || !current || locked) return;
 
-  const handleCheck = async () => {
-    if (!packId || !current || !selectedId || checking) return;
-
-    setChecking(true);
+    setSelectedId(optionId);
+    setSubmitting(true);
+    setSubmitError(null);
     try {
-      const result = await api.checkLearningAnswer(packId, current.id, selectedId);
-      await refreshUser();
+      const result = await api.checkLearningAnswer(packId, current.id, optionId);
+
+      setDetail((prev) =>
+        prev
+          ? {
+              ...prev,
+              completedActivityIds: prev.completedActivityIds.includes(current.id)
+                ? prev.completedActivityIds
+                : [...prev.completedActivityIds, current.id],
+              completed: result.packCompleted,
+            }
+          : prev
+      );
+
+      const revealedCorrectId = result.correctOptionId ?? (result.correct ? optionId : null);
+      setCorrectId(revealedCorrectId);
+      setAnsweredCorrect(result.correct);
+      setPackCompletedAfterAnswer(result.packCompleted);
 
       if (result.correct) {
-        setCorrectId(selectedId);
         playSfx('complete');
-        if (result.explanation?.he) {
-          setExplanation(result.explanation.he);
-        }
-        if (result.pointsAwarded > 0) {
-          setCelebrateMsg(`+${result.pointsAwarded} ${pointsEmoji}`);
-          setCelebrate(true);
-        }
-        if (result.newBadges?.length) {
-          celebrateBadges(result.newBadges);
-        }
-        setDetail((prev) =>
-          prev
-            ? {
-                ...prev,
-                completedActivityIds: [...prev.completedActivityIds, current.id],
-                completed: result.packCompleted,
-              }
-            : prev
-        );
       } else {
         playSfx('error');
-        if (result.correctOptionId) {
-          setCorrectId(result.correctOptionId);
-        }
-        if (result.explanation?.he) {
-          setExplanation(result.explanation.he);
-        } else {
-          setExplanation(t('tryAgain'));
+      }
+
+      if (result.newBadges?.length) {
+        setPendingBadges((prev) => [...prev, ...result.newBadges!]);
+      }
+
+      if (result.packCompleted) {
+        await refreshUser();
+        const badges = [...pendingBadges, ...(result.newBadges ?? [])];
+        const seen = new Set<string>();
+        const unique = badges.filter((b) => {
+          if (seen.has(b.id)) return false;
+          seen.add(b.id);
+          return true;
+        });
+        if (unique.length) celebrateBadges(unique);
+        setPendingBadges([]);
+        if (result.packPointsEarned && result.packPointsEarned > 0) {
+          setCelebrateMsg(`+${result.packPointsEarned} ${pointsEmoji}`);
+          setCelebrate(true);
         }
       }
     } catch (err: unknown) {
       playSfx('error');
+      setSelectedId(null);
       const message = err instanceof Error ? err.message : t('learningCheckError');
-      setExplanation(message);
+      setSubmitError(message);
     } finally {
-      setChecking(false);
+      setSubmitting(false);
     }
   };
 
   const handleNext = () => {
-    resetQuestionState();
-    if (activityIndex + 1 >= activities.length) {
+    if (packCompletedAfterAnswer || activityIndex + 1 >= activities.length) {
       setFinished(true);
       return;
     }
+    resetQuestionState();
+    setPassageExpanded(false);
     setActivityIndex((i) => i + 1);
   };
 
@@ -177,6 +229,31 @@ export default function LearnPackScreen() {
             style={{ marginTop: spacing.xl, width: '100%' }}
           />
         </ScrollView>
+        <Celebration visible={celebrate} message={celebrateMsg} onDone={() => setCelebrate(false)} />
+      </ThemedScreen>
+    );
+  }
+
+  if (showPassageIntro && passageText) {
+    return (
+      <ThemedScreen tabs>
+        <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
+          <View style={styles.header}>
+            <Text style={[styles.title, rtl.text]}>{packDisplayTitle(detail.pack.title)}</Text>
+            <Text style={[styles.introHint, rtl.text]}>{t('readingIntroHint')}</Text>
+          </View>
+          <ReadingPassage title={passageTitle} text={passageText} />
+          <View style={styles.actions}>
+            <Button
+              title={t('readingStartQuestions')}
+              onPress={() => {
+                playSfx('tap');
+                setShowPassageIntro(false);
+              }}
+            />
+            <Button title={t('back')} onPress={() => router.back()} variant="outline" sound={false} />
+          </View>
+        </ScrollView>
       </ThemedScreen>
     );
   }
@@ -192,9 +269,6 @@ export default function LearnPackScreen() {
     );
   }
 
-  const alreadyDone = completedIds.includes(current.id);
-  const answered = correctId !== null || alreadyDone;
-
   return (
     <ThemedScreen tabs>
       <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
@@ -208,39 +282,63 @@ export default function LearnPackScreen() {
           </Text>
         </View>
 
+        {packKind === 'reading' && passageText ? (
+          <View style={styles.passageToggleWrap}>
+            {passageExpanded ? (
+              <>
+                <ReadingPassage title={passageTitle} text={passageText} compact />
+                <Button
+                  title={t('readingHidePassage')}
+                  variant="outline"
+                  onPress={() => setPassageExpanded(false)}
+                  style={{ marginTop: spacing.sm }}
+                  sound={false}
+                />
+              </>
+            ) : (
+              <Button
+                title={t('readingShowPassage')}
+                variant="outline"
+                onPress={() => setPassageExpanded(true)}
+                sound={false}
+              />
+            )}
+          </View>
+        ) : null}
+
         <Card>
           <MultipleChoice
             prompt={current.prompt.text}
             options={current.options}
             selectedId={selectedId}
-            correctId={alreadyDone ? selectedId : correctId}
-            disabled={answered || checking}
-            onSelect={setSelectedId}
+            correctId={correctId}
+            disabled={locked}
+            onSelect={handleSelect}
           />
 
-          {explanation && (
+          {answeredCorrect !== null ? (
             <View
               style={[
                 styles.feedback,
-                correctId || alreadyDone ? styles.feedbackCorrect : styles.feedbackWrong,
+                answeredCorrect ? styles.feedbackCorrect : styles.feedbackWrong,
               ]}
             >
-              <Text style={[styles.feedbackText, rtl.text]}>{explanation}</Text>
+              <Text style={[styles.feedbackText, rtl.text]}>
+                {answeredCorrect ? t('answerCorrect') : t('answerIncorrect')}
+              </Text>
             </View>
-          )}
+          ) : null}
+
+          {submitError ? (
+            <View style={styles.errorBox}>
+              <Text style={[styles.errorText, rtl.text]}>{submitError}</Text>
+            </View>
+          ) : null}
 
           <View style={styles.actions}>
-            {!answered && (
-              <Button
-                title={t('checkAnswer')}
-                onPress={handleCheck}
-                disabled={!selectedId || checking}
-                loading={checking}
-              />
-            )}
-            {(answered || alreadyDone) && (
+            {correctId !== null ? (
               <Button title={t('nextQuestion')} onPress={handleNext} />
-            )}
+            ) : null}
             <Button title={t('back')} onPress={() => router.back()} variant="outline" sound={false} />
           </View>
         </Card>
