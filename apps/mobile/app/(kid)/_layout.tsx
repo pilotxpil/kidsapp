@@ -104,6 +104,7 @@ export default function KidLayout() {
           tabBarIcon: ({ focused }) => <ThemeTabIcon name="shop" fallback={tabIcons.shop} focused={focused} />,
         }}
       />
+      <Tabs.Screen name="avatar-shop" options={{ href: null, title: t('paidAvatars') }} />
       <Tabs.Screen
         name="profile"
         options={{

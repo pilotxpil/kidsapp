@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, StyleProp, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { spacing } from '../constants/theme';
 import { getThemeArt } from '../constants/theme-art';
@@ -10,6 +10,8 @@ import { t } from '../lib/i18n';
 import { ThemeGlyph } from './icons/ThemeGlyph';
 import { KidAvatar } from './KidAvatar';
 import { shopAvatarImage } from '../lib/avatar-images';
+import { BouncyPressable } from './animations/BouncyPressable';
+import { playSfx } from '../lib/sfx';
 
 interface AvatarFrameProps {
   avatar: string;
@@ -95,14 +97,70 @@ export function AvatarFrame({ avatar, size = 'md' }: AvatarFrameProps) {
   );
 }
 
+interface HomeAvatarSlotProps {
+  avatar: string;
+  onPress?: () => void;
+  hidden?: boolean;
+  anchorRef?: React.Ref<View>;
+  onAnchorLayout?: () => void;
+  style?: StyleProp<ViewStyle>;
+}
+
+export function HomeAvatarSlot({
+  avatar,
+  onPress,
+  hidden,
+  anchorRef,
+  onAnchorLayout,
+  style,
+}: HomeAvatarSlotProps) {
+  const frame = <AvatarFrame avatar={avatar} size="lg" />;
+  return (
+    <View
+      ref={anchorRef}
+      collapsable={false}
+      onLayout={onAnchorLayout}
+      style={[{ opacity: hidden ? 0 : 1 }, style]}
+    >
+      {onPress ? (
+        <BouncyPressable
+          onPress={() => {
+            playSfx('tap');
+            onPress();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t('changeAvatar')}
+        >
+          {frame}
+        </BouncyPressable>
+      ) : (
+        frame
+      )}
+    </View>
+  );
+}
+
 interface ThemedHeroProps {
   displayName: string;
   avatar: string;
   streak: number;
   level?: number;
+  onAvatarPress?: () => void;
+  avatarHidden?: boolean;
+  avatarAnchorRef?: React.Ref<View>;
+  onAvatarLayout?: () => void;
 }
 
-export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroProps) {
+export function ThemedHero({
+  displayName,
+  avatar,
+  streak,
+  level,
+  onAvatarPress,
+  avatarHidden,
+  avatarAnchorRef,
+  onAvatarLayout,
+}: ThemedHeroProps) {
   const { borderRadius, cardBorder, heroGradient, heroEmoji, heroTagline, id: themeId, chrome, colors } =
     useTheme();
   const type = useType();
@@ -200,7 +258,13 @@ export function ThemedHero({ displayName, avatar, streak, level }: ThemedHeroPro
           </>
         ) : null}
         <View style={[styles.row, rtl.row]}>
-          <AvatarFrame avatar={avatar} size="lg" />
+          <HomeAvatarSlot
+            avatar={avatar}
+            onPress={onAvatarPress}
+            hidden={avatarHidden}
+            anchorRef={avatarAnchorRef}
+            onAnchorLayout={onAvatarLayout}
+          />
           <View style={styles.textBlock}>
             <Text style={[styles.tagline, rtl.text]}>{heroTagline}</Text>
             <Text style={[styles.name, rtl.text]}>{displayName}</Text>

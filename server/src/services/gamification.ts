@@ -1,7 +1,7 @@
 import {
   calculateLevel,
   DAILY_STAR_TAPS,
-  DAILY_STAR_BONUS,
+  DAILY_STAR_REWARDS,
   FORTUNE_WHEEL_SEGMENTS,
   SURPRISE_CHEST_DAILY_CHANCE,
   BADGES,
@@ -10,6 +10,8 @@ import {
   type DailyGiftType,
   type FortuneWheelSegment,
   defaultUiThemeForRole,
+  FREE_AVATAR_ID,
+  AVATAR_GIFT_CAMPAIGN,
 } from '@kidsapp/shared';
 import { IUser, User } from '../models/User';
 import { PointTransaction } from '../models/PointTransaction';
@@ -174,14 +176,13 @@ export async function getDailyStarStatus(kid: IUser) {
   const available = giftType === 'star' && !claimedToday;
   const streak = available ? projectedStreak(kid) : kid.streak;
   const streakBonus = available && STREAK_BONUSES[streak] ? STREAK_BONUSES[streak] : 0;
-  const dailyBonus = available ? DAILY_STAR_BONUS : 0;
 
   return {
     available,
     tapsRequired: DAILY_STAR_TAPS,
-    dailyBonus,
+    dailyBonus: 0,
     streakBonus,
-    totalPoints: dailyBonus + streakBonus,
+    totalPoints: streakBonus,
     streak,
     giftType,
   };
@@ -194,6 +195,42 @@ export async function processDailyLogin(kid: IUser) {
     dailyGiftType: giftType,
     dailyGiftAvailable: !used,
   };
+}
+
+/** Give classic-noob for free and mark the one-time shop announcement. */
+export async function grantStarterAvatarGift(kid: IUser): Promise<{ granted: boolean; notified: boolean }> {
+  if (kid.role !== 'kid') return { granted: false, notified: false };
+
+  const hadNoob = (kid.ownedCosmetics ?? []).includes(FREE_AVATAR_ID);
+
+  const claimed = await User.findOneAndUpdate(
+    { _id: kid._id, role: 'kid', lastAvatarGiftCampaign: { $ne: AVATAR_GIFT_CAMPAIGN } },
+    {
+      $set: { lastAvatarGiftCampaign: AVATAR_GIFT_CAMPAIGN },
+      $addToSet: { ownedCosmetics: FREE_AVATAR_ID },
+    },
+    { new: true }
+  );
+
+  if (claimed) {
+    kid.ownedCosmetics = claimed.ownedCosmetics ?? [];
+    kid.lastAvatarGiftCampaign = claimed.lastAvatarGiftCampaign;
+    return { granted: !hadNoob, notified: true };
+  }
+
+  if (!hadNoob) {
+    const grantedDoc = await User.findOneAndUpdate(
+      { _id: kid._id, role: 'kid' },
+      { $addToSet: { ownedCosmetics: FREE_AVATAR_ID } },
+      { new: true }
+    );
+    if (grantedDoc) {
+      kid.ownedCosmetics = grantedDoc.ownedCosmetics ?? [];
+      return { granted: true, notified: false };
+    }
+  }
+
+  return { granted: false, notified: false };
 }
 
 export async function claimDailyStar(kid: IUser) {
@@ -221,7 +258,8 @@ export async function claimDailyStar(kid: IUser) {
   }
 
   const streakBonus = await recordDailyActivity(kid);
-  const dailyBonus = DAILY_STAR_BONUS;
+  const dailyBonus =
+    DAILY_STAR_REWARDS[Math.floor(Math.random() * DAILY_STAR_REWARDS.length)];
   kid.points += dailyBonus;
   kid.xp += dailyBonus;
   const newBadges = await updateLevelAndBadges(kid);

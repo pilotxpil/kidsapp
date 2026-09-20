@@ -17,6 +17,13 @@ export const SHOP_AVATAR_IMAGES: Record<string, ImageSourcePropType> = {
   'stink-king': require('../assets/avatars/avatar-stink-king.png'),
   'skibidi-sigma': require('../assets/avatars/avatar-skibidi-sigma.png'),
   'pizza-face': require('../assets/avatars/avatar-pizza-face.png'),
+  'fedora-flex': require('../assets/avatars/avatar-fedora-flex.png'),
+  'stud-builder': require('../assets/avatars/avatar-stud-builder.png'),
+  'tp-ninja': require('../assets/avatars/avatar-tp-ninja.png'),
+  'sigma-jersey': require('../assets/avatars/avatar-sigma-jersey.png'),
+  'gym-hamster': require('../assets/avatars/avatar-gym-hamster.png'),
+  'peel-ninja': require('../assets/avatars/avatar-peel-ninja.png'),
+  'chicken-jock': require('../assets/avatars/avatar-chicken-jock.png'),
 };
 
 export function shopAvatarImage(id?: string | null): ImageSourcePropType | undefined {

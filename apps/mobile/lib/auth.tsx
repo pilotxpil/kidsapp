@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User } from '@kidsapp/shared';
 import { api } from './api';
 import { registerPushNotifications, unregisterPushNotifications } from './push';
+import { markAvatarGiftUnlocked } from './avatar-gift';
 
 type UserProgressPatch = Partial<
   Pick<User, 'points' | 'level' | 'xp' | 'streak' | 'badges' | 'learningStreak' | 'avatar' | 'ownedCosmetics' | 'equippedFrame' | 'equippedEffect'>
@@ -59,7 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshUser = useCallback(async () => {
-    const { user: userData } = await api.getMe();
+    const { user: userData, avatarGiftJustUnlocked } = await api.getMe();
+    if (avatarGiftJustUnlocked) markAvatarGiftUnlocked();
     setUser((prev) => {
       if (
         prev &&
@@ -71,6 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         prev.displayName === userData.displayName &&
         prev.uiTheme === userData.uiTheme &&
         prev.avatar === userData.avatar &&
+        prev.ownedCosmetics.length === userData.ownedCosmetics.length &&
+        prev.ownedCosmetics.every((id) => userData.ownedCosmetics.includes(id)) &&
         prev.badges.length === userData.badges.length &&
         prev.badges.every((b) => userData.badges.includes(b))
       ) {

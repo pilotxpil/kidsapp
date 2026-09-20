@@ -5,7 +5,7 @@ import { UI_THEME_IDS, AVATARS, DEFAULT_PARENT_THEME_ID, isAllowedParentAvatar }
 import { Family } from '../models/Family';
 import { User } from '../models/User';
 import { formatUser } from '../utils/format';
-import { processDailyLogin } from '../services/gamification';
+import { processDailyLogin, grantStarterAvatarGift } from '../services/gamification';
 import { authenticate } from '../middleware/auth';
 import {
   generateUniqueInviteCode,
@@ -165,6 +165,11 @@ router.post('/kid/login', async (req: Request, res: Response) => {
     }
 
     const { dailyGiftAvailable, dailyGiftType } = await processDailyLogin(kid);
+    const avatarGift = await grantStarterAvatarGift(kid);
+    if (avatarGift.notified) {
+      const { pushAvatarShopGift } = await import('../services/push');
+      pushAvatarShopGift(kid._id.toString());
+    }
 
     const token = jwt.sign(
       { userId: kid._id.toString(), role: 'kid', familyId: kid.familyId.toString() },
@@ -177,6 +182,7 @@ router.post('/kid/login', async (req: Request, res: Response) => {
       user: formatUser(kid),
       dailyGiftAvailable,
       dailyGiftType,
+      avatarGiftJustUnlocked: avatarGift.notified,
       /** @deprecated use dailyGiftAvailable */
       dailyStarAvailable: dailyGiftAvailable,
     });
@@ -189,7 +195,18 @@ router.post('/kid/login', async (req: Request, res: Response) => {
 router.get('/me', authenticate, async (req: Request, res: Response) => {
   const user = await User.findById(req.user!.userId);
   if (!user) return res.status(404).json({ error: 'משתמש לא נמצא' });
-  res.json({ user: formatUser(user) });
+
+  let avatarGiftJustUnlocked = false;
+  if (user.role === 'kid') {
+    const avatarGift = await grantStarterAvatarGift(user);
+    avatarGiftJustUnlocked = avatarGift.notified;
+    if (avatarGift.notified) {
+      const { pushAvatarShopGift } = await import('../services/push');
+      pushAvatarShopGift(user._id.toString());
+    }
+  }
+
+  res.json({ user: formatUser(user), avatarGiftJustUnlocked });
 });
 
 router.patch('/me', authenticate, async (req: Request, res: Response) => {

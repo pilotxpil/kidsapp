@@ -13,9 +13,11 @@ import { Button } from './Button';
 import { FadeInUp } from './animations/FadeInUp';
 import { AnimatedCounter } from './animations/AnimatedCounter';
 import { BouncyPressable } from './animations/BouncyPressable';
+import { HomeAvatarSlot } from './ThemedHero';
 
 interface EmberHomeProps {
   displayName: string;
+  avatar: string;
   points: number;
   profile: KidProfile | null;
   tasks: Task[];
@@ -23,10 +25,15 @@ interface EmberHomeProps {
   refreshing: boolean;
   onRefresh: () => void;
   onComplete: (task: Task) => void;
+  onAvatarPress?: () => void;
+  avatarHidden?: boolean;
+  avatarAnchorRef?: React.Ref<View>;
+  onAvatarLayout?: () => void;
 }
 
 export function EmberHome({
   displayName,
+  avatar,
   points,
   profile,
   tasks,
@@ -34,6 +41,10 @@ export function EmberHome({
   refreshing,
   onRefresh,
   onComplete,
+  onAvatarPress,
+  avatarHidden,
+  avatarAnchorRef,
+  onAvatarLayout,
 }: EmberHomeProps) {
   const router = useRouter();
   const { colors, borderRadius, id: themeId } = useTheme();
@@ -55,6 +66,7 @@ export function EmberHome({
           marginBottom: spacing.lg,
           alignItems: 'flex-start',
         },
+        greetRow: { flex: 1, minWidth: 0, alignItems: 'center', gap: spacing.sm },
         greetBlock: { flex: 1, minWidth: 0 },
         hello: {
           color: colors.primaryLight,
@@ -157,11 +169,20 @@ export function EmberHome({
               <Text style={[styles.gemLabel, rtl.text]}>{t('emberFireStones')}</Text>
             </View>
           </View>
-          <View style={styles.greetBlock}>
-            <Text style={[styles.hello, rtl.text]} numberOfLines={2}>
-              {t('hello')}, {displayName}!
-            </Text>
-            <Text style={[styles.ready, rtl.text]}>{t('emberReady')}</Text>
+          <View style={[styles.greetRow, rtl.row]}>
+            <HomeAvatarSlot
+              avatar={avatar}
+              onPress={onAvatarPress}
+              hidden={avatarHidden}
+              anchorRef={avatarAnchorRef}
+              onAnchorLayout={onAvatarLayout}
+            />
+            <View style={styles.greetBlock}>
+              <Text style={[styles.hello, rtl.text]} numberOfLines={2}>
+                {t('hello')}, {displayName}!
+              </Text>
+              <Text style={[styles.ready, rtl.text]}>{t('emberReady')}</Text>
+            </View>
           </View>
         </View>
       </FadeInUp>

@@ -113,14 +113,20 @@ export const api = {
   },
 
   kidLogin(username: string, pin: string, familyCode: string) {
-    return request<AuthResponse & { dailyGiftAvailable?: boolean; dailyStarAvailable?: boolean }>('/auth/kid/login', {
+    return request<
+      AuthResponse & {
+        dailyGiftAvailable?: boolean;
+        dailyStarAvailable?: boolean;
+        avatarGiftJustUnlocked?: boolean;
+      }
+    >('/auth/kid/login', {
       method: 'POST',
       body: JSON.stringify({ username, pin, familyCode }),
     });
   },
 
   getMe() {
-    return request<{ user: User }>('/auth/me');
+    return request<{ user: User; avatarGiftJustUnlocked?: boolean }>('/auth/me');
   },
 
   updateMe(data: { uiTheme?: UiThemeId; displayName?: string; avatar?: string }) {

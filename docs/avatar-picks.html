@@ -140,8 +140,8 @@
   <header>
     <div class="row">
       <div>
-        <h1>50 אווטארים — סמני מה להוסיף</h1>
-        <p class="hint">סמני אווטארים לחנות, שנה שם ומחיר XP לכל אחד שנבחר.</p>
+        <h1>אווטארים שעוד לא בחנות</h1>
+        <p class="hint">רק אלה שעדיין לא נוספו. סמני חינמיים חדשים — מחיר ברירת המחדל 0 XP.</p>
       </div>
       <div class="actions">
         <span class="count">נבחרו <span id="n">0</span></span>
@@ -161,7 +161,7 @@
       { id: "pets", title: "חיות מדברות", color: "#4ade80", blurb: "חתול רחוב, כלב בום, אוגר" },
       { id: "gross", title: "מגעיל-מגניב", color: "#fb7185", blurb: "סליים, בננה, צ'יקן ג'וקי" },
     ];
-    const AVATARS = [
+    const ALL_AVATARS = [
       { id: "classic-noob", n: 1, pack: "roblox", name: "נוב קלאסי", look: "ראש צהוב, חולצה כחולה, מכנסיים ירוקים." },
       { id: "bacon-swirl", n: 2, pack: "roblox", name: "בייקון סווירל", look: "שיער חום מסולסל, קפוצ'ון, שרשרת זהב." },
       { id: "guest-blank", n: 3, pack: "roblox", name: "אורח ריק", look: "דמות אפורה בלי פנים, ויזור זוהר." },
@@ -213,18 +213,44 @@
       { id: "gum-bubble", n: 49, pack: "gross", name: "בועת מסטיק", look: "ראש בתוך בועה ורודה." },
       { id: "spit-seed", n: 50, pack: "gross", name: "גרעין אבטיח", look: "גרעין שחור עם פס אדום." },
     ];
+    const ALREADY_IN_APP = new Set([
+      "classic-noob",
+      "guest-blank",
+      "poop-rocket",
+      "fried-brain",
+      "ban-hammer",
+      "cam-flush",
+      "obby-ninja",
+      "visor-666",
+      "ice-stare",
+      "robux-tank",
+      "glitch-hoodie",
+      "bowl-head",
+      "drip-poop",
+      "stink-king",
+      "skibidi-sigma",
+      "pizza-face",
+      "fedora-flex",
+      "stud-builder",
+      "tp-ninja",
+      "sigma-jersey",
+      "gym-hamster",
+      "peel-ninja",
+      "chicken-jock",
+    ]);
+    const AVATARS = ALL_AVATARS.filter((a) => !ALREADY_IN_APP.has(a.id));
 
-    const KEY = "kidsquest-avatar-picks";
-    const PRICE_KEY = "kidsquest-avatar-prices";
-    const NAME_KEY = "kidsquest-avatar-names";
-    const DEFAULT_COST = { roblox: 100, toilet: 130, sigma: 110, pets: 90, gross: 100 };
+    const KEY = "kidsquest-avatar-picks-remaining";
+    const PRICE_KEY = "kidsquest-avatar-prices-remaining";
+    const NAME_KEY = "kidsquest-avatar-names-remaining";
+    const DEFAULT_COST = { roblox: 0, toilet: 0, sigma: 0, pets: 0, gross: 0 };
     const selected = new Set(JSON.parse(localStorage.getItem(KEY) || "[]"));
     const prices = JSON.parse(localStorage.getItem(PRICE_KEY) || "{}");
     const customNames = JSON.parse(localStorage.getItem(NAME_KEY) || "{}");
 
     function costOf(a) {
       const n = Number(prices[a.id]);
-      return Number.isFinite(n) && n > 0 ? n : DEFAULT_COST[a.pack];
+      return Number.isFinite(n) && n >= 0 ? n : DEFAULT_COST[a.pack];
     }
 
     function nameOf(a) {
@@ -237,7 +263,10 @@
       localStorage.setItem(PRICE_KEY, JSON.stringify(prices));
       localStorage.setItem(NAME_KEY, JSON.stringify(customNames));
       document.getElementById("n").textContent = selected.size;
-      const names = AVATARS.filter((a) => selected.has(a.id)).map((a) => `${nameOf(a)} (${costOf(a)} XP)`);
+      const names = AVATARS.filter((a) => selected.has(a.id)).map((a) => {
+        const xp = costOf(a);
+        return `${nameOf(a)} (${xp === 0 ? "חינם" : xp + " XP"})`;
+      });
       document.getElementById("picked").textContent = names.length ? "לחנות: " + names.join(" · ") : "";
       document.querySelectorAll("div.card").forEach((el) => {
         const on = selected.has(el.dataset.id);
@@ -251,6 +280,7 @@
     const app = document.getElementById("app");
     PACKS.forEach((pack) => {
       const items = AVATARS.filter((a) => a.pack === pack.id);
+      if (!items.length) return;
       const sec = document.createElement("section");
       sec.className = "pack";
       sec.innerHTML = `<h2><span class="dot" style="background:${pack.color}"></span>${pack.title}</h2>
@@ -269,7 +299,7 @@
             <div class="look">${a.look}</div>
             <div class="price">
               <span>מחיר XP</span>
-              <input type="number" min="1" step="10" value="${costOf(a)}" ${on ? "" : "disabled"} />
+              <input type="number" min="0" step="10" value="${costOf(a)}" ${on ? "" : "disabled"} />
             </div>
           </div>`;
         card.querySelector("input[type=checkbox]").addEventListener("change", (e) => {
@@ -283,7 +313,7 @@
         });
         card.querySelector(".price input").addEventListener("input", (e) => {
           const n = Number(e.target.value);
-          if (Number.isFinite(n) && n > 0) prices[a.id] = n;
+          if (Number.isFinite(n) && n >= 0) prices[a.id] = n;
           save();
         });
         grid.appendChild(card);
@@ -297,7 +327,10 @@
       save();
     };
     document.getElementById("copy").onclick = async () => {
-      const rows = AVATARS.filter((a) => selected.has(a.id)).map((a) => `${a.n}. ${nameOf(a)} (${a.id}) — ${costOf(a)} XP`);
+      const rows = AVATARS.filter((a) => selected.has(a.id)).map((a) => {
+        const xp = costOf(a);
+        return `${a.n}. ${nameOf(a)} (${a.id}) — ${xp === 0 ? "חינם" : xp + " XP"}`;
+      });
       const text = rows.length ? rows.join("\n") : "לא נבחר כלום";
       await navigator.clipboard.writeText(text);
       const el = document.getElementById("copied");

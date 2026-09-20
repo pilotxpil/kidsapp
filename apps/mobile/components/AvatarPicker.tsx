@@ -1,40 +1,56 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  View,
   Text,
   StyleSheet,
-  ActivityIndicator,
   Modal,
   Pressable,
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { AVATARS, PARENT_AVATARS } from '@kidsapp/shared';
+import {
+  PARENT_AVATARS,
+  COSMETIC_ITEMS,
+  FREE_AVATAR_IDS,
+} from '@kidsapp/shared';
 import { spacing } from '../constants/theme';
 import { useAuth } from '../lib/auth';
 import { api } from '../lib/api';
 import { useTheme } from '../lib/theme-context';
 import { playSfx } from '../lib/sfx';
-import { BouncyPressable } from './animations/BouncyPressable';
-import { KidAvatar } from './KidAvatar';
 import { ShopAvatarGrid } from './ShopAvatarGrid';
+import { AvatarShopTeaser } from './AvatarShopTeaser';
 import { shopAvatarImage } from '../lib/avatar-images';
-import { rtl } from '../lib/rtl';
 import { t } from '../lib/i18n';
 
 interface AvatarPickerModalProps {
   visible: boolean;
   onClose: () => void;
   mode?: 'parent' | 'kid';
+  onOpenShop?: () => void;
 }
 
-export function AvatarPickerModal({ visible, onClose, mode }: AvatarPickerModalProps) {
-  const { user, refreshUser } = useAuth();
+export function AvatarPickerModal({ visible, onClose, mode, onOpenShop }: AvatarPickerModalProps) {
+  const { user, refreshUser, patchUser } = useAuth();
   const { borderRadius, colors, cardBorder } = useTheme();
   const [saving, setSaving] = useState<string | null>(null);
-  const showShopGrid = mode === 'parent' || user?.role === 'parent';
-  const current = user?.avatar ?? (showShopGrid ? PARENT_AVATARS[0] : AVATARS[0]);
-  const emojiOptions = AVATARS;
+  const [ownedFromApi, setOwnedFromApi] = useState<string[] | null>(null);
+  const isParent = mode === 'parent' || user?.role === 'parent';
+  const current = user?.avatar ?? (isParent ? PARENT_AVATARS[0] : FREE_AVATAR_IDS[0]);
+
+  const ownedIds = useMemo(() => {
+    const ids = new Set<string>([...FREE_AVATAR_IDS, ...(user?.ownedCosmetics ?? []), ...(ownedFromApi ?? [])]);
+    if (current && shopAvatarImage(current)) ids.add(current);
+    return COSMETIC_ITEMS.filter((c) => c.type === 'avatar' && ids.has(c.id)).map((c) => c.id);
+  }, [user?.ownedCosmetics, ownedFromApi, current]);
+
+  useEffect(() => {
+    if (!visible || isParent) return;
+    setOwnedFromApi(null);
+    void (async () => {
+      const [cos] = await Promise.all([api.getCosmetics().catch(() => null), refreshUser()]);
+      if (cos?.owned) setOwnedFromApi(cos.owned);
+    })();
+  }, [visible, isParent, refreshUser]);
 
   const handleSelect = async (avatar: string) => {
     if (!user || saving) return;
@@ -47,10 +63,16 @@ export function AvatarPickerModal({ visible, onClose, mode }: AvatarPickerModalP
       playSfx('tap');
       if (user.role === 'parent') {
         await api.updateMe({ avatar });
+        await refreshUser();
       } else {
-        await api.updateKid(user._id, { avatar });
+        try {
+          const res = await api.equipCosmetic(avatar);
+          patchUser(res.kid);
+        } catch {
+          await api.updateKid(user._id, { avatar });
+          await refreshUser();
+        }
       }
-      await refreshUser();
       onClose();
     } finally {
       setSaving(null);
@@ -73,41 +95,31 @@ export function AvatarPickerModal({ visible, onClose, mode }: AvatarPickerModalP
         >
           <Text style={[styles.title, { color: colors.text }]}>{t('selectAvatar')}</Text>
           <Text style={[styles.hint, { color: colors.textMuted }]}>
-            {t(showShopGrid ? 'selectAvatarHintParent' : 'selectAvatarHint')}
+            {t(isParent ? 'selectAvatarHintParent' : 'selectAvatarHintKid')}
           </Text>
           <ScrollView style={styles.scroll} contentContainerStyle={styles.gridWrap}>
-            {showShopGrid ? (
+            {isParent ? (
               <ShopAvatarGrid selected={current} onSelect={handleSelect} savingId={saving} />
             ) : (
-              <View style={[styles.grid, rtl.tabs]}>
-                {emojiOptions.map((emoji) => {
-                  const selected = emoji === current;
-                  const loading = saving === emoji;
-                  return (
-                    <BouncyPressable
-                      key={emoji}
-                      style={[
-                        styles.btn,
-                        {
-                          borderRadius: borderRadius.md,
-                          backgroundColor: colors.bgCardLight,
-                          borderColor: selected ? colors.primary : colors.border,
-                          borderWidth: selected ? 3 : 2,
-                        },
-                      ]}
-                      onPress={() => handleSelect(emoji)}
-                    >
-                      {loading ? (
-                        <ActivityIndicator color={colors.primary} size="small" />
-                      ) : shopAvatarImage(emoji) ? (
-                        <KidAvatar avatar={emoji} size={40} />
-                      ) : (
-                        <Text style={styles.emoji}>{emoji}</Text>
-                      )}
-                    </BouncyPressable>
-                  );
-                })}
-              </View>
+              <>
+                <Text style={[styles.section, { color: colors.text }]}>{t('ownedAvatars')}</Text>
+                <Text style={[styles.sectionHint, { color: colors.textMuted }]}>{t('ownedAvatarsHint')}</Text>
+                <ShopAvatarGrid
+                  selected={current}
+                  onSelect={handleSelect}
+                  savingId={saving}
+                  ids={ownedIds}
+                  caption={(id) => (id === current ? t('avatarEquipped') : t('freeToChoose'))}
+                />
+                {onOpenShop ? (
+                  <AvatarShopTeaser
+                    onPress={() => {
+                      onClose();
+                      onOpenShop();
+                    }}
+                  />
+                ) : null}
+              </>
             )}
           </ScrollView>
           <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
@@ -147,21 +159,21 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     width: '100%',
   },
+  section: {
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+    width: '100%',
+    marginBottom: spacing.xs,
+  },
+  sectionHint: {
+    fontSize: 12,
+    textAlign: 'center',
+    width: '100%',
+    marginBottom: spacing.md,
+  },
   scroll: { width: '100%', maxHeight: 420 },
   gridWrap: { width: '100%', paddingBottom: spacing.sm },
-  grid: {
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    justifyContent: 'center',
-    width: '100%',
-  },
-  btn: {
-    width: 52,
-    height: 52,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emoji: { fontSize: 28 },
   closeBtn: {
     marginTop: spacing.sm,
     paddingVertical: spacing.sm,

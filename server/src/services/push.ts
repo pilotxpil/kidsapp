@@ -181,3 +181,11 @@ export function pushBonusAwarded(kidId: string, amount: number, reason: string):
     data: { type: 'bonus_awarded' satisfies PushNotificationType },
   });
 }
+
+export function pushAvatarShopGift(kidId: string): void {
+  pushToUsers([kidId], {
+    title: 'מתנה מההורים! 🎁',
+    body: 'נוב קלאסי מחכה לך בחינם — ובחנות יש אווטארים חדשים לקנייה',
+    data: { type: 'avatar_shop_gift' satisfies PushNotificationType },
+  });
+}

@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Image } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
@@ -9,6 +10,8 @@ import { Celebration } from '../../components/Celebration';
 import { DailyStar } from '../../components/DailyStar';
 import { FortuneWheel } from '../../components/FortuneWheel';
 import { TreasureChest } from '../../components/TreasureChest';
+import { AvatarGiftModal } from '../../components/AvatarGiftModal';
+import { AvatarZoomModal } from '../../components/AvatarZoomModal';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { ThemedHero, SectionHeader } from '../../components/ThemedHero';
 import { EmberHome } from '../../components/EmberHome';
@@ -29,9 +32,16 @@ import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 import { useCelebrateBadges } from '../../lib/badge-celebration';
 import { ProgressBar } from '../../components/ProgressBar';
+import {
+  consumeAvatarGiftUnlocked,
+  isAvatarGiftPending,
+  subscribeAvatarGift,
+} from '../../lib/avatar-gift';
+import { FREE_AVATAR_ID } from '@kidsapp/shared';
 
 export default function KidHomeScreen() {
-  const { user, patchUser } = useAuth();
+  const { user, patchUser, refreshUser } = useAuth();
+  const router = useRouter();
   const celebrateBadges = useCelebrateBadges();
   const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
   const art = getThemeArt(themeId);
@@ -45,6 +55,18 @@ export default function KidHomeScreen() {
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [starKey, setStarKey] = useState(0);
   const [chestKey, setChestKey] = useState(0);
+  const [giftOpen, setGiftOpen] = useState(false);
+  const [avatarZoom, setAvatarZoom] = useState(false);
+
+  useEffect(() => {
+    const showGift = () => {
+      if (!isAvatarGiftPending()) return;
+      consumeAvatarGiftUnlocked();
+      setGiftOpen(true);
+    };
+    showGift();
+    return subscribeAvatarGift(showGift);
+  }, []);
 
   const styles = useMemo(
     () =>
@@ -170,6 +192,7 @@ export default function KidHomeScreen() {
       {themeId === 'ember' ? (
         <EmberHome
           displayName={user?.displayName ?? ''}
+          avatar={user?.avatar ?? '🎮'}
           points={profile?.points ?? user?.points ?? 0}
           profile={profile}
           tasks={tasks}
@@ -177,6 +200,7 @@ export default function KidHomeScreen() {
           refreshing={refreshing}
           onRefresh={onRefresh}
           onComplete={handleComplete}
+          onAvatarPress={() => setAvatarZoom(true)}
         />
       ) : (
       <ScrollView
@@ -190,6 +214,7 @@ export default function KidHomeScreen() {
               avatar={user?.avatar ?? '🎮'}
               streak={profile?.streak ?? user?.streak ?? 0}
               level={profile?.level ?? user?.level}
+              onAvatarPress={() => setAvatarZoom(true)}
             />
           </FadeInUp>
 
@@ -296,6 +321,30 @@ export default function KidHomeScreen() {
         </>
       ) : null}
 
+      <AvatarZoomModal
+        visible={avatarZoom}
+        avatar={user?.avatar ?? '🎮'}
+        onClose={() => setAvatarZoom(false)}
+        onShop={() => {
+          setAvatarZoom(false);
+          router.push('/(kid)/avatar-shop');
+        }}
+      />
+      <AvatarGiftModal
+        visible={giftOpen}
+        onSkip={() => setGiftOpen(false)}
+        onUse={async () => {
+          if (!userId) return;
+          try {
+            const res = await api.equipCosmetic(FREE_AVATAR_ID);
+            patchUser(res.kid);
+          } catch {
+            await api.updateKid(userId, { avatar: FREE_AVATAR_ID });
+            await refreshUser();
+          }
+          setGiftOpen(false);
+        }}
+      />
       <Celebration
         visible={celebrate}
         message={t('taskSubmitted')}

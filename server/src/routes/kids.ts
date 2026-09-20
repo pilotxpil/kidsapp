@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { UI_THEME_IDS, DEFAULT_KID_THEME_ID, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS, DEFAULT_SHOP_AVATAR_ID, isAllowedKidAvatar } from '@kidsapp/shared';
+import { UI_THEME_IDS, DEFAULT_KID_THEME_ID, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS, DEFAULT_SHOP_AVATAR_ID, FREE_AVATAR_ID, isAllowedKidAvatar, isFreeAvatar, AVATARS } from '@kidsapp/shared';
 import { authenticate, requireParent } from '../middleware/auth';
 import { User } from '../models/User';
 import { Task } from '../models/Task';
@@ -68,13 +68,19 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
     }
 
     const pinHash = await bcrypt.hash(pin, 10);
+    const starterAvatar = avatar || DEFAULT_SHOP_AVATAR_ID;
+    const owned = [FREE_AVATAR_ID];
+    if (starterAvatar !== FREE_AVATAR_ID && isAllowedKidAvatar(String(starterAvatar))) {
+      owned.push(String(starterAvatar));
+    }
     const kid = await User.create({
       role: 'kid',
       familyId: req.user!.familyId,
       displayName,
       username,
       pinHash,
-      avatar: avatar || DEFAULT_SHOP_AVATAR_ID,
+      avatar: starterAvatar,
+      ownedCosmetics: owned,
       uiTheme: DEFAULT_KID_THEME_ID,
       ...(gradeVal != null ? { grade: gradeVal } : {}),
     });
@@ -146,8 +152,21 @@ router.patch('/:id', authenticate, async (req: Request, res: Response) => {
     }
 
     if (avatar !== undefined) {
-      if (!isAllowedKidAvatar(avatar)) {
-        return res.status(400).json({ error: 'אווטאר לא תקין' });
+      if (req.user!.role === 'parent') {
+        if (!isAllowedKidAvatar(avatar)) {
+          return res.status(400).json({ error: 'אווטאר לא תקין' });
+        }
+        const owned = kid.ownedCosmetics ?? [];
+        if (!owned.includes(avatar) && !AVATARS.includes(avatar)) {
+          kid.ownedCosmetics = [...owned, avatar];
+        }
+      } else {
+        const owned = kid.ownedCosmetics ?? [];
+        const allowed =
+          AVATARS.includes(avatar) || isFreeAvatar(avatar) || owned.includes(avatar);
+        if (!allowed) {
+          return res.status(400).json({ error: 'אווטאר לא תקין' });
+        }
       }
       kid.avatar = avatar;
     }
@@ -423,6 +442,13 @@ router.get('/cosmetics', authenticate, async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'אין הרשאה' });
     }
 
+    const { grantStarterAvatarGift } = await import('../services/gamification');
+    const gift = await grantStarterAvatarGift(kid);
+    if (gift.notified) {
+      const { pushAvatarShopGift } = await import('../services/push');
+      pushAvatarShopGift(kid._id.toString());
+    }
+
     res.json({
       items: COSMETIC_ITEMS,
       owned: kid.ownedCosmetics ?? [],
@@ -457,13 +483,15 @@ router.post('/cosmetics/:itemId/buy', authenticate, async (req: Request, res: Re
     if (owned.includes(item.id)) {
       return res.status(400).json({ error: 'הפריט כבר בבעלותך' });
     }
-    if (kid.points < item.cost) {
+    if (item.cost > 0 && kid.points < item.cost) {
       return res.status(400).json({ error: 'אין מספיק נקודות' });
     }
 
-    await deductPoints(kid, item.cost, `קנייה: ${item.label}`, item.id);
+    if (item.cost > 0) {
+      await deductPoints(kid, item.cost, `קנייה: ${item.label}`, item.id);
+    }
     kid.ownedCosmetics = [...owned, item.id];
-    if (item.type === 'avatar') {
+    if (item.type === 'avatar' && item.cost > 0) {
       kid.avatar = item.id;
     }
     await kid.save();
@@ -489,7 +517,7 @@ router.post('/cosmetics/:itemId/equip', authenticate, async (req: Request, res: 
 
     const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
     if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
-    if (!(kid.ownedCosmetics ?? []).includes(item.id)) {
+    if (!(kid.ownedCosmetics ?? []).includes(item.id) && item.cost > 0) {
       return res.status(400).json({ error: 'יש לקנות את הפריט קודם' });
     }
 

@@ -32,7 +32,8 @@ export function defaultUiThemeForRole(role: UserRole): UiThemeId {
 
 /** Daily gift star — tap this many times to claim (Brawl Stars–style). */
 export const DAILY_STAR_TAPS = 4;
-export const DAILY_STAR_BONUS = 10;
+/** Possible point amounts for the daily star (picked at claim time). */
+export const DAILY_STAR_REWARDS = [5, 8, 10, 12, 15, 20] as const;
 
 /** Approved tasks needed to unlock one treasure chest. @deprecated chest is now a random daily surprise */
 export const TREASURE_CHEST_TASKS = 5;
@@ -487,7 +488,8 @@ export type PushNotificationType =
   | 'learning_assigned'
   | 'bonus_awarded'
   | 'tasks_incomplete_evening'
-  | 'family_challenge_complete';
+  | 'family_challenge_complete'
+  | 'avatar_shop_gift';
 
 export type PushPlatform = 'ios' | 'android' | 'web' | 'unknown';
 
@@ -515,7 +517,13 @@ export interface CosmeticItem {
 
 /** Cosmetics kids can buy with points (avatars / frames / effects). Sorted cheap → expensive. */
 export const COSMETIC_ITEMS: CosmeticItem[] = [
-  { id: 'classic-noob', type: 'avatar', cost: 20, icon: 'classic-noob', label: 'נוב קלאסי' },
+  { id: 'classic-noob', type: 'avatar', cost: 0, icon: 'classic-noob', label: 'נוב קלאסי' },
+  { id: 'fedora-flex', type: 'avatar', cost: 0, icon: 'fedora-flex', label: 'פדורה פלקס' },
+  { id: 'stud-builder', type: 'avatar', cost: 0, icon: 'stud-builder', label: 'בנאי סטאד' },
+  { id: 'tp-ninja', type: 'avatar', cost: 0, icon: 'tp-ninja', label: 'נינג׳ת נייר' },
+  { id: 'sigma-jersey', type: 'avatar', cost: 0, icon: 'sigma-jersey', label: 'סיגמה 67' },
+  { id: 'gym-hamster', type: 'avatar', cost: 0, icon: 'gym-hamster', label: 'אוגר חדר כושר' },
+  { id: 'peel-ninja', type: 'avatar', cost: 0, icon: 'peel-ninja', label: 'נינג׳ת קליפה' },
   { id: 'guest-blank', type: 'avatar', cost: 20, icon: 'guest-blank', label: '404 לא נמצא' },
   { id: 'poop-rocket', type: 'avatar', cost: 20, icon: 'poop-rocket', label: 'קקי דחוף' },
   { id: 'fried-brain', type: 'avatar', cost: 20, icon: 'fried-brain', label: 'מוח מטוגן' },
@@ -531,11 +539,27 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
   { id: 'stink-king', type: 'avatar', cost: 100, icon: 'stink-king', label: 'מלך הפוקים' },
   { id: 'skibidi-sigma', type: 'avatar', cost: 100, icon: 'skibidi-sigma', label: 'סקיבידי סיגמה' },
   { id: 'pizza-face', type: 'avatar', cost: 100, icon: 'pizza-face', label: 'פיצה פייס' },
+  { id: 'chicken-jock', type: 'avatar', cost: 100, icon: 'chicken-jock', label: 'צ׳יקן ג׳וקי' },
 ];
 
 export const SHOP_AVATAR_IDS = COSMETIC_ITEMS.filter((c) => c.type === 'avatar').map((c) => c.id);
 
-export const DEFAULT_SHOP_AVATAR_ID = SHOP_AVATAR_IDS[0];
+export const FREE_AVATAR_ID = 'classic-noob';
+export const DEFAULT_SHOP_AVATAR_ID = FREE_AVATAR_ID;
+export const FREE_AVATAR_IDS = COSMETIC_ITEMS.filter((c) => c.type === 'avatar' && c.cost === 0).map((c) => c.id);
+
+export function isFreeAvatar(id: string): boolean {
+  return FREE_AVATAR_IDS.includes(id);
+}
+
+/** One-time gift + shop announcement (push once per kid). */
+export const AVATAR_GIFT_CAMPAIGN = 'starter-noob-v1';
+/** Sample paid avatars shown as a teaser in the kid picker. */
+export const SHOP_TEASER_AVATAR_IDS = ['skibidi-sigma', 'pizza-face', 'ban-hammer', 'bowl-head'];
+
+export function paidCosmeticItems(): CosmeticItem[] {
+  return COSMETIC_ITEMS.filter((c) => c.cost > 0);
+}
 
 export function isAllowedKidAvatar(avatar: string): boolean {
   return AVATARS.includes(avatar) || SHOP_AVATAR_IDS.includes(avatar);

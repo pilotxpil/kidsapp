@@ -490,7 +490,12 @@ export default function KidProfileScreen() {
         </Pressable>
       </Modal>
 
-      <AvatarPickerModal visible={avatarOpen} onClose={() => setAvatarOpen(false)} />
+      <AvatarPickerModal
+        visible={avatarOpen}
+        onClose={() => setAvatarOpen(false)}
+        mode="kid"
+        onOpenShop={() => router.push('/(kid)/avatar-shop')}
+      />
     </ThemedScreen>
   );
 }

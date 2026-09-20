@@ -11,11 +11,13 @@ interface ShopAvatarGridProps {
   selected?: string;
   onSelect: (id: string) => void;
   savingId?: string | null;
+  ids?: string[];
+  caption?: (id: string) => string | undefined;
 }
 
-export function ShopAvatarGrid({ selected, onSelect, savingId }: ShopAvatarGridProps) {
+export function ShopAvatarGrid({ selected, onSelect, savingId, ids, caption }: ShopAvatarGridProps) {
   const { colors, borderRadius } = useTheme();
-  const items = COSMETIC_ITEMS.filter((c) => c.type === 'avatar');
+  const items = COSMETIC_ITEMS.filter((c) => c.type === 'avatar' && (!ids || ids.includes(c.id)));
 
   return (
     <View style={[styles.grid, rtl.tabs]}>
@@ -48,6 +50,14 @@ export function ShopAvatarGrid({ selected, onSelect, savingId }: ShopAvatarGridP
             >
               {item.label}
             </Text>
+            {caption?.(item.id) ? (
+              <Text
+                numberOfLines={1}
+                style={[styles.caption, { color: isSelected ? colors.primary : colors.gold }]}
+              >
+                {caption(item.id)}
+              </Text>
+            ) : null}
           </View>
         );
       })}
@@ -78,6 +88,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 10,
     fontWeight: '700',
+    textAlign: 'center',
+    width: '100%',
+  },
+  caption: {
+    marginTop: 2,
+    fontSize: 10,
+    fontWeight: '800',
     textAlign: 'center',
     width: '100%',
   },

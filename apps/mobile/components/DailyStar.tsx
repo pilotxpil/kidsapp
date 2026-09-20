@@ -192,7 +192,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
     claimStartedRef.current = true;
     try {
       const result = await api.claimDailyStar(kidId);
-      const parts = [`+${result.totalPoints} ${t('points')}`];
+      const parts = [`+${result.dailyBonus} ${t('points')}`];
       if (result.streakBonus) parts.push(`${t('streakBonus')}: +${result.streakBonus}`);
       setCelebrateMsg(parts.join(' · '));
       setCelebrate(true);
@@ -248,11 +248,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
   if (!status?.available && !visible) return null;
 
   const remaining = status ? Math.max(status.tapsRequired - taps, 0) : 0;
-  const rewardHint = status
-    ? status.streakBonus > 0
-      ? `+${status.totalPoints} (${t('dailyBonus')} + ${t('streakBonus')})`
-      : `+${status.totalPoints} ${t('points')}`
-    : '';
+  const rewardHint = t('dailyStarMystery');
 
   return (
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent>

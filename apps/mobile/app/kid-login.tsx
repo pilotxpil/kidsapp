@@ -15,6 +15,7 @@ import { spacing } from '../constants/theme';
 import { kidAuthTheme } from '../constants/theme';
 import { t } from '../lib/i18n';
 import { resetKidGiftDismissals } from '../lib/kid-gift-dismiss';
+import { markAvatarGiftUnlocked } from '../lib/avatar-gift';
 import { getSavedFamilyCode, saveFamilyCode } from '../lib/kid-login-storage';
 
 export default function KidLoginScreen() {
@@ -112,6 +113,7 @@ export default function KidLoginScreen() {
       const res = await api.kidLogin(username.trim(), pin, code);
       await saveFamilyCode(code);
       resetKidGiftDismissals();
+      if (res.avatarGiftJustUnlocked) markAvatarGiftUnlocked();
       await login(res.token, res.user);
 
       if (res.dailyGiftAvailable ?? res.dailyStarAvailable) {
