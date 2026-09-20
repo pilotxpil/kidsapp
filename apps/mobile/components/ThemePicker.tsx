@@ -11,8 +11,9 @@ import { playSfx } from '../lib/sfx';
 import { BouncyPressable } from './animations/BouncyPressable';
 import { rtl } from '../lib/rtl';
 
-const CARD_HEIGHT = 112;
+const CARD_HEIGHT = 148;
 const GRID_PADDING = spacing.lg;
+const ICON_SIZE = 88;
 
 export function ThemePicker() {
   const { width: screenW } = useWindowDimensions();
@@ -22,7 +23,7 @@ export function ThemePicker() {
   const gap = spacing.md;
   const cardWidth = Math.floor((screenW - GRID_PADDING * 2 - gap) / 2);
 
-  const handleSelect = async (themeId: UiThemeId, sfx: typeof UI_THEME_OPTIONS[0]['sfx']) => {
+  const handleSelect = async (themeId: UiThemeId, sfx: (typeof UI_THEME_OPTIONS)[0]['sfx']) => {
     if (themeId === currentId || saving) return;
     setSaving(themeId);
     try {
@@ -38,6 +39,7 @@ export function ThemePicker() {
       {UI_THEME_OPTIONS.map((opt) => {
         const selected = opt.id === currentId;
         const loading = saving === opt.id;
+        const icon = getThemeArt(opt.id)?.picker;
         return (
           <BouncyPressable
             key={opt.id}
@@ -63,19 +65,11 @@ export function ThemePicker() {
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
                 <>
-                  {getThemeArt(opt.id)?.gem ? (
-                    <Image source={getThemeArt(opt.id)!.gem} style={styles.gemArt} resizeMode="contain" />
-                  ) : (
-                    <>
-                      <Text style={styles.bgDecor}>{opt.decorEmojis.slice(0, 3).join(' ')}</Text>
-                      <Text style={styles.icon}>{opt.icon}</Text>
-                    </>
-                  )}
+                  {icon ? (
+                    <Image source={icon} style={styles.icon} resizeMode="contain" />
+                  ) : null}
                   <Text style={[styles.name, type.title]} numberOfLines={1}>
                     {opt.name}
-                  </Text>
-                  <Text style={[styles.sub, type.body]} numberOfLines={1}>
-                    {opt.subtitle}
                   </Text>
                   {selected && (
                     <View style={[styles.badge, { backgroundColor: opt.accent }]}>
@@ -103,26 +97,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  bgDecor: {
-    position: 'absolute',
-    top: 4,
-    left: 0,
-    right: 0,
-    textAlign: 'center',
-    fontSize: 8,
-    opacity: 0.35,
-    letterSpacing: 1,
-  },
-  icon: { fontSize: 28, marginBottom: 4 },
-  gemArt: { width: 40, height: 40, marginBottom: 4 },
-  name: { fontSize: 10, fontWeight: '800', textAlign: 'center', color: '#fff', width: '100%' },
-  sub: {
-    fontSize: 9,
-    marginTop: 1,
-    textAlign: 'center',
-    color: 'rgba(255,255,255,0.8)',
-    width: '100%',
-  },
+  icon: { width: ICON_SIZE, height: ICON_SIZE, marginBottom: 2 },
+  name: { fontSize: 14, fontWeight: '800', textAlign: 'center', color: '#fff', width: '100%' },
   badge: {
     marginTop: 6,
     paddingHorizontal: 8,

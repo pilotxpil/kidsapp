@@ -23,6 +23,34 @@ interface InputProps extends TextInputProps {
   compact?: boolean;
 }
 
+function isCompleteEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+/** Android/iOS autofill in RTL often appends the full suggestion onto the typed prefix. */
+function collapseAutofillDuplicate(prev: string, next: string) {
+  if (!next || next === prev) return next;
+  if (prev && next.startsWith(prev) && next.length > prev.length) {
+    const inserted = next.slice(prev.length);
+    if (isCompleteEmail(inserted) && inserted.toLowerCase().startsWith(prev.toLowerCase())) {
+      return inserted;
+    }
+  }
+  if (prev && next.endsWith(prev) && next.length > prev.length) {
+    const inserted = next.slice(0, next.length - prev.length);
+    if (isCompleteEmail(inserted)) {
+      return inserted;
+    }
+  }
+  if (next.length % 2 === 0) {
+    const half = next.slice(0, next.length / 2);
+    if (half && half === next.slice(next.length / 2) && isCompleteEmail(half)) {
+      return half;
+    }
+  }
+  return next;
+}
+
 function EyeIcon({ crossed, color }: { crossed: boolean; color: string }) {
   return (
     <Svg width={22} height={22} viewBox="0 0 24 24" accessibilityElementsHidden>
@@ -56,6 +84,11 @@ export function Input({
   secureTextEntry,
   ltr,
   compact,
+  value,
+  onChangeText,
+  keyboardType,
+  autoComplete,
+  textContentType,
   ...props
 }: InputProps) {
   const { colors, borderRadius, id: themeId } = useTheme();
@@ -64,10 +97,20 @@ export function Input({
   const [passwordVisible, setPasswordVisible] = useState(false);
   const isSecretField = Boolean(secureTextEntry);
   const hideText = isSecretField && !passwordVisible;
+  const isEmailField =
+    keyboardType === 'email-address' || autoComplete === 'email' || textContentType === 'emailAddress';
   // Credentials / username-style fields: open keyboard in lowercase by default.
   const resolvedAutoCapitalize =
-    autoCapitalize ?? (secureTextEntry ? 'none' : undefined);
-  const resolvedAutoCorrect = autoCorrect ?? (secureTextEntry ? false : undefined);
+    autoCapitalize ?? (secureTextEntry || isEmailField || ltr ? 'none' : undefined);
+  const resolvedAutoCorrect = autoCorrect ?? (secureTextEntry || isEmailField || ltr ? false : undefined);
+  const resolvedTextContentType =
+    textContentType ?? (isEmailField ? 'emailAddress' : undefined);
+  const resolvedAutoComplete = autoComplete ?? (isEmailField ? 'email' : undefined);
+
+  const handleChangeText = (text: string) => {
+    const prev = typeof value === 'string' ? value : '';
+    onChangeText?.(isEmailField ? collapseAutofillDuplicate(prev, text) : text);
+  };
 
   const fieldPadV = compact ? spacing.sm : spacing.md;
   const styles = useMemo(
@@ -120,6 +163,7 @@ export function Input({
         ltrText: {
           textAlign: 'left',
           writingDirection: 'ltr',
+          direction: 'ltr',
         },
         inputWithToggle: {
           paddingRight: 44,
@@ -142,6 +186,12 @@ export function Input({
     <TextInput
       placeholderTextColor={colors.textMuted}
       {...props}
+      value={value}
+      onChangeText={handleChangeText}
+      keyboardType={keyboardType}
+      autoComplete={resolvedAutoComplete}
+      textContentType={resolvedTextContentType}
+      importantForAutofill="yes"
       style={[
         styles.input,
         isSecretField && styles.inputWithToggle,
@@ -154,25 +204,29 @@ export function Input({
     />
   );
 
+  const wrapped = ltr || isSecretField ? (
+    <View style={styles.fieldWrap}>
+      {input}
+      {isSecretField ? (
+        <Pressable
+          onPress={() => setPasswordVisible((v) => !v)}
+          style={styles.toggle}
+          accessibilityRole="button"
+          accessibilityLabel={passwordVisible ? t('hidePassword') : t('showPassword')}
+          hitSlop={8}
+        >
+          <EyeIcon crossed={passwordVisible} color={colors.textMuted} />
+        </Pressable>
+      ) : null}
+    </View>
+  ) : (
+    input
+  );
+
   return (
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={[styles.label, rtl.text]}>{label}</Text>}
-      {isSecretField ? (
-        <View style={styles.fieldWrap}>
-          {input}
-          <Pressable
-            onPress={() => setPasswordVisible((v) => !v)}
-            style={styles.toggle}
-            accessibilityRole="button"
-            accessibilityLabel={passwordVisible ? t('hidePassword') : t('showPassword')}
-            hitSlop={8}
-          >
-            <EyeIcon crossed={passwordVisible} color={colors.textMuted} />
-          </Pressable>
-        </View>
-      ) : (
-        input
-      )}
+      {wrapped}
     </View>
   );
 }

@@ -64,7 +64,7 @@ export default function ParentLoginScreen() {
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
-          textContentType="username"
+          textContentType="emailAddress"
           autoComplete="email"
           ltr
         />
