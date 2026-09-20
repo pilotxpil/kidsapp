@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -61,13 +61,6 @@ export function AuthScreenShell({
 }: AuthScreenShellProps) {
   const theme = getTheme(themeId);
   const keyboardOpen = useKeyboardOpen();
-  const scrollRef = useRef<ScrollView>(null);
-
-  useEffect(() => {
-    if (keyboardOpen) {
-      scrollRef.current?.scrollTo({ y: 0, animated: true });
-    }
-  }, [keyboardOpen]);
 
   const styles = useMemo(
     () =>
@@ -79,8 +72,8 @@ export function AuthScreenShell({
         inner: {
           flexGrow: 1,
           paddingHorizontal: spacing.lg,
-          paddingBottom: spacing.lg,
-          paddingTop: keyboardOpen && !scroll ? spacing.xl + spacing.lg : spacing.lg,
+          paddingBottom: keyboardOpen ? spacing.sm : spacing.lg,
+          paddingTop: keyboardOpen ? spacing.xs : spacing.lg,
           justifyContent: keyboardOpen ? 'flex-start' : 'center',
         },
         back: {
@@ -116,12 +109,12 @@ export function AuthScreenShell({
           alignSelf: 'center',
         },
       }),
-    [theme, keyboardOpen, scroll]
+    [theme, keyboardOpen]
   );
 
   const content = (
     <View style={[styles.body, contentStyle]}>
-      {scroll && onBack ? (
+      {scroll && onBack && !keyboardOpen ? (
         <BouncyPressable onPress={onBack} style={styles.backInline}>
           <RtlText style={styles.backText} wrap={false}>
             ← {t('back')}
@@ -142,8 +135,8 @@ export function AuthScreenShell({
       {theme.chrome !== 'vector' && (
         <FloatingEmojis emojis={emojis} count={emojiCount} opacity={0.24} />
       )}
-      <SafeAreaView style={styles.safe}>
-        {!scroll && onBack ? (
+      <SafeAreaView style={styles.safe} edges={keyboardOpen ? ['top', 'left', 'right'] : ['top', 'bottom', 'left', 'right']}>
+        {!scroll && onBack && !keyboardOpen ? (
           <BouncyPressable onPress={onBack} style={styles.back}>
             <RtlText style={styles.backText} wrap={false}>
               ← {t('back')}
@@ -156,12 +149,11 @@ export function AuthScreenShell({
           keyboardVerticalOffset={Platform.OS === 'ios' ? spacing.sm : 0}
         >
           <ScrollView
-            ref={scrollRef}
             contentContainerStyle={styles.inner}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="interactive"
             showsVerticalScrollIndicator={false}
-            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+            automaticallyAdjustKeyboardInsets
           >
             {content}
           </ScrollView>

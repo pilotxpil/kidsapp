@@ -5,7 +5,7 @@ import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { Celebration } from '../components/Celebration';
 import { AuthBrand } from '../components/AuthBrand';
-import { AuthScreenShell } from '../components/AuthScreenShell';
+import { AuthScreenShell, useKeyboardOpen } from '../components/AuthScreenShell';
 import { AuthFormCard } from '../components/AuthFormCard';
 import { KidLoginScanner } from '../components/KidLoginScanner';
 import { playSfx } from '../lib/sfx';
@@ -36,6 +36,7 @@ export default function KidLoginScreen() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const keyboardOpen = useKeyboardOpen();
 
   useEffect(() => {
     void getSavedFamilyCode().then((code) => {
@@ -66,7 +67,7 @@ export default function KidLoginScreen() {
         scanRow: {
           width: '100%',
           alignItems: 'flex-end',
-          marginBottom: spacing.sm,
+          marginBottom: spacing.xs,
         },
         scanBtn: {
           flexDirection: 'row',
@@ -86,7 +87,7 @@ export default function KidLoginScreen() {
         error: {
           color: kidAuthTheme.colors.danger,
           textAlign: 'center',
-          marginTop: spacing.md,
+          marginTop: spacing.sm,
           fontSize: 14,
           fontWeight: '600',
         },
@@ -94,8 +95,8 @@ export default function KidLoginScreen() {
           color: kidAuthTheme.colors.textMuted,
           fontSize: 12,
           textAlign: 'right',
-          marginTop: -spacing.sm,
-          marginBottom: spacing.md,
+          marginTop: -spacing.xs,
+          marginBottom: spacing.sm,
         },
       }),
     []
@@ -143,8 +144,8 @@ export default function KidLoginScreen() {
       >
         <AuthBrand variant="kid" compact />
 
-        <AuthFormCard themeId="ember">
-          {Platform.OS !== 'web' ? (
+        <AuthFormCard themeId="ember" compact>
+          {Platform.OS !== 'web' && !keyboardOpen ? (
             <View style={styles.scanRow}>
               <Pressable
                 onPress={() => setScannerOpen(true)}
@@ -158,6 +159,7 @@ export default function KidLoginScreen() {
           ) : null}
 
           <Input
+            compact
             label={t('familyCode')}
             value={familyCode}
             onChangeText={(v) => setFamilyCode(v.replace(/\D/g, '').slice(0, 6))}
@@ -165,9 +167,10 @@ export default function KidLoginScreen() {
             maxLength={6}
             placeholder="123456"
           />
-          <Text style={styles.hint}>{t('familyCodeHint')}</Text>
+          {!keyboardOpen ? <Text style={styles.hint}>{t('familyCodeHint')}</Text> : null}
 
           <Input
+            compact
             label={t('username')}
             value={username}
             onChangeText={setUsername}
@@ -177,6 +180,7 @@ export default function KidLoginScreen() {
             autoComplete="username"
           />
           <Input
+            compact
             label={t('pin')}
             value={pin}
             onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}

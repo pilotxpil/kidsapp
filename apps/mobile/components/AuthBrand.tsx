@@ -28,7 +28,7 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
   const theme = variant === 'kid' ? getTheme('ember') : getTheme('roblox');
   const logoVariant: AuthLogoVariant =
     variant === 'kid' || variant === 'welcome' ? 'gem' : variant === 'register' ? 'shield' : 'coin';
-  const logoSize = variant === 'welcome' && !compact ? 130 : compact ? 96 : 130;
+  const logoSize = variant === 'welcome' && !compact ? 130 : compact ? 56 : 130;
   const titlePulse = useSharedValue(1);
 
   useEffect(() => {
@@ -58,11 +58,11 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
           marginBottom: compact ? spacing.xs : spacing.sm,
         },
         appName: {
-          fontSize: compact ? 32 : 44,
+          fontSize: compact ? 24 : 44,
           fontWeight: variant === 'kid' ? 'normal' : '900',
           fontFamily: variant === 'kid' ? Heebo.black : undefined,
           color: theme.colors.text,
-          letterSpacing: compact ? 2 : 4,
+          letterSpacing: compact ? 1 : 4,
           textAlign: 'center',
           textShadowColor: 'rgba(0,0,0,0.55)',
           textShadowOffset: { width: 0, height: 3 },
@@ -79,7 +79,7 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
           fontFamily: variant === 'kid' ? Heebo.bold : undefined,
         },
         heroTitle: {
-          fontSize: 26,
+          fontSize: compact ? 18 : 26,
           fontWeight: variant === 'kid' ? 'normal' : '800',
           fontFamily: variant === 'kid' ? Heebo.extrabold : undefined,
           color: theme.colors.text,
@@ -87,11 +87,11 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
           marginTop: spacing.xs,
         },
         heroSub: {
-          fontSize: 14,
+          fontSize: compact ? 12 : 14,
           color: theme.colors.textMuted,
           textAlign: 'center',
           marginTop: spacing.xs,
-          marginBottom: compact ? spacing.lg : spacing.xl,
+          marginBottom: compact ? spacing.sm : spacing.xl,
           fontFamily: variant === 'kid' ? Heebo.medium : undefined,
         },
       }),
@@ -132,13 +132,17 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
                 ? t('parentRegisterHero')
                 : t('parentLoginHero')}
           </Text>
-          <Text style={styles.heroSub}>
-            {variant === 'kid'
-              ? t('kidLoginSub')
-              : variant === 'register'
-                ? t('parentRegisterSub')
-                : t('parentLoginSub')}
-          </Text>
+          {!compact ? (
+            <Text style={styles.heroSub}>
+              {variant === 'kid'
+                ? t('kidLoginSub')
+                : variant === 'register'
+                  ? t('parentRegisterSub')
+                  : t('parentLoginSub')}
+            </Text>
+          ) : (
+            <View style={{ height: spacing.sm }} />
+          )}
         </FadeInUp>
       )}
     </View>

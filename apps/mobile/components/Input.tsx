@@ -20,6 +20,7 @@ interface InputProps extends TextInputProps {
   containerStyle?: ViewStyle;
   /** LTR value (email, password). The Hebrew label stays RTL. */
   ltr?: boolean;
+  compact?: boolean;
 }
 
 function EyeIcon({ crossed, color }: { crossed: boolean; color: string }) {
@@ -54,6 +55,7 @@ export function Input({
   autoCorrect,
   secureTextEntry,
   ltr,
+  compact,
   ...props
 }: InputProps) {
   const { colors, borderRadius, id: themeId } = useTheme();
@@ -67,15 +69,16 @@ export function Input({
     autoCapitalize ?? (secureTextEntry ? 'none' : undefined);
   const resolvedAutoCorrect = autoCorrect ?? (secureTextEntry ? false : undefined);
 
+  const fieldPadV = compact ? spacing.sm : spacing.md;
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        container: { marginBottom: spacing.md },
+        container: { marginBottom: compact ? spacing.sm : spacing.md },
         label: {
           color: colors.text,
-          fontSize: 14,
+          fontSize: compact ? 13 : 14,
           fontWeight: '600',
-          marginBottom: spacing.sm,
+          marginBottom: compact ? spacing.xs : spacing.sm,
           ...type.ui,
         },
         fieldWrap: {
@@ -86,11 +89,11 @@ export function Input({
           ? {
               backgroundColor: 'rgba(12,8,6,0.72)',
               borderRadius: 16,
-              paddingTop: spacing.md,
-              paddingBottom: spacing.md,
+              paddingTop: fieldPadV,
+              paddingBottom: fieldPadV,
               paddingLeft: spacing.md,
               paddingRight: spacing.md,
-              fontSize: 16,
+              fontSize: compact ? 15 : 16,
               color: colors.text,
               borderWidth: 1,
               borderColor: 'rgba(255,138,61,0.4)',
@@ -99,11 +102,11 @@ export function Input({
           : {
               backgroundColor: colors.bgCardLight,
               borderRadius: borderRadius.sm,
-              paddingTop: spacing.md,
-              paddingBottom: spacing.md,
+              paddingTop: fieldPadV,
+              paddingBottom: fieldPadV,
               paddingLeft: spacing.md,
               paddingRight: spacing.md,
-              fontSize: 16,
+              fontSize: compact ? 15 : 16,
               color: colors.text,
               borderTopWidth: 2,
               borderLeftWidth: 2,
@@ -132,7 +135,7 @@ export function Input({
           zIndex: 2,
         },
       }),
-    [themeId, colors, borderRadius, ember, type.ui, type.body]
+    [themeId, colors, borderRadius, ember, type.ui, type.body, compact, fieldPadV]
   );
 
   const input = (

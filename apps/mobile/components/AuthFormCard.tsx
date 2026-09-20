@@ -22,9 +22,10 @@ interface AuthFormCardProps {
   children: React.ReactNode;
   index?: number;
   style?: StyleProp<ViewStyle>;
+  compact?: boolean;
 }
 
-export function AuthFormCard({ themeId, children, index = 3, style }: AuthFormCardProps) {
+export function AuthFormCard({ themeId, children, index = 3, style, compact }: AuthFormCardProps) {
   const theme = getTheme(themeId);
   const pulse = useSharedValue(0);
   const shimmer = useSharedValue(0);
@@ -82,7 +83,7 @@ export function AuthFormCard({ themeId, children, index = 3, style }: AuthFormCa
           ...theme.cardBorder(2),
         },
         gradient: {
-          padding: spacing.lg,
+          padding: compact ? spacing.md : spacing.lg,
           overflow: 'hidden',
         },
         topAccent: {
@@ -103,7 +104,7 @@ export function AuthFormCard({ themeId, children, index = 3, style }: AuthFormCa
         shimmerGrad: { flex: 1, width: 70 },
         inner: { zIndex: 1 },
       }),
-    [theme, themeId]
+    [theme, themeId, compact]
   );
 
   const gradientColors =
