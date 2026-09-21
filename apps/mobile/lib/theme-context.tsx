@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useMemo, useCallback, useState } from 'react';
+import React, { createContext, useContext, useMemo, useCallback, useState, useEffect } from 'react';
 import type { TaskCategory, UiThemeId } from '@kidsapp/shared';
 import { defaultUiThemeForRole } from '@kidsapp/shared';
 import { useAuth } from './auth';
 import { api } from './api';
 import { AppTheme, getTheme } from '../constants/themes';
+import { setSfxTheme } from './sfx';
 
 interface ThemeContextValue extends AppTheme {
   setUiTheme: (id: UiThemeId) => Promise<void>;
@@ -20,6 +21,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     user?.uiTheme ?? (user ? defaultUiThemeForRole(user.role) : 'roblox');
   const themeId = pendingThemeId ?? serverThemeId;
   const theme = useMemo(() => getTheme(themeId), [themeId]);
+
+  useEffect(() => {
+    setSfxTheme(themeId);
+  }, [themeId]);
 
   const setUiTheme = useCallback(
     async (id: UiThemeId) => {

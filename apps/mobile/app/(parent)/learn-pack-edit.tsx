@@ -3,16 +3,15 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { api } from '../../lib/api';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { KeyboardScroll } from '../../components/KeyboardSheet';
 import { SectionHeader } from '../../components/ThemedHero';
 import {
   LEARNING_CATEGORIES,
@@ -21,12 +20,16 @@ import {
   LEARNING_PACK_KIND_LABELS,
   GRADE_OPTIONS,
   formatGradeLabel,
+  parseOpenWordList,
 } from '@kidsapp/shared';
 import type {
   LearningCategory,
   LearningPack,
   LearningPackKind,
+  LearningActivity,
   MultipleChoiceActivity,
+  SelectAllActivity,
+  OpenWordsActivity,
 } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
@@ -35,17 +38,27 @@ import { t } from '../../lib/i18n';
 
 type DraftQuestion = {
   id: string;
+  type: 'multiple_choice' | 'select_all' | 'open_words';
   prompt: string;
-  options: [string, string, string];
-  answerIndex: 0 | 1 | 2;
+  options: string[];
+  answerIndex: number;
+  answerIndexes: number[];
+  acceptText: string;
+  count: number;
 };
 
-function emptyQuestion(): DraftQuestion {
+function emptyQuestion(
+  type: 'multiple_choice' | 'select_all' | 'open_words' = 'multiple_choice'
+): DraftQuestion {
   return {
     id: `q${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`,
+    type,
     prompt: '',
-    options: ['', '', ''],
+    options: type === 'select_all' ? ['', '', '', ''] : type === 'open_words' ? [] : ['', '', ''],
     answerIndex: 0,
+    answerIndexes: type === 'select_all' ? [0, 1] : [0],
+    acceptText: '',
+    count: 3,
   };
 }
 
@@ -60,22 +73,56 @@ function packToDraft(pack: LearningPack): {
   questions: DraftQuestion[];
 } {
   const questions: DraftQuestion[] = pack.activities
-    .filter((a): a is MultipleChoiceActivity => a.type === 'multiple_choice')
+    .filter(
+      (a): a is MultipleChoiceActivity | SelectAllActivity | OpenWordsActivity =>
+        a.type === 'multiple_choice' || a.type === 'select_all' || a.type === 'open_words'
+    )
     .map((a) => {
-      const opts = [...a.options.map((o) => o.text), '', '', ''].slice(0, 3) as [
-        string,
-        string,
-        string,
-      ];
+      if (a.type === 'open_words') {
+        return {
+          id: a.id,
+          type: 'open_words' as const,
+          prompt: a.prompt.text,
+          options: [],
+          answerIndex: 0,
+          answerIndexes: [],
+          acceptText: a.accept.join(', '),
+          count: a.count,
+        };
+      }
+      const slotCount = a.type === 'select_all' ? 4 : 3;
+      const opts = [...a.options.map((o) => o.text), ...Array(slotCount).fill('')].slice(
+        0,
+        slotCount
+      );
+      if (a.type === 'select_all') {
+        const answerIndexes = a.answer
+          .map((id) => a.options.findIndex((o) => o.id === id))
+          .filter((i) => i >= 0);
+        return {
+          id: a.id,
+          type: 'select_all' as const,
+          prompt: a.prompt.text,
+          options: opts,
+          answerIndex: answerIndexes[0] ?? 0,
+          answerIndexes: answerIndexes.length ? answerIndexes : [0, 1],
+          acceptText: '',
+          count: 3,
+        };
+      }
       const answerIndex = Math.max(
         0,
         a.options.findIndex((o) => o.id === a.answer)
-      ) as 0 | 1 | 2;
+      );
       return {
         id: a.id,
+        type: 'multiple_choice' as const,
         prompt: a.prompt.text,
         options: opts,
-        answerIndex: (answerIndex >= 0 && answerIndex <= 2 ? answerIndex : 0) as 0 | 1 | 2,
+        answerIndex,
+        answerIndexes: [answerIndex],
+        acceptText: '',
+        count: 3,
       };
     });
 
@@ -112,7 +159,7 @@ export default function LearnPackEditScreen() {
     () =>
       StyleSheet.create({
         scroll: { padding: spacing.lg, maxWidth: 720, alignSelf: 'center', width: '100%' },
-        chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+        chipRow: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
         chip: {
           paddingHorizontal: spacing.md,
           paddingVertical: spacing.sm,
@@ -173,25 +220,60 @@ export default function LearnPackEditScreen() {
     setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, ...patch } : q)));
   };
 
-  const buildActivities = (): MultipleChoiceActivity[] | null => {
-    const clean: MultipleChoiceActivity[] = [];
+  const buildActivities = (): LearningActivity[] | null => {
+    const clean: LearningActivity[] = [];
     for (const q of questions) {
       if (!q.prompt.trim()) continue;
-      const texts = q.options.map((o) => o.trim()).filter(Boolean);
-      if (texts.length < 2) continue;
-      const options = texts.map((text, i) => ({
-        id: String.fromCharCode(97 + i),
-        text,
-      }));
-      const preferredText = q.options[q.answerIndex]?.trim();
-      const answer = options.find((o) => o.text === preferredText)?.id ?? options[0].id;
-      clean.push({
-        id: q.id,
-        type: 'multiple_choice',
-        prompt: { text: q.prompt.trim() },
-        options,
-        answer,
+      if (q.type === 'open_words') {
+        const accept = parseOpenWordList(q.acceptText);
+        const count = Math.min(8, Math.max(1, Math.round(q.count)));
+        if (accept.length < count || count < 1) continue;
+        clean.push({
+          id: q.id,
+          type: 'open_words',
+          prompt: { text: q.prompt.trim() },
+          accept,
+          count,
+        });
+        continue;
+      }
+      const kept: { text: string; orig: number }[] = [];
+      q.options.forEach((text, i) => {
+        if (text.trim()) kept.push({ text: text.trim(), orig: i });
       });
+      if (q.type === 'select_all') {
+        if (kept.length < 3) continue;
+        const options = kept.map((k, i) => ({
+          id: String.fromCharCode(97 + i),
+          text: k.text,
+        }));
+        const answer = kept
+          .map((k, i) => (q.answerIndexes.includes(k.orig) ? options[i].id : null))
+          .filter((id): id is string => !!id);
+        if (answer.length < 2 || answer.length >= options.length) continue;
+        clean.push({
+          id: q.id,
+          type: 'select_all',
+          prompt: { text: q.prompt.trim() },
+          options,
+          answer,
+        });
+      } else {
+        if (kept.length < 2) continue;
+        const options = kept.map((k, i) => ({
+          id: String.fromCharCode(97 + i),
+          text: k.text,
+        }));
+        const preferred = q.options[q.answerIndex]?.trim();
+        const answer = options.find((o) => o.text === preferred)?.id ?? options[0].id;
+        clean.push({
+          id: q.id,
+          type: 'multiple_choice',
+          prompt: { text: q.prompt.trim() },
+          options,
+          answer,
+        });
+      }
     }
     return clean.length ? clean : null;
   };
@@ -209,6 +291,22 @@ export default function LearnPackEditScreen() {
     const activities = buildActivities();
     if (!activities) {
       alert(t('learningPackNeedQuestion'));
+      return;
+    }
+    const badSelectAll = questions.some(
+      (q) => q.prompt.trim() && q.type === 'select_all' && q.answerIndexes.length < 2
+    );
+    const badOpen = questions.some((q) => {
+      if (!q.prompt.trim() || q.type !== 'open_words') return false;
+      const accept = parseOpenWordList(q.acceptText);
+      return accept.length < q.count || q.count < 1;
+    });
+    if (badSelectAll) {
+      alert(t('selectAllNeedTwoCorrect'));
+      return;
+    }
+    if (badOpen) {
+      alert(t('openWordsNeed'));
       return;
     }
     if (kind === 'reading' && !passage.trim()) {
@@ -260,11 +358,7 @@ export default function LearnPackEditScreen() {
 
   return (
     <ThemedScreen>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
+      <KeyboardScroll contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
           <SectionHeader
             title={editing ? t('editLearningPack') : t('createLearningPack')}
             icon="📝"
@@ -348,40 +442,135 @@ export default function LearnPackEditScreen() {
               <Text style={[styles.questionHeader, rtl.text]}>
                 {t('questions')} {index + 1}
               </Text>
+              <Text style={[styles.label, rtl.text]}>{t('packKind')}</Text>
+              <View style={styles.chipRow}>
+                <TouchableOpacity
+                  style={[styles.chip, q.type === 'multiple_choice' && styles.chipActive]}
+                  onPress={() =>
+                    updateQuestion(q.id, {
+                      type: 'multiple_choice',
+                      options: [...q.options, '', '', ''].slice(0, 3),
+                      answerIndex: 0,
+                      answerIndexes: [0],
+                    })
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      q.type === 'multiple_choice' && styles.chipTextActive,
+                    ]}
+                  >
+                    {t('singleAnswerType')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.chip, q.type === 'select_all' && styles.chipActive]}
+                  onPress={() =>
+                    updateQuestion(q.id, {
+                      type: 'select_all',
+                      options: [...q.options, '', '', '', ''].slice(0, 4),
+                      answerIndexes: q.answerIndexes.length >= 2 ? q.answerIndexes : [0, 1],
+                    })
+                  }
+                >
+                  <Text
+                    style={[styles.chipText, q.type === 'select_all' && styles.chipTextActive]}
+                  >
+                    {t('selectAllType')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.chip, q.type === 'open_words' && styles.chipActive]}
+                  onPress={() =>
+                    updateQuestion(q.id, {
+                      type: 'open_words',
+                      options: [],
+                      acceptText: q.acceptText,
+                      count: q.count || 3,
+                    })
+                  }
+                >
+                  <Text
+                    style={[styles.chipText, q.type === 'open_words' && styles.chipTextActive]}
+                  >
+                    {t('openWordsType')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
               <Input
                 label={t('questionPrompt')}
                 value={q.prompt}
                 onChangeText={(v) => updateQuestion(q.id, { prompt: v })}
                 multiline
               />
+              {q.type === 'open_words' ? (
+                <>
+                  <Input
+                    label={t('openWordsCount')}
+                    value={String(q.count)}
+                    onChangeText={(v) =>
+                      updateQuestion(q.id, {
+                        count: Math.min(8, Math.max(1, parseInt(v, 10) || 1)),
+                      })
+                    }
+                    keyboardType="number-pad"
+                  />
+                  <Input
+                    label={t('openWordsAccept')}
+                    value={q.acceptText}
+                    onChangeText={(v) => updateQuestion(q.id, { acceptText: v })}
+                    multiline
+                    numberOfLines={4}
+                    style={{ minHeight: 90, textAlignVertical: 'top' }}
+                  />
+                  <Text style={[styles.label, rtl.text]}>{t('openWordsAcceptHint')}</Text>
+                </>
+              ) : (
+                <>
               {q.options.map((opt, oi) => (
                 <Input
                   key={oi}
                   label={t('optionLabel').replace('{n}', String(oi + 1))}
                   value={opt}
                   onChangeText={(v) => {
-                    const next = [...q.options] as [string, string, string];
+                    const next = [...q.options];
                     next[oi] = v;
                     updateQuestion(q.id, { options: next });
                   }}
                 />
               ))}
-              <Text style={[styles.label, rtl.text]}>{t('correctOption')}</Text>
+              <Text style={[styles.label, rtl.text]}>
+                {q.type === 'select_all' ? t('selectAllHint') : t('correctOption')}
+              </Text>
               <View style={styles.answerRow}>
-                {([0, 1, 2] as const).map((i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={[styles.chip, q.answerIndex === i && styles.chipActive]}
-                    onPress={() => updateQuestion(q.id, { answerIndex: i })}
-                  >
-                    <Text
-                      style={[styles.chipText, q.answerIndex === i && styles.chipTextActive]}
+                {q.options.map((_, i) => {
+                  const active =
+                    q.type === 'select_all' ? q.answerIndexes.includes(i) : q.answerIndex === i;
+                  return (
+                    <TouchableOpacity
+                      key={i}
+                      style={[styles.chip, active && styles.chipActive]}
+                      onPress={() => {
+                        if (q.type === 'select_all') {
+                          const next = q.answerIndexes.includes(i)
+                            ? q.answerIndexes.filter((x) => x !== i)
+                            : [...q.answerIndexes, i];
+                          updateQuestion(q.id, { answerIndexes: next });
+                        } else {
+                          updateQuestion(q.id, { answerIndex: i });
+                        }
+                      }}
                     >
-                      {i + 1}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                        {i + 1}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
+                </>
+              )}
               {questions.length > 1 ? (
                 <Button
                   title={t('delete')}
@@ -402,9 +591,34 @@ export default function LearnPackEditScreen() {
           <View style={styles.actions}>
             <Button title={t('saveLearningPack')} onPress={handleSave} loading={saving} />
             <Button title={t('cancel')} variant="outline" onPress={() => router.back()} sound={false} />
+            {editing && packId ? (
+              <Button
+                title={t('deleteLearningPack')}
+                variant="danger"
+                onPress={() => {
+                  Alert.alert(t('deleteLearningPack'), t('deleteLearningPackConfirm'), [
+                    { text: t('cancel'), style: 'cancel' },
+                    {
+                      text: t('delete'),
+                      style: 'destructive',
+                      onPress: () => {
+                        void (async () => {
+                          try {
+                            await api.deleteCustomLearningPack(packId);
+                            router.back();
+                          } catch (err: unknown) {
+                            alert(err instanceof Error ? err.message : 'שגיאה');
+                          }
+                        })();
+                      },
+                    },
+                  ]);
+                }}
+                sound={false}
+              />
+            ) : null}
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardScroll>
     </ThemedScreen>
   );
 }

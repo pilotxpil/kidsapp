@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { UI_THEME_IDS, AVATARS, DEFAULT_PARENT_THEME_ID, isAllowedParentAvatar } from '@kidsapp/shared';
+import { UI_THEME_IDS, AVATARS, DEFAULT_PARENT_THEME_ID, isAllowedParentAvatar, MAX_HERO_LINE } from '@kidsapp/shared';
 import { Family } from '../models/Family';
 import { User } from '../models/User';
 import { formatUser } from '../utils/format';
@@ -165,6 +165,8 @@ router.post('/kid/login', async (req: Request, res: Response) => {
     }
 
     const { dailyGiftAvailable, dailyGiftType } = await processDailyLogin(kid);
+    const { expireShopRental } = await import('../services/shopFreebies');
+    await expireShopRental(kid);
     const avatarGift = await grantStarterAvatarGift(kid);
     if (avatarGift.notified) {
       const { pushAvatarShopGift } = await import('../services/push');
@@ -198,6 +200,8 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
 
   let avatarGiftJustUnlocked = false;
   if (user.role === 'kid') {
+    const { expireShopRental } = await import('../services/shopFreebies');
+    await expireShopRental(user);
     const avatarGift = await grantStarterAvatarGift(user);
     avatarGiftJustUnlocked = avatarGift.notified;
     if (avatarGift.notified) {
@@ -214,7 +218,7 @@ router.patch('/me', authenticate, async (req: Request, res: Response) => {
     const user = await User.findById(req.user!.userId);
     if (!user) return res.status(404).json({ error: 'משתמש לא נמצא' });
 
-    const { uiTheme, displayName, avatar } = req.body;
+    const { uiTheme, displayName, avatar, heroLine } = req.body;
 
     if (displayName !== undefined) {
       const name = String(displayName).trim();
@@ -229,6 +233,14 @@ router.patch('/me', authenticate, async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'אווטאר לא תקין' });
       }
       user.avatar = avatar;
+    }
+
+    if (heroLine !== undefined) {
+      if (user.role !== 'kid') {
+        return res.status(400).json({ error: 'רק ילד יכול לעדכן משפט בדשבורד' });
+      }
+      const line = String(heroLine).trim().slice(0, MAX_HERO_LINE);
+      user.heroLine = line;
     }
 
     if (uiTheme !== undefined) {

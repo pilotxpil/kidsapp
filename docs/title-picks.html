@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>תארים — משפטי פלקס לילדים</title>
+  <style>
+    :root {
+      --bg: #121014;
+      --card: #1c1917;
+      --line: #3f322c;
+      --text: #f5efe8;
+      --muted: #b7a79a;
+      --accent: #ff8a3d;
+      --ok: #3dd68c;
+      --no: #f07171;
+      --flex: #ffd36a;
+      --funny: #7ad7ff;
+      --legend: #c9a4ff;
+      --pride: #ffb4e6;
+      --power: #3dd68c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Heebo, "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(800px 380px at 90% -10%, #3a2414 0%, transparent 50%),
+        var(--bg);
+      color: var(--text);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(18, 16, 20, 0.94);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 20px;
+      backdrop-filter: blur(10px);
+    }
+    header .row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    .hint { color: var(--muted); font-size: 13px; margin: 6px 0 0; line-height: 1.5; max-width: 640px; }
+    .count {
+      background: #2a211c;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .filters {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 12px 20px 0;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filters button {
+      border: 1px solid var(--line);
+      background: #2a211c;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .filters button.on { background: var(--accent); color: #1a0e08; border-color: var(--accent); }
+    main { max-width: 860px; margin: 0 auto; padding: 16px 20px 40px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .card.yes { border-color: var(--ok); box-shadow: inset 0 0 0 1px var(--ok); }
+    .card.no { opacity: 0.45; }
+    .line {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .phrase {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.35;
+      margin: 0;
+    }
+    .preview {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .preview b { color: var(--text); }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      border-radius: 999px;
+      padding: 3px 8px;
+      margin-left: 6px;
+      background: #2a211c;
+      border: 1px solid var(--line);
+    }
+    .tag.flex { color: var(--flex); }
+    .tag.funny { color: var(--funny); }
+    .tag.legend { color: var(--legend); }
+    .tag.pride { color: var(--pride); }
+    .tag.power { color: var(--power); }
+    .votes { display: flex; gap: 6px; flex-shrink: 0; }
+    .votes button {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #2a211c;
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .votes button.good.on { background: var(--ok); color: #062214; border-color: var(--ok); }
+    .votes button.bad.on { background: var(--no); color: #2a0707; border-color: var(--no); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <div>
+        <h1>תארים לילד בן 10</h1>
+        <p class="hint">
+          משפטים קצרים מתחת לשם — במתנה, בחנות, או אחרי סטריק.
+          עברית שילד באמת יגיד: כמה הוא תותח, כמה הוא מעולה.
+          בלי להוריד אחרים ובלי לקרוא למישהו לוזר. סמנו מה עובד.
+        </p>
+      </div>
+      <div class="count" id="count">0 / 100</div>
+    </div>
+  </header>
+  <div class="filters" id="filters"></div>
+  <main id="list"></main>
+  <script>
+    const TITLES = [
+      { vibe: "flex", text: "באתי, ניצחתי, חייכתי" },
+      { vibe: "flex", text: "לא מזיע. פשוט תותח." },
+      { vibe: "flex", text: "הכוכב הקבוע של הבית" },
+      { vibe: "flex", text: "אני ברמה אחרת" },
+      { vibe: "flex", text: "שקט — האלוף נכנס" },
+      { vibe: "flex", text: "פשוט אין עליי" },
+      { vibe: "flex", text: "כשאני מגיע, המופע מתחיל" },
+      { vibe: "flex", text: "כפתור הניצחון? זה אני" },
+      { vibe: "flex", text: "נולדתי מוצלח" },
+      { vibe: "flex", text: "הטעות היחידה: לעצור אותי" },
+      { vibe: "flex", text: "כבר ניצחתי. ממשיך בשביל הכיף." },
+      { vibe: "flex", text: "הנקודות רצות אליי" },
+      { vibe: "flex", text: "הרמה שלי בקומה אחרת" },
+      { vibe: "flex", text: "הבוס של היום שלי" },
+      { vibe: "flex", text: "אל תקראו לי מלך. תקראו לי תותח." },
+      { vibe: "flex", text: "לא באתי לשחק. באתי לפתוח רמה." },
+      { vibe: "flex", text: "יש רק אחד כמוני" },
+      { vibe: "flex", text: "ראשון בטבלה. כרגיל." },
+      { vibe: "flex", text: "אוסף ניצחונות כמו מדבקות" },
+      { vibe: "flex", text: "עוד יום, עוד אלוף" },
+
+      { vibe: "funny", text: "אכלתי שניצל. עכשיו אני בלתי ניתן לעצירה." },
+      { vibe: "funny", text: "אמא אמרה שאני מיוחד. הניקוד מסכים." },
+      { vibe: "funny", text: "המורה אמרה תתרכז. התרכזתי בניצחון." },
+      { vibe: "funny", text: "שיניים עם פלטה. לב של אלוף." },
+      { vibe: "funny", text: "ישנתי שמונה שעות. עכשיו אני פצצה." },
+      { vibe: "funny", text: "החתול שלי גאה בסטריק הזה" },
+      { vibe: "funny", text: "גם הווייפיי מתחבר אליי יותר חזק" },
+      { vibe: "funny", text: "סיימתי שיעורים. עכשיו אני סופר־תותח." },
+      { vibe: "funny", text: "אבא אמר משחק אחד. יצא לי יום של אלוף." },
+      { vibe: "funny", text: "הסנדוויץ' שלי מאמין בי" },
+      { vibe: "funny", text: "גרביים לא תואמות. כישרון כן." },
+      { vibe: "funny", text: "השיער מבולגן. הדירוג מסודר." },
+      { vibe: "funny", text: "נשבר לי הקליק. לא נשבר לי הביטחון." },
+      { vibe: "funny", text: "כמעט שכחתי לנשום. לא שכחתי לנצח." },
+      { vibe: "funny", text: "באתי לשחק קצת. יצאתי אגדה." },
+      { vibe: "funny", text: "אל תעירו אותי לפני שסיימתי לנצח" },
+      { vibe: "funny", text: "יש לי שיעור חשבון ומצב רוח של אלוף" },
+      { vibe: "funny", text: "הספקתי לנצח לפני שהקפה של אבא התקרר" },
+      { vibe: "funny", text: "זה לא מזל. זה אני, עם קצת מזל." },
+      { vibe: "funny", text: "התרנגול של הבוקר מקנא בי" },
+
+      { vibe: "power", text: "כל משימה שאני מתחיל — אני גומר" },
+      { vibe: "power", text: "נפלתי? קמתי עם בונוס." },
+      { vibe: "power", text: "הסטריק שלי לא יוצא לחופש" },
+      { vibe: "power", text: "לומד. מצליח. חוזר על זה." },
+      { vibe: "power", text: "אין חשק? מתחיל בכל זאת." },
+      { vibe: "power", text: "מי אמר שאי אפשר? כנראה לא הכיר אותי." },
+      { vibe: "power", text: "היום זה קשה. מחר זה אני." },
+      { vibe: "power", text: "טעות אחת. עשר נקודות תיקון." },
+      { vibe: "power", text: "הלב שלי על מלא" },
+      { vibe: "power", text: "כל יום גרסה חדשה שלי. יותר חזקה." },
+      { vibe: "power", text: "סבלנות של נינג׳ה. רעב של דרקון." },
+      { vibe: "power", text: "הצלחתי כי לא יצאתי באמצע" },
+      { vibe: "power", text: "הנקודות רק מוכיחות מה שאני כבר יודע" },
+      { vibe: "power", text: "אומרים קשה? מעולה. בשבילי." },
+      { vibe: "power", text: "אין תוכנית ב׳. תוכנית א׳ עובדת." },
+      { vibe: "power", text: "ניצחון זה הרגל, לא הפתעה" },
+      { vibe: "power", text: "בונה את עצמי בלוק אחרי בלוק" },
+      { vibe: "power", text: "היום נקודות. מחר הכתר." },
+      { vibe: "power", text: "אני לא מפחד מהבוס. הבוס מפחד מהשיעורים שלי." },
+      { vibe: "power", text: "הילד שהמשימות רצות אליו" },
+
+      { vibe: "pride", text: "אני תותח. זהו." },
+      { vibe: "pride", text: "פשוט מעולה, מה לעשות" },
+      { vibe: "pride", text: "איזה אלוף יצא ממני" },
+      { vibe: "pride", text: "כיף להיות כזה טוב" },
+      { vibe: "pride", text: "וואו, אני ממש טוב בזה" },
+      { vibe: "pride", text: "אין עליי היום" },
+      { vibe: "pride", text: "על החלל לגמרי" },
+      { vibe: "pride", text: "בשיא שלי עכשיו" },
+      { vibe: "pride", text: "לא עוצרים תותח כזה" },
+      { vibe: "pride", text: "יש לי את זה" },
+      { vibe: "pride", text: "נולדתי תותח. מתאמן כל יום." },
+      { vibe: "pride", text: "אני פצצה עם נקודות" },
+      { vibe: "pride", text: "מלך הבית, בלי כתר מיותר" },
+      { vibe: "pride", text: "תסתכלו עליי. כדאי." },
+      { vibe: "pride", text: "כל הכבוד לי היום" },
+      { vibe: "pride", text: "הביטחון שלי על מלא" },
+      { vibe: "pride", text: "מותר להתגאות: אני אלוף" },
+      { vibe: "pride", text: "פשוט נולדתי ככה" },
+      { vibe: "pride", text: "היום אני בלתי ניתן לעצירה" },
+      { vibe: "pride", text: "עוד ניקוד, עוד חיוך גדול" },
+
+      { vibe: "legend", text: "אני הלג׳נד פה" },
+      { vibe: "legend", text: "חיים מלאים. ביטחון מלא." },
+      { vibe: "legend", text: "אין לי כפתור כניעה" },
+      { vibe: "legend", text: "יהלומים בכיס. כתר בראש." },
+      { vibe: "legend", text: "רץ קדימה בלי לעצור" },
+      { vibe: "legend", text: "אי אפשר לבאן כישרון" },
+      { vibe: "legend", text: "השחקן הכי חזק בשרת" },
+      { vibe: "legend", text: "באתי ישר לגמר" },
+      { vibe: "legend", text: "תשמרו את זה. זה היסטוריה שלי." },
+      { vibe: "legend", text: "חפרתי יהלום. אחר כך חפרתי שיא." },
+      { vibe: "legend", text: "שלושה כתרים לפני ארוחת הערב" },
+      { vibe: "legend", text: "לא בוס קטן. אני הפיינל." },
+      { vibe: "legend", text: "רובלוקס בלב. ברזל בידיים." },
+      { vibe: "legend", text: "לא טרנד. פשוט אלוף." },
+      { vibe: "legend", text: "בונה ניצחון מאפס" },
+      { vibe: "legend", text: "נכנס לזירה עם ביטחון מלא" },
+      { vibe: "legend", text: "לא קריפר. אני המתקפה." },
+      { vibe: "legend", text: "מכוש ביד. ניצחון בכיס." },
+      { vibe: "legend", text: "מלך המסך" },
+      { vibe: "legend", text: "אגדה בגרסת בית" }
+    ];
+
+    const VIBES = {
+      all: "הכל",
+      flex: "פלקס",
+      funny: "מצחיק",
+      power: "מחזק",
+      pride: "תותח",
+      legend: "גיימר",
+    };
+
+    const KEY = "kq-title-votes-v1";
+    const votes = new Map(Object.entries(JSON.parse(localStorage.getItem(KEY) || "{}")));
+    let filter = "all";
+
+    const filtersEl = document.getElementById("filters");
+    const listEl = document.getElementById("list");
+    const countEl = document.getElementById("count");
+
+    function save() {
+      localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(votes)));
+    }
+
+    function updateCount() {
+      const yes = [...votes.values()].filter((v) => v === "yes").length;
+      countEl.textContent = yes + " / " + TITLES.length + " נבחרו";
+    }
+
+    Object.entries(VIBES).forEach(([id, label]) => {
+      const btn = document.createElement("button");
+      btn.textContent = label;
+      btn.dataset.id = id;
+      btn.onclick = () => {
+        filter = id;
+        [...filtersEl.children].forEach((b) => b.classList.toggle("on", b.dataset.id === id));
+        render();
+      };
+      if (id === "all") btn.classList.add("on");
+      filtersEl.appendChild(btn);
+    });
+
+    function render() {
+      listEl.innerHTML = "";
+      TITLES.forEach((item, i) => {
+        if (filter !== "all" && item.vibe !== filter) return;
+        const card = document.createElement("article");
+        card.className = "card";
+        const vote = votes.get(String(i));
+        if (vote === "yes") card.classList.add("yes");
+        if (vote === "no") card.classList.add("no");
+        card.innerHTML =
+          '<div class="line">' +
+            '<div>' +
+              '<p class="phrase">«' + item.text + '»</p>' +
+              '<div class="preview">יונתן · <b>' + item.text + '</b>' +
+                '<span class="tag ' + item.vibe + '">' + VIBES[item.vibe] + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="votes">' +
+              '<button class="good' + (vote === "yes" ? " on" : "") + '" data-act="yes" data-i="' + i + '">✓</button>' +
+              '<button class="bad' + (vote === "no" ? " on" : "") + '" data-act="no" data-i="' + i + '">✗</button>' +
+            '</div>' +
+          '</div>';
+        listEl.appendChild(card);
+      });
+      updateCount();
+    }
+
+    listEl.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-act]");
+      if (!btn) return;
+      const i = btn.dataset.i;
+      const act = btn.dataset.act;
+      votes.set(i, votes.get(i) === act ? "" : act);
+      if (!votes.get(i)) votes.delete(i);
+      save();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

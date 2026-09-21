@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
@@ -13,6 +13,7 @@ import { ProgressBar } from '../../components/ProgressBar';
 import { Button } from '../../components/Button';
 import { RtlText } from '../../components/RtlText';
 import { AvatarShopTeaser } from '../../components/AvatarShopTeaser';
+import { ShopDailyGifts } from '../../components/ShopDailyGifts';
 import { sfxForRewardTitle, playSfx, SfxName } from '../../lib/sfx';
 import type { Reward, PersonalGoal } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
@@ -35,16 +36,15 @@ export default function KidShopScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        scroll: { padding: spacing.lg, paddingBottom: spacing.xl },
+        scroll: { padding: spacing.md, paddingBottom: spacing.lg },
         header: { marginBottom: spacing.sm, alignItems: 'flex-start' },
-        empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.xl },
-        section: { marginTop: spacing.lg, marginBottom: spacing.sm },
-        goalCard: { marginBottom: spacing.md },
-        goalTitle: { color: colors.text, fontSize: 16, fontWeight: '700', writingDirection: 'rtl' },
-        goalMeta: { color: colors.textMuted, fontSize: 13, marginTop: spacing.sm, writingDirection: 'rtl' },
-        goalPick: { marginTop: spacing.sm },
-        goalPickBtn: { marginTop: spacing.xs },
-        avatarRow: { marginTop: spacing.lg },
+        empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.lg },
+        section: { marginTop: spacing.md, marginBottom: spacing.sm },
+        goalCard: { marginBottom: spacing.sm, paddingVertical: 10, paddingHorizontal: spacing.sm + 4 },
+        goalTitle: { color: colors.text, fontSize: 15, fontWeight: '700', writingDirection: 'rtl' },
+        goalMeta: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs, writingDirection: 'rtl' },
+        goalPickBtn: { marginTop: spacing.sm },
+        avatarRow: { marginTop: spacing.md },
       }),
     [themeId, colors]
   );
@@ -128,6 +128,8 @@ export default function KidShopScreen() {
           </View>
         </View>
 
+        {user?._id ? <ShopDailyGifts kidId={user._id} refreshing={refreshing} /> : null}
+
         {goal ? (
           <Card style={styles.goalCard}>
             <RtlText style={styles.goalTitle}>
@@ -139,7 +141,7 @@ export default function KidShopScreen() {
                 .replace('{current}', String(goal.currentPoints))
                 .replace('{cost}', String(goal.rewardCost))}
             </RtlText>
-            <Button title={t('clearPersonalGoal')} onPress={clearGoal} variant="secondary" style={styles.goalPickBtn} />
+            <Button title={t('clearPersonalGoal')} onPress={clearGoal} variant="secondary" compact style={styles.goalPickBtn} />
           </Card>
         ) : null}
 
@@ -150,19 +152,16 @@ export default function KidShopScreen() {
           <Text style={styles.empty}>{t('noRewards')}</Text>
         ) : (
           rewards.map((reward, i) => (
-            <View key={reward._id}>
-              <RewardCard
-                index={i}
-                reward={reward}
-                userPoints={user?.points || 0}
-                onRedeem={handleRedeem}
-                loading={redeemingId === reward._id}
-                pending={pendingIds.has(reward._id)}
-              />
-              <TouchableOpacity onPress={() => setAsGoal(reward)} style={styles.goalPick}>
-                <RtlText style={{ color: colors.primaryLight }}>{t('setPersonalGoal')}</RtlText>
-              </TouchableOpacity>
-            </View>
+            <RewardCard
+              key={reward._id}
+              index={i}
+              reward={reward}
+              userPoints={user?.points || 0}
+              onRedeem={handleRedeem}
+              loading={redeemingId === reward._id}
+              pending={pendingIds.has(reward._id)}
+              onSetGoal={setAsGoal}
+            />
           ))
         )}
 

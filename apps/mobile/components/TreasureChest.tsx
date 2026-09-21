@@ -289,6 +289,7 @@ export function TreasureChest({ kidId, refreshKey = 0, onOpened }: TreasureChest
                 <Animated.Text style={[styles.bigChest, iconStyle]}>🎁</Animated.Text>
                 <BouncyPressable
                   onPress={handleOpen}
+                  sound={false}
                   disabled={opening || celebrate}
                   style={[styles.openBtn, (opening || celebrate) && styles.openBtnDisabled]}
                 >

@@ -4,6 +4,7 @@ import type { ActivityOption } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
+import { playSfx } from '../../lib/sfx';
 
 interface MultipleChoiceProps {
   prompt: string;
@@ -29,18 +30,19 @@ export function MultipleChoice({
       StyleSheet.create({
         prompt: {
           color: colors.text,
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: '700',
           textAlign: 'center',
-          marginBottom: spacing.lg,
+          marginBottom: spacing.sm,
           width: '100%',
         },
         option: {
           backgroundColor: colors.bgCard,
-          borderRadius: borderRadius.md,
-          padding: spacing.md,
-          marginBottom: spacing.sm,
-          ...cardBorder(2),
+          borderRadius: borderRadius.sm,
+          paddingVertical: 8,
+          paddingHorizontal: 10,
+          marginBottom: 6,
+          ...cardBorder(1),
         },
         optionSelected: {
           borderColor: colors.primary,
@@ -56,7 +58,7 @@ export function MultipleChoice({
         },
         optionText: {
           color: colors.text,
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: '600',
           textAlign: 'center',
           width: '100%',
@@ -82,7 +84,10 @@ export function MultipleChoice({
               isCorrect && correctId !== null && styles.optionCorrect,
               isWrong && styles.optionWrong,
             ]}
-            onPress={() => onSelect(option.id)}
+            onPress={() => {
+              playSfx('tap');
+              onSelect(option.id);
+            }}
             disabled={disabled}
             activeOpacity={0.8}
           >

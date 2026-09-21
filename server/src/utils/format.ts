@@ -1,4 +1,5 @@
-import { defaultUiThemeForRole } from '@kidsapp/shared';
+import { defaultUiThemeForRole, resolvedRewardIcon } from '@kidsapp/shared';
+import type { RewardCategory } from '@kidsapp/shared';
 import { IUser } from '../models/User';
 import { ITask } from '../models/Task';
 import { ITaskCompletion } from '../models/TaskCompletion';
@@ -25,8 +26,13 @@ export function formatUser(user: IUser) {
     ownedCosmetics: user.ownedCosmetics ?? [],
     equippedFrame: user.equippedFrame,
     equippedEffect: user.equippedEffect,
+    rentalAvatar:
+      user.rentalAvatar && user.rentalUntilDate && user.rentalUntilDate >= todayString()
+        ? user.rentalAvatar
+        : undefined,
     goalRewardId: user.goalRewardId?.toString(),
     grade: user.role === 'kid' ? user.grade ?? undefined : undefined,
+    heroLine: user.role === 'kid' && user.heroLine?.trim() ? user.heroLine.trim() : undefined,
     createdAt: user.createdAt.toISOString(),
   };
 }
@@ -87,6 +93,34 @@ export function formatFamilyChallenge(doc: IFamilyChallenge) {
     rewardPoints: doc.rewardPoints,
     completed: doc.completed,
     claimedAt: doc.claimedAt?.toISOString(),
+  };
+}
+
+export function formatReward(r: {
+  _id: { toString(): string };
+  familyId: { toString(): string };
+  title: string;
+  description?: string;
+  cost: number;
+  category: string;
+  icon?: string;
+  imageUrl?: string;
+  requiresApproval?: boolean;
+  isActive?: boolean;
+  createdAt: Date;
+}) {
+  return {
+    _id: r._id.toString(),
+    familyId: r.familyId.toString(),
+    title: r.title,
+    description: r.description,
+    cost: r.cost,
+    category: r.category,
+    icon: resolvedRewardIcon(r.title, r.icon, r.category as RewardCategory),
+    imageUrl: r.imageUrl,
+    requiresApproval: r.requiresApproval,
+    isActive: r.isActive,
+    createdAt: r.createdAt.toISOString(),
   };
 }
 

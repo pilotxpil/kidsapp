@@ -1,33 +1,39 @@
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Modal, Pressable, Image } from 'react-native';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, RefreshControl, TouchableOpacity, Modal, Pressable, Image, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { Card, PointsBadge, LevelBar, StreakBadge } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { Input } from '../../components/Input';
 import { ThemePicker } from '../../components/ThemePicker';
+import { AudioSettings } from '../../components/AudioSettings';
 import { AvatarPickerModal } from '../../components/AvatarPicker';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { KeyboardScroll } from '../../components/KeyboardSheet';
 import { AvatarFrame, SectionHeader } from '../../components/ThemedHero';
 import { KidAvatar } from '../../components/KidAvatar';
 import { AppVersionLabel } from '../../components/AppVersionLabel';
 import { PointsMark } from '../../components/icons/ThemeGlyph';
-import { BADGES, BADGE_REWARDS } from '@kidsapp/shared';
+import { BADGES, BADGE_REWARDS, MAX_HERO_LINE, UI_THEME_IDS } from '@kidsapp/shared';
 import type { KidProfile } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { getThemeArt } from '../../constants/theme-art';
+import { THEMES } from '../../constants/themes';
 import { useTheme } from '../../lib/theme-context';
 import { useType } from '../../lib/typography';
 import { rtl } from '../../lib/rtl';
-import { isSfxMuted, setSfxMuted, playSfx } from '../../lib/sfx';
-import { isBgmMuted, setBgmMuted, startBgm } from '../../lib/bgm';
+import { playSfx } from '../../lib/sfx';
 import { t } from '../../lib/i18n';
 
+/** Kid leaderboard stays in code; hide until we want siblings to compare. */
+const SHOW_KID_LEADERBOARD = false;
+
 export default function KidProfileScreen() {
-  const { user, logout, refreshUser } = useAuth();
+  const { user, logout, refreshUser, patchUser } = useAuth();
   const router = useRouter();
-  const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
+  const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId, heroTagline } = useTheme();
   const type = useType();
   const art = getThemeArt(themeId);
   const ember = themeId === 'ember';
@@ -35,11 +41,11 @@ export default function KidProfileScreen() {
   const [profile, setProfile] = useState<KidProfile | null>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [soundOn, setSoundOn] = useState(true);
-  const [musicOn, setMusicOn] = useState(true);
   const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [heroLine, setHeroLine] = useState(user?.heroLine ?? '');
+  const [heroSaving, setHeroSaving] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const historySectionY = useRef(0);
 
@@ -92,7 +98,7 @@ export default function KidProfileScreen() {
         },
         badgesGrid: {
           width: '100%',
-          flexDirection: 'row',
+          flexDirection: 'row-reverse',
           flexWrap: 'wrap',
           rowGap: spacing.sm,
         },
@@ -144,28 +150,6 @@ export default function KidProfileScreen() {
         txInfo: { flex: 1, minWidth: 0 },
         txDesc: { color: colors.text, fontWeight: '600' },
         txDate: { color: colors.textMuted, fontSize: 12 },
-        settingsRow: ember
-          ? {
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              backgroundColor: 'rgba(12,8,6,0.72)',
-              borderRadius: 18,
-              padding: spacing.md,
-              width: '100%',
-              borderWidth: 1,
-              borderColor: 'rgba(255,138,61,0.32)',
-            }
-          : {
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              backgroundColor: colors.bgCard,
-              borderRadius: borderRadius.md,
-              padding: spacing.md,
-              width: '100%',
-              ...cardBorder(2),
-            },
-        settingsLabel: { color: colors.text, fontWeight: '600', flex: 1, ...type.body },
-        settingsValue: { color: colors.primary, fontWeight: '700', flexShrink: 0, ...type.heading },
         avatarEditBtn: {
           marginTop: spacing.sm,
           marginBottom: spacing.md,
@@ -176,6 +160,26 @@ export default function KidProfileScreen() {
           borderColor: colors.primary,
         },
         avatarEditText: { color: colors.primary, fontWeight: '700', fontSize: 14, ...type.ui },
+        chipWrap: {
+          width: '100%',
+          flexDirection: 'row-reverse',
+          flexWrap: 'wrap',
+          gap: spacing.sm,
+          marginBottom: spacing.md,
+        },
+        chip: {
+          paddingVertical: 8,
+          paddingHorizontal: 12,
+          borderRadius: borderRadius.md,
+          borderWidth: ember ? 1 : 2,
+          borderColor: colors.primary,
+          backgroundColor: ember ? 'rgba(12,8,6,0.72)' : colors.bgCard,
+        },
+        chipOn: {
+          backgroundColor: colors.primary,
+        },
+        chipText: { color: colors.text, fontWeight: '700', fontSize: 12, ...type.ui },
+        chipTextOn: { color: ember ? '#1A0A06' : colors.bgDeep },
         settingsStack: { width: '100%', marginTop: spacing.lg, gap: spacing.md },
         logout: { marginTop: spacing.md, marginBottom: spacing.xl },
         badgeModalOverlay: {
@@ -251,7 +255,7 @@ export default function KidProfileScreen() {
     const [, profileRes, lbRes] = await Promise.all([
       refreshUser(),
       api.getKidProfile(userId),
-      api.getLeaderboard(),
+      SHOW_KID_LEADERBOARD ? api.getLeaderboard() : Promise.resolve({ leaderboard: [] }),
     ]);
     setProfile(profileRes.profile);
     setLeaderboard(lbRes.leaderboard);
@@ -260,22 +264,22 @@ export default function KidProfileScreen() {
   useFocusLoad(load, !!userId);
 
   useEffect(() => {
-    setSoundOn(!isSfxMuted());
-    setMusicOn(!isBgmMuted());
-  }, []);
+    setHeroLine(user?.heroLine ?? '');
+  }, [user?.heroLine]);
 
-  const toggleSound = async () => {
-    const next = !soundOn;
-    setSoundOn(next);
-    await setSfxMuted(!next);
-    if (next) playSfx('tap');
-  };
-
-  const toggleMusic = async () => {
-    const next = !musicOn;
-    setMusicOn(next);
-    await setBgmMuted(!next);
-    if (next) void startBgm();
+  const saveHeroLine = async (next: string) => {
+    const line = next.trim().slice(0, MAX_HERO_LINE);
+    setHeroLine(line);
+    setHeroSaving(true);
+    try {
+      const { user: updated } = await api.updateMe({ heroLine: line });
+      patchUser({ heroLine: updated.heroLine });
+      playSfx('tap');
+    } catch (err: any) {
+      Alert.alert('שגיאה', err.message);
+    } finally {
+      setHeroSaving(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -288,7 +292,7 @@ export default function KidProfileScreen() {
 
   return (
     <ThemedScreen tabs>
-      <ScrollView
+      <KeyboardScroll
         ref={scrollRef}
         contentContainerStyle={[styles.scroll, rtl.scrollContent]}
         refreshControl={
@@ -326,6 +330,45 @@ export default function KidProfileScreen() {
           <Text style={[styles.sectionHint, rtl.textFull]}>{t('uiThemeHint')}</Text>
           <ThemePicker />
         </View>
+
+        <View style={styles.section}>
+          <SectionHeader title={t('heroLine')} icon="💬" />
+          <Text style={[styles.sectionHint, rtl.textFull]}>{t('heroLineHint')}</Text>
+          <Text style={[styles.sectionHint, rtl.textFull]}>{t('heroLinePresets')}</Text>
+          <View style={styles.chipWrap}>
+            {[heroTagline, ...UI_THEME_IDS.map((id) => THEMES[id].heroTagline).filter((line) => line !== heroTagline)].map(
+              (line) => {
+                const on = (heroLine.trim() || heroTagline) === line;
+                return (
+                  <Pressable
+                    key={line}
+                    onPress={() => {
+                      playSfx('tap');
+                      void saveHeroLine(line);
+                    }}
+                    style={[styles.chip, on && styles.chipOn]}
+                  >
+                    <Text style={[styles.chipText, on && styles.chipTextOn]}>{line}</Text>
+                  </Pressable>
+                );
+              }
+            )}
+          </View>
+          <Input
+            label={t('heroLine')}
+            value={heroLine}
+            onChangeText={(text) => setHeroLine(text.slice(0, MAX_HERO_LINE))}
+            placeholder={t('heroLinePlaceholder')}
+            maxLength={MAX_HERO_LINE}
+          />
+          <Button
+            title={t('saveHeroLine')}
+            onPress={() => void saveHeroLine(heroLine)}
+            loading={heroSaving}
+          />
+        </View>
+
+        <AudioSettings />
 
         <View style={styles.section}>
           <SectionHeader title={t('badges')} icon="🏅" />
@@ -367,6 +410,7 @@ export default function KidProfileScreen() {
           </View>
         </View>
 
+        {SHOW_KID_LEADERBOARD ? (
         <View style={styles.section}>
           <SectionHeader title={t('leaderboard')} icon="🏆" />
           {leaderboard.map((entry) => (
@@ -388,6 +432,7 @@ export default function KidProfileScreen() {
           </Card>
           ))}
         </View>
+        ) : null}
 
         <View
           style={styles.section}
@@ -443,21 +488,11 @@ export default function KidProfileScreen() {
         </View>
 
         <View style={styles.settingsStack}>
-          <TouchableOpacity style={[styles.settingsRow, rtl.rowBetween]} onPress={toggleSound}>
-            <Text style={[styles.settingsLabel, rtl.textFull]}>{t('soundEffects')}</Text>
-            <Text style={[styles.settingsValue, rtl.text]}>{soundOn ? t('on') : t('off')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.settingsRow, rtl.rowBetween]} onPress={toggleMusic}>
-            <Text style={[styles.settingsLabel, rtl.textFull]}>{t('backgroundMusic')}</Text>
-            <Text style={[styles.settingsValue, rtl.text]}>{musicOn ? t('on') : t('off')}</Text>
-          </TouchableOpacity>
-
           <Button title={t('privacyPolicy')} variant="outline" onPress={() => router.push('/privacy')} />
           <Button title={t('logout')} onPress={handleLogout} variant="outline" style={styles.logout} sound={false} />
           <AppVersionLabel />
         </View>
-      </ScrollView>
+      </KeyboardScroll>
 
       <Modal visible={!!selectedBadgeData} transparent animationType="fade" onRequestClose={() => setSelectedBadge(null)}>
         <Pressable style={styles.badgeModalOverlay} onPress={() => setSelectedBadge(null)}>

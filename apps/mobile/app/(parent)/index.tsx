@@ -15,9 +15,12 @@ import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
+import { ParentDailyWordList } from '../../components/DailyWord';
+import { ParentDailyRiddleList } from '../../components/DailyRiddle';
 import { KidAvatar } from '../../components/KidAvatar';
 import { Button } from '../../components/Button';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { KeyboardSheet } from '../../components/KeyboardSheet';
 import { ProgressBar } from '../../components/ProgressBar';
 import type {
   ParentDashboard,
@@ -216,6 +219,15 @@ export default function ParentDashboardScreen() {
     await load();
   };
 
+  const handleReviewDailyWord = async (kidId: string) => {
+    try {
+      await api.reviewDailyWord(kidId, 'approve');
+      await load();
+    } catch (err: any) {
+      Alert.alert('שגיאה', err.message);
+    }
+  };
+
   return (
     <ThemedScreen tabs>
       <ScrollView
@@ -303,6 +315,12 @@ export default function ParentDashboardScreen() {
             </View>
           </>
         )}
+
+        <ParentDailyWordList
+          items={dashboard?.dailyWords ?? []}
+          onApprove={(kidId) => void handleReviewDailyWord(kidId)}
+        />
+        <ParentDailyRiddleList items={dashboard?.dailyRiddles ?? []} />
 
         <Text style={[styles.sectionTitle, rtl.textFull]}>{t('taskApprovals')}</Text>
         {dashboard?.pendingCompletions.length === 0 ? (
@@ -394,7 +412,7 @@ export default function ParentDashboardScreen() {
       </ScrollView>
 
       <Modal visible={!!rejectId} transparent animationType="fade" onRequestClose={() => setRejectId(null)}>
-        <View style={styles.modalBackdrop}>
+        <KeyboardSheet style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{t('rejectReason')}</Text>
             <TextInput
@@ -405,18 +423,12 @@ export default function ParentDashboardScreen() {
               placeholderTextColor={colors.textMuted}
               multiline
             />
-            <View style={[styles.modalActions, rtl.row]}>
-              <Button title={t('cancel')} onPress={() => setRejectId(null)} variant="secondary" style={{ flex: 1 }} />
-              <Button
-                title={t('reject')}
-                onPress={submitReject}
-                variant="danger"
-                loading={rejecting}
-                style={{ flex: 1 }}
-              />
+            <View style={styles.modalActions}>
+              <Button title={t('reject')} onPress={submitReject} variant="danger" loading={rejecting} />
+              <Button title={t('cancel')} onPress={() => setRejectId(null)} variant="secondary" />
             </View>
           </View>
-        </View>
+        </KeyboardSheet>
       </Modal>
     </ThemedScreen>
   );

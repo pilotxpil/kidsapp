@@ -4,7 +4,8 @@ import { Reward } from '../models/Reward';
 import { Redemption } from '../models/Redemption';
 import { User } from '../models/User';
 import { deductPoints } from '../services/gamification';
-import { formatUser } from '../utils/format';
+import { formatUser, formatReward } from '../utils/format';
+import { resolvedRewardIcon } from '@kidsapp/shared';
 
 const router = Router();
 
@@ -16,19 +17,7 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
     }).sort({ cost: 1 });
 
     res.json({
-      rewards: rewards.map((r) => ({
-        _id: r._id.toString(),
-        familyId: r.familyId.toString(),
-        title: r.title,
-        description: r.description,
-        cost: r.cost,
-        category: r.category,
-        icon: r.icon,
-        imageUrl: r.imageUrl,
-        requiresApproval: r.requiresApproval,
-        isActive: r.isActive,
-        createdAt: r.createdAt.toISOString(),
-      })),
+      rewards: rewards.map((r) => formatReward(r)),
     });
   } catch (err) {
     res.status(500).json({ error: 'שגיאה בטעינת פרסים' });
@@ -39,30 +28,19 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
   try {
     const { title, description, cost, category, icon, imageUrl } = req.body;
 
+    const cat = category || 'other';
     const reward = await Reward.create({
       familyId: req.user!.familyId,
       title,
       description: description || '',
       cost,
-      category: category || 'other',
-      icon: icon || '🎁',
+      category: cat,
+      icon: resolvedRewardIcon(title || '', icon, cat),
       imageUrl,
     });
 
     res.status(201).json({
-      reward: {
-        _id: reward._id.toString(),
-        familyId: reward.familyId.toString(),
-        title: reward.title,
-        description: reward.description,
-        cost: reward.cost,
-        category: reward.category,
-        icon: reward.icon,
-        imageUrl: reward.imageUrl,
-        requiresApproval: reward.requiresApproval,
-        isActive: reward.isActive,
-        createdAt: reward.createdAt.toISOString(),
-      },
+      reward: formatReward(reward),
     });
   } catch (err) {
     res.status(500).json({ error: 'שגיאה ביצירת פרס' });
@@ -72,13 +50,20 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
 router.put('/:id', authenticate, requireParent, async (req: Request, res: Response) => {
   try {
     const { title, description, cost, category, icon, imageUrl } = req.body;
+    const existing = await Reward.findOne({ _id: req.params.id, familyId: req.user!.familyId });
+    if (!existing) return res.status(404).json({ error: 'פרס לא נמצא' });
+
     const updates: Record<string, unknown> = {};
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
     if (cost !== undefined) updates.cost = Number(cost);
     if (category !== undefined) updates.category = category;
-    if (icon !== undefined) updates.icon = icon;
     if (imageUrl !== undefined) updates.imageUrl = imageUrl;
+
+    const nextTitle = title !== undefined ? title : existing.title;
+    const nextCat = category !== undefined ? category : existing.category;
+    const nextIcon = icon !== undefined ? icon : existing.icon;
+    updates.icon = resolvedRewardIcon(nextTitle, nextIcon, nextCat);
 
     const reward = await Reward.findOneAndUpdate(
       { _id: req.params.id, familyId: req.user!.familyId },
@@ -87,19 +72,7 @@ router.put('/:id', authenticate, requireParent, async (req: Request, res: Respon
     );
     if (!reward) return res.status(404).json({ error: 'פרס לא נמצא' });
     res.json({
-      reward: {
-        _id: reward._id.toString(),
-        familyId: reward.familyId.toString(),
-        title: reward.title,
-        description: reward.description,
-        cost: reward.cost,
-        category: reward.category,
-        icon: reward.icon,
-        imageUrl: reward.imageUrl,
-        requiresApproval: reward.requiresApproval,
-        isActive: reward.isActive,
-        createdAt: reward.createdAt.toISOString(),
-      },
+      reward: formatReward(reward),
     });
   } catch (err) {
     res.status(500).json({ error: 'שגיאה בעדכון פרס' });
@@ -204,7 +177,7 @@ router.get('/redemptions/pending', authenticate, requireParent, async (req: Requ
         reward: r.rewardId && typeof r.rewardId === 'object' ? {
           _id: (r.rewardId as any)._id.toString(),
           title: (r.rewardId as any).title,
-          icon: (r.rewardId as any).icon,
+          icon: resolvedRewardIcon((r.rewardId as any).title, (r.rewardId as any).icon, (r.rewardId as any).category),
           cost: (r.rewardId as any).cost,
         } : undefined,
         kid: r.kidId && typeof r.kidId === 'object' ? {

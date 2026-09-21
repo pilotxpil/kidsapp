@@ -6,7 +6,6 @@ import {
   ScrollView,
   Modal,
   TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
   Dimensions,
   Pressable,
@@ -15,15 +14,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
+import { TaskSectionHeader } from '../../components/TaskCard';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { KeyboardSheet, KeyboardScroll, useKeyboardHeight } from '../../components/KeyboardSheet';
 import { TASK_CATEGORIES, TASK_TEMPLATES, TASK_RECURRENCE } from '@kidsapp/shared';
 import type { FamilyTaskTemplate, Task, TaskCategory, TaskRecurrence, TaskTemplate, User } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
+import { groupByTaskSection } from '../../lib/task-sections';
 
 type TaskGroup = {
   key: string;
@@ -72,6 +74,13 @@ function groupTasks(tasks: Task[]): TaskGroup[] {
 
 export default function ParentTasksScreen() {
   const insets = useSafeAreaInsets();
+  const keyboardHeight = useKeyboardHeight();
+  const modalMaxHeight =
+    Dimensions.get('window').height -
+    insets.top -
+    insets.bottom -
+    spacing.lg * 2 -
+    (Platform.OS === 'android' ? keyboardHeight : 0);
   const { colors, borderRadius, cardBorder, categoryIcon, pointsEmoji, id: themeId } = useTheme();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [kids, setKids] = useState<User[]>([]);
@@ -91,8 +100,8 @@ export default function ParentTasksScreen() {
   const [loading, setLoading] = useState(false);
   const savingRef = useRef(false);
 
-  const modalMaxHeight = Dimensions.get('window').height - insets.top - insets.bottom - spacing.lg * 2;
   const taskGroups = useMemo(() => groupTasks(tasks), [tasks]);
+  const taskSections = useMemo(() => groupByTaskSection(taskGroups), [taskGroups]);
 
   const styles = useMemo(
     () =>
@@ -103,6 +112,7 @@ export default function ParentTasksScreen() {
         headerBtn: { flexGrow: 1, flexBasis: '45%' },
         title: { color: colors.text, fontSize: 24, fontWeight: '800', width: '100%' },
         taskCard: { marginBottom: spacing.sm },
+        firstSection: { marginTop: 0 },
         taskRow: { alignItems: 'flex-start', width: '100%', gap: spacing.sm },
         actions: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', flexShrink: 0 },
         actionIcon: { fontSize: 20 },
@@ -153,11 +163,11 @@ export default function ParentTasksScreen() {
           writingDirection: 'rtl',
         },
         chipRow: {
-          flexDirection: 'row',
+          flexDirection: 'row-reverse',
           flexWrap: 'wrap',
           gap: spacing.sm,
           marginBottom: spacing.md,
-          justifyContent: 'flex-end',
+          justifyContent: 'flex-start',
           alignItems: 'flex-end',
           width: '100%',
         },
@@ -171,7 +181,7 @@ export default function ParentTasksScreen() {
           alignSelf: 'flex-end',
         },
         chipContent: {
-          flexDirection: 'row',
+          flexDirection: 'row-reverse',
           alignItems: 'center',
           gap: 4,
         },
@@ -479,7 +489,15 @@ export default function ParentTasksScreen() {
           </View>
         </View>
 
-        {taskGroups.map((group) => {
+        {taskSections.map((section, sectionIndex) => (
+          <View key={section.key}>
+            <TaskSectionHeader
+              title={section.title}
+              icon={section.icon}
+              count={section.items.length}
+              style={sectionIndex === 0 ? styles.firstSection : undefined}
+            />
+            {section.items.map((group) => {
           const assignedKids = kids.filter((k) => group.assignedTo.includes(k._id));
           const kidsLabel =
             assignedKids.length === kids.length && kids.length > 1
@@ -512,7 +530,9 @@ export default function ParentTasksScreen() {
               </View>
             </Card>
           );
-        })}
+            })}
+          </View>
+        ))}
       </ScrollView>
 
       <Modal
@@ -546,13 +566,10 @@ export default function ParentTasksScreen() {
       </Modal>
 
       <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={closeModal}>
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
+        <KeyboardSheet style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={closeModal} />
           <View style={[styles.modal, { maxHeight: modalMaxHeight }]}>
-            <ScrollView
+            <KeyboardScroll
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator
               contentContainerStyle={styles.modalScroll}
@@ -693,14 +710,14 @@ export default function ParentTasksScreen() {
                   </View>
                 </>
               )}
-            </ScrollView>
+            </KeyboardScroll>
 
-            <View style={[styles.modalActions, rtl.row]}>
-              <Button title={t('save')} onPress={handleSave} loading={loading} style={{ flex: 1 }} />
-              <Button title={t('cancel')} onPress={closeModal} variant="outline" style={{ flex: 1 }} />
+            <View style={styles.modalActions}>
+              <Button title={t('save')} onPress={handleSave} loading={loading} />
+              <Button title={t('cancel')} onPress={closeModal} variant="outline" />
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardSheet>
       </Modal>
     </ThemedScreen>
   );

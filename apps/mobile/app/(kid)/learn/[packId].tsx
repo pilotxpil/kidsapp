@@ -8,11 +8,19 @@ import { Button } from '../../../components/Button';
 import { Card } from '../../../components/Card';
 import { Celebration } from '../../../components/Celebration';
 import { ThemedScreen } from '../../../components/ThemedScreen';
+import { KeyboardScroll } from '../../../components/KeyboardSheet';
 import { MultipleChoice } from '../../../components/learning/MultipleChoice';
+import { SelectAll } from '../../../components/learning/SelectAll';
+import { OpenWords } from '../../../components/learning/OpenWords';
 import { ReadingPassage } from '../../../components/learning/ReadingPassage';
 import { useCelebrateBadges } from '../../../lib/badge-celebration';
 import type { LearningPackDetail, PublicLearningActivity } from '@kidsapp/shared';
-import { packDisplayTitle, packDisplaySubtitle, resolvePackKind } from '@kidsapp/shared';
+import {
+  packDisplayTitle,
+  packDisplaySubtitle,
+  resolvePackKind,
+  normalizeOpenWord,
+} from '@kidsapp/shared';
 import { spacing } from '../../../constants/theme';
 import { useTheme } from '../../../lib/theme-context';
 import { rtl } from '../../../lib/rtl';
@@ -30,7 +38,11 @@ export default function LearnPackScreen() {
   const [loading, setLoading] = useState(true);
   const [activityIndex, setActivityIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [correctId, setCorrectId] = useState<string | null>(null);
+  const [correctIds, setCorrectIds] = useState<string[] | null>(null);
+  const [typedWords, setTypedWords] = useState<string[]>([]);
+  const [acceptedWords, setAcceptedWords] = useState<string[] | null>(null);
   const [answeredCorrect, setAnsweredCorrect] = useState<boolean | null>(null);
   const [packCompletedAfterAnswer, setPackCompletedAfterAnswer] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -45,51 +57,59 @@ export default function LearnPackScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        scroll: { padding: spacing.lg, flexGrow: 1 },
-        header: { marginBottom: spacing.lg },
-        title: { color: colors.text, fontSize: 22, fontWeight: '800', textAlign: 'center' },
+        scroll: { padding: spacing.md, flexGrow: 1, paddingBottom: spacing.lg },
+        header: { marginBottom: spacing.sm },
+        title: { color: colors.text, fontSize: 18, fontWeight: '800', textAlign: 'center' },
         progress: {
           color: colors.textMuted,
-          fontSize: 14,
+          fontSize: 12,
           textAlign: 'center',
-          marginTop: spacing.xs,
+          marginTop: 2,
         },
+        questionCard: { paddingVertical: 10, paddingHorizontal: spacing.sm + 4 },
         feedback: {
-          marginTop: spacing.md,
-          padding: spacing.md,
-          borderRadius: 12,
+          marginTop: spacing.sm,
+          paddingVertical: 8,
+          paddingHorizontal: spacing.sm,
+          borderRadius: 10,
           width: '100%',
         },
         feedbackCorrect: { backgroundColor: colors.success + '33' },
         feedbackWrong: { backgroundColor: colors.danger + '33' },
-        feedbackText: { color: colors.text, fontSize: 15, textAlign: 'center', fontWeight: '600' },
+        feedbackText: { color: colors.text, fontSize: 13, textAlign: 'center', fontWeight: '600' },
         errorBox: {
-          marginTop: spacing.md,
-          padding: spacing.md,
-          borderRadius: 12,
+          marginTop: spacing.sm,
+          paddingVertical: 8,
+          paddingHorizontal: spacing.sm,
+          borderRadius: 10,
           width: '100%',
           backgroundColor: colors.danger + '33',
         },
-        errorText: { color: colors.text, fontSize: 15, textAlign: 'center', fontWeight: '600' },
-        actions: { marginTop: spacing.lg, gap: spacing.sm },
+        errorText: { color: colors.text, fontSize: 13, textAlign: 'center', fontWeight: '600' },
+        actions: { marginTop: spacing.sm, gap: 6 },
+        actionBtn: { width: '100%', alignSelf: 'stretch' as const },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
         doneTitle: { color: colors.text, fontSize: 24, fontWeight: '800', textAlign: 'center' },
         doneSub: { color: colors.textMuted, fontSize: 16, textAlign: 'center', marginTop: spacing.sm },
         introHint: {
           color: colors.textMuted,
-          fontSize: 14,
+          fontSize: 13,
           textAlign: 'center',
-          marginTop: spacing.md,
-          marginBottom: spacing.lg,
+          marginTop: spacing.sm,
+          marginBottom: spacing.md,
         },
-        passageToggleWrap: { marginBottom: spacing.md },
+        passageToggleWrap: { marginBottom: spacing.sm },
       }),
     [themeId, colors]
   );
 
   const resetQuestionState = () => {
     setSelectedId(null);
+    setSelectedIds([]);
     setCorrectId(null);
+    setCorrectIds(null);
+    setTypedWords([]);
+    setAcceptedWords(null);
     setAnsweredCorrect(null);
     setPackCompletedAfterAnswer(false);
     setSubmitError(null);
@@ -133,7 +153,63 @@ export default function LearnPackScreen() {
   const packKind = resolvePackKind(detail?.pack.kind);
   const passageText = detail?.pack.passage?.he;
   const passageTitle = detail?.pack.passageTitle?.he;
-  const locked = correctId !== null || submitting;
+  const locked = answeredCorrect !== null || submitting;
+
+  const applyCheckResult = async (
+    activityId: string,
+    result: Awaited<ReturnType<typeof api.checkLearningAnswer>>,
+    fallbackSingleId?: string
+  ) => {
+    setDetail((prev) =>
+      prev
+        ? {
+            ...prev,
+            completedActivityIds: prev.completedActivityIds.includes(activityId)
+              ? prev.completedActivityIds
+              : [...prev.completedActivityIds, activityId],
+            completed: result.packCompleted,
+          }
+        : prev
+    );
+
+    if (result.correctOptionIds?.length) {
+      setCorrectIds(result.correctOptionIds);
+    }
+    if (result.acceptedWords) {
+      setAcceptedWords(result.acceptedWords);
+    }
+    const revealedCorrectId = result.correctOptionId ?? (result.correct ? fallbackSingleId : null);
+    if (revealedCorrectId) setCorrectId(revealedCorrectId);
+    setAnsweredCorrect(result.correct);
+    setPackCompletedAfterAnswer(result.packCompleted);
+
+    if (result.correct) {
+      playSfx(result.packCompleted ? 'cheer' : 'complete');
+    } else {
+      playSfx('error');
+    }
+
+    if (result.newBadges?.length) {
+      setPendingBadges((prev) => [...prev, ...result.newBadges!]);
+    }
+
+    if (result.packCompleted) {
+      await refreshUser();
+      const badges = [...pendingBadges, ...(result.newBadges ?? [])];
+      const seen = new Set<string>();
+      const unique = badges.filter((b) => {
+        if (seen.has(b.id)) return false;
+        seen.add(b.id);
+        return true;
+      });
+      if (unique.length) celebrateBadges(unique);
+      setPendingBadges([]);
+      if (result.packPointsEarned && result.packPointsEarned > 0) {
+        setCelebrateMsg(`+${result.packPointsEarned} ${pointsEmoji}`);
+        setCelebrate(true);
+      }
+    }
+  };
 
   const handleSelect = async (optionId: string) => {
     if (!packId || !current || locked) return;
@@ -143,53 +219,64 @@ export default function LearnPackScreen() {
     setSubmitError(null);
     try {
       const result = await api.checkLearningAnswer(packId, current.id, optionId);
-
-      setDetail((prev) =>
-        prev
-          ? {
-              ...prev,
-              completedActivityIds: prev.completedActivityIds.includes(current.id)
-                ? prev.completedActivityIds
-                : [...prev.completedActivityIds, current.id],
-              completed: result.packCompleted,
-            }
-          : prev
-      );
-
-      const revealedCorrectId = result.correctOptionId ?? (result.correct ? optionId : null);
-      setCorrectId(revealedCorrectId);
-      setAnsweredCorrect(result.correct);
-      setPackCompletedAfterAnswer(result.packCompleted);
-
-      if (result.correct) {
-        playSfx('complete');
-      } else {
-        playSfx('error');
-      }
-
-      if (result.newBadges?.length) {
-        setPendingBadges((prev) => [...prev, ...result.newBadges!]);
-      }
-
-      if (result.packCompleted) {
-        await refreshUser();
-        const badges = [...pendingBadges, ...(result.newBadges ?? [])];
-        const seen = new Set<string>();
-        const unique = badges.filter((b) => {
-          if (seen.has(b.id)) return false;
-          seen.add(b.id);
-          return true;
-        });
-        if (unique.length) celebrateBadges(unique);
-        setPendingBadges([]);
-        if (result.packPointsEarned && result.packPointsEarned > 0) {
-          setCelebrateMsg(`+${result.packPointsEarned} ${pointsEmoji}`);
-          setCelebrate(true);
-        }
-      }
+      await applyCheckResult(current.id, result, optionId);
     } catch (err: unknown) {
       playSfx('error');
       setSelectedId(null);
+      const message = err instanceof Error ? err.message : t('learningCheckError');
+      setSubmitError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleToggleSelectAll = (optionId: string) => {
+    if (locked) return;
+    setSelectedIds((prev) =>
+      prev.includes(optionId) ? prev.filter((id) => id !== optionId) : [...prev, optionId]
+    );
+  };
+
+  const handleSubmitOpenWords = async () => {
+    if (!packId || !current || locked) return;
+    const count = current.count ?? 0;
+    const words = Array.from({ length: count }, (_, i) => typedWords[i] ?? '').map((w) => w.trim());
+    if (words.some((w) => !w)) {
+      setSubmitError(t('openWordsNeedPick'));
+      return;
+    }
+    const unique = new Set(words.map((w) => normalizeOpenWord(w)));
+    if (unique.size !== words.length) {
+      setSubmitError(t('openWordsNeedUnique'));
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const result = await api.checkLearningAnswer(packId, current.id, words);
+      await applyCheckResult(current.id, result);
+    } catch (err: unknown) {
+      playSfx('error');
+      const message = err instanceof Error ? err.message : t('learningCheckError');
+      setSubmitError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmitSelectAll = async () => {
+    if (!packId || !current || locked) return;
+    if (!selectedIds.length) {
+      setSubmitError(t('selectAllNeedPick'));
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const result = await api.checkLearningAnswer(packId, current.id, selectedIds);
+      await applyCheckResult(current.id, result);
+    } catch (err: unknown) {
+      playSfx('error');
       const message = err instanceof Error ? err.message : t('learningCheckError');
       setSubmitError(message);
     } finally {
@@ -229,7 +316,7 @@ export default function LearnPackScreen() {
             style={{ marginTop: spacing.xl, width: '100%' }}
           />
         </ScrollView>
-        <Celebration visible={celebrate} message={celebrateMsg} onDone={() => setCelebrate(false)} />
+        <Celebration visible={celebrate} sfx={false} message={celebrateMsg} onDone={() => setCelebrate(false)} />
       </ThemedScreen>
     );
   }
@@ -237,7 +324,7 @@ export default function LearnPackScreen() {
   if (showPassageIntro && passageText) {
     return (
       <ThemedScreen tabs>
-        <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
+        <KeyboardScroll contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
           <View style={styles.header}>
             <Text style={[styles.title, rtl.text]}>{packDisplayTitle(detail.pack.title)}</Text>
             <Text style={[styles.introHint, rtl.text]}>{t('readingIntroHint')}</Text>
@@ -246,19 +333,33 @@ export default function LearnPackScreen() {
           <View style={styles.actions}>
             <Button
               title={t('readingStartQuestions')}
+              compact
               onPress={() => {
                 playSfx('tap');
                 setShowPassageIntro(false);
               }}
+              style={styles.actionBtn}
             />
-            <Button title={t('back')} onPress={() => router.back()} variant="outline" sound={false} />
+            <Button
+              title={t('back')}
+              onPress={() => router.back()}
+              variant="outline"
+              compact
+              style={styles.actionBtn}
+            />
           </View>
-        </ScrollView>
+        </KeyboardScroll>
       </ThemedScreen>
     );
   }
 
-  if (!current || current.type !== 'multiple_choice' || !current.options) {
+  const canShowQuestion =
+    !!current &&
+    ((current.type === 'multiple_choice' && !!current.options) ||
+      (current.type === 'select_all' && !!current.options) ||
+      (current.type === 'open_words' && (current.count ?? 0) > 0));
+
+  if (!canShowQuestion || !current) {
     return (
       <ThemedScreen tabs>
         <View style={styles.center}>
@@ -271,7 +372,7 @@ export default function LearnPackScreen() {
 
   return (
     <ThemedScreen tabs>
-      <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
+      <KeyboardScroll contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
         <View style={styles.header}>
           <Text style={[styles.title, rtl.text]}>{packDisplayTitle(detail.pack.title)}</Text>
           {packDisplaySubtitle(detail.pack.title) ? (
@@ -290,31 +391,58 @@ export default function LearnPackScreen() {
                 <Button
                   title={t('readingHidePassage')}
                   variant="outline"
+                  compact
                   onPress={() => setPassageExpanded(false)}
-                  style={{ marginTop: spacing.sm }}
-                  sound={false}
+                  style={{ marginTop: 6, width: '100%', alignSelf: 'stretch' }}
                 />
               </>
             ) : (
               <Button
                 title={t('readingShowPassage')}
                 variant="outline"
+                compact
                 onPress={() => setPassageExpanded(true)}
-                sound={false}
+                style={{ width: '100%', alignSelf: 'stretch' }}
               />
             )}
           </View>
         ) : null}
 
-        <Card>
-          <MultipleChoice
-            prompt={current.prompt.text}
-            options={current.options}
-            selectedId={selectedId}
-            correctId={correctId}
-            disabled={locked}
-            onSelect={handleSelect}
-          />
+        <Card style={styles.questionCard}>
+          {current.type === 'open_words' ? (
+            <OpenWords
+              prompt={current.prompt.text}
+              count={current.count ?? 1}
+              values={typedWords}
+              acceptedWords={acceptedWords}
+              disabled={locked}
+              onChange={(index, value) => {
+                setTypedWords((prev) => {
+                  const next = Array.from({ length: current.count ?? 1 }, (_, i) => prev[i] ?? '');
+                  next[index] = value;
+                  return next;
+                });
+              }}
+            />
+          ) : current.type === 'select_all' ? (
+            <SelectAll
+              prompt={current.prompt.text}
+              options={current.options ?? []}
+              selectedIds={selectedIds}
+              correctIds={correctIds}
+              disabled={locked}
+              onToggle={handleToggleSelectAll}
+            />
+          ) : (
+            <MultipleChoice
+              prompt={current.prompt.text}
+              options={current.options ?? []}
+              selectedId={selectedId}
+              correctId={correctId}
+              disabled={locked}
+              onSelect={handleSelect}
+            />
+          )}
 
           {answeredCorrect !== null ? (
             <View
@@ -336,15 +464,37 @@ export default function LearnPackScreen() {
           ) : null}
 
           <View style={styles.actions}>
-            {correctId !== null ? (
-              <Button title={t('nextQuestion')} onPress={handleNext} />
+            {answeredCorrect !== null ? (
+              <Button title={t('nextQuestion')} compact onPress={handleNext} style={styles.actionBtn} />
+            ) : current.type === 'select_all' ? (
+              <Button
+                title={t('checkAnswer')}
+                compact
+                onPress={() => void handleSubmitSelectAll()}
+                loading={submitting}
+                style={styles.actionBtn}
+              />
+            ) : current.type === 'open_words' ? (
+              <Button
+                title={t('checkAnswer')}
+                compact
+                onPress={() => void handleSubmitOpenWords()}
+                loading={submitting}
+                style={styles.actionBtn}
+              />
             ) : null}
-            <Button title={t('back')} onPress={() => router.back()} variant="outline" sound={false} />
+            <Button
+              title={t('back')}
+              onPress={() => router.back()}
+              variant="outline"
+              compact
+              style={styles.actionBtn}
+            />
           </View>
         </Card>
-      </ScrollView>
+      </KeyboardScroll>
 
-      <Celebration visible={celebrate} message={celebrateMsg} onDone={() => setCelebrate(false)} />
+      <Celebration visible={celebrate} sfx={false} message={celebrateMsg} onDone={() => setCelebrate(false)} />
     </ThemedScreen>
   );
 }

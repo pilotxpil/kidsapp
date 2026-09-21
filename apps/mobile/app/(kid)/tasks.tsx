@@ -14,23 +14,23 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
-import { TaskCard, CategoryTabs } from '../../components/TaskCard';
+import { TaskCard, TaskSectionHeader } from '../../components/TaskCard';
 import { Celebration } from '../../components/Celebration';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { SectionHeader } from '../../components/ThemedHero';
 import { Button } from '../../components/Button';
-import type { Task, TaskCategory } from '@kidsapp/shared';
+import type { Task } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
+import { groupByTaskSection } from '../../lib/task-sections';
 
 export default function KidTasksScreen() {
   const { user } = useAuth();
   const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
   const userId = user?._id;
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [category, setCategory] = useState<TaskCategory | 'all'>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -40,8 +40,9 @@ export default function KidTasksScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        scroll: { padding: spacing.lg },
-        empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.xl },
+        scroll: { padding: spacing.md },
+        empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.lg },
+        firstSection: { marginTop: 0 },
         modalBackdrop: {
           flex: 1,
           backgroundColor: 'rgba(0,0,0,0.5)',
@@ -82,7 +83,16 @@ export default function KidTasksScreen() {
 
   useFocusLoad(load, !!userId);
 
-  const filtered = category === 'all' ? tasks : tasks.filter((tk) => tk.category === category);
+  const sections = useMemo(() => {
+    const rank = (status: Task['completionStatus']) =>
+      status === 'pending' ? 1 : status === 'completed' ? 2 : 0;
+    return groupByTaskSection(tasks).map((section) => ({
+      ...section,
+      items: [...section.items].sort(
+        (a, b) => rank(a.completionStatus) - rank(b.completionStatus)
+      ),
+    }));
+  }, [tasks]);
 
   const pickPhoto = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -149,19 +159,28 @@ export default function KidTasksScreen() {
         }
       >
         <SectionHeader title={t('tasks')} icon="📜" />
-        <CategoryTabs selected={category} onSelect={setCategory} />
 
-        {filtered.length === 0 ? (
+        {sections.length === 0 ? (
           <Text style={styles.empty}>{t('noTasks')}</Text>
         ) : (
-          filtered.map((task, i) => (
-            <TaskCard
-              key={task._id}
-              task={task}
-              index={i}
-              onComplete={openComplete}
-              loading={completingId === task._id}
-            />
+          sections.map((section, sectionIndex) => (
+            <View key={section.key}>
+              <TaskSectionHeader
+                title={section.title}
+                icon={section.icon}
+                count={section.items.length}
+                style={sectionIndex === 0 ? styles.firstSection : undefined}
+              />
+              {section.items.map((task, i) => (
+                <TaskCard
+                  key={task._id}
+                  task={task}
+                  index={i}
+                  onComplete={openComplete}
+                  loading={completingId === task._id}
+                />
+              ))}
+            </View>
           ))
         )}
       </ScrollView>
@@ -194,7 +213,7 @@ export default function KidTasksScreen() {
         </View>
       </Modal>
 
-      <Celebration visible={celebrate} message={t('taskSubmitted')} onDone={() => setCelebrate(false)} />
+      <Celebration visible={celebrate} sfx="cheer" message={t('taskSubmitted')} onDone={() => setCelebrate(false)} />
     </ThemedScreen>
   );
 }

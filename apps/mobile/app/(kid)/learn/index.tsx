@@ -8,10 +8,11 @@ import { Card } from '../../../components/Card';
 import { PointsBadge } from '../../../components/Card';
 import { ThemedScreen } from '../../../components/ThemedScreen';
 import { SectionHeader } from '../../../components/ThemedHero';
-import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, LEARNING_DIFFICULTY_LABELS, LEARNING_PACK_KIND_LABELS, packDisplayTitle, packDisplaySubtitle, formatGradeLabel } from '@kidsapp/shared';
+import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, LEARNING_PACK_KIND_LABELS, packDisplayTitle, packDisplaySubtitle, formatGradeLabel } from '@kidsapp/shared';
 import type { LearningPackSummary, LearningCategory } from '@kidsapp/shared';
 import { spacing } from '../../../constants/theme';
 import { useTheme } from '../../../lib/theme-context';
+import { playSfx } from '../../../lib/sfx';
 import { useType } from '../../../lib/typography';
 import { rtl } from '../../../lib/rtl';
 import { t } from '../../../lib/i18n';
@@ -39,20 +40,25 @@ export default function LearnIndexScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        scroll: { padding: spacing.lg },
+        scroll: { padding: spacing.md },
         header: { marginBottom: spacing.sm, alignItems: 'flex-start' },
-        empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.xl },
-        categoryBlock: { marginBottom: spacing.lg },
-        packCard: { marginBottom: spacing.sm, maxWidth: '100%' },
-        packRow: { gap: spacing.md, alignItems: 'center', width: '100%', maxWidth: '100%' },
+        empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.lg },
+        categoryBlock: { marginBottom: spacing.md },
+        packCard: {
+          marginBottom: 6,
+          maxWidth: '100%',
+          paddingVertical: 10,
+          paddingHorizontal: spacing.sm + 4,
+        },
+        packRow: { gap: spacing.sm, alignItems: 'center', width: '100%', maxWidth: '100%' },
         packInfo: { flex: 1, minWidth: 0, maxWidth: '100%' },
-        packTitle: { color: colors.text, fontSize: 17, fontWeight: '700', flexShrink: 1, ...type.title },
-        packMeta: { color: colors.textMuted, fontSize: 13, marginTop: 4, ...type.body },
+        packTitle: { color: colors.text, fontSize: 15, fontWeight: '800', flexShrink: 1, ...type.title },
+        packMeta: { color: colors.textMuted, fontSize: 11, marginTop: 2, ...type.body },
         progressBar: {
-          height: 5,
+          height: 4,
           backgroundColor: colors.bgDeep,
           borderRadius: borderRadius.full,
-          marginTop: spacing.sm,
+          marginTop: 4,
           overflow: 'hidden',
         },
         progressFill: {
@@ -68,7 +74,7 @@ export default function LearnIndexScreen() {
         },
         doneText: { color: colors.textDark, fontSize: 11, fontWeight: '700', ...type.ui },
         chevron: { color: colors.textMuted, fontSize: 18, fontWeight: '700' },
-        pointsMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+        pointsMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, flexWrap: 'wrap' },
       }),
     [themeId, colors, borderRadius, type.title, type.body, type.ui]
   );
@@ -127,35 +133,36 @@ export default function LearnIndexScreen() {
                   return (
                     <TouchableOpacity
                       key={pack.id}
-                      onPress={() => router.push(`/(kid)/learn/${pack.id}`)}
+                      onPress={() => {
+                        playSfx('tap');
+                        router.push(`/(kid)/learn/${pack.id}`);
+                      }}
                       activeOpacity={0.85}
                     >
                       <Card style={styles.packCard} glow={pack.completed}>
                         <View style={[styles.packRow, rtl.row]}>
                           <View style={styles.packInfo}>
-                            <Text style={[styles.packTitle, rtl.text]} numberOfLines={2}>
+                            <Text style={[styles.packTitle, rtl.text]} numberOfLines={1}>
                               {displayName}
                             </Text>
                             {subtitle ? (
-                              <Text style={[styles.packMeta, rtl.text]}>{subtitle}</Text>
+                              <Text style={[styles.packMeta, rtl.text]} numberOfLines={1}>
+                                {subtitle}
+                              </Text>
                             ) : null}
                             <View style={[styles.pointsMeta, rtl.rowInline]}>
-                              <Text style={[styles.packMeta, rtl.text, { marginTop: 0 }]}>
+                              <Text style={[styles.packMeta, rtl.text, { marginTop: 0 }]} numberOfLines={1}>
                                 {LEARNING_PACK_KIND_LABELS[pack.kind]}
                                 {' · '}
-                                {pack.activityCount} {t('questions')}
+                                {pack.completedCount}/{pack.activityCount}
                                 {pack.grade ? ` · ${formatGradeLabel(pack.grade, t('grade'))}` : ''}
-                                {` · ${LEARNING_DIFFICULTY_LABELS[pack.difficulty]} · `}
-                                {pack.pointsPerActivity}
+                                {` · ${pack.pointsPerActivity}`}
                               </Text>
-                              <PointsMark size={14} />
+                              <PointsMark size={12} />
                             </View>
                             <View style={styles.progressBar}>
                               <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
                             </View>
-                            <Text style={[styles.packMeta, rtl.text]}>
-                              {pack.completedCount}/{pack.activityCount} {t('completed')}
-                            </Text>
                           </View>
                           {pack.completed ? (
                             <View style={styles.doneBadge}>

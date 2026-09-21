@@ -22,9 +22,13 @@ export interface IUser extends Document {
   ownedCosmetics: string[];
   equippedFrame?: string;
   equippedEffect?: string;
+  rentalAvatar?: string;
+  rentalUntilDate?: string;
   goalRewardId?: Types.ObjectId;
   /** Kid school grade 1–6 (כיתה א–ו). */
   grade?: number;
+  /** Custom line on the home dashboard. */
+  heroLine?: string;
   /** Last one-time avatar shop gift campaign notified to this kid. */
   lastAvatarGiftCampaign?: string;
   createdAt: Date;
@@ -52,8 +56,11 @@ const userSchema = new Schema<IUser>(
     ownedCosmetics: { type: [String], default: [] },
     equippedFrame: { type: String },
     equippedEffect: { type: String },
+    rentalAvatar: { type: String },
+    rentalUntilDate: { type: String },
     goalRewardId: { type: Schema.Types.ObjectId, ref: 'Reward' },
     grade: { type: Number, min: 1, max: 6 },
+    heroLine: { type: String, maxlength: 48 },
     lastAvatarGiftCampaign: { type: String },
   },
   { timestamps: { createdAt: true, updatedAt: false } }

@@ -14,8 +14,11 @@ interface CelebrationProps {
   visible: boolean;
   message?: string;
   icon?: string;
+  /** Theme kicker by default. Pass `""` to hide the skin name. */
   kicker?: string;
   sfx?: SfxName | false;
+  confettiCount?: number;
+  huge?: boolean;
   onDone?: () => void;
 }
 
@@ -25,6 +28,8 @@ export function Celebration({
   icon,
   kicker,
   sfx,
+  confettiCount = 48,
+  huge,
   onDone,
 }: CelebrationProps) {
   const {
@@ -39,22 +44,22 @@ export function Celebration({
   } = useTheme();
   const playName = sfx === false ? null : (sfx ?? themeSfx);
   const displayIcon = icon ?? themeIcon;
-  const displayKicker = kicker ?? celebrationKicker;
+  const displayKicker = kicker === undefined ? celebrationKicker : kicker;
   const gemArt = getThemeArt(themeId)?.gem;
   const { overlayStyle, cardStyle: enterStyle } = useModalEnter(visible);
 
   useEffect(() => {
     if (!visible) return;
     if (playName) playSfx(playName);
-    const timer = setTimeout(() => onDone?.(), 1600);
+    const timer = setTimeout(() => onDone?.(), huge ? 2200 : 1600);
     return () => clearTimeout(timer);
-  }, [visible, playName, onDone]);
+  }, [visible, playName, onDone, huge]);
 
   if (!visible) return null;
 
   return (
     <Animated.View style={[styles.overlay, overlayStyle]} pointerEvents="none">
-      <Confetti active={visible} count={48} />
+      <Confetti active={visible} count={confettiCount} />
       <Animated.View style={enterStyle}>
         <LinearGradient
           colors={[...heroGradient]}
@@ -78,8 +83,8 @@ export function Celebration({
           ) : (
             <Text style={styles.bigIcon}>{displayIcon}</Text>
           )}
-          <Text style={styles.kicker}>{displayKicker}</Text>
-          <Text style={styles.message}>{message}</Text>
+          {displayKicker ? <Text style={styles.kicker}>{displayKicker}</Text> : null}
+          <Text style={[styles.message, huge && styles.huge]}>{message}</Text>
         </LinearGradient>
       </Animated.View>
     </Animated.View>
@@ -118,5 +123,10 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+  },
+  huge: {
+    fontSize: 44,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
 });

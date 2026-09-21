@@ -6,7 +6,7 @@ import type {
   PublicLearningActivity,
   LearningPackSummary,
 } from '@kidsapp/shared';
-import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, resolvePackKind } from '@kidsapp/shared';
+import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, resolvePackKind, selectAllMatches, openWordsMatch, openWordGroups } from '@kidsapp/shared';
 import type { LearningCategory, LearningCatalogFilters, LearningDifficulty } from '@kidsapp/shared';
 import { ILearningProgress } from '../models/LearningProgress';
 
@@ -66,12 +66,31 @@ export function parseLearningPack(raw: unknown): LearningPack | null {
     if (!act || typeof act !== 'object') return null;
     const a = act as Record<string, unknown>;
     if (typeof a.id !== 'string' || !a.id) return null;
-    if (a.type !== 'multiple_choice') return null;
     if (!a.prompt || typeof (a.prompt as { text?: string }).text !== 'string') return null;
-    if (!Array.isArray(a.options) || a.options.length < 2) return null;
-    if (typeof a.answer !== 'string' || !a.answer) return null;
-    const opts = a.options as { id?: string }[];
-    if (!opts.some((o) => o && o.id === a.answer)) return null;
+    if (a.type === 'multiple_choice') {
+      if (!Array.isArray(a.options) || a.options.length < 2) return null;
+      if (typeof a.answer !== 'string' || !a.answer) return null;
+      const opts = a.options as { id?: string }[];
+      if (!opts.some((o) => o && o.id === a.answer)) return null;
+    } else if (a.type === 'select_all') {
+      if (!Array.isArray(a.options) || a.options.length < 3) return null;
+      if (!Array.isArray(a.answer) || a.answer.length < 2) return null;
+      const optIds = new Set(
+        (a.options as { id?: string }[]).map((o) => o?.id).filter((id): id is string => !!id)
+      );
+      const answers = (a.answer as unknown[]).filter((id): id is string => typeof id === 'string' && !!id);
+      if (answers.length < 2) return null;
+      if (!answers.every((id) => optIds.has(id))) return null;
+      if (answers.length >= optIds.size) return null;
+    } else if (a.type === 'open_words') {
+      if (!Array.isArray(a.accept) || a.accept.length < 1) return null;
+      const accept = (a.accept as unknown[]).filter((w): w is string => typeof w === 'string' && !!w.trim());
+      const count = typeof a.count === 'number' ? a.count : Number(a.count);
+      if (!Number.isInteger(count) || count < 1 || count > 8) return null;
+      if (openWordGroups(accept).length < count) return null;
+    } else {
+      return null;
+    }
   }
 
   const version = typeof p.version === 'number' && p.version >= 1 ? p.version : 1;
@@ -198,7 +217,7 @@ export async function loadAllPacksForFamily(familyId: string): Promise<LearningP
 }
 
 export function toPublicActivity(activity: LearningActivity): PublicLearningActivity {
-  if (activity.type === 'multiple_choice') {
+  if (activity.type === 'multiple_choice' || activity.type === 'select_all') {
     return {
       id: activity.id,
       type: activity.type,
@@ -212,6 +231,15 @@ export function toPublicActivity(activity: LearningActivity): PublicLearningActi
       id: activity.id,
       type: activity.type,
       prompt: activity.prompt,
+      points: activity.points,
+    };
+  }
+  if (activity.type === 'open_words') {
+    return {
+      id: activity.id,
+      type: activity.type,
+      prompt: activity.prompt,
+      count: activity.count,
       points: activity.points,
     };
   }
@@ -247,30 +275,48 @@ export function packToSummary(
   };
 }
 
-export function checkAnswer(activity: LearningActivity, answer: string): boolean {
+export function checkAnswer(activity: LearningActivity, answer: string | string[]): boolean {
   if (activity.type === 'multiple_choice') {
-    return activity.answer === answer;
+    const given = Array.isArray(answer) ? answer[0] : answer;
+    return activity.answer === given;
+  }
+  if (activity.type === 'select_all') {
+    return selectAllMatches(activity.answer, answer);
+  }
+  if (activity.type === 'open_words') {
+    return openWordsMatch(activity.accept, answer, activity.count);
   }
   if (activity.type === 'fill_blank') {
-    const normalized = answer.trim().toLowerCase();
+    const given = Array.isArray(answer) ? String(answer[0] ?? '') : answer;
+    const normalized = given.trim().toLowerCase();
     return activity.answer.some((a) => a.trim().toLowerCase() === normalized);
   }
   if (activity.type === 'flashcard') {
-    const normalized = answer.trim().toLowerCase();
+    const given = Array.isArray(answer) ? String(answer[0] ?? '') : answer;
+    const normalized = given.trim().toLowerCase();
     return activity.answer.text.trim().toLowerCase() === normalized;
   }
   return false;
 }
 
-export function activityPoints(
+/** Points for finishing the whole pack — not per question, not based on score. */
+export function packCompletionPoints(
   pack: LearningPack,
-  activity: LearningActivity,
   pointsOverride?: number | null
 ): number {
   if (typeof pointsOverride === 'number' && pointsOverride >= 1) {
     return pointsOverride;
   }
-  return activity.points ?? pack.defaultPoints;
+  return pack.defaultPoints;
+}
+
+/** @deprecated Use packCompletionPoints. */
+export function activityPoints(
+  pack: LearningPack,
+  _activity: LearningActivity,
+  pointsOverride?: number | null
+): number {
+  return packCompletionPoints(pack, pointsOverride);
 }
 
 export function filterCatalogPacks(
@@ -283,8 +329,12 @@ export function filterCatalogPacks(
     result = result.filter((p) => p.category === filters.category);
   }
 
-  if (filters.grade != null && !Number.isNaN(filters.grade)) {
-    result = result.filter((p) => p.grade === filters.grade);
+  const grades =
+    filters.grades?.filter((g) => Number.isFinite(g)) ??
+    (filters.grade != null && !Number.isNaN(filters.grade) ? [filters.grade] : undefined);
+  if (grades && grades.length > 0) {
+    const allowed = new Set(grades);
+    result = result.filter((p) => p.grade != null && allowed.has(p.grade));
   }
 
   const search = filters.search?.trim().toLowerCase();
@@ -304,7 +354,9 @@ export function filterCatalogPacks(
 export function packToCatalogItem(
   pack: LearningPack,
   assignedKidIds: string[] = [],
-  settings?: { pointsPerActivity?: number; difficulty?: LearningDifficulty } | null
+  settings?: { pointsPerActivity?: number; difficulty?: LearningDifficulty } | null,
+  completedKidIds: string[] = [],
+  pastKidIds: string[] = []
 ) {
   return {
     id: pack.id,
@@ -318,6 +370,8 @@ export function packToCatalogItem(
     pointsPerActivity: settings?.pointsPerActivity,
     difficulty: settings?.difficulty,
     assignedKidIds,
+    completedKidIds,
+    pastKidIds,
     isCustom: pack.id.startsWith('custom_'),
   };
 }

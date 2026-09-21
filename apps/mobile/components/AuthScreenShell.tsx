@@ -1,19 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Keyboard,
-  Platform,
-  ScrollView,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { View, StyleSheet, Keyboard, Platform, ScrollView, StyleProp, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FloatingEmojis } from './animations/FloatingEmojis';
 import { BouncyPressable } from './animations/BouncyPressable';
 import { RtlText } from './RtlText';
+import { KeyboardSheet } from './KeyboardSheet';
 import { getTheme } from '../constants/themes';
 import { spacing } from '../constants/theme';
 import { t } from '../lib/i18n';
@@ -143,11 +135,7 @@ export function AuthScreenShell({
             </RtlText>
           </BouncyPressable>
         ) : null}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.flex}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? spacing.sm : 0}
-        >
+        <KeyboardSheet style={styles.flex} androidInset={false}>
           <ScrollView
             contentContainerStyle={styles.inner}
             keyboardShouldPersistTaps="handled"
@@ -157,7 +145,7 @@ export function AuthScreenShell({
           >
             {content}
           </ScrollView>
-        </KeyboardAvoidingView>
+        </KeyboardSheet>
       </SafeAreaView>
     </LinearGradient>
   );

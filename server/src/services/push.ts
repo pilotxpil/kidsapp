@@ -31,6 +31,7 @@ async function sendToTokens(tokens: string[], payload: PushPayload): Promise<voi
     body: payload.body,
     data: payload.data,
     channelId: 'default',
+    priority: 'high',
   }));
 
   const stale: string[] = [];
@@ -60,7 +61,11 @@ async function sendToTokens(tokens: string[], payload: PushPayload): Promise<voi
 async function tokensForUserIds(userIds: string[]): Promise<string[]> {
   if (userIds.length === 0) return [];
   const docs = await PushToken.find({ userId: { $in: userIds } }).select('token');
-  return docs.map((d) => d.token);
+  const tokens = docs.map((d) => d.token);
+  if (tokens.length === 0) {
+    console.warn('[push] no tokens for users', userIds.join(','));
+  }
+  return tokens;
 }
 
 export async function notifyUsers(userIds: string[], payload: PushPayload): Promise<void> {
@@ -174,12 +179,27 @@ export function pushLearningAssigned(kidIds: string[], packTitle: string): void 
   });
 }
 
-export function pushBonusAwarded(kidId: string, amount: number, reason: string): void {
-  pushToUsers([kidId], {
-    title: `קיבלת ${amount} נקודות! ⭐`,
-    body: reason,
-    data: { type: 'bonus_awarded' satisfies PushNotificationType },
+export async function notifyBonusAwarded(
+  kidId: string,
+  amount: number,
+  reason: string
+): Promise<void> {
+  const note = reason.trim();
+  const generic = !note || note === 'בונוס מההורה';
+  await notifyUsers([kidId], {
+    title: `+${amount} נקודות! ⭐`,
+    body: generic
+      ? `ההורים העניקו לך ${amount} נקודות סתם ככה. כנסו לראות!`
+      : `${note} — קיבלת ${amount} נקודות`,
+    data: {
+      type: 'bonus_awarded' satisfies PushNotificationType,
+      amount: String(amount),
+    },
   });
+}
+
+export function pushBonusAwarded(kidId: string, amount: number, reason: string): void {
+  fireAndForget(notifyBonusAwarded(kidId, amount, reason));
 }
 
 export function pushAvatarShopGift(kidId: string): void {
@@ -187,5 +207,17 @@ export function pushAvatarShopGift(kidId: string): void {
     title: 'מתנה מההורים! 🎁',
     body: 'נוב קלאסי מחכה לך בחינם — ובחנות יש אווטארים חדשים לקנייה',
     data: { type: 'avatar_shop_gift' satisfies PushNotificationType },
+  });
+}
+
+export function pushDailyWordReviewed(kidId: string, approved: boolean, points?: number): void {
+  pushToUsers([kidId], {
+    title: approved ? 'המילה אושרה! 🎉' : 'עוד לא הפעם',
+    body: approved
+      ? `קיבלת ${points ?? 0} נקודות על המילה היומית`
+      : 'אפשר ללמוד עוד ואז ההורים ישאלו שוב',
+    data: {
+      type: (approved ? 'daily_word_approved' : 'daily_word_rejected') satisfies PushNotificationType,
+    },
   });
 }

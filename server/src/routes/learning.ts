@@ -1,3 +1,5 @@
+import path from 'path';
+import fs from 'fs';
 import { Router, Request, Response } from 'express';
 import { authenticate, requireKid, requireParent } from '../middleware/auth';
 import { User } from '../models/User';
@@ -13,7 +15,7 @@ import {
   packToSummary,
   toPublicActivity,
   checkAnswer,
-  activityPoints,
+  packCompletionPoints,
   filterCatalogPacks,
   packToCatalogItem,
   parseLearningPack,
@@ -26,17 +28,44 @@ import {
   makeCustomLearningPackId,
   isCustomLearningPackId,
   LEARNING_CATEGORIES,
+  normalizeSelectAllIds,
+  parseOpenWordList,
+  canonicalOpenWords,
 } from '@kidsapp/shared';
 import { FamilyLearningPack } from '../models/FamilyLearningPack';
 import { todayString } from '../utils/format';
 
 const router = Router();
 
+/** Parent content studio — static HTML, login happens in the page. */
+router.get('/studio', (_req, res) => {
+  const file = path.resolve(__dirname, '../../../docs/learning-pack-studio.html');
+  if (!fs.existsSync(file)) {
+    return res.status(404).send('סטודיו לא נמצא בשרת');
+  }
+  res.sendFile(file);
+});
+
 function parseDifficulty(value: unknown): LearningDifficulty | null {
   if (typeof value !== 'string') return null;
   return (LEARNING_DIFFICULTIES as string[]).includes(value)
     ? (value as LearningDifficulty)
     : null;
+}
+
+function parseGradeQuery(raw: unknown): number[] | undefined {
+  const parts: string[] = [];
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      if (typeof item === 'string') parts.push(...item.split(','));
+    }
+  } else if (typeof raw === 'string' && raw.trim()) {
+    parts.push(...raw.split(','));
+  }
+  const grades = parts
+    .map((p) => parseInt(p.trim(), 10))
+    .filter((n) => Number.isFinite(n) && n >= 1 && n <= 6);
+  return grades.length ? [...new Set(grades)] : undefined;
 }
 
 function parsePoints(value: unknown): number | null {
@@ -71,18 +100,19 @@ router.get('/catalog', authenticate, requireParent, async (req: Request, res: Re
   try {
     const search = typeof req.query.search === 'string' ? req.query.search : undefined;
     const category = typeof req.query.category === 'string' ? (req.query.category as LearningCategory) : undefined;
-    const gradeRaw = req.query.grade;
-    const grade =
-      typeof gradeRaw === 'string' && gradeRaw !== '' ? parseInt(gradeRaw, 10) : undefined;
+    const grades = parseGradeQuery(req.query.grades ?? req.query.grade);
 
     const packs = filterCatalogPacks(await loadAllPacksForFamily(req.user!.familyId), {
       search,
       category,
-      grade,
+      grades,
     });
     const assignments = await LearningAssignment.find({ familyId: req.user!.familyId });
     const settingsRows = await LearningPackSettings.find({ familyId: req.user!.familyId });
+    const progressRows = await LearningProgress.find({ familyId: req.user!.familyId });
     const byPack = new Map<string, string[]>();
+    const completedByPack = new Map<string, string[]>();
+    const pastByPack = new Map<string, string[]>();
     const settingsByPack = new Map(
       settingsRows.map((row) => [
         row.packId,
@@ -96,9 +126,33 @@ router.get('/catalog', authenticate, requireParent, async (req: Request, res: Re
       byPack.set(row.packId, list);
     }
 
+    for (const row of progressRows) {
+      const kidId = row.kidId.toString();
+      const assigned = (byPack.get(row.packId) ?? []).includes(kidId);
+      const started =
+        !!row.completedAt ||
+        (row.completedActivityIds?.length ?? 0) > 0 ||
+        (row.answers?.length ?? 0) > 0;
+      if (row.completedAt) {
+        const list = completedByPack.get(row.packId) ?? [];
+        list.push(kidId);
+        completedByPack.set(row.packId, list);
+      } else if (started && !assigned) {
+        const list = pastByPack.get(row.packId) ?? [];
+        list.push(kidId);
+        pastByPack.set(row.packId, list);
+      }
+    }
+
     res.json({
       items: packs.map((pack) =>
-        packToCatalogItem(pack, byPack.get(pack.id) ?? [], settingsByPack.get(pack.id))
+        packToCatalogItem(
+          pack,
+          byPack.get(pack.id) ?? [],
+          settingsByPack.get(pack.id),
+          completedByPack.get(pack.id) ?? [],
+          pastByPack.get(pack.id) ?? []
+        )
       ),
     });
   } catch (err) {
@@ -581,11 +635,28 @@ router.post('/packs/:packId/check', authenticate, requireKid, async (req: Reques
       return res.status(404).json({ error: 'שאלה לא נמצאה' });
     }
 
-    if (activity.type !== 'multiple_choice') {
+    if (
+      activity.type !== 'multiple_choice' &&
+      activity.type !== 'select_all' &&
+      activity.type !== 'open_words'
+    ) {
       return res.status(400).json({ error: 'סוג פעילות לא נתמך עדיין' });
     }
 
-    const correct = checkAnswer(activity, String(answer));
+    if (activity.type === 'select_all' && normalizeSelectAllIds(answer).length < 1) {
+      return res.status(400).json({ error: 'סמנו לפחות תשובה אחת' });
+    }
+    if (activity.type === 'open_words' && parseOpenWordList(answer).length < 1) {
+      return res.status(400).json({ error: 'הכניסו לפחות מילה אחת' });
+    }
+
+    const correct = checkAnswer(activity, answer);
+    const storedAnswer =
+      activity.type === 'select_all'
+        ? normalizeSelectAllIds(answer).join(',')
+        : activity.type === 'open_words'
+          ? parseOpenWordList(answer).join(',')
+          : String(answer);
     let progress = await LearningProgress.findOne({ kidId: kid._id, packId });
 
     if (!progress) {
@@ -609,7 +680,7 @@ router.post('/packs/:packId/check', authenticate, requireKid, async (req: Reques
       const answers = progress.answers ?? [];
       answers.push({
         activityId,
-        selectedAnswer: String(answer),
+        selectedAnswer: storedAnswer,
         correct,
         answeredAt: new Date(),
       });
@@ -622,12 +693,22 @@ router.post('/packs/:packId/check', authenticate, requireKid, async (req: Reques
         if (existingMistake) existingMistake.count += 1;
         else mistakes.push({ activityId, count: 1 });
         progress.mistakes = mistakes;
-      } else {
+      }
+
+      if (
+        progress.completedActivityIds.length >= pack.activities.length &&
+        !progress.completedAt
+      ) {
+        progress.completedAt = new Date();
+        packJustCompleted = true;
+      }
+
+      if (packJustCompleted) {
         const settings = await LearningPackSettings.findOne({
           familyId: kid.familyId,
           packId,
         });
-        pointsAwarded = activityPoints(pack, activity, settings?.pointsPerActivity);
+        pointsAwarded = packCompletionPoints(pack, settings?.pointsPerActivity);
         progress.totalPointsEarned += pointsAwarded;
 
         const today = todayString();
@@ -646,17 +727,9 @@ router.post('/packs/:packId/check', authenticate, requireKid, async (req: Reques
           pointsAwarded,
           'bonus',
           `לימוד: ${pack.title.he}`,
-          `${packId}:${activityId}`
+          `${packId}:complete`
         );
         newBadges = badges.map((b) => ({ id: b.id, xpAwarded: b.xpAwarded }));
-      }
-
-      if (
-        progress.completedActivityIds.length >= pack.activities.length &&
-        !progress.completedAt
-      ) {
-        progress.completedAt = new Date();
-        packJustCompleted = true;
       }
 
       await progress.save();
@@ -679,9 +752,11 @@ router.post('/packs/:packId/check', authenticate, requireKid, async (req: Reques
       xp: kid.xp,
       learningStreak: kid.learningStreak ?? 0,
       newBadges: newBadges.length ? newBadges : undefined,
-      packPointsEarned: packCompleted ? progress.totalPointsEarned : undefined,
+      packPointsEarned: packJustCompleted ? pointsAwarded : undefined,
       correct,
       correctOptionId: activity.type === 'multiple_choice' ? activity.answer : undefined,
+      correctOptionIds: activity.type === 'select_all' ? [...activity.answer] : undefined,
+      acceptedWords: activity.type === 'open_words' ? canonicalOpenWords(activity.accept) : undefined,
       explanation: activity.explanation,
       pointsAwarded,
     });
@@ -717,30 +792,71 @@ router.get('/results', authenticate, requireParent, async (req: Request, res: Re
       correctText: string;
       correct: boolean;
       answeredAt: string;
+      kind?: string;
+      category?: string;
+      explanationHe?: string;
+      passageHe?: string;
+      passageTitleHe?: string;
     }> = [];
 
     for (const progress of progressList) {
       const pack = await getLearningPackForFamily(progress.packId, req.user!.familyId);
       for (const ans of progress.answers || []) {
         const activity = pack?.activities.find((a) => a.id === ans.activityId);
-        if (!activity || activity.type !== 'multiple_choice') continue;
-        const selected = activity.options.find((o) => o.id === ans.selectedAnswer);
-        const correctOpt = activity.options.find((o) => o.id === activity.answer);
+        if (!activity) continue;
+
+        let options: { id: string; text: string }[] = [];
+        let selectedText = ans.selectedAnswer;
+        let correctAnswer = '';
+        let correctText = '';
+
+        if (activity.type === 'multiple_choice') {
+          options = activity.options.map((o) => ({ id: o.id, text: o.text }));
+          selectedText = activity.options.find((o) => o.id === ans.selectedAnswer)?.text || ans.selectedAnswer;
+          correctAnswer = activity.answer;
+          correctText = activity.options.find((o) => o.id === activity.answer)?.text || activity.answer;
+        } else if (activity.type === 'select_all') {
+          options = activity.options.map((o) => ({ id: o.id, text: o.text }));
+          const selectedIds = normalizeSelectAllIds(ans.selectedAnswer);
+          selectedText = selectedIds
+            .map((id) => activity.options.find((o) => o.id === id)?.text || id)
+            .join(' · ');
+          correctAnswer = activity.answer.join(',');
+          correctText = activity.answer
+            .map((id) => activity.options.find((o) => o.id === id)?.text || id)
+            .join(' · ');
+        } else if (activity.type === 'open_words') {
+          selectedText = parseOpenWordList(ans.selectedAnswer).join(' · ');
+          correctAnswer = activity.accept.join(',');
+          correctText = canonicalOpenWords(activity.accept).join(' · ');
+        } else if (activity.type === 'fill_blank') {
+          correctAnswer = activity.answer.join(' / ');
+          correctText = correctAnswer;
+        } else {
+          correctAnswer = activity.answer.text;
+          correctText = activity.answer.text;
+        }
+
         results.push({
           packId: progress.packId,
           packTitle: pack?.title.he || progress.packId,
           activityId: ans.activityId,
-          questionPreview: activity.prompt.text.slice(0, 120),
-          options: activity.options.map((o) => ({ id: o.id, text: o.text })),
+          questionPreview: activity.prompt.text.slice(0, 160),
+          options,
           selectedAnswer: ans.selectedAnswer,
-          selectedText: selected?.text || ans.selectedAnswer,
-          correctAnswer: activity.answer,
-          correctText: correctOpt?.text || activity.answer,
+          selectedText,
+          correctAnswer,
+          correctText,
           correct: ans.correct,
           answeredAt:
             ans.answeredAt instanceof Date
               ? ans.answeredAt.toISOString()
               : new Date(ans.answeredAt).toISOString(),
+          kind: pack ? resolvePackKind(pack.kind) : undefined,
+          category: pack?.category,
+          explanationHe: activity.explanation?.he,
+          passageHe: pack?.passage?.he,
+          passageTitleHe: pack?.passageTitle?.he,
         });
       }
     }

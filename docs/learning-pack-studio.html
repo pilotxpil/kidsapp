@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>סטודיו חבילות לימוד — KidsQuest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #120c0a;
+      --card: #1c1410;
+      --line: #4a3224;
+      --text: #f6eee6;
+      --muted: #b7a08c;
+      --accent: #ff8a3d;
+      --ok: #8bc34a;
+      --bad: #ff5a3d;
+      --warn: #ffb300;
+      --kid-bg: #1a0a06;
+      --kid-card: #1a120e;
+      --kid-card-2: #2a1c14;
+      --kid-line: #5c3a22;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: Heebo, "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(900px 420px at 12% -10%, #5a2208 0%, transparent 55%),
+        var(--bg);
+      color: var(--text);
+    }
+    header {
+      position: sticky; top: 0; z-index: 8;
+      background: rgba(18, 10, 8, 0.94);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 18px;
+      backdrop-filter: blur(10px);
+    }
+    header .row {
+      display: flex; gap: 12px; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; max-width: 1440px; margin: 0 auto;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    .hint { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    button, .btn, select, input, textarea {
+      font-family: inherit;
+    }
+    button, .btn {
+      border: 0; border-radius: 10px; padding: 8px 14px;
+      font-weight: 800; cursor: pointer; font-size: 13px;
+      background: #3a2218; color: var(--text);
+    }
+    button.primary, .btn.primary { background: var(--accent); color: #1a0a06; }
+    button.ok { background: #2d4a22; color: #c8f0a8; }
+    button.ghost { background: transparent; border: 1px solid var(--line); }
+    button:disabled { opacity: 0.45; cursor: default; }
+    .drop {
+      border: 1.5px dashed var(--line); border-radius: 16px;
+      padding: 28px 16px; text-align: center; color: var(--muted);
+      background: #18100c; margin-bottom: 12px;
+    }
+    .drop.over { border-color: var(--accent); background: #2a160e; color: var(--text); }
+    .layout {
+      display: grid;
+      grid-template-columns: 250px minmax(340px, 1fr) 400px;
+      gap: 14px;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 16px;
+      align-items: start;
+    }
+    @media (max-width: 1180px) {
+      .layout { grid-template-columns: 1fr; }
+      .phone-col { position: static; }
+    }
+    .col {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      min-height: 200px;
+    }
+    .pack-item {
+      display: block; width: 100%; text-align: right;
+      background: #18100c; border: 1px solid var(--line);
+      border-radius: 12px; padding: 10px 12px; margin-bottom: 8px;
+    }
+    .pack-item.active { border-color: var(--accent); box-shadow: 0 0 0 1px #ff8a3d55; }
+    .pack-item .name { font-weight: 800; font-size: 14px; }
+    .pack-item .meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .tag {
+      display: inline-block; font-size: 11px; font-weight: 800;
+      border-radius: 999px; padding: 2px 8px; margin-inline-start: 4px;
+    }
+    .tag.ok { background: #1c3320; color: #7dff9a; }
+    .tag.bad { background: #3a1610; color: #ff8a7a; }
+    .tag.warn { background: #3a2a0c; color: var(--warn); }
+    .tag.dirty { background: #3a1c0c; color: var(--accent); }
+    label { display: block; font-size: 12px; font-weight: 800; color: var(--muted); margin: 10px 0 4px; }
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%; background: #120c0a; color: var(--text);
+      border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 14px;
+    }
+    textarea { min-height: 88px; resize: vertical; line-height: 1.45; }
+    textarea.tall { min-height: 140px; }
+    .q-card {
+      border: 1px solid var(--line); border-radius: 14px;
+      padding: 10px 12px; margin-top: 12px; background: #18100c;
+    }
+    .q-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .opt {
+      display: grid; grid-template-columns: auto 36px 1fr auto;
+      gap: 8px; align-items: center; margin-top: 6px;
+    }
+    .opt input[type="text"] { margin: 0; }
+    .status {
+      border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: 13px; line-height: 1.45;
+    }
+    .status.ok { background: #1c3320; color: #c8f0a8; }
+    .status.bad { background: #3a1610; color: #ffc8bc; }
+    .status.warn { background: #3a2a0c; color: #ffe7a8; }
+    .status ul { margin: 6px 0 0; padding-inline-start: 18px; }
+    .phone-col { position: sticky; top: 76px; }
+    .phone {
+      width: 100%; max-width: 380px; margin: 0 auto;
+      background: linear-gradient(180deg, #1a0a06, #0a0604);
+      border: 3px solid #5c3a22; border-radius: 28px; padding: 16px 14px 20px;
+      min-height: 640px; box-shadow: 0 18px 40px #0008;
+    }
+    .phone .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      color: #d4b8a0; font-size: 12px; font-weight: 800; margin-bottom: 12px;
+    }
+    .phone h2 { font-size: 18px; margin: 0 0 10px; text-align: center; }
+    .passage {
+      background: #050506; border: 1px solid #5c3a22; border-radius: 18px;
+      padding: 14px; margin-bottom: 12px;
+    }
+    .passage .eyebrow { color: #ff5a00; font-size: 12px; font-weight: 800; text-align: center; }
+    .passage .ptitle { text-align: center; font-weight: 800; margin: 6px 0 10px; }
+    .passage .body { font-size: 16px; line-height: 1.7; white-space: pre-wrap; }
+    .badge {
+      display: block; width: fit-content; margin: 0 auto 10px;
+      background: #ff5a0033; color: #ff8a3d; font-weight: 800;
+      border-radius: 999px; padding: 5px 12px; font-size: 12px;
+    }
+    .prompt { font-size: 19px; font-weight: 800; text-align: center; margin: 0 0 14px; }
+    .choice {
+      display: block; width: 100%; text-align: center;
+      background: #1a120e; border: 2px solid #5c3a22; border-radius: 16px;
+      padding: 12px; margin-bottom: 8px; color: #fff8f0; font-weight: 700; font-size: 15px;
+    }
+    .choice.on { border-color: #ff5a00; background: #2a1c14; }
+    .choice.good { border-color: #8bc34a; background: #8bc34a33; }
+    .choice.bad { border-color: #ff3d00; background: #ff3d0033; }
+    .choice.miss { border-color: #8bc34a; background: #8bc34a18; }
+    .sel-row { display: flex; align-items: center; gap: 10px; text-align: right; }
+    .box {
+      width: 22px; height: 22px; border-radius: 6px; border: 2px solid #ff5a00;
+      flex: 0 0 22px; display: grid; place-items: center; font-weight: 900;
+    }
+    .box.on { background: #ff5a00; }
+    .word-slot { margin-bottom: 8px; }
+    .word-slot label { color: #d4b8a0; }
+    .phone .cta {
+      width: 100%; background: #ff5a00; color: #0a0a0c;
+      border-radius: 14px; padding: 12px; font-size: 16px; margin-top: 8px;
+    }
+    .phone .cta.ghost {
+      background: transparent; color: #fff8f0; border: 1px solid #5c3a22;
+    }
+    .feedback {
+      text-align: center; font-weight: 800; margin: 10px 0; border-radius: 12px; padding: 8px;
+    }
+    .feedback.good { background: #8bc34a33; color: #c8f0a8; }
+    .feedback.bad { background: #ff3d0033; color: #ffc8bc; }
+    .key {
+      margin-top: 12px; background: #18100c; border: 1px dashed var(--line);
+      border-radius: 12px; padding: 10px; font-size: 13px; color: var(--muted);
+    }
+    .key b { color: var(--ok); }
+    .muted { color: var(--muted); font-size: 13px; }
+    .empty { color: var(--muted); text-align: center; padding: 28px 8px; }
+    .type-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .type-row button { padding: 6px 10px; }
+    .type-row button.on { background: var(--accent); color: #1a0a06; }
+    #paste { min-height: 70px; }
+    .auth {
+      display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap;
+      max-width: 1440px; margin: 10px auto 0;
+    }
+    .auth label { margin: 0; }
+    .auth input, .auth select { width: auto; min-width: 180px; }
+    .auth .who { font-size: 13px; font-weight: 800; padding-bottom: 8px; color: var(--ok); }
+    .kids { margin-top: 12px; }
+    .kids label.kid {
+      display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text);
+      margin: 6px 0; font-size: 13px;
+    }
+    #publishMsg { font-size: 13px; font-weight: 700; padding: 8px 0 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <div>
+        <h1>סטודיו חבילות לימוד</h1>
+        <p class="hint">העלו JSON, בדקו, ערכו — ואז טענו ישר למאגר המשפחה (בלי לעבור בטלפון).</p>
+      </div>
+      <div class="actions">
+        <label class="btn primary" style="margin:0">
+          העלאת קבצים
+          <input id="file" type="file" accept=".json,application/json" multiple hidden />
+        </label>
+        <button type="button" id="btnNew">חבילה חדשה</button>
+        <button type="button" id="btnPublish" class="ok" disabled>טעינה למאגר</button>
+        <button type="button" id="btnPublishAll" class="ghost" disabled>טעינת הכל למאגר</button>
+        <button type="button" id="btnDownload" class="ghost" disabled>הורדת JSON</button>
+      </div>
+    </div>
+    <div class="auth" id="authBar"></div>
+  </header>
+
+  <main class="layout">
+    <aside class="col" id="sidebar">
+      <div id="drop" class="drop">גררו לכאן קבצי JSON, או הדביקו למטה</div>
+      <label for="paste">הדבקת JSON</label>
+      <textarea id="paste" placeholder='אובייקט אחד, או מערך [{...},{...}]'></textarea>
+      <button type="button" id="btnPaste" class="primary" style="width:100%;margin-top:8px">טעינה מההדבקה</button>
+      <div id="kidsBox" class="kids"></div>
+      <div id="packList" style="margin-top:14px"></div>
+    </aside>
+
+    <section class="col" id="editorCol">
+      <div class="empty">בחרו חבילה מהרשימה, או העלו קובץ.</div>
+    </section>
+
+    <section class="phone-col">
+      <div class="col" style="padding:12px 10px 16px">
+        <div class="phone" id="phone">
+          <div class="empty">כאן תופיע תצוגת הילד</div>
+        </div>
+        <div id="answerKey" class="key" hidden></div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const CATEGORIES = { language: "עברית", math: "חשבון", english: "אנגלית", science: "מדעים", general: "כללי" };
+const KINDS = { quiz: "שאלות", reading: "קריאה והבנה" };
+const GRADES = { 1: "א", 2: "ב", 3: "ג", 4: "ד", 5: "ה", 6: "ו" };
+const TYPES = { multiple_choice: "תשובה אחת", select_all: "כל הנכונות", open_words: "הכנסת מילים" };
+
+let items = [];
+let selected = -1;
+let preview = { screen: "intro", q: 0 };
+let tryState = emptyTry();
+
+const PROD_API = "https://kids.synaboard.com";
+const LOCAL_API = "http://localhost:3001";
+const session = {
+  api: localStorage.getItem("kq_studio_api") || PROD_API,
+  token: localStorage.getItem("kq_studio_token") || "",
+  user: null,
+  kids: [],
+  kidIds: new Set(),
+};
+try {
+  session.kidIds = new Set(JSON.parse(localStorage.getItem("kq_studio_kids") || "[]"));
+} catch (_) {}
+
+function emptyTry() {
+  return { selectedId: null, selectedIds: [], words: [], revealed: false, correct: null, error: "" };
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+function he(obj) { return (obj && typeof obj === "object" ? obj.he : "") || ""; }
+function clone(v) { return JSON.parse(JSON.stringify(v)); }
+
+function stripFence(text) {
+  return String(text || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+}
+
+function normalizeOpenWord(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[\u0591-\u05C7]/g, "")
+    .replace(/[״"׳'`]/g, "")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+function parseOpenWordList(value) {
+  const raw = Array.isArray(value) ? value : String(value || "").split(/[\n,،]+/);
+  return raw.map((w) => String(w).trim()).filter(Boolean);
+}
+function openWordGroups(accept) {
+  return parseOpenWordList(accept)
+    .map((item) => item.split("|").map((p) => normalizeOpenWord(p)).filter(Boolean))
+    .filter((g) => g.length);
+}
+function canonicalOpenWords(accept) {
+  return parseOpenWordList(accept).map((item) => item.split("|")[0].trim()).filter(Boolean);
+}
+function openWordsMatch(accept, given, count) {
+  if (!Number.isFinite(count) || count < 1) return false;
+  const groups = openWordGroups(accept);
+  if (groups.length < count) return false;
+  const words = parseOpenWordList(given).map(normalizeOpenWord).filter(Boolean);
+  const unique = [...new Set(words)];
+  if (unique.length !== count || unique.length !== words.length) return false;
+  const used = new Set();
+  for (const word of unique) {
+    const idx = groups.findIndex((g, i) => !used.has(i) && g.includes(word));
+    if (idx < 0) return false;
+    used.add(idx);
+  }
+  return used.size === count;
+}
+
+function validatePack(raw) {
+  const errors = [];
+  const warnings = [];
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { ok: false, errors: ["הקובץ חייב להיות אובייקט JSON של חבילה"], warnings };
+  }
+  const p = raw;
+  if (typeof p.id !== "string" || !p.id.trim()) errors.push("חסר id באנגלית (kebab-case)");
+  if (p.version !== undefined && (typeof p.version !== "number" || p.version < 1)) errors.push("version חייב להיות מספר ≥ 1");
+  if (!he(p.title).trim()) errors.push("חסרה כותרת title.he");
+  const category = p.category || p.subject;
+  if (!CATEGORIES[category]) errors.push("category חייב להיות language / math / english / science / general");
+  if (typeof p.defaultPoints !== "number" || p.defaultPoints < 1 || p.defaultPoints > 100) {
+    errors.push("defaultPoints חייב להיות מספר 1–100");
+  }
+  const kind = p.kind === "reading" ? "reading" : "quiz";
+  if (p.kind && p.kind !== "quiz" && p.kind !== "reading") errors.push("kind חייב להיות quiz או reading");
+  if (kind === "reading" && !he(p.passage).trim()) errors.push("לחבילת קריאה חובה passage.he");
+  if (p.grade != null && ![1,2,3,4,5,6].includes(Number(p.grade))) errors.push("grade חייב להיות 1–6");
+  if (!Array.isArray(p.activities) || !p.activities.length) errors.push("חסרות שאלות ב-activities");
+  const ids = new Set();
+  (p.activities || []).forEach((a, i) => {
+    const n = `שאלה ${i + 1}`;
+    if (!a || typeof a !== "object") { errors.push(`${n}: לא תקינה`); return; }
+    if (typeof a.id !== "string" || !a.id) errors.push(`${n}: חסר id`);
+    else if (ids.has(a.id)) errors.push(`${n}: id כפול (${a.id})`);
+    else ids.add(a.id);
+    if (!a.prompt || typeof a.prompt.text !== "string" || !a.prompt.text.trim()) errors.push(`${n}: חסר נוסח שאלה`);
+    if (a.type === "multiple_choice") {
+      const opts = Array.isArray(a.options) ? a.options : [];
+      if (opts.length < 2) errors.push(`${n}: צריך לפחות 2 אפשרויות`);
+      if (opts.some((o) => !o || !o.id || !String(o.text || "").trim())) errors.push(`${n}: אפשרות בלי id או טקסט`);
+      if (typeof a.answer !== "string" || !opts.some((o) => o && o.id === a.answer)) errors.push(`${n}: answer חייב להיות id של אפשרות`);
+      if (opts.length === 2) warnings.push(`${n}: מומלץ 3–4 אפשרויות`);
+    } else if (a.type === "select_all") {
+      const opts = Array.isArray(a.options) ? a.options : [];
+      const answers = Array.isArray(a.answer) ? a.answer.filter((id) => typeof id === "string") : [];
+      if (opts.length < 3) errors.push(`${n}: select_all צריך לפחות 3 אפשרויות`);
+      if (answers.length < 2) errors.push(`${n}: סמנו לפחות 2 תשובות נכונות`);
+      else if (answers.length >= opts.length) errors.push(`${n}: חייבת להישאר לפחות אפשרות שגויה אחת`);
+      if (answers.some((id) => !opts.some((o) => o && o.id === id))) errors.push(`${n}: answer כולל id שלא קיים`);
+    } else if (a.type === "open_words") {
+      const accept = parseOpenWordList(a.accept);
+      const count = typeof a.count === "number" ? a.count : Number(a.count);
+      if (!Number.isInteger(count) || count < 1 || count > 8) errors.push(`${n}: count חייב להיות מספר שלם 1–8`);
+      if (openWordGroups(accept).length < (count || 1)) errors.push(`${n}: ב-accept צריך לפחות כמו count מילים קבילות`);
+    } else {
+      errors.push(`${n}: type לא נתמך (${a.type || "חסר"}) — multiple_choice / select_all / open_words`);
+    }
+    if (!he(a.explanation).trim()) warnings.push(`${n}: כדאי explanation.he לסקירת הורה`);
+  });
+  if ((p.activities || []).length && (p.activities || []).length < 6) {
+    warnings.push("מומלץ 6–10 שאלות לחבילה");
+  }
+  return { ok: errors.length === 0, errors, warnings, kind, category };
+}
+
+function blankPack() {
+  return {
+    id: "topic-slug-4",
+    version: 1,
+    title: { he: "חבילה חדשה" },
+    category: "language",
+    kind: "reading",
+    grade: 4,
+    tags: ["reading"],
+    defaultPoints: 6,
+    passageTitle: { he: "" },
+    passage: { he: "" },
+    activities: [blankQuestion("q1", "multiple_choice")]
+  };
+}
+function blankQuestion(id, type) {
+  if (type === "open_words") {
+    return { id, type, prompt: { text: "" }, count: 3, accept: [], explanation: { he: "" } };
+  }
+  if (type === "select_all") {
+    return {
+      id, type, prompt: { text: "" },
+      options: [
+        { id: "a", text: "" }, { id: "b", text: "" }, { id: "c", text: "" }, { id: "d", text: "" }
+      ],
+      answer: ["a", "b"],
+      explanation: { he: "" }
+    };
+  }
+  return {
+    id, type: "multiple_choice", prompt: { text: "" },
+    options: [{ id: "a", text: "" }, { id: "b", text: "" }, { id: "c", text: "" }],
+    answer: "a",
+    explanation: { he: "" }
+  };
+}
+function nextQid(pack) {
+  const n = (pack.activities || []).length + 1;
+  let id = `q${n}`;
+  const used = new Set((pack.activities || []).map((a) => a.id));
+  while (used.has(id)) id = `q${n}-${Math.random().toString(36).slice(2, 4)}`;
+  return id;
+}
+function optionId(i) { return String.fromCharCode(97 + i); }
+
+function cleanPack(pack) {
+  const kind = pack.kind === "reading" ? "reading" : "quiz";
+  const out = {
+    id: String(pack.id || "").trim(),
+    version: typeof pack.version === "number" && pack.version >= 1 ? pack.version : 1,
+    title: { he: he(pack.title).trim() },
+    category: CATEGORIES[pack.category] ? pack.category : "general",
+    kind,
+    defaultPoints: Number(pack.defaultPoints) || 5,
+    activities: (pack.activities || []).map(cleanActivity)
+  };
+  if (pack.title && pack.title.en) out.title.en = pack.title.en;
+  if (pack.grade) out.grade = Number(pack.grade);
+  if (Array.isArray(pack.tags) && pack.tags.length) out.tags = pack.tags.map(String);
+  if (kind === "reading" || he(pack.passage).trim()) out.passage = { he: he(pack.passage) };
+  if (he(pack.passageTitle).trim()) out.passageTitle = { he: he(pack.passageTitle).trim() };
+  return out;
+}
+function cleanActivity(a) {
+  const base = {
+    id: a.id,
+    type: a.type,
+    prompt: { text: a.prompt?.text || "" }
+  };
+  if (he(a.explanation).trim()) base.explanation = { he: he(a.explanation).trim() };
+  if (a.points) base.points = a.points;
+  if (a.type === "open_words") {
+    base.count = Math.min(8, Math.max(1, Math.round(Number(a.count) || 1)));
+    base.accept = parseOpenWordList(a.accept);
+    return base;
+  }
+  base.options = (a.options || []).map((o, i) => ({ id: o.id || optionId(i), text: String(o.text || "").trim() }));
+  if (a.type === "select_all") base.answer = Array.isArray(a.answer) ? a.answer.slice() : [];
+  else base.answer = a.answer;
+  return base;
+}
+
+function addItems(payload, filename) {
+  const list = Array.isArray(payload) ? payload : [payload];
+  list.forEach((raw, i) => {
+    const pack = (raw && typeof raw === "object") ? raw : {};
+    if (!pack.activities) pack.activities = [];
+    if (!pack.title) pack.title = { he: "" };
+    items.push({
+      filename: list.length > 1 ? `${filename || "pack"} #${i + 1}` : (filename || pack.id || "חבילה"),
+      pack,
+      dirty: false
+    });
+  });
+  selected = items.length - 1;
+  resetPreview();
+  renderAll();
+}
+
+function current() { return selected >= 0 ? items[selected] : null; }
+function currentPack() { return current()?.pack || null; }
+function markDirty() { if (current()) current().dirty = true; }
+
+function resetPreview() {
+  const pack = currentPack();
+  preview = { screen: (pack && pack.kind === "reading") ? "intro" : "q", q: 0 };
+  tryState = emptyTry();
+}
+
+function ingestText(text, filename) {
+  const cleaned = stripFence(text);
+  if (!cleaned) return alert("אין מה לטעון");
+  let parsed;
+  try { parsed = JSON.parse(cleaned); }
+  catch (e) { return alert("JSON לא תקין: " + e.message); }
+  addItems(parsed, filename);
+}
+
+function download(obj, name) {
+  const blob = new Blob([JSON.stringify(obj, null, 2) + "\n"], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function renderSidebar() {
+  const host = document.getElementById("packList");
+  if (!items.length) {
+    host.innerHTML = "";
+    return;
+  }
+  host.innerHTML = items.map((it, i) => {
+    const v = validatePack(it.pack);
+    const title = he(it.pack.title) || it.filename;
+    const tag = v.ok
+      ? `<span class="tag ok">תקין</span>`
+      : `<span class="tag bad">${v.errors.length} שגיאות</span>`;
+    const warn = v.ok && v.warnings.length ? `<span class="tag warn">${v.warnings.length} הערות</span>` : "";
+    const dirty = it.dirty ? `<span class="tag dirty">נערך</span>` : "";
+    return `<button type="button" class="pack-item ${i === selected ? "active" : ""}" data-select="${i}">
+      <div class="name">${esc(title)}</div>
+      <div class="meta">${esc(it.filename)} · ${(it.pack.activities || []).length} שאלות ${tag}${warn}${dirty}</div>
+    </button>`;
+  }).join("");
+}
+
+function statusHtml(v) {
+  if (v.ok && !v.warnings.length) return `<div class="status ok">החבילה תקינה לייבוא באפליקציה.</div>`;
+  if (v.ok) {
+    return `<div class="status warn">תקינה לייבוא, עם הערות:<ul>${v.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div>`;
+  }
+  return `<div class="status bad">לא ייובא במצב הנוכחי:<ul>${v.errors.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>
+    ${v.warnings.length ? `<div style="margin-top:8px">הערות: ${v.warnings.map(esc).join(" · ")}</div>` : ""}</div>`;
+}
+
+function renderEditor() {
+  const host = document.getElementById("editorCol");
+  const item = current();
+  const btnDl = document.getElementById("btnDownload");
+  const btnPub = document.getElementById("btnPublish");
+  const btnPubAll = document.getElementById("btnPublishAll");
+  btnPubAll.disabled = !items.length || !session.token;
+  if (!item) {
+    host.innerHTML = `<div class="empty">בחרו חבילה מהרשימה, או העלו קובץ.</div>`;
+    btnDl.disabled = true;
+    btnPub.disabled = true;
+    return;
+  }
+  const p = item.pack;
+  const v = validatePack(p);
+  btnDl.disabled = false;
+  btnPub.disabled = !session.token;
+  const cats = Object.entries(CATEGORIES).map(([id, label]) =>
+    `<option value="${id}" ${p.category === id ? "selected" : ""}>${label}</option>`).join("");
+  const grades = [`<option value="">—</option>`].concat(
+    Object.entries(GRADES).map(([n, l]) => `<option value="${n}" ${String(p.grade) === n ? "selected" : ""}>כיתה ${l}</option>`)
+  ).join("");
+  host.innerHTML = `
+    ${statusHtml(v)}
+    <div class="row2">
+      <div><label>כותרת</label><input type="text" data-f="title" value="${esc(he(p.title))}" /></div>
+      <div><label>מזהה (id)</label><input type="text" data-f="id" value="${esc(p.id || "")}" dir="ltr" /></div>
+    </div>
+    <div class="row2">
+      <div><label>קטגוריה</label><select data-f="category">${cats}</select></div>
+      <div><label>סוג חבילה</label>
+        <select data-f="kind">
+          <option value="quiz" ${p.kind !== "reading" ? "selected" : ""}>שאלות</option>
+          <option value="reading" ${p.kind === "reading" ? "selected" : ""}>קריאה והבנה</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div><label>כיתה</label><select data-f="grade">${grades}</select></div>
+      <div><label>נקודות לסיום (כמו משימה — לא לפי כמה נכון)</label><input type="number" min="1" max="100" data-f="defaultPoints" value="${esc(p.defaultPoints ?? 5)}" /></div>
+    </div>
+    <label>תגיות (מופרדות בפסיק)</label>
+    <input type="text" data-f="tags" value="${esc((p.tags || []).join(", "))}" />
+    <div ${p.kind === "reading" ? "" : "hidden"}>
+      <label>כותרת הטקסט</label>
+      <input type="text" data-f="passageTitle" value="${esc(he(p.passageTitle))}" />
+      <label>טקסט לקריאה</label>
+      <textarea class="tall" data-f="passage">${esc(he(p.passage))}</textarea>
+    </div>
+    <div class="q-head" style="margin-top:16px">
+      <strong>שאלות (${(p.activities || []).length})</strong>
+      <button type="button" data-act="add-q">+ שאלה</button>
+    </div>
+    ${(p.activities || []).map(renderQuestionEditor).join("")}
+  `;
+}
+
+function renderQuestionEditor(a, i) {
+  const typeBtns = Object.entries(TYPES).map(([id, label]) =>
+    `<button type="button" data-act="type" data-qi="${i}" data-type="${id}" class="${a.type === id ? "on" : ""}">${label}</button>`
+  ).join("");
+  let body = "";
+  if (a.type === "open_words") {
+    body = `
+      <div class="row2">
+        <div><label>כמה מילים למצוא</label>
+          <input type="number" min="1" max="8" data-f="count" data-qi="${i}" value="${esc(a.count ?? 3)}" /></div>
+      </div>
+      <label>כל המילים הקבילות (שורה או פסיק. aliases: חזרה|חזר)</label>
+      <textarea data-f="accept" data-qi="${i}">${esc(parseOpenWordList(a.accept).join("\n"))}</textarea>
+    `;
+  } else {
+    const opts = a.options || [];
+    body = opts.map((o, oi) => {
+      const checked = a.type === "select_all"
+        ? (Array.isArray(a.answer) && a.answer.includes(o.id) ? "checked" : "")
+        : (a.answer === o.id ? "checked" : "");
+      const inputType = a.type === "select_all" ? "checkbox" : "radio";
+      return `<div class="opt">
+        <input type="${inputType}" name="ans-${i}" data-f="correct" data-qi="${i}" data-oi="${oi}" ${checked} />
+        <span class="muted">${esc(o.id || optionId(oi))}</span>
+        <input type="text" data-f="opt" data-qi="${i}" data-oi="${oi}" value="${esc(o.text || "")}" />
+        <button type="button" class="ghost" data-act="del-opt" data-qi="${i}" data-oi="${oi}">×</button>
+      </div>`;
+    }).join("");
+    body += `<button type="button" class="ghost" data-act="add-opt" data-qi="${i}" style="margin-top:8px">+ אפשרות</button>`;
+  }
+  return `<article class="q-card" data-qi="${i}">
+    <div class="q-head">
+      <strong>שאלה ${i + 1}</strong>
+      <div>
+        <button type="button" class="ghost" data-act="up" data-qi="${i}" ${i === 0 ? "disabled" : ""}>↑</button>
+        <button type="button" class="ghost" data-act="down" data-qi="${i}">↓</button>
+        <button type="button" class="ghost" data-act="del-q" data-qi="${i}">מחיקה</button>
+      </div>
+    </div>
+    <div class="type-row" style="margin-top:8px">${typeBtns}</div>
+    <label>נוסח השאלה</label>
+    <textarea data-f="prompt" data-qi="${i}">${esc(a.prompt?.text || "")}</textarea>
+    ${body}
+    <label>הסבר להורה (אחרי בדיקה)</label>
+    <textarea data-f="expl" data-qi="${i}">${esc(he(a.explanation))}</textarea>
+  </article>`;
+}
+
+function renderPhone() {
+  const phone = document.getElementById("phone");
+  const key = document.getElementById("answerKey");
+  const pack = currentPack();
+  if (!pack) {
+    phone.innerHTML = `<div class="empty">כאן תופיע תצוגת הילד</div>`;
+    key.hidden = true;
+    return;
+  }
+  const acts = pack.activities || [];
+  const v = validatePack(pack);
+  if (preview.screen === "intro" && pack.kind === "reading") {
+    phone.innerHTML = `
+      <div class="topbar"><span>לימוד</span><span>${esc(CATEGORIES[pack.category] || "")}</span></div>
+      <h2>${esc(he(pack.title) || "חבילה")}</h2>
+      <p class="muted" style="text-align:center">קראו את הטקסט בעיון, ואז ענו על שאלות ההבנה</p>
+      <div class="passage">
+        <div class="eyebrow">טקסט לקריאה</div>
+        <div class="ptitle">${esc(he(pack.passageTitle) || "")}</div>
+        <div class="body">${esc(he(pack.passage) || "— אין טקסט —")}</div>
+      </div>
+      <button type="button" class="cta" data-nav="start">לשאלות ההבנה</button>
+    `;
+    key.hidden = true;
+    return;
+  }
+  if (preview.screen === "done" || !acts.length) {
+    phone.innerHTML = `
+      <div class="topbar"><span>לימוד</span><span>${acts.length}/${acts.length}</span></div>
+      <h2>סיימתם את החבילה!</h2>
+      <p class="muted" style="text-align:center">ההורים יעברו איתך על התשובות אחר כך</p>
+      <button type="button" class="cta ghost" data-nav="restart">התחלה מחדש</button>
+    `;
+    key.hidden = true;
+    return;
+  }
+  const q = Math.min(preview.q, Math.max(0, acts.length - 1));
+  preview.q = q;
+  const a = acts[q];
+  const passageBtn = pack.kind === "reading"
+    ? `<button type="button" class="cta ghost" data-nav="passage">${preview.screen === "passage" ? "הסתרת הטקסט" : "הצגת הטקסט שוב"}</button>`
+    : "";
+  if (preview.screen === "passage") {
+    phone.innerHTML = `
+      <div class="topbar"><span>שאלה ${q + 1} מתוך ${acts.length}</span><span>${esc(GRADES[pack.grade] ? "כיתה " + GRADES[pack.grade] : "")}</span></div>
+      <div class="passage">
+        <div class="eyebrow">טקסט לקריאה</div>
+        <div class="ptitle">${esc(he(pack.passageTitle) || "")}</div>
+        <div class="body">${esc(he(pack.passage) || "")}</div>
+      </div>
+      ${passageBtn}
+    `;
+    key.hidden = false;
+    key.innerHTML = keyFor(a);
+    return;
+  }
+  phone.innerHTML = `
+    <div class="topbar"><span>שאלה ${q + 1} מתוך ${acts.length}</span><span>${v.ok ? "תקין" : "יש שגיאות"}</span></div>
+    ${questionView(a)}
+    ${tryState.revealed ? `<div class="feedback ${tryState.correct ? "good" : "bad"}">${tryState.correct ? "נכון!" : "לא מדויק"}</div>` : ""}
+    ${tryState.error ? `<div class="feedback bad">${esc(tryState.error)}</div>` : ""}
+    ${he(a.explanation) && tryState.revealed ? `<p class="muted" style="text-align:center">${esc(he(a.explanation))}</p>` : ""}
+    ${tryState.revealed
+      ? `<button type="button" class="cta" data-nav="next">${q + 1 >= acts.length ? "סיום" : "הבא"}</button>`
+      : (a.type === "multiple_choice"
+          ? ""
+          : `<button type="button" class="cta" data-nav="check">בדיקה</button>`)}
+    ${passageBtn}
+  `;
+  key.hidden = false;
+  key.innerHTML = keyFor(a);
+}
+
+function questionView(a) {
+  if (a.type === "open_words") {
+    const count = Math.min(8, Math.max(1, Number(a.count) || 1));
+    const slots = Array.from({ length: count }, (_, i) => {
+      const val = tryState.words[i] || "";
+      return `<div class="word-slot">
+        <label>מילה ${i + 1}</label>
+        <input type="text" data-word="${i}" value="${esc(val)}" ${tryState.revealed ? "disabled" : ""} />
+      </div>`;
+    }).join("");
+    const reveal = tryState.revealed
+      ? `<p class="muted">מילים אפשריות: ${esc(canonicalOpenWords(a.accept).join(" · "))}</p>` : "";
+    return `<div class="badge">הכניסו מילים מהטקסט</div><p class="prompt">${esc(a.prompt?.text || "")}</p>${slots}${reveal}`;
+  }
+  if (a.type === "select_all") {
+    const opts = (a.options || []).map((o) => {
+      const on = tryState.selectedIds.includes(o.id);
+      const revealed = tryState.revealed;
+      const good = Array.isArray(a.answer) && a.answer.includes(o.id);
+      const cls = revealed ? (good ? (on ? "good" : "miss") : (on ? "bad" : "")) : (on ? "on" : "");
+      return `<button type="button" class="choice ${cls}" data-toggle="${esc(o.id)}" ${revealed ? "disabled" : ""}>
+        <span class="sel-row"><span class="box ${on ? "on" : ""}">${on ? "✓" : ""}</span><span>${esc(o.text || "")}</span></span>
+      </button>`;
+    }).join("");
+    return `<div class="badge">סמנו את כל התשובות הנכונות</div><p class="prompt">${esc(a.prompt?.text || "")}</p>${opts}`;
+  }
+  const opts = (a.options || []).map((o) => {
+    const on = tryState.selectedId === o.id;
+    const revealed = tryState.revealed;
+    const good = o.id === a.answer;
+    const cls = revealed ? (good ? "good" : (on ? "bad" : "")) : (on ? "on" : "");
+    return `<button type="button" class="choice ${cls}" data-pick="${esc(o.id)}" ${revealed ? "disabled" : ""}>${esc(o.text || "")}</button>`;
+  }).join("");
+  return `<p class="prompt">${esc(a.prompt?.text || "")}</p>${opts}`;
+}
+
+function keyFor(a) {
+  if (!a) return "";
+  if (a.type === "open_words") {
+    return `<b>מפתח:</b> למצוא ${esc(a.count)} מתוך ${esc(canonicalOpenWords(a.accept).join(" · ") || "—")}`;
+  }
+  if (a.type === "select_all") {
+    const texts = (a.options || []).filter((o) => (a.answer || []).includes(o.id)).map((o) => o.text);
+    return `<b>מפתח:</b> ${esc(texts.join(" · ") || "—")}`;
+  }
+  const t = (a.options || []).find((o) => o.id === a.answer);
+  return `<b>מפתח:</b> ${esc(t?.text || a.answer || "—")}`;
+}
+
+function checkCurrent() {
+  const a = currentPack()?.activities?.[preview.q];
+  if (!a) return;
+  tryState.error = "";
+  if (a.type === "open_words") {
+    const count = Math.min(8, Math.max(1, Number(a.count) || 1));
+    const words = Array.from({ length: count }, (_, i) => (tryState.words[i] || "").trim());
+    if (words.some((w) => !w)) { tryState.error = "מלאו את כל המשבצות"; renderPhone(); return; }
+    const unique = new Set(words.map(normalizeOpenWord));
+    if (unique.size !== words.length) { tryState.error = "כל מילה צריכה להיות שונה"; renderPhone(); return; }
+    tryState.correct = openWordsMatch(a.accept, words, count);
+  } else if (a.type === "select_all") {
+    if (!tryState.selectedIds.length) { tryState.error = "סמנו לפחות תשובה אחת"; renderPhone(); return; }
+    const exp = [...(a.answer || [])].map(String).sort().join(",");
+    const got = [...tryState.selectedIds].map(String).sort().join(",");
+    tryState.correct = exp === got;
+  } else {
+    tryState.correct = tryState.selectedId === a.answer;
+  }
+  tryState.revealed = true;
+  renderPhone();
+}
+
+function renderAll() {
+  renderSidebar();
+  renderEditor();
+  renderPhone();
+}
+
+function setHe(obj, key, value) {
+  if (!obj[key] || typeof obj[key] !== "object") obj[key] = { he: "" };
+  obj[key].he = value;
+}
+
+function apiUrl(path) {
+  return session.api.replace(/\/$/, "") + path;
+}
+
+async function apiFetch(path, opts = {}) {
+  const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+  if (session.token) headers.Authorization = "Bearer " + session.token;
+  const res = await fetch(apiUrl(path), Object.assign({}, opts, { headers }));
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || ("שגיאה " + res.status));
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+function saveSession() {
+  localStorage.setItem("kq_studio_api", session.api);
+  if (session.token) localStorage.setItem("kq_studio_token", session.token);
+  else localStorage.removeItem("kq_studio_token");
+  if (session.user) localStorage.setItem("kq_studio_user", JSON.stringify(session.user));
+  else localStorage.removeItem("kq_studio_user");
+  localStorage.setItem("kq_studio_kids", JSON.stringify([...session.kidIds]));
+}
+
+function renderAuth() {
+  const host = document.getElementById("authBar");
+  const kidsHost = document.getElementById("kidsBox");
+  const prodSel = session.api === PROD_API ? "selected" : "";
+  const localSel = session.api === LOCAL_API ? "selected" : "";
+  if (session.token && session.user) {
+    host.innerHTML = `
+      <label>מאגר
+        <select id="apiBase">
+          <option value="${PROD_API}" ${prodSel}>האפליקציה (ייצור)</option>
+          <option value="${LOCAL_API}" ${localSel}>מקומי (פיתוח)</option>
+        </select>
+      </label>
+      <div class="who">מחובר/ת: ${esc(session.user.displayName || session.user.email || "הורה")}</div>
+      <button type="button" id="btnLogout" class="ghost">התנתקות</button>
+      <span id="publishMsg"></span>
+    `;
+    kidsHost.innerHTML = session.kids.length
+      ? `<div class="muted">שייכו לילדים אחרי טעינה</div>` +
+        session.kids.map((k) => `
+          <label class="kid">
+            <input type="checkbox" data-kid="${esc(k._id)}" ${session.kidIds.has(k._id) ? "checked" : ""} />
+            ${esc(k.displayName || k.username || "ילד")}
+          </label>`).join("")
+      : `<div class="muted">אין ילדים במשפחה — החבילה תיכנס לקטלוג, ותוכלו לשייך אחר כך באפליקציה.</div>`;
+  } else {
+    host.innerHTML = `
+      <label>מאגר
+        <select id="apiBase">
+          <option value="${PROD_API}" ${prodSel}>האפליקציה (ייצור)</option>
+          <option value="${LOCAL_API}" ${localSel}>מקומי (פיתוח)</option>
+        </select>
+      </label>
+      <label>אימייל הורה
+        <input type="email" id="loginEmail" autocomplete="username" dir="ltr" />
+      </label>
+      <label>סיסמה
+        <input type="password" id="loginPass" autocomplete="current-password" dir="ltr" />
+      </label>
+      <button type="button" id="btnLogin" class="primary">התחברות</button>
+      <span id="publishMsg"></span>
+    `;
+    kidsHost.innerHTML = `<div class="muted">התחברו כהורה כדי לטעון למאגר מהמחשב.</div>`;
+  }
+  updatePublishButtons();
+}
+
+function updatePublishButtons() {
+  const has = items.length > 0 && !!session.token;
+  const pub = document.getElementById("btnPublish");
+  const all = document.getElementById("btnPublishAll");
+  if (pub) pub.disabled = !session.token || selected < 0;
+  if (all) all.disabled = !has;
+}
+
+function setPublishMsg(text, ok) {
+  const el = document.getElementById("publishMsg");
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = ok ? "var(--ok)" : "var(--bad)";
+}
+
+async function login() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const pass = document.getElementById("loginPass").value;
+  if (!email || !pass) return setPublishMsg("חסר אימייל או סיסמה", false);
+  try {
+    setPublishMsg("מתחבר…", true);
+    const data = await apiFetch("/auth/parent/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password: pass }),
+    });
+    session.token = data.token;
+    session.user = data.user;
+    saveSession();
+    await loadKids();
+    renderAuth();
+    renderEditor();
+    setPublishMsg("מחובר. אפשר לטעון למאגר.", true);
+  } catch (e) {
+    setPublishMsg(e.message, false);
+  }
+}
+
+function logout() {
+  session.token = "";
+  session.user = null;
+  session.kids = [];
+  saveSession();
+  renderAuth();
+  renderEditor();
+}
+
+async function loadKids() {
+  const data = await apiFetch("/kids");
+  session.kids = data.kids || [];
+}
+
+async function restoreSession() {
+  try {
+    session.user = JSON.parse(localStorage.getItem("kq_studio_user") || "null");
+  } catch {
+    session.user = null;
+  }
+  renderAuth();
+  if (!session.token) return;
+  try {
+    await loadKids();
+    if (!session.user) session.user = { displayName: "הורה" };
+    renderAuth();
+  } catch (e) {
+    if (e.status === 401) logout();
+    else setPublishMsg(e.message, false);
+  }
+}
+
+async function publishPacks(mode) {
+  if (!session.token) return setPublishMsg("התחברו קודם כהורה", false);
+  const list = mode === "all" ? items : [current()].filter(Boolean);
+  if (!list.length) return setPublishMsg("אין חבילה לטעינה", false);
+  const payloads = list.map((it) => cleanPack(it.pack));
+  for (const p of payloads) {
+    const v = validatePack(p);
+    if (!v.ok) {
+      return setPublishMsg((p.title?.he || p.id) + ": " + v.errors[0], false);
+    }
+  }
+  const pub = document.getElementById("btnPublish");
+  const all = document.getElementById("btnPublishAll");
+  if (pub) pub.disabled = true;
+  if (all) all.disabled = true;
+  try {
+    setPublishMsg("טוען למאגר…", true);
+    const body = payloads.length === 1 ? payloads[0] : payloads;
+    const res = await apiFetch("/learning/custom-packs/import", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    const packs = res.packs || [];
+    const kidIds = [...session.kidIds];
+    if (kidIds.length && packs.length) {
+      for (const pack of packs) {
+        await apiFetch("/learning/assign", {
+          method: "POST",
+          body: JSON.stringify({ packId: pack.id, kidIds }),
+        });
+      }
+    }
+    const extra = res.errors && res.errors.length ? " · שגיאות: " + res.errors.join("; ") : "";
+    const assign = kidIds.length ? " ושויכה לילדים שנבחרו" : " — שייכו לילד בלשונית לימוד באפליקציה";
+    setPublishMsg("נטען למאגר (" + packs.length + " חבילות)" + assign + extra, !extra);
+  } catch (e) {
+    setPublishMsg(e.message, false);
+  }
+  updatePublishButtons();
+}
+
+document.getElementById("file").addEventListener("change", async (e) => {
+  const files = [...e.target.files];
+  for (const f of files) ingestText(await f.text(), f.name);
+  e.target.value = "";
+});
+
+const drop = document.getElementById("drop");
+drop.addEventListener("click", () => document.getElementById("file").click());
+["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", async (e) => {
+  const files = [...e.dataTransfer.files].filter((f) => /\.json$/i.test(f.name) || f.type.includes("json"));
+  if (!files.length && e.dataTransfer.getData("text")) return ingestText(e.dataTransfer.getData("text"), "הדבקה");
+  for (const f of files) ingestText(await f.text(), f.name);
+});
+
+document.getElementById("btnPaste").addEventListener("click", () => {
+  ingestText(document.getElementById("paste").value, "הדבקה");
+});
+document.getElementById("btnNew").addEventListener("click", () => addItems(blankPack(), "חדש.json"));
+document.getElementById("btnDownload").addEventListener("click", () => {
+  const it = current();
+  if (!it) return;
+  const cleaned = cleanPack(it.pack);
+  const v = validatePack(cleaned);
+  if (!v.ok && !confirm("יש שגיאות. להוריד בכל זאת?")) return;
+  download(cleaned, (cleaned.id || "pack") + ".json");
+});
+document.getElementById("btnPublish").addEventListener("click", () => void publishPacks("one"));
+document.getElementById("btnPublishAll").addEventListener("click", () => void publishPacks("all"));
+
+document.getElementById("packList").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-select]");
+  if (!btn) return;
+  selected = Number(btn.dataset.select);
+  resetPreview();
+  renderAll();
+});
+
+document.getElementById("editorCol").addEventListener("input", onEdit);
+document.getElementById("editorCol").addEventListener("change", onEdit);
+function onEdit(e) {
+  const el = e.target;
+  const p = currentPack();
+  if (!p || !el.dataset.f) return;
+  const f = el.dataset.f;
+  const qi = el.dataset.qi != null ? Number(el.dataset.qi) : -1;
+  const a = qi >= 0 ? p.activities[qi] : null;
+  if (f === "title") setHe(p, "title", el.value);
+  else if (f === "id") p.id = el.value.trim();
+  else if (f === "category") p.category = el.value;
+  else if (f === "kind") {
+    p.kind = el.value;
+    if (p.kind === "reading" && !p.passage) p.passage = { he: "" };
+    resetPreview();
+    renderEditor();
+  }
+  else if (f === "grade") p.grade = el.value ? Number(el.value) : undefined;
+  else if (f === "defaultPoints") p.defaultPoints = Number(el.value);
+  else if (f === "tags") p.tags = el.value.split(/[,،]+/).map((s) => s.trim()).filter(Boolean);
+  else if (f === "passageTitle") setHe(p, "passageTitle", el.value);
+  else if (f === "passage") setHe(p, "passage", el.value);
+  else if (a && f === "prompt") a.prompt = { ...(a.prompt || {}), text: el.value };
+  else if (a && f === "expl") setHe(a, "explanation", el.value);
+  else if (a && f === "count") a.count = Math.min(8, Math.max(1, parseInt(el.value, 10) || 1));
+  else if (a && f === "accept") a.accept = parseOpenWordList(el.value);
+  else if (a && f === "opt") a.options[Number(el.dataset.oi)].text = el.value;
+  else if (a && f === "correct") {
+    const oid = a.options[Number(el.dataset.oi)].id;
+    if (a.type === "select_all") {
+      const set = new Set(Array.isArray(a.answer) ? a.answer : []);
+      if (el.checked) set.add(oid); else set.delete(oid);
+      a.answer = [...set];
+    } else a.answer = oid;
+  }
+  markDirty();
+  renderSidebar();
+  const status = document.querySelector("#editorCol .status");
+  if (status) status.outerHTML = statusHtml(validatePack(p));
+  renderPhone();
+}
+
+document.getElementById("editorCol").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-act]");
+  const p = currentPack();
+  if (!btn || !p) return;
+  const qi = Number(btn.dataset.qi);
+  const act = btn.dataset.act;
+  if (act === "add-q") {
+    p.activities.push(blankQuestion(nextQid(p), "multiple_choice"));
+  } else if (act === "del-q") {
+    if (p.activities.length < 2) return alert("צריך לפחות שאלה אחת");
+    p.activities.splice(qi, 1);
+  } else if (act === "up" && qi > 0) {
+    [p.activities[qi - 1], p.activities[qi]] = [p.activities[qi], p.activities[qi - 1]];
+  } else if (act === "down" && qi < p.activities.length - 1) {
+    [p.activities[qi + 1], p.activities[qi]] = [p.activities[qi], p.activities[qi + 1]];
+  } else if (act === "type") {
+    const next = btn.dataset.type;
+    const prev = p.activities[qi];
+    const q = blankQuestion(prev.id, next);
+    q.prompt = prev.prompt;
+    q.explanation = prev.explanation;
+    if ((next === "multiple_choice" || next === "select_all") && prev.options) q.options = prev.options;
+    p.activities[qi] = q;
+  } else if (act === "add-opt") {
+    const a = p.activities[qi];
+    a.options = a.options || [];
+    const used = new Set((a.options || []).map((o) => o.id));
+    let oid = optionId(a.options.length);
+    for (let i = 0; i < 26; i++) {
+      const cand = optionId(i);
+      if (!used.has(cand)) { oid = cand; break; }
+    }
+    a.options.push({ id: oid, text: "" });
+  } else if (act === "del-opt") {
+    const a = p.activities[qi];
+    const oi = Number(btn.dataset.oi);
+    const id = a.options[oi].id;
+    a.options.splice(oi, 1);
+    if (a.type === "select_all") a.answer = (a.answer || []).filter((x) => x !== id);
+    else if (a.answer === id) a.answer = a.options[0]?.id || "";
+  } else return;
+  markDirty();
+  resetPreview();
+  renderAll();
+});
+
+document.getElementById("phone").addEventListener("click", (e) => {
+  const nav = e.target.closest("[data-nav]");
+  const pick = e.target.closest("[data-pick]");
+  const tog = e.target.closest("[data-toggle]");
+  if (nav) {
+    const n = nav.dataset.nav;
+    if (n === "start") { preview.screen = "q"; preview.q = 0; tryState = emptyTry(); }
+    else if (n === "restart") resetPreview();
+    else if (n === "passage") preview.screen = preview.screen === "passage" ? "q" : "passage";
+    else if (n === "check") checkCurrent();
+    else if (n === "next") {
+      const pack = currentPack();
+      if (preview.q + 1 >= (pack.activities || []).length) preview.screen = "done";
+      else { preview.q += 1; preview.screen = "q"; tryState = emptyTry(); }
+    }
+    renderPhone();
+    return;
+  }
+  if (pick && !tryState.revealed) {
+    tryState.selectedId = pick.dataset.pick;
+    checkCurrent();
+    return;
+  }
+  if (tog && !tryState.revealed) {
+    const id = tog.dataset.toggle;
+    tryState.selectedIds = tryState.selectedIds.includes(id)
+      ? tryState.selectedIds.filter((x) => x !== id)
+      : [...tryState.selectedIds, id];
+    renderPhone();
+  }
+});
+document.getElementById("phone").addEventListener("input", (e) => {
+  if (e.target.dataset.word == null) return;
+  tryState.words[Number(e.target.dataset.word)] = e.target.value;
+});
+
+document.getElementById("authBar").addEventListener("click", (e) => {
+  if (e.target.id === "btnLogin") void login();
+  if (e.target.id === "btnLogout") logout();
+});
+document.getElementById("authBar").addEventListener("change", (e) => {
+  if (e.target.id !== "apiBase") return;
+  session.api = e.target.value;
+  saveSession();
+  if (session.token) logout();
+  else renderAuth();
+});
+document.getElementById("authBar").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.target.id === "loginPass" || e.target.id === "loginEmail")) {
+    e.preventDefault();
+    void login();
+  }
+});
+document.getElementById("kidsBox").addEventListener("change", (e) => {
+  const id = e.target.dataset.kid;
+  if (!id) return;
+  if (e.target.checked) session.kidIds.add(id);
+  else session.kidIds.delete(id);
+  saveSession();
+});
+
+void restoreSession();
+</script>
+</body>
+</html>

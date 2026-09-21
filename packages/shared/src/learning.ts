@@ -26,7 +26,7 @@ export const LEARNING_PACK_KIND_LABELS: Record<LearningPackKind, string> = {
   reading: 'קריאה והבנה',
 };
 
-export type ActivityType = 'multiple_choice' | 'fill_blank' | 'flashcard';
+export type ActivityType = 'multiple_choice' | 'select_all' | 'open_words' | 'fill_blank' | 'flashcard';
 
 export interface LocalizedText {
   he: string;
@@ -54,11 +54,35 @@ export interface MultipleChoiceActivity {
   points?: number;
 }
 
+/** Select every correct option. `answer` is the list of correct option ids. */
+export interface SelectAllActivity {
+  id: string;
+  type: 'select_all';
+  prompt: ActivityPrompt;
+  options: ActivityOption[];
+  answer: string[];
+  explanation?: LocalizedText;
+  points?: number;
+}
+
 export interface FillBlankActivity {
   id: string;
   type: 'fill_blank';
   prompt: ActivityPrompt;
   answer: string[];
+  explanation?: LocalizedText;
+  points?: number;
+}
+
+/** Kid types N words that must each match a distinct item in `accept`. */
+export interface OpenWordsActivity {
+  id: string;
+  type: 'open_words';
+  prompt: ActivityPrompt;
+  /** All valid words (e.g. every verb in the passage). Use `חזרה|חזר` for aliases of one item. */
+  accept: string[];
+  /** How many distinct accepted words the kid must enter. */
+  count: number;
   explanation?: LocalizedText;
   points?: number;
 }
@@ -72,7 +96,12 @@ export interface FlashcardActivity {
   points?: number;
 }
 
-export type LearningActivity = MultipleChoiceActivity | FillBlankActivity | FlashcardActivity;
+export type LearningActivity =
+  | MultipleChoiceActivity
+  | SelectAllActivity
+  | OpenWordsActivity
+  | FillBlankActivity
+  | FlashcardActivity;
 
 export interface LearningPack {
   id: string;
@@ -89,6 +118,7 @@ export interface LearningPack {
   passageTitle?: LocalizedText;
   grade?: number;
   tags?: string[];
+  /** Points for finishing the pack once, regardless of how many answers were correct. */
   defaultPoints: number;
   activities: LearningActivity[];
 }
@@ -103,7 +133,7 @@ export interface LearningPackSummary {
   tags: string[];
   activityCount: number;
   defaultPoints: number;
-  /** Effective points per activity (family override or pack default). */
+  /** Effective points for finishing the pack (family override or pack default). */
   pointsPerActivity: number;
   difficulty: LearningDifficulty;
   completedCount: number;
@@ -125,6 +155,10 @@ export interface LearningCatalogItem {
   pointsPerActivity?: number;
   difficulty?: LearningDifficulty;
   assignedKidIds: string[];
+  /** Kids who finished this pack — so parents don't re-assign by mistake. */
+  completedKidIds?: string[];
+  /** Kids who started it but are not assigned now. */
+  pastKidIds?: string[];
   /** True when the pack was created by the family (not built-in). */
   isCustom?: boolean;
 }
@@ -154,6 +188,7 @@ export interface LearningPackInput {
   passageTitle?: LocalizedText;
   grade?: number;
   tags?: string[];
+  /** Points for finishing the pack once. */
   defaultPoints: number;
   activities: LearningActivity[];
 }
@@ -167,7 +202,9 @@ export interface LearningPackSettings {
 export interface LearningCatalogFilters {
   search?: string;
   category?: LearningCategory;
+  /** @deprecated Prefer `grades` for multi-select. */
   grade?: number;
+  grades?: number[];
 }
 
 export interface LearningAssignment {
@@ -185,6 +222,8 @@ export interface PublicLearningActivity {
   type: ActivityType;
   prompt: ActivityPrompt;
   options?: ActivityOption[];
+  /** How many words to enter — open_words only. Accept list is never sent. */
+  count?: number;
   points?: number;
 }
 
@@ -198,6 +237,7 @@ export interface LearningPackDetail {
     passageTitle?: LocalizedText;
     grade?: number;
     defaultPoints: number;
+    /** Points the kid gets when they finish the pack. */
     pointsPerActivity: number;
     difficulty: LearningDifficulty;
     activities: PublicLearningActivity[];
@@ -225,6 +265,10 @@ export interface LearningCheckResult {
   correct: boolean;
   /** Shown when wrong so the kid can see the right option. */
   correctOptionId?: string;
+  /** All correct option ids — used by select_all. */
+  correctOptionIds?: string[];
+  /** Acceptable words revealed after an open_words check. */
+  acceptedWords?: string[];
   explanation?: LocalizedText;
   pointsAwarded?: number;
 }
@@ -242,6 +286,11 @@ export interface LearningAnswerReview {
   correctText: string;
   correct: boolean;
   answeredAt: string;
+  kind?: LearningPackKind;
+  category?: LearningCategory;
+  explanationHe?: string;
+  passageHe?: string;
+  passageTitleHe?: string;
 }
 
 export const LEARNING_CATEGORIES: Record<
@@ -292,6 +341,76 @@ export function formatGradeLabel(grade: number | null | undefined, gradeWord = '
   const letter = formatGrade(grade);
   if (!letter) return '';
   return `${gradeWord} ${letter}`;
+}
+
+/** Normalize a select-all payload (array or comma-separated ids). */
+export function normalizeSelectAllIds(answer: unknown): string[] {
+  const raw = Array.isArray(answer)
+    ? answer
+    : typeof answer === 'string'
+      ? answer.split(',')
+      : [];
+  return [...new Set(raw.map((id) => String(id).trim()).filter(Boolean))].sort();
+}
+
+export function selectAllMatches(expected: string[], given: unknown): boolean {
+  const a = normalizeSelectAllIds(expected);
+  const b = normalizeSelectAllIds(given);
+  if (!a.length || a.length !== b.length) return false;
+  return a.every((id, i) => id === b[i]);
+}
+
+/** Strip niqqud / extra marks so typed Hebrew matches the accept list. */
+export function normalizeOpenWord(value: string): string {
+  return value
+    .trim()
+    .replace(/[\u0591-\u05C7]/g, '')
+    .replace(/[״"׳'`]/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+export function parseOpenWordList(value: unknown): string[] {
+  const raw = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.split(/[\n,،]+/)
+      : [];
+  return raw.map((w) => String(w).trim()).filter(Boolean);
+}
+
+/** Each accept item may list aliases with `|`, e.g. `חזרה|חזר`. */
+export function openWordGroups(accept: string[]): string[][] {
+  return accept
+    .map((item) =>
+      item
+        .split('|')
+        .map((part) => normalizeOpenWord(part))
+        .filter(Boolean)
+    )
+    .filter((group) => group.length > 0);
+}
+
+export function canonicalOpenWords(accept: string[]): string[] {
+  return accept
+    .map((item) => item.split('|')[0]?.trim() ?? '')
+    .filter(Boolean);
+}
+
+export function openWordsMatch(accept: string[], given: unknown, count: number): boolean {
+  if (!Number.isFinite(count) || count < 1) return false;
+  const groups = openWordGroups(accept);
+  if (groups.length < count) return false;
+  const words = parseOpenWordList(given).map(normalizeOpenWord).filter(Boolean);
+  const unique = [...new Set(words)];
+  if (unique.length !== count || unique.length !== words.length) return false;
+  const used = new Set<number>();
+  for (const word of unique) {
+    const idx = groups.findIndex((group, i) => !used.has(i) && group.includes(word));
+    if (idx < 0) return false;
+    used.add(idx);
+  }
+  return used.size === count;
 }
 
 /** Primary label for a pack in lists (Hebrew UI by default). */

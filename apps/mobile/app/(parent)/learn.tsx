@@ -7,27 +7,26 @@ import {
   Modal,
   TouchableOpacity,
   Pressable,
-  KeyboardAvoidingView,
   Platform,
-  Share,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as Clipboard from 'expo-clipboard';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
+import { KeyboardSheet } from '../../components/KeyboardSheet';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { SectionHeader } from '../../components/ThemedHero';
 import {
   LEARNING_CATEGORIES,
   LEARNING_CATEGORY_ORDER,
-  LEARNING_DIFFICULTIES,
   LEARNING_DIFFICULTY_LABELS,
   LEARNING_PACK_KIND_LABELS,
   GRADE_OPTIONS,
+  GRADE_LETTERS,
   formatGradeLabel,
   packDisplayTitle,
   packDisplaySubtitle,
@@ -35,13 +34,16 @@ import {
 import type {
   LearningCatalogItem,
   LearningCategory,
-  LearningDifficulty,
+  LearningPack,
+  LearningActivity,
+  LearningAnswerReview,
   User,
 } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
+import { KidAvatar } from '../../components/KidAvatar';
 
 function groupByCategory(items: LearningCatalogItem[]): Map<LearningCategory, LearningCatalogItem[]> {
   const map = new Map<LearningCategory, LearningCatalogItem[]>();
@@ -53,23 +55,42 @@ function groupByCategory(items: LearningCatalogItem[]): Map<LearningCategory, Le
   return map;
 }
 
+function activityAnswerLabel(activity: LearningActivity): string {
+  if (activity.type === 'multiple_choice') {
+    return activity.options.find((o) => o.id === activity.answer)?.text ?? activity.answer;
+  }
+  if (activity.type === 'select_all') {
+    return activity.answer
+      .map((id) => activity.options.find((o) => o.id === id)?.text ?? id)
+      .join(' · ');
+  }
+  if (activity.type === 'open_words') {
+    return activity.accept.map((item) => item.split('|')[0]?.trim() ?? item).join(' · ');
+  }
+  if (activity.type === 'fill_blank') {
+    return activity.answer.join(' / ');
+  }
+  return activity.answer.text;
+}
+
 export default function ParentLearnScreen() {
   const router = useRouter();
+  const { height: windowHeight } = useWindowDimensions();
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
   const [items, setItems] = useState<LearningCatalogItem[]>([]);
   const [kids, setKids] = useState<User[]>([]);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<LearningCategory | null>(null);
-  const [gradeFilter, setGradeFilter] = useState<number | null>(null);
-  const [assignItem, setAssignItem] = useState<LearningCatalogItem | null>(null);
-  const [assignedIds, setAssignedIds] = useState<string[]>([]);
-  const [assignPoints, setAssignPoints] = useState('5');
-  const [assignDifficulty, setAssignDifficulty] = useState<LearningDifficulty>('medium');
-  const [saving, setSaving] = useState(false);
+  const [gradeFilter, setGradeFilter] = useState<number[]>([]);
+  const [previewItem, setPreviewItem] = useState<LearningCatalogItem | null>(null);
+  const [previewPack, setPreviewPack] = useState<LearningPack | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [savingPackId, setSavingPackId] = useState<string | null>(null);
   const [resultsKidId, setResultsKidId] = useState<string | null>(null);
-  const [results, setResults] = useState<import('@kidsapp/shared').LearningAnswerReview[]>([]);
+  const [results, setResults] = useState<LearningAnswerReview[]>([]);
   const [resultsLoading, setResultsLoading] = useState(false);
   const [resultsFilter, setResultsFilter] = useState<'all' | 'wrong' | 'correct'>('all');
+  const [review, setReview] = useState<LearningAnswerReview | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importing, setImporting] = useState(false);
@@ -79,7 +100,53 @@ export default function ParentLearnScreen() {
       StyleSheet.create({
         scroll: { padding: spacing.lg, maxWidth: 800, alignSelf: 'center', width: '100%' },
         hint: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.md },
-        chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+        chipRow: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
+        filterRow: {
+          width: '100%',
+          marginBottom: spacing.sm,
+          gap: 4,
+          alignItems: 'center',
+        },
+        filterChip: {
+          flex: 1,
+          minWidth: 0,
+          paddingVertical: 6,
+          paddingHorizontal: 2,
+          borderRadius: borderRadius.full,
+          backgroundColor: colors.bgCard,
+          alignItems: 'center',
+          justifyContent: 'center',
+          ...cardBorder(1),
+        },
+        filterChipText: {
+          color: colors.textMuted,
+          fontSize: 11,
+          fontWeight: '700',
+          textAlign: 'center',
+        },
+        gradeLabel: {
+          color: colors.text,
+          fontSize: 12,
+          fontWeight: '800',
+          flexShrink: 0,
+          paddingHorizontal: 2,
+        },
+        previewBody: { maxHeight: Math.min(520, windowHeight * 0.62) },
+        previewQ: {
+          marginBottom: spacing.md,
+          paddingBottom: spacing.sm,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        },
+        previewPrompt: { color: colors.text, fontSize: 15, fontWeight: '700', marginBottom: spacing.xs },
+        previewOption: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
+        previewCorrect: { color: colors.success, fontSize: 13, fontWeight: '800', marginTop: 4 },
+        previewPassage: {
+          color: colors.text,
+          fontSize: 14,
+          lineHeight: 22,
+          marginBottom: spacing.md,
+        },
         chip: {
           paddingHorizontal: spacing.md,
           paddingVertical: spacing.sm,
@@ -100,21 +167,10 @@ export default function ParentLearnScreen() {
         packMeta: { color: colors.textMuted, fontSize: 12, marginTop: 4 },
         assignRow: { marginTop: spacing.sm, gap: spacing.xs },
         packActions: {
-          marginTop: spacing.md,
+          marginTop: spacing.sm,
           gap: spacing.sm,
           flexWrap: 'wrap',
           alignItems: 'center',
-        },
-        packActionPrimary: {
-          paddingHorizontal: spacing.md,
-          paddingVertical: spacing.sm,
-          borderRadius: borderRadius.full,
-          backgroundColor: colors.primary,
-        },
-        packActionPrimaryText: {
-          color: colors.textDark,
-          fontSize: 13,
-          fontWeight: '800',
         },
         packActionLink: {
           paddingHorizontal: spacing.sm,
@@ -125,19 +181,24 @@ export default function ParentLearnScreen() {
           fontSize: 13,
           fontWeight: '700',
         },
-        packActionDangerText: {
-          color: colors.danger,
-          fontSize: 13,
-          fontWeight: '700',
-        },
         kidChip: {
           backgroundColor: colors.bgDeep,
           paddingHorizontal: spacing.sm,
-          paddingVertical: 2,
-          borderRadius: borderRadius.sm,
+          paddingVertical: 4,
+          borderRadius: borderRadius.full,
           alignSelf: 'flex-start',
+          alignItems: 'center',
+          gap: 4,
+          borderWidth: 2,
+          borderColor: 'transparent',
         },
-        kidChipText: { color: colors.text, fontSize: 11, fontWeight: '600' },
+        kidChipOn: {
+          backgroundColor: colors.primary + '33',
+          borderWidth: 2,
+          borderColor: colors.primary,
+        },
+        kidChipText: { color: colors.text, fontSize: 13, fontWeight: '700' },
+        kidChipTag: { color: colors.textMuted, fontSize: 11, fontWeight: '800' },
         empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.xl },
         modalOverlay: {
           flex: 1,
@@ -155,18 +216,6 @@ export default function ParentLearnScreen() {
           ...cardBorder(2),
         },
         modalTitle: { color: colors.text, fontSize: 18, fontWeight: '800', marginBottom: spacing.md },
-        kidOption: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: spacing.md,
-          borderRadius: borderRadius.md,
-          marginBottom: spacing.sm,
-          backgroundColor: colors.bgDeep,
-          gap: spacing.sm,
-        },
-        kidOptionOn: { backgroundColor: colors.primary + '33', borderWidth: 2, borderColor: colors.primary },
-        kidAvatar: { fontSize: 24 },
-        kidName: { color: colors.text, fontSize: 16, fontWeight: '600', flex: 1 },
         modalActions: { marginTop: spacing.lg, gap: spacing.sm },
         resultBadge: {
           alignSelf: 'flex-start',
@@ -181,7 +230,7 @@ export default function ParentLearnScreen() {
         resultLine: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
         resultLineStrong: { color: colors.text, fontSize: 13, marginTop: 4, fontWeight: '600' },
       }),
-    [themeId, colors, borderRadius, cardBorder]
+    [themeId, colors, borderRadius, cardBorder, windowHeight]
   );
 
   const loadKids = useCallback(async () => {
@@ -194,7 +243,7 @@ export default function ParentLearnScreen() {
     const res = await api.getLearningCatalog({
       search: search.trim() || undefined,
       category: categoryFilter ?? undefined,
-      grade: gradeFilter ?? undefined,
+      grades: gradeFilter.length ? gradeFilter : undefined,
     });
     setItems(res.items);
   }, [search, categoryFilter, gradeFilter]);
@@ -239,81 +288,61 @@ export default function ParentLearnScreen() {
 
   const grouped = useMemo(() => groupByCategory(items), [items]);
 
-  const openAssign = (item: LearningCatalogItem) => {
-    setAssignItem(item);
-    setAssignedIds([...item.assignedKidIds]);
-    setAssignPoints(String(item.pointsPerActivity ?? item.defaultPoints));
-    setAssignDifficulty(item.difficulty ?? 'medium');
+  const toggleGrade = (grade: number) => {
+    setGradeFilter((prev) => {
+      const next = prev.includes(grade) ? prev.filter((g) => g !== grade) : [...prev, grade].sort();
+      return next.length === GRADE_OPTIONS.length ? [] : next;
+    });
   };
 
-  const toggleKid = (kidId: string) => {
-    setAssignedIds((prev) =>
-      prev.includes(kidId) ? prev.filter((id) => id !== kidId) : [...prev, kidId]
-    );
-  };
-
-  const saveAssign = async () => {
-    if (!assignItem || saving) return;
-    const points = parseInt(assignPoints, 10);
-    if (!Number.isFinite(points) || points < 1 || points > 100) {
-      alert(t('learningPointsInvalid'));
-      return;
-    }
-    setSaving(true);
-    try {
-      await api.assignLearningPack(assignItem.id, assignedIds, {
-        pointsPerActivity: points,
-        difficulty: assignDifficulty,
-      });
-      setAssignItem(null);
-      await loadCatalog();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'שגיאה';
-      alert(message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const kidName = (id: string) => kids.find((k) => k._id === id)?.displayName ?? id;
-
-  const handleExport = async (item: LearningCatalogItem) => {
+  const openPreview = async (item: LearningCatalogItem) => {
+    setPreviewItem(item);
+    setPreviewPack(null);
+    setPreviewLoading(true);
     try {
       const res = await api.exportLearningPack(item.id);
-      const json = JSON.stringify(res.pack, null, 2);
-      try {
-        await Clipboard.setStringAsync(json);
-      } catch {
-        /* ignore */
-      }
-      try {
-        await Share.share({ message: json, title: packDisplayTitle(item.title) });
-      } catch {
-        Alert.alert(t('exportLearningPack'), t('learningPackExported'));
-      }
+      setPreviewPack(res.pack);
     } catch (err: unknown) {
+      setPreviewItem(null);
       alert(err instanceof Error ? err.message : 'שגיאה');
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
-  const handleDeletePack = (item: LearningCatalogItem) => {
-    Alert.alert(t('deleteLearningPack'), t('deleteLearningPackConfirm'), [
-      { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('delete'),
-        style: 'destructive',
-        onPress: () => {
-          void (async () => {
-            try {
-              await api.deleteCustomLearningPack(item.id);
-              await loadCatalog();
-            } catch (err: unknown) {
-              alert(err instanceof Error ? err.message : 'שגיאה');
-            }
-          })();
-        },
-      },
-    ]);
+  const closePreview = () => {
+    setPreviewItem(null);
+    setPreviewPack(null);
+  };
+
+  const openPackFromReview = () => {
+    if (!review) return;
+    const item = items.find((i) => i.id === review.packId);
+    setReview(null);
+    if (item) void openPreview(item);
+  };
+
+  const toggleKidAssign = async (item: LearningCatalogItem, kidId: string) => {
+    if (savingPackId) return;
+    const next = item.assignedKidIds.includes(kidId)
+      ? item.assignedKidIds.filter((id) => id !== kidId)
+      : [...item.assignedKidIds, kidId];
+    setSavingPackId(item.id);
+    setItems((prev) =>
+      prev.map((pack) => (pack.id === item.id ? { ...pack, assignedKidIds: next } : pack))
+    );
+    try {
+      await api.assignLearningPack(item.id, next, {
+        pointsPerActivity: item.pointsPerActivity ?? item.defaultPoints,
+        difficulty: item.difficulty ?? 'medium',
+      });
+      await loadCatalog();
+    } catch (err: unknown) {
+      await loadCatalog();
+      alert(err instanceof Error ? err.message : 'שגיאה');
+    } finally {
+      setSavingPackId(null);
+    }
   };
 
   const handleImportJson = async () => {
@@ -382,20 +411,23 @@ export default function ParentLearnScreen() {
           <View style={{ marginBottom: spacing.lg }}>
             <SectionHeader title={t('learningResults')} icon="📝" />
             <Text style={[styles.hint, rtl.text]}>{t('learningResultsHint')}</Text>
-            <View style={styles.chipRow}>
+            <View style={[styles.chipRow, rtl.chips]}>
               {kids.map((kid) => (
                 <TouchableOpacity
                   key={kid._id}
                   style={[styles.chip, resultsKidId === kid._id && styles.chipActive]}
                   onPress={() => setResultsKidId(kid._id)}
                 >
-                  <Text style={[styles.chipText, resultsKidId === kid._id && styles.chipTextActive]}>
-                    {kid.avatar} {kid.displayName}
-                  </Text>
+                  <View style={[rtl.rowInline, { gap: 6 }]}>
+                    <KidAvatar avatar={kid.avatar} size={22} />
+                    <Text style={[styles.chipText, resultsKidId === kid._id && styles.chipTextActive]}>
+                      {kid.displayName}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
-            <View style={styles.chipRow}>
+            <View style={[styles.chipRow, rtl.chips]}>
               {(
                 [
                   ['all', t('filterAllAnswers')],
@@ -420,7 +452,12 @@ export default function ParentLearnScreen() {
               <Text style={[styles.empty, rtl.text]}>{t('noLearningResults')}</Text>
             ) : (
               filteredResults.slice(0, 30).map((r) => (
-                <Card key={`${r.packId}:${r.activityId}:${r.answeredAt}`} style={styles.packCard}>
+                <Pressable
+                  key={`${r.packId}:${r.activityId}:${r.answeredAt}`}
+                  onPress={() => setReview(r)}
+                  accessibilityRole="button"
+                >
+                <Card style={styles.packCard}>
                   <View
                     style={[
                       styles.resultBadge,
@@ -441,7 +478,9 @@ export default function ParentLearnScreen() {
                       {t('correctWas')}: {r.correctText}
                     </Text>
                   ) : null}
+                  <Text style={[styles.packMeta, rtl.text]}>{t('tapToReviewMistake')}</Text>
                 </Card>
+                </Pressable>
               ))
             )}
           </View>
@@ -454,53 +493,51 @@ export default function ParentLearnScreen() {
           autoCapitalize="none"
         />
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: spacing.sm }}>
-          <View style={styles.chipRow}>
-            <TouchableOpacity
-              style={[styles.chip, !categoryFilter && styles.chipActive]}
-              onPress={() => setCategoryFilter(null)}
+        <View style={[styles.filterRow, rtl.chips]}>
+          <Pressable
+            style={[styles.filterChip, !categoryFilter && styles.chipActive]}
+            onPress={() => setCategoryFilter(null)}
+          >
+            <Text
+              numberOfLines={1}
+              style={[styles.filterChipText, !categoryFilter && styles.chipTextActive]}
             >
-              <Text style={[styles.chipText, !categoryFilter && styles.chipTextActive]}>
-                {t('allCategories')}
-              </Text>
-            </TouchableOpacity>
-            {LEARNING_CATEGORY_ORDER.map((cat) => (
-              <TouchableOpacity
-                key={cat}
-                style={[styles.chip, categoryFilter === cat && styles.chipActive]}
-                onPress={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
+              {t('allCategories')}
+            </Text>
+          </Pressable>
+          {LEARNING_CATEGORY_ORDER.map((cat) => (
+            <Pressable
+              key={cat}
+              style={[styles.filterChip, categoryFilter === cat && styles.chipActive]}
+              onPress={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
+            >
+              <Text
+                numberOfLines={1}
+                style={[styles.filterChipText, categoryFilter === cat && styles.chipTextActive]}
               >
-                <Text style={[styles.chipText, categoryFilter === cat && styles.chipTextActive]}>
-                  {LEARNING_CATEGORIES[cat].icon} {LEARNING_CATEGORIES[cat].label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
+                {LEARNING_CATEGORIES[cat].label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: spacing.md }}>
-          <View style={styles.chipRow}>
-            <TouchableOpacity
-              style={[styles.chip, gradeFilter === null && styles.chipActive]}
-              onPress={() => setGradeFilter(null)}
-            >
-              <Text style={[styles.chipText, gradeFilter === null && styles.chipTextActive]}>
-                {t('allGrades')}
-              </Text>
-            </TouchableOpacity>
-            {GRADE_OPTIONS.map((g) => (
-              <TouchableOpacity
+        <View style={[styles.filterRow, rtl.chips, { marginBottom: spacing.md }]}>
+          <Text style={[styles.gradeLabel, rtl.text]}>{t('grade')}</Text>
+          {GRADE_OPTIONS.map((g) => {
+            const on = gradeFilter.includes(g);
+            return (
+              <Pressable
                 key={g}
-                style={[styles.chip, gradeFilter === g && styles.chipActive]}
-                onPress={() => setGradeFilter(gradeFilter === g ? null : g)}
+                style={[styles.filterChip, on && styles.chipActive]}
+                onPress={() => toggleGrade(g)}
               >
-                <Text style={[styles.chipText, gradeFilter === g && styles.chipTextActive]}>
-                  {formatGradeLabel(g, t('grade'))}
+                <Text numberOfLines={1} style={[styles.filterChipText, on && styles.chipTextActive]}>
+                  {GRADE_LETTERS[g]}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
+              </Pressable>
+            );
+          })}
+        </View>
 
         {items.length === 0 ? (
           <Text style={styles.empty}>{t('noCatalogResults')}</Text>
@@ -513,79 +550,76 @@ export default function ParentLearnScreen() {
               />
               {grouped.get(categoryId)!.map((item) => (
                 <Card key={item.id} style={styles.packCard}>
-                  <View style={styles.packInfo}>
-                    <Text style={[styles.packTitle, rtl.text]}>
-                      {packDisplayTitle(item.title)}
-                    </Text>
-                    {packDisplaySubtitle(item.title) ? (
-                      <Text style={[styles.packMeta, rtl.text]}>
-                        {packDisplaySubtitle(item.title)}
+                  <Pressable onPress={() => void openPreview(item)} accessibilityRole="button">
+                    <View style={styles.packInfo}>
+                      <Text style={[styles.packTitle, rtl.text]}>
+                        {packDisplayTitle(item.title)}
                       </Text>
+                      {packDisplaySubtitle(item.title) ? (
+                        <Text style={[styles.packMeta, rtl.text]}>
+                          {packDisplaySubtitle(item.title)}
+                        </Text>
+                      ) : null}
+                      <Text style={[styles.packMeta, rtl.text]}>
+                        {item.isCustom ? `${t('customPackBadge')} · ` : ''}
+                        {LEARNING_PACK_KIND_LABELS[item.kind]}
+                        {' · '}
+                        {item.activityCount} {t('questions')}
+                        {item.grade ? ` · ${formatGradeLabel(item.grade, t('grade'))}` : ''}
+                        {` · ${item.pointsPerActivity ?? item.defaultPoints} ${pointsEmoji}`}
+                        {item.difficulty
+                          ? ` · ${LEARNING_DIFFICULTY_LABELS[item.difficulty]}`
+                          : ''}
+                      </Text>
+                    </View>
+                  </Pressable>
+                  <View style={styles.assignRow}>
+                    {kids.length === 0 || item.assignedKidIds.length === 0 ? (
+                      <Text style={[styles.packMeta, rtl.text]}>{t('notAssigned')}</Text>
                     ) : null}
-                    <Text style={[styles.packMeta, rtl.text]}>
-                      {item.isCustom ? `${t('customPackBadge')} · ` : ''}
-                      {LEARNING_PACK_KIND_LABELS[item.kind]}
-                      {' · '}
-                      {item.activityCount} {t('questions')}
-                      {item.grade ? ` · ${formatGradeLabel(item.grade, t('grade'))}` : ''}
-                      {` · ${item.pointsPerActivity ?? item.defaultPoints} ${pointsEmoji}`}
-                      {item.difficulty
-                        ? ` · ${LEARNING_DIFFICULTY_LABELS[item.difficulty]}`
-                        : ''}
-                    </Text>
-                    <View style={[styles.assignRow, rtl.row, { flexWrap: 'wrap' }]}>
-                      {item.assignedKidIds.length > 0 ? (
-                        item.assignedKidIds.map((kidId) => (
-                          <View key={kidId} style={styles.kidChip}>
-                            <Text style={styles.kidChipText}>{kidName(kidId)}</Text>
-                          </View>
-                        ))
-                      ) : (
-                        <Text style={[styles.packMeta, rtl.text]}>{t('notAssigned')}</Text>
-                      )}
+                    <View style={[rtl.chips, { gap: 6 }]}>
+                      {kids.map((kid) => {
+                        const assigned = item.assignedKidIds.includes(kid._id);
+                        const done = (item.completedKidIds ?? []).includes(kid._id);
+                        const past = (item.pastKidIds ?? []).includes(kid._id);
+                        const tag = done ? t('packKidDone') : past ? t('packKidPast') : null;
+                        return (
+                          <Pressable
+                            key={kid._id}
+                            style={[styles.kidChip, { flexDirection: 'row-reverse' }, assigned && styles.kidChipOn]}
+                            onPress={() => void toggleKidAssign(item, kid._id)}
+                            disabled={savingPackId === item.id}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: assigned }}
+                          >
+                            <KidAvatar avatar={kid.avatar} size={18} />
+                            <Text style={[styles.kidChipText, rtl.text]}>{kid.displayName}</Text>
+                            {tag ? (
+                              <Text style={[styles.kidChipTag, rtl.text]}>{tag}</Text>
+                            ) : null}
+                          </Pressable>
+                        );
+                      })}
                     </View>
                   </View>
-                  <View style={[styles.packActions, rtl.row]}>
-                    <TouchableOpacity
-                      style={styles.packActionPrimary}
-                      onPress={() => openAssign(item)}
-                      accessibilityRole="button"
-                    >
-                      <Text style={styles.packActionPrimaryText}>{t('assignLearningShort')}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.packActionLink}
-                      onPress={() => void handleExport(item)}
-                      accessibilityRole="button"
-                    >
-                      <Text style={[styles.packActionLinkText, rtl.text]}>
-                        {t('exportLearningPack')}
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.packActionLink}
-                      onPress={() =>
-                        router.push({
-                          pathname: '/(parent)/learn-pack-edit',
-                          params: { packId: item.id },
-                        })
-                      }
-                      accessibilityRole="button"
-                    >
-                      <Text style={[styles.packActionLinkText, rtl.text]}>
-                        {t('editLearningPackShort')}
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.packActionLink}
-                      onPress={() => handleDeletePack(item)}
-                      accessibilityRole="button"
-                    >
-                      <Text style={[styles.packActionDangerText, rtl.text]}>
-                        {t('deleteLearningPackShort')}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  {item.isCustom ? (
+                    <View style={[styles.packActions, rtl.row]}>
+                      <TouchableOpacity
+                        style={styles.packActionLink}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/(parent)/learn-pack-edit',
+                            params: { packId: item.id },
+                          })
+                        }
+                        accessibilityRole="button"
+                      >
+                        <Text style={[styles.packActionLinkText, rtl.text]}>
+                          {t('editLearningPackShort')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
                 </Card>
               ))}
             </View>
@@ -593,71 +627,123 @@ export default function ParentLearnScreen() {
         )}
       </ScrollView>
 
-      <Modal visible={!!assignItem} transparent animationType="fade" onRequestClose={() => setAssignItem(null)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setAssignItem(null)}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <Pressable style={styles.modal} onPress={(e) => e.stopPropagation()}>
-              <Text style={[styles.modalTitle, rtl.text]}>
-                {assignItem ? packDisplayTitle(assignItem.title) : ''}
-              </Text>
-
-              <Input
-                label={t('learningPointsPerQuestion')}
-                value={assignPoints}
-                onChangeText={setAssignPoints}
-                keyboardType="number-pad"
-                placeholder={String(assignItem?.defaultPoints ?? 5)}
-              />
-
-              <Text style={[styles.packMeta, rtl.text, { marginBottom: spacing.sm }]}>
-                {t('learningDifficulty')}
-              </Text>
-              <View style={[styles.chipRow, { marginBottom: spacing.md }]}>
-                {LEARNING_DIFFICULTIES.map((level) => (
-                  <TouchableOpacity
-                    key={level}
-                    style={[styles.chip, assignDifficulty === level && styles.chipActive]}
-                    onPress={() => setAssignDifficulty(level)}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        assignDifficulty === level && styles.chipTextActive,
-                      ]}
-                    >
-                      {LEARNING_DIFFICULTY_LABELS[level]}
+      <Modal visible={!!previewItem} transparent animationType="fade" onRequestClose={closePreview}>
+        <Pressable style={styles.modalOverlay} onPress={closePreview}>
+          <Pressable style={styles.modal} onPress={(e) => e.stopPropagation()}>
+            <Text style={[styles.modalTitle, rtl.text]}>
+              {previewItem ? packDisplayTitle(previewItem.title) : ''}
+            </Text>
+            {previewLoading || !previewPack ? (
+              <Text style={[styles.packMeta, rtl.text]}>{t('learningPreviewLoading')}</Text>
+            ) : (
+              <ScrollView style={styles.previewBody} nestedScrollEnabled>
+                {previewPack.passage?.he ? (
+                  <Text style={[styles.previewPassage, rtl.text]}>{previewPack.passage.he}</Text>
+                ) : null}
+                {previewPack.activities.map((activity, index) => (
+                  <View key={activity.id} style={styles.previewQ}>
+                    <Text style={[styles.previewPrompt, rtl.text]}>
+                      {index + 1}. {activity.prompt.text}
                     </Text>
-                  </TouchableOpacity>
+                    {activity.type === 'select_all' ? (
+                      <Text style={[styles.previewCorrect, rtl.text]}>{t('selectAllHint')}</Text>
+                    ) : null}
+                    {activity.type === 'open_words' ? (
+                      <Text style={[styles.previewCorrect, rtl.text]}>{t('openWordsHint')}</Text>
+                    ) : null}
+                    {activity.type === 'multiple_choice' || activity.type === 'select_all'
+                      ? activity.options.map((option) => {
+                          const correct =
+                            activity.type === 'select_all'
+                              ? activity.answer.includes(option.id)
+                              : option.id === activity.answer;
+                          return (
+                            <Text
+                              key={option.id}
+                              style={[
+                                correct ? styles.previewCorrect : styles.previewOption,
+                                rtl.text,
+                              ]}
+                            >
+                              {correct ? '✓ ' : '• '}
+                              {option.text}
+                              {correct ? ` · ${t('correctOption')}` : ''}
+                            </Text>
+                          );
+                        })
+                      : (
+                          <Text style={[styles.previewCorrect, rtl.text]}>
+                            {t('correctWas')}: {activityAnswerLabel(activity)}
+                          </Text>
+                        )}
+                  </View>
                 ))}
-              </View>
+              </ScrollView>
+            )}
+            <View style={styles.modalActions}>
+              <Button title={t('close')} onPress={closePreview} variant="outline" sound={false} />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
-              <Text style={[styles.packMeta, rtl.text, { marginBottom: spacing.md }]}>
-                {t('selectKidsToAssign')}
-              </Text>
-              {kids.length === 0 ? (
-                <Text style={styles.packMeta}>{t('addKidFirst')}</Text>
-              ) : (
-                kids.map((kid) => {
-                  const selected = assignedIds.includes(kid._id);
-                  return (
-                    <TouchableOpacity
-                      key={kid._id}
-                      style={[styles.kidOption, selected && styles.kidOptionOn]}
-                      onPress={() => toggleKid(kid._id)}
-                    >
-                      <Text style={styles.kidAvatar}>{kid.avatar}</Text>
-                      <Text style={[styles.kidName, rtl.text]}>{kid.displayName}</Text>
-                      <Text style={styles.packMeta}>{selected ? '✓' : ''}</Text>
-                    </TouchableOpacity>
-                  );
-                })
-              )}
-              <View style={styles.modalActions}>
-                <Button title={t('assignLearningSave')} onPress={saveAssign} loading={saving} />
-                <Button title={t('cancel')} onPress={() => setAssignItem(null)} variant="outline" sound={false} />
-              </View>
-            </Pressable>
-          </KeyboardAvoidingView>
+      <Modal visible={!!review} transparent animationType="fade" onRequestClose={() => setReview(null)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setReview(null)}>
+          <Pressable style={styles.modal} onPress={(e) => e.stopPropagation()}>
+            <Text style={[styles.modalTitle, rtl.text]}>{review?.packTitle ?? ''}</Text>
+            {review ? (
+              <ScrollView style={styles.previewBody} nestedScrollEnabled>
+                <View
+                  style={[
+                    styles.resultBadge,
+                    review.correct ? styles.resultBadgeOk : styles.resultBadgeBad,
+                    { marginBottom: spacing.sm },
+                  ]}
+                >
+                  <Text style={[styles.resultBadgeText, rtl.text]}>
+                    {review.correct ? `✓ ${t('answerCorrect')}` : `✗ ${t('answerIncorrect')}`}
+                  </Text>
+                </View>
+                <Text style={[styles.previewPrompt, rtl.text]}>{review.questionPreview}</Text>
+                <Text style={[styles.resultLineStrong, rtl.text]}>
+                  {t('kidAnswered')}: {review.selectedText}
+                </Text>
+                <Text style={[styles.previewCorrect, rtl.text]}>
+                  {t('correctWas')}: {review.correctText}
+                </Text>
+                {!review.correct ? (
+                  <>
+                    {review.explanationHe ? (
+                      <>
+                        <Text style={[styles.previewPrompt, rtl.text, { marginTop: spacing.md }]}>
+                          {t('whyThisMistake')}
+                        </Text>
+                        <Text style={[styles.previewPassage, rtl.text]}>{review.explanationHe}</Text>
+                      </>
+                    ) : null}
+                    <Text style={[styles.previewPrompt, rtl.text]}>{t('whatToImprove')}</Text>
+                    <Text style={[styles.previewPassage, rtl.text]}>
+                      {review.kind === 'reading' ? t('parentImproveReading') : t('parentImproveQuiz')}
+                    </Text>
+                  </>
+                ) : null}
+                {review.passageHe ? (
+                  <>
+                    <Text style={[styles.previewPrompt, rtl.text]}>
+                      {review.passageTitleHe || t('readPassageTogether')}
+                    </Text>
+                    <Text style={[styles.previewPassage, rtl.text]}>{review.passageHe}</Text>
+                  </>
+                ) : null}
+              </ScrollView>
+            ) : null}
+            <View style={styles.modalActions}>
+              {review && items.some((i) => i.id === review.packId) ? (
+                <Button title={t('openFullPack')} onPress={openPackFromReview} sound={false} />
+              ) : null}
+              <Button title={t('close')} onPress={() => setReview(null)} variant="outline" sound={false} />
+            </View>
+          </Pressable>
         </Pressable>
       </Modal>
 
@@ -668,7 +754,7 @@ export default function ParentLearnScreen() {
         onRequestClose={() => setImportOpen(false)}
       >
         <Pressable style={styles.modalOverlay} onPress={() => setImportOpen(false)}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <KeyboardSheet>
             <Pressable style={styles.modal} onPress={(e) => e.stopPropagation()}>
               <Text style={[styles.modalTitle, rtl.text]}>{t('importLearningPack')}</Text>
               <Text style={[styles.packMeta, rtl.text, { marginBottom: spacing.md }]}>
@@ -695,7 +781,7 @@ export default function ParentLearnScreen() {
                 />
               </View>
             </Pressable>
-          </KeyboardAvoidingView>
+          </KeyboardSheet>
         </Pressable>
       </Modal>
     </ThemedScreen>

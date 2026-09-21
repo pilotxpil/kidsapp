@@ -5,7 +5,21 @@ import { registerPushNotifications, unregisterPushNotifications } from './push';
 import { markAvatarGiftUnlocked } from './avatar-gift';
 
 type UserProgressPatch = Partial<
-  Pick<User, 'points' | 'level' | 'xp' | 'streak' | 'badges' | 'learningStreak' | 'avatar' | 'ownedCosmetics' | 'equippedFrame' | 'equippedEffect'>
+  Pick<
+    User,
+    | 'points'
+    | 'level'
+    | 'xp'
+    | 'streak'
+    | 'badges'
+    | 'learningStreak'
+    | 'avatar'
+    | 'heroLine'
+    | 'ownedCosmetics'
+    | 'equippedFrame'
+    | 'equippedEffect'
+    | 'rentalAvatar'
+  >
 >;
 
 interface AuthContextType {
@@ -71,8 +85,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         prev.xp === userData.xp &&
         prev.streak === userData.streak &&
         prev.displayName === userData.displayName &&
+        prev.heroLine === userData.heroLine &&
         prev.uiTheme === userData.uiTheme &&
         prev.avatar === userData.avatar &&
+        prev.rentalAvatar === userData.rentalAvatar &&
         prev.ownedCosmetics.length === userData.ownedCosmetics.length &&
         prev.ownedCosmetics.every((id) => userData.ownedCosmetics.includes(id)) &&
         prev.badges.length === userData.badges.length &&

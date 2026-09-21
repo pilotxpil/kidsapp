@@ -23,6 +23,10 @@ import type {
   LearningCatalogItem,
   LearningCategory,
   PushPlatform,
+  KidDailyWord,
+  KidDailyRiddle,
+  ShopFreebies,
+  BadgeUnlock,
 } from '@kidsapp/shared';
 
 const TOKEN_KEY = 'kidsapp_token';
@@ -129,7 +133,7 @@ export const api = {
     return request<{ user: User; avatarGiftJustUnlocked?: boolean }>('/auth/me');
   },
 
-  updateMe(data: { uiTheme?: UiThemeId; displayName?: string; avatar?: string }) {
+  updateMe(data: { uiTheme?: UiThemeId; displayName?: string; avatar?: string; heroLine?: string }) {
     return request<{ user: User }>('/auth/me', {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -296,6 +300,55 @@ export const api = {
     return request<TreasureChestOpenResult>(`/kids/${id}/treasure-chest/open`, { method: 'POST' });
   },
 
+  getDailyWord(id: string) {
+    return request<{ dailyWord: KidDailyWord }>(`/kids/${id}/daily-word`);
+  },
+
+  getDailyRiddle(id: string) {
+    return request<{ dailyRiddle: KidDailyRiddle }>(`/kids/${id}/daily-riddle`);
+  },
+
+  guessDailyRiddle(id: string, guess: string) {
+    return request<{
+      dailyRiddle: KidDailyRiddle;
+      correct: boolean;
+      pointsAwarded?: number;
+      points?: number;
+      level?: number;
+      xp?: number;
+      newBadges?: BadgeUnlock[];
+    }>(`/kids/${id}/daily-riddle/guess`, {
+      method: 'POST',
+      body: JSON.stringify({ guess }),
+    });
+  },
+
+  getShopFreebies(id: string) {
+    return request<{ freebies: ShopFreebies; kid: User }>(`/kids/${id}/shop-freebies`);
+  },
+
+  claimShopPoints(id: string) {
+    return request<{ freebies: ShopFreebies; points: number; kid: User }>(
+      `/kids/${id}/shop-freebies/points`,
+      { method: 'POST' }
+    );
+  },
+
+  claimShopRental(id: string) {
+    return request<{
+      freebies: ShopFreebies;
+      rental: { id: string; label: string };
+      kid: User;
+    }>(`/kids/${id}/shop-freebies/rental`, { method: 'POST' });
+  },
+
+  reviewDailyWord(id: string, action: 'approve' | 'reject') {
+    return request<{ ok: true; points?: number }>(`/kids/${id}/daily-word/review`, {
+      method: 'POST',
+      body: JSON.stringify({ action }),
+    });
+  },
+
   getTransactions(id: string) {
     return request<{ transactions: PointTransaction[] }>(`/kids/${id}/transactions`);
   },
@@ -316,11 +369,17 @@ export const api = {
     return request<{ packs: LearningPackSummary[]; assignedOnly?: boolean }>('/learning/packs');
   },
 
-  getLearningCatalog(params?: { search?: string; category?: LearningCategory; grade?: number }) {
+  getLearningCatalog(params?: {
+    search?: string;
+    category?: LearningCategory;
+    grade?: number;
+    grades?: number[];
+  }) {
     const q = new URLSearchParams();
     if (params?.search?.trim()) q.set('search', params.search.trim());
     if (params?.category) q.set('category', params.category);
-    if (params?.grade != null) q.set('grade', String(params.grade));
+    if (params?.grades?.length) q.set('grades', params.grades.join(','));
+    else if (params?.grade != null) q.set('grade', String(params.grade));
     const query = q.toString();
     return request<{ items: LearningCatalogItem[] }>(
       `/learning/catalog${query ? `?${query}` : ''}`
@@ -392,7 +451,7 @@ export const api = {
     return request<LearningPackDetail>(`/learning/packs/${encodeURIComponent(packId)}`);
   },
 
-  checkLearningAnswer(packId: string, activityId: string, answer: string) {
+  checkLearningAnswer(packId: string, activityId: string, answer: string | string[]) {
     return request<LearningCheckResult>(
       `/learning/packs/${encodeURIComponent(packId)}/check`,
       {
@@ -460,6 +519,7 @@ export const api = {
       equippedEffect?: string;
       avatar: string;
       points: number;
+      rentalAvatar?: string;
     }>(`/kids/cosmetics${query}`);
   },
 

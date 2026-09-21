@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { UI_THEME_IDS, DEFAULT_KID_THEME_ID, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS, DEFAULT_SHOP_AVATAR_ID, FREE_AVATAR_ID, isAllowedKidAvatar, isFreeAvatar, AVATARS } from '@kidsapp/shared';
+import { UI_THEME_IDS, DEFAULT_KID_THEME_ID, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS, DEFAULT_SHOP_AVATAR_ID, FREE_AVATAR_ID, isAllowedKidAvatar, isFreeAvatar, AVATARS, resolvedRewardIcon } from '@kidsapp/shared';
 import { authenticate, requireParent } from '../middleware/auth';
 import { User } from '../models/User';
 import { Task } from '../models/Task';
@@ -19,6 +19,17 @@ import {
   openTreasureChest,
   awardPoints,
 } from '../services/gamification';
+import { getKidDailyWord, listFamilyDailyWords, reviewDailyWord } from '../services/dailyWord';
+import { getKidDailyRiddle, guessDailyRiddle, listFamilyDailyRiddles } from '../services/dailyRiddle';
+import {
+  getShopFreebies,
+  claimShopPoints,
+  claimShopRental,
+  expireShopRental,
+  canEquipAvatar,
+  ownedWithRental,
+  isRentalActive,
+} from '../services/shopFreebies';
 
 const router = Router();
 
@@ -117,8 +128,8 @@ router.post('/:id/bonus', authenticate, requireParent, async (req: Request, res:
     const newBadges = await awardPoints(kid, amount, 'bonus', reason);
     const updated = await User.findById(kid._id);
 
-    const { pushBonusAwarded } = await import('../services/push');
-    pushBonusAwarded(kid._id.toString(), amount, reason);
+    const { notifyBonusAwarded } = await import('../services/push');
+    await notifyBonusAwarded(kid._id.toString(), amount, reason);
 
     res.json({
       kid: formatUser(updated ?? kid),
@@ -363,6 +374,131 @@ router.post('/:id/treasure-chest/open', authenticate, async (req: Request, res: 
   }
 });
 
+router.get('/:id/daily-word', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role !== 'kid' || req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'רק הילד יכול לראות את המילה היומית' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const dailyWord = await getKidDailyWord(kid);
+    res.json({ dailyWord });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטעינת המילה היומית' });
+  }
+});
+
+router.get('/:id/shop-freebies', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role !== 'kid' || req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'רק הילד יכול לראות את מתנות החנות' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const freebies = await getShopFreebies(kid);
+    res.json({ freebies, kid: formatUser(kid) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטעינת מתנות החנות' });
+  }
+});
+
+router.post('/:id/shop-freebies/points', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role !== 'kid' || req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'רק הילד יכול לקחת את המתנה' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const result = await claimShopPoints(kid);
+    const freebies = await getShopFreebies(kid);
+    res.json({ freebies, points: result.points, kid: formatUser(kid) });
+  } catch (err: unknown) {
+    const status = (err as { status?: number }).status;
+    if (status) return res.status(status).json({ error: (err as Error).message });
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בקבלת הנקודות' });
+  }
+});
+
+router.post('/:id/shop-freebies/rental', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role !== 'kid' || req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'רק הילד יכול לקחת את המתנה' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const result = await claimShopRental(kid);
+    const freebies = await getShopFreebies(kid);
+    res.json({ freebies, rental: result.rental, kid: formatUser(kid) });
+  } catch (err: unknown) {
+    const status = (err as { status?: number }).status;
+    if (status) return res.status(status).json({ error: (err as Error).message });
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בקבלת האווטר' });
+  }
+});
+
+router.post('/:id/daily-word/review', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    const action = req.body?.action === 'approve' ? 'approve' : req.body?.action === 'reject' ? 'reject' : null;
+    if (!action) return res.status(400).json({ error: 'יש לאשר או לדחות' });
+    const result = await reviewDailyWord(req.user!.familyId, kidId, action);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ ok: true, points: result.points });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה באישור המילה היומית' });
+  }
+});
+
+router.get('/:id/daily-riddle', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role !== 'kid' || req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'רק הילד יכול לראות את החידה היומית' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const dailyRiddle = await getKidDailyRiddle(kid);
+    res.json({ dailyRiddle });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטעינת החידה היומית' });
+  }
+});
+
+router.post('/:id/daily-riddle/guess', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role !== 'kid' || req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'רק הילד יכול לפתור את החידה' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const result = await guessDailyRiddle(kid, req.body?.guess);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({
+      dailyRiddle: result.dailyRiddle,
+      correct: result.correct,
+      pointsAwarded: result.pointsAwarded,
+      points: result.points,
+      level: result.level,
+      xp: result.xp,
+      newBadges: result.newBadges,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בבדיקת החידה' });
+  }
+});
+
 router.get('/:id/transactions', authenticate, async (req: Request, res: Response) => {
   try {
     const kid = await User.findOne({
@@ -449,13 +585,16 @@ router.get('/cosmetics', authenticate, async (req: Request, res: Response) => {
       pushAvatarShopGift(kid._id.toString());
     }
 
+    await expireShopRental(kid);
+
     res.json({
       items: COSMETIC_ITEMS,
-      owned: kid.ownedCosmetics ?? [],
+      owned: ownedWithRental(kid),
       equippedFrame: kid.equippedFrame,
       equippedEffect: kid.equippedEffect,
       avatar: kid.avatar,
       points: kid.points,
+      rentalAvatar: isRentalActive(kid) ? kid.rentalAvatar : undefined,
     });
   } catch (err) {
     console.error(err);
@@ -517,7 +656,8 @@ router.post('/cosmetics/:itemId/equip', authenticate, async (req: Request, res: 
 
     const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
     if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
-    if (!(kid.ownedCosmetics ?? []).includes(item.id) && item.cost > 0) {
+    await expireShopRental(kid);
+    if (!canEquipAvatar(kid, item.id, item.cost)) {
       return res.status(400).json({ error: 'יש לקנות את הפריט קודם' });
     }
 
@@ -569,7 +709,7 @@ router.get('/goal', authenticate, async (req: Request, res: Response) => {
         rewardId: reward._id.toString(),
         rewardTitle: reward.title,
         rewardCost: reward.cost,
-        rewardIcon: reward.icon,
+        rewardIcon: resolvedRewardIcon(reward.title, reward.icon, reward.category),
         currentPoints: kid.points,
         progress,
       },
@@ -614,7 +754,7 @@ router.put('/goal', authenticate, async (req: Request, res: Response) => {
         rewardId: reward._id.toString(),
         rewardTitle: reward.title,
         rewardCost: reward.cost,
-        rewardIcon: reward.icon,
+        rewardIcon: resolvedRewardIcon(reward.title, reward.icon, reward.category),
         currentPoints: kid.points,
         progress,
       },
@@ -644,6 +784,8 @@ router.get('/dashboard', authenticate, requireParent, async (req: Request, res: 
         Task.countDocuments({ familyId, isActive: true }),
         Reward.countDocuments({ familyId, isActive: true }),
       ]);
+    const dailyWords = await listFamilyDailyWords(kids);
+    const dailyRiddles = await listFamilyDailyRiddles(kids);
 
     res.json({
       dashboard: {
@@ -675,13 +817,15 @@ router.get('/dashboard', authenticate, requireParent, async (req: Request, res: 
           requestedAt: r.requestedAt.toISOString(),
           reward: r.rewardId && typeof r.rewardId === 'object' ? {
             title: (r.rewardId as any).title,
-            icon: (r.rewardId as any).icon,
+            icon: resolvedRewardIcon((r.rewardId as any).title, (r.rewardId as any).icon, (r.rewardId as any).category),
           } : undefined,
           kid: r.kidId && typeof r.kidId === 'object' ? {
             displayName: (r.kidId as any).displayName,
             avatar: (r.kidId as any).avatar,
           } : undefined,
         })),
+        dailyWords,
+        dailyRiddles,
         kids: kids.map(formatUser),
         stats: {
           totalTasks,

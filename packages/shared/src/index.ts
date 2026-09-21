@@ -1,4 +1,8 @@
 export * from './learning';
+export * from './dailyWords';
+export * from './dailyRiddles';
+import type { ParentDailyWordKid } from './dailyWords';
+import type { ParentDailyRiddleKid } from './dailyRiddles';
 
 export type UserRole = 'parent' | 'kid';
 
@@ -16,6 +20,7 @@ export type PointTransactionType = 'task' | 'redemption' | 'bonus' | 'streak' | 
 
 /** Max points a parent can award manually in one action. */
 export const MAX_MANUAL_BONUS_POINTS = 500;
+export const MAX_HERO_LINE = 48;
 
 export type RewardCategory = 'gaming' | 'food' | 'screen' | 'privilege' | 'other';
 
@@ -258,9 +263,13 @@ export interface User {
   ownedCosmetics: string[];
   equippedFrame?: string;
   equippedEffect?: string;
+  /** Paid avatar loaned for today only. */
+  rentalAvatar?: string;
   goalRewardId?: string;
   /** Kid school grade 1–6 (כיתה א–ו). */
   grade?: number;
+  /** Custom line on the home dashboard (falls back to the theme tagline). */
+  heroLine?: string;
   createdAt: string;
 }
 
@@ -352,6 +361,8 @@ export interface KidProfile extends User {
 export interface ParentDashboard {
   pendingCompletions: TaskCompletion[];
   pendingRedemptions: Redemption[];
+  dailyWords: ParentDailyWordKid[];
+  dailyRiddles: ParentDailyRiddleKid[];
   kids: User[];
   stats: {
     totalTasks: number;
@@ -410,11 +421,39 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
 
 export const REWARD_CATEGORIES: Record<RewardCategory, { label: string; icon: string }> = {
   gaming: { label: 'גיימינג', icon: '⛏️' },
-  food: { label: 'אוכל', icon: '🍖' },
+  food: { label: 'אוכל', icon: '🍽️' },
   screen: { label: 'מסך', icon: '🖥️' },
   privilege: { label: 'הרשאות', icon: '✨' },
   other: { label: 'אחר', icon: '📦' },
 };
+
+/** Category chips used to stamp a generic icon — not the reward itself. */
+const GENERIC_REWARD_ICONS = new Set<string>([
+  '🎁',
+  '🍖',
+  ...Object.values(REWARD_CATEGORIES).map((c) => c.icon),
+]);
+
+/** Icon that actually matches the reward title (cola ≠ meat). */
+export function suggestedRewardIcon(title: string): string | undefined {
+  const t = title.trim().toLowerCase();
+  if (/קולה|cola|coca|קוקה|פפסי|pepsi|ספרייט|sprite|פאנטה|fanta/.test(t)) return '🥤';
+  if (/פיצה|pizza/.test(t)) return '🍕';
+  if (/המבורגר|burger/.test(t)) return '🍔';
+  if (/גלידה|ice\s*cream/.test(t)) return '🍦';
+  if (/שוקולד|chocolate/.test(t)) return '🍫';
+  if (/ממתק|candy|סוכריה/.test(t)) return '🍬';
+  return undefined;
+}
+
+export function resolvedRewardIcon(title: string, icon?: string, category?: RewardCategory): string {
+  const suggested = suggestedRewardIcon(title);
+  if (suggested && (!icon || GENERIC_REWARD_ICONS.has(icon))) return suggested;
+  if (icon) return icon;
+  if (suggested) return suggested;
+  if (category && REWARD_CATEGORIES[category]) return REWARD_CATEGORIES[category].icon;
+  return '🎁';
+}
 
 export interface RewardTemplate {
   title: string;
@@ -430,6 +469,7 @@ export const REWARD_TEMPLATES: RewardTemplate[] = [
   { title: 'Brawl Stars Gems', description: '100 ג׳מס לבראול סטארס', icon: '💎', cost: 400, category: 'gaming' },
   { title: 'Minecraft Coins', description: 'מטבעות למיינקראפט', icon: '⛏️', cost: 350, category: 'gaming' },
   { title: 'הזמנת פיצה', description: 'פיצה מהמסעדה האהובה', icon: '🍕', cost: 800, category: 'food' },
+  { title: 'קולה', description: 'בקבוק קולה', icon: '🥤', cost: 80, category: 'food' },
   { title: '30 דק מסך', description: 'זמן מסך בונוס', icon: '📱', cost: 150, category: 'screen' },
 ];
 
@@ -489,7 +529,11 @@ export type PushNotificationType =
   | 'bonus_awarded'
   | 'tasks_incomplete_evening'
   | 'family_challenge_complete'
-  | 'avatar_shop_gift';
+  | 'avatar_shop_gift'
+  | 'daily_word_claimed'
+  | 'daily_word_ask'
+  | 'daily_word_approved'
+  | 'daily_word_rejected';
 
 export type PushPlatform = 'ios' | 'android' | 'web' | 'unknown';
 
@@ -559,6 +603,20 @@ export const SHOP_TEASER_AVATAR_IDS = ['skibidi-sigma', 'pizza-face', 'ban-hamme
 
 export function paidCosmeticItems(): CosmeticItem[] {
   return COSMETIC_ITEMS.filter((c) => c.cost > 0);
+}
+
+export const SHOP_FREE_POINTS_MIN = 1;
+export const SHOP_FREE_POINTS_MAX = 5;
+/** Chance a kid also gets a 1-day paid-avatar loan. */
+export const SHOP_RENTAL_CHANCE = 0.32;
+
+export interface ShopFreebies {
+  date: string;
+  points: number;
+  pointsClaimed: boolean;
+  rental: { id: string; label: string } | null;
+  rentalClaimed: boolean;
+  activeRental: { id: string; label: string } | null;
 }
 
 export function isAllowedKidAvatar(avatar: string): boolean {

@@ -13,7 +13,6 @@ import { spacing } from '../constants/theme';
 import { useTheme } from '../lib/theme-context';
 import { useType } from '../lib/typography';
 import { BouncyPressable } from './animations/BouncyPressable';
-import { playSfx } from '../lib/sfx';
 
 interface ButtonProps {
   title: string;
@@ -21,6 +20,7 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'danger' | 'outline' | 'success';
   loading?: boolean;
   disabled?: boolean;
+  compact?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: TextStyle;
   sound?: boolean;
@@ -60,6 +60,7 @@ export function Button({
   variant = 'primary',
   loading,
   disabled,
+  compact,
   style,
   textStyle,
   sound = true,
@@ -74,38 +75,44 @@ export function Button({
       StyleSheet.create({
         shell: ember
           ? {
-              borderRadius: 22,
+              borderRadius: compact ? 14 : 22,
               overflow: 'hidden' as const,
-              alignSelf: 'stretch',
+              alignSelf: compact ? ('flex-start' as const) : ('stretch' as const),
               maxWidth: '100%',
+              minWidth: 0,
+              flexShrink: 1,
               shadowColor: colors.primary,
-              shadowOpacity: variant === 'outline' ? 0 : 0.8,
-              shadowRadius: 16,
-              shadowOffset: { width: 0, height: 8 },
-              elevation: variant === 'outline' ? 0 : 14,
+              shadowOpacity: variant === 'outline' || compact ? 0 : 0.8,
+              shadowRadius: compact ? 0 : 16,
+              shadowOffset: { width: 0, height: compact ? 0 : 8 },
+              elevation: variant === 'outline' || compact ? 0 : 14,
             }
           : {
-              borderRadius: borderRadius.md,
+              borderRadius: compact ? borderRadius.sm : borderRadius.md,
               overflow: 'hidden' as const,
-              alignSelf: 'stretch',
+              alignSelf: compact ? ('flex-start' as const) : ('stretch' as const),
               maxWidth: '100%',
-              ...cardBorder(2),
+              minWidth: 0,
+              flexShrink: 1,
+              ...cardBorder(compact ? 1 : 2),
               borderBottomColor: colors.buttonShadow,
               borderRightColor: colors.buttonShadow,
               shadowColor: colors.glow,
-              shadowOpacity: 0.45,
-              shadowRadius: 10,
-              shadowOffset: { width: 0, height: 4 },
-              elevation: 8,
+              shadowOpacity: compact ? 0.2 : 0.45,
+              shadowRadius: compact ? 4 : 10,
+              shadowOffset: { width: 0, height: compact ? 1 : 4 },
+              elevation: compact ? 2 : 8,
             },
         fill: {
-          width: '100%',
+          width: compact ? undefined : '100%',
           maxWidth: '100%',
-          paddingVertical: ember ? 15 : spacing.md,
-          paddingHorizontal: spacing.lg,
+          flexShrink: 1,
+          paddingVertical: compact ? 6 : ember ? 15 : spacing.md,
+          paddingHorizontal: compact ? spacing.sm : spacing.lg,
           alignItems: 'center' as const,
           justifyContent: 'center' as const,
-          minHeight: ember ? 52 : 48,
+          minHeight: compact ? 32 : ember ? 52 : 48,
+          minWidth: compact ? 72 : undefined,
         },
         sheen: {
           position: 'absolute' as const,
@@ -117,11 +124,11 @@ export function Button({
         },
         text: {
           color: ember ? colors.textDark : '#fff',
-          fontSize: ember ? 17 : 16,
+          fontSize: compact ? 13 : ember ? 17 : 16,
           fontWeight: ember ? 'normal' : ('800' as const),
           textAlign: 'center' as const,
           letterSpacing: ember ? 0.35 : 0,
-          textShadowColor: ember ? 'transparent' : 'rgba(0,0,0,0.4)',
+          textShadowColor: ember || compact ? 'transparent' : 'rgba(0,0,0,0.4)',
           textShadowOffset: { width: 1, height: 1 },
           textShadowRadius: 0,
           flexShrink: 1,
@@ -142,11 +149,10 @@ export function Button({
               elevation: 0,
             },
       }),
-    [themeId, colors, borderRadius, cardBorder, ember, type.title, variant]
+    [themeId, colors, borderRadius, cardBorder, ember, type.title, variant, compact]
   );
 
   const handlePress = () => {
-    if (sound) playSfx('tap');
     onPress();
   };
 
@@ -172,6 +178,7 @@ export function Button({
       <BouncyPressable
         onPress={handlePress}
         disabled={disabled || loading}
+        sound={sound}
         style={[styles.shell, outerStyle, (disabled || loading) && styles.disabled]}
       >
         <LinearGradient
@@ -184,7 +191,7 @@ export function Button({
           end={ember ? { x: 0.5, y: 1 } : { x: 1, y: 0 }}
           style={[styles.fill, innerStyle]}
         >
-          {ember ? <View style={styles.sheen} pointerEvents="none" /> : null}
+          {ember && !compact ? <View style={styles.sheen} pointerEvents="none" /> : null}
           {content}
         </LinearGradient>
       </BouncyPressable>
@@ -202,6 +209,7 @@ export function Button({
     <BouncyPressable
       onPress={handlePress}
       disabled={disabled || loading}
+      sound={sound}
       style={[
         styles.shell,
         variant === 'outline' && styles.outlineShell,
@@ -213,7 +221,7 @@ export function Button({
         colors={[fillColors[variant] ?? colors.secondary, fillColors[variant] ?? colors.secondary]}
         style={[styles.fill, innerStyle]}
       >
-        {ember && variant !== 'outline' ? <View style={styles.sheen} pointerEvents="none" /> : null}
+        {ember && variant !== 'outline' && !compact ? <View style={styles.sheen} pointerEvents="none" /> : null}
         {content}
       </LinearGradient>
     </BouncyPressable>

@@ -1,9 +1,21 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Image, StyleProp, ImageStyle } from 'react-native';
 import Svg, { Path, Circle, G } from 'react-native-svg';
+import Animated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import type { ImageSourcePropType } from 'react-native';
 import type { TaskCategory } from '@kidsapp/shared';
 import { useTheme } from '../../lib/theme-context';
+import { useAuth } from '../../lib/auth';
 import { getThemeArt, type ThemeTabArtKey } from '../../constants/theme-art';
+import { KidAvatar } from '../KidAvatar';
 
 export type GlyphName =
   | 'home'
@@ -199,8 +211,30 @@ export function ThemeGlyph({ name, size = 22, color, filled = true }: GlyphProps
     );
   }
 
+  if (name === 'streak') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" style={{ backgroundColor: 'transparent' }}>
+        <Path
+          d="M6.2 6.4h11.6v13.2H6.2z"
+          fill={filled ? tint : 'none'}
+          fillOpacity={filled ? 0.18 : 0}
+          stroke={tint}
+          strokeWidth={stroke}
+          strokeLinejoin="round"
+        />
+        <Path d="M6.2 9.6h11.6" stroke={tint} strokeWidth={stroke} strokeLinecap="round" />
+        <Path d="M8.4 4.6v3.4M15.6 4.6v3.4" stroke={tint} strokeWidth={stroke} strokeLinecap="round" />
+        <Circle cx="9" cy="13.6" r="1.35" fill={tint} />
+        <Circle cx="12" cy="13.6" r="1.35" fill={tint} />
+        <Circle cx="15" cy="13.6" r="1.35" fill={tint} />
+        <Circle cx="9" cy="16.8" r="1.35" fill={tint} />
+        <Circle cx="12" cy="16.8" r="1.35" fill={tint} />
+      </Svg>
+    );
+  }
+
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Svg width={size} height={size} viewBox="0 0 24 24" style={{ backgroundColor: 'transparent' }}>
       <G>
         <Path
           d={glyphPath(name)}
@@ -215,40 +249,80 @@ export function ThemeGlyph({ name, size = 22, color, filled = true }: GlyphProps
   );
 }
 
-const TAB_GLYPH: Record<string, GlyphName> = {
+export type ThemeTabIconName = ThemeTabArtKey | 'kids';
+
+const TAB_GLYPH: Record<ThemeTabIconName, GlyphName> = {
   home: 'home',
   tasks: 'tasks',
   learn: 'learn',
   shop: 'shop',
   profile: 'profile',
+  kids: 'social',
 };
 
-const EMBER_TAB_GLYPH: Record<string, GlyphName> = {
+const EMBER_TAB_GLYPH: Record<ThemeTabIconName, GlyphName> = {
   home: 'house',
   tasks: 'swords',
   learn: 'learn',
   shop: 'cart',
   profile: 'helmet',
+  kids: 'social',
 };
 
 interface ThemeTabIconProps {
-  name: ThemeTabArtKey;
+  name: ThemeTabIconName;
   fallback: string;
   focused: boolean;
 }
 
 export function ThemeTabIcon({ name, fallback, focused }: ThemeTabIconProps) {
   const { chrome, colors, id: themeId } = useTheme();
+  const { user } = useAuth();
   const art = getThemeArt(themeId);
-  const painted = art?.icons?.[name];
+  const painted = name === 'kids' || name === 'profile' ? undefined : art?.icons?.[name];
+
+  if (name === 'profile' && user?.avatar) {
+    const ember = themeId === 'ember';
+    const voxel = themeId === 'minecraft';
+    const dim = focused ? (ember || voxel ? 30 : 26) : ember || voxel ? 26 : 22;
+    return (
+      <View
+        style={[
+          styles.profileWrap,
+          voxel && styles.profileWrapMc,
+          {
+            width: dim + 6,
+            height: dim + 6,
+            opacity: focused ? 1 : ember || voxel ? 1 : 0.72,
+            borderColor: focused ? (voxel ? colors.primaryLight : colors.primary) : `${colors.primary}66`,
+            borderWidth: focused ? 2 : 1,
+          },
+        ]}
+      >
+        <KidAvatar avatar={user.avatar} size={dim} />
+      </View>
+    );
+  }
 
   if (painted) {
-    const dim = focused ? 26 : 22;
+    const ember = themeId === 'ember';
+    const voxel = themeId === 'minecraft';
+    const dim = focused ? (ember || voxel ? 32 : 26) : ember || voxel ? 28 : 22;
     return (
       <View
         style={[
           styles.tabArtWrap,
-          focused && {
+          ember && styles.tabArtWrapEmber,
+          voxel && styles.tabArtWrapMc,
+          ember && {
+            borderWidth: focused ? 1.5 : 1,
+            borderColor: focused ? 'rgba(255, 210, 150, 0.95)' : 'rgba(255, 190, 130, 0.4)',
+          },
+          voxel && {
+            borderWidth: focused ? 2 : 1,
+            borderColor: focused ? colors.primaryLight : 'rgba(158, 174, 142, 0.55)',
+          },
+          focused && !ember && !voxel && {
             shadowColor: colors.primary,
             shadowOpacity: 0.95,
             shadowRadius: 14,
@@ -258,7 +332,12 @@ export function ThemeTabIcon({ name, fallback, focused }: ThemeTabIconProps) {
       >
         <Image
           source={painted}
-          style={{ width: dim, height: dim, opacity: focused ? 1 : 0.58 }}
+          style={{
+            width: dim,
+            height: dim,
+            opacity: ember || voxel ? 1 : focused ? 1 : 0.58,
+            ...(voxel ? ({ imageRendering: 'pixelated' } as const) : {}),
+          }}
           resizeMode="contain"
         />
       </View>
@@ -331,13 +410,88 @@ export function PointsMark({ size = 18 }: { size?: number }) {
   const { chrome, colors, pointsEmoji, id: themeId } = useTheme();
   const gem = getThemeArt(themeId)?.gem;
   if (gem) {
-    return <Image source={gem} style={{ width: size + 4, height: size + 4 }} resizeMode="contain" />;
+    if (themeId === 'minecraft' && size >= 22) {
+      return <SparkleGem source={gem} size={size + 4} />;
+    }
+    return (
+      <Image
+        source={gem}
+        style={{
+          width: size + 4,
+          height: size + 4,
+          backgroundColor: 'transparent',
+        }}
+        resizeMode="contain"
+      />
+    );
   }
   if (chrome !== 'vector') {
     return <Text style={{ fontSize: size }}>{pointsEmoji}</Text>;
   }
   return <ThemeGlyph name="gem" size={size} color={colors.gold} />;
 }
+
+export function SparkleGem({
+  source,
+  size,
+  style,
+}: {
+  source: ImageSourcePropType;
+  size?: number;
+  style?: StyleProp<ImageStyle>;
+}) {
+  const twinkle = useSharedValue(0);
+
+  useEffect(() => {
+    twinkle.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 900, easing: Easing.inOut(Easing.quad) }),
+        withTiming(0.25, { duration: 700, easing: Easing.inOut(Easing.quad) }),
+        withTiming(1, { duration: 500, easing: Easing.out(Easing.quad) }),
+        withTiming(0.4, { duration: 1200, easing: Easing.inOut(Easing.quad) })
+      ),
+      -1,
+      false
+    );
+  }, [twinkle]);
+
+  const pulse = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(twinkle.value, [0, 1], [0.96, 1.06]) }],
+  }));
+
+  const glint = useAnimatedStyle(() => ({
+    opacity: interpolate(twinkle.value, [0, 0.45, 1], [0.1, 0.95, 0.2]),
+    transform: [
+      { scale: interpolate(twinkle.value, [0, 1], [0.7, 1.15]) },
+      { rotate: `${interpolate(twinkle.value, [0, 1], [-12, 18])}deg` },
+    ],
+  }));
+
+  const dim = size ?? 64;
+
+  return (
+    <Animated.View style={[{ width: dim, height: dim, alignItems: 'center', justifyContent: 'center' }, pulse]}>
+      <Image source={source} style={[{ width: dim, height: dim, backgroundColor: 'transparent' }, style]} resizeMode="contain" />
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, glint, sparkleStyles.glint]}>
+        <Text style={[sparkleStyles.star, { fontSize: dim * 0.22 }]}>✦</Text>
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
+const sparkleStyles = StyleSheet.create({
+  glint: {
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: '18%',
+  },
+  star: {
+    color: '#FFFFFF',
+    textShadowColor: '#7DF9FF',
+    textShadowRadius: 10,
+    textShadowOffset: { width: 0, height: 0 },
+  },
+});
 
 const styles = StyleSheet.create({
   tabWrap: {
@@ -355,5 +509,25 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  tabArtWrapEmber: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+  },
+  tabArtWrapMc: {
+    width: 36,
+    height: 36,
+    borderRadius: 6,
+  },
+  profileWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    borderRadius: 999,
+    backgroundColor: 'transparent',
+  },
+  profileWrapMc: {
+    borderRadius: 6,
   },
 });

@@ -1,5 +1,14 @@
 import React from 'react';
-import { Image, Text, View, StyleProp, ImageStyle, TextStyle, ViewStyle } from 'react-native';
+import {
+  Image,
+  Platform,
+  Text,
+  View,
+  StyleProp,
+  ImageStyle,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
 import { shopAvatarImage } from '../lib/avatar-images';
 
 interface KidAvatarProps {
@@ -21,15 +30,22 @@ export function KidAvatar({ avatar, size, style }: KidAvatarProps) {
             borderRadius: radius,
             overflow: 'hidden',
             flexShrink: 0,
-            backgroundColor: 'rgba(0,0,0,0.2)',
+            backgroundColor: 'transparent',
           },
           style as ViewStyle,
         ]}
       >
         <Image
           source={src}
-          style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
+          pointerEvents="none"
           resizeMode="cover"
+          style={[
+            { width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' },
+            Platform.OS === 'web'
+              ? ({ userSelect: 'none', WebkitUserDrag: 'none' } as ImageStyle)
+              : null,
+          ]}
+          {...(Platform.OS === 'web' ? { draggable: false } : {})}
         />
       </View>
     );

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { REWARD_CATEGORIES } from '@kidsapp/shared';
 import type { Reward, RewardCategory } from '@kidsapp/shared';
 import { Card } from './Card';
@@ -7,11 +7,11 @@ import { Button } from './Button';
 import { RtlText } from './RtlText';
 import { FadeInUp } from './animations/FadeInUp';
 import { spacing } from '../constants/theme';
-import { getThemeArt } from '../constants/theme-art';
 import { useTheme } from '../lib/theme-context';
 import { useType } from '../lib/typography';
 import { rtl } from '../lib/rtl';
 import { t } from '../lib/i18n';
+import { playSfx } from '../lib/sfx';
 import { PointsMark } from './icons/ThemeGlyph';
 
 interface RewardCardProps {
@@ -21,12 +21,20 @@ interface RewardCardProps {
   loading?: boolean;
   pending?: boolean;
   index?: number;
+  onSetGoal?: (reward: Reward) => void;
 }
 
-export function RewardCard({ reward, userPoints, onRedeem, loading, pending, index = 0 }: RewardCardProps) {
+export function RewardCard({
+  reward,
+  userPoints,
+  onRedeem,
+  loading,
+  pending,
+  index = 0,
+  onSetGoal,
+}: RewardCardProps) {
   const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
   const type = useType();
-  const art = getThemeArt(themeId);
   const ember = themeId === 'ember';
   const canAfford = userPoints >= reward.cost;
   const cat = REWARD_CATEGORIES[reward.category as RewardCategory];
@@ -35,111 +43,106 @@ export function RewardCard({ reward, userPoints, onRedeem, loading, pending, ind
     () =>
       StyleSheet.create({
         cardWrap: { width: '100%', alignSelf: 'stretch' },
-        card: { marginBottom: spacing.md, alignSelf: 'stretch' },
-        cardDisabled: { opacity: 0.6 },
-        header: { marginBottom: spacing.md, width: '100%', maxWidth: '100%' },
-        title: { color: colors.text, fontSize: 18, fontWeight: '700', ...type.title },
-        description: { color: colors.textMuted, fontSize: 14, marginTop: 4, ...type.body },
-        costRow: {
-          alignItems: 'flex-start',
-          marginTop: spacing.sm,
-          gap: spacing.sm,
-          flexWrap: 'wrap',
-          width: '100%',
+        card: {
+          marginBottom: spacing.sm,
+          alignSelf: 'stretch',
+          paddingVertical: 10,
+          paddingHorizontal: spacing.sm + 4,
         },
-        cost: { color: colors.emerald, fontWeight: '800', fontSize: 18, ...type.title },
+        cardDisabled: { opacity: 0.6 },
+        row: { width: '100%', alignItems: 'center', gap: spacing.sm },
+        info: { flex: 1, minWidth: 0, alignItems: 'flex-end' },
+        title: { color: colors.text, fontSize: 15, fontWeight: '800', ...type.title },
+        description: { color: colors.textMuted, fontSize: 12, marginTop: 2, ...type.body },
+        meta: {
+          alignItems: 'center',
+          marginTop: 4,
+          gap: 6,
+          flexWrap: 'wrap',
+        },
+        cost: { color: colors.emerald, fontWeight: '800', fontSize: 13, ...type.title },
         costDisabled: { color: colors.textMuted },
-        costPair: { gap: 4, alignSelf: 'flex-start', flexGrow: 0 },
-        thumb: { width: 56, height: 56, marginBottom: spacing.sm },
-        categoryBadge: ember
-          ? {
-              backgroundColor: 'rgba(255,90,0,0.14)',
-              paddingHorizontal: spacing.sm,
-              paddingVertical: 6,
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: 'rgba(255,138,61,0.35)',
-              alignSelf: 'flex-start',
-              flexGrow: 0,
-              flexShrink: 0,
-            }
-          : {
-              backgroundColor: colors.bgCardLight,
-              paddingHorizontal: spacing.sm,
-              paddingVertical: 5,
-              borderRadius: borderRadius.sm,
-              alignSelf: 'flex-start',
-              flexGrow: 0,
-              flexShrink: 0,
-              ...cardBorder(1),
-            },
-        categoryText: { color: colors.text, fontSize: 12, fontWeight: '700', ...type.ui },
-        button: { marginTop: spacing.sm, alignSelf: 'stretch', width: '100%' },
+        costPair: { gap: 3, flexGrow: 0 },
+        categoryText: { color: colors.textMuted, fontSize: 11, fontWeight: '700', ...type.ui },
+        action: { flexShrink: 0, alignItems: 'flex-start' },
         pendingBadge: ember
           ? {
               backgroundColor: 'rgba(107,58,24,0.7)',
-              paddingHorizontal: spacing.md,
-              paddingVertical: spacing.sm,
+              paddingHorizontal: spacing.sm,
+              paddingVertical: 5,
               borderRadius: 999,
-              alignSelf: 'flex-start',
-              flexGrow: 0,
               borderWidth: 1,
               borderColor: 'rgba(255,138,61,0.3)',
             }
           : {
               backgroundColor: colors.secondary,
-              paddingHorizontal: spacing.md,
-              paddingVertical: spacing.sm,
+              paddingHorizontal: spacing.sm,
+              paddingVertical: 5,
               borderRadius: borderRadius.full,
-              alignSelf: 'flex-start',
-              flexGrow: 0,
               ...cardBorder(1),
             },
-        pendingText: { color: colors.text, fontWeight: '600', ...type.ui },
+        pendingText: { color: colors.text, fontWeight: '600', fontSize: 12, ...type.ui },
+        goalLink: { marginTop: 4 },
+        goalText: { color: colors.primaryLight, fontSize: 12, fontWeight: '700', ...type.ui },
       }),
     [themeId, colors, borderRadius, cardBorder, ember, type.title, type.body, type.ui]
   );
 
   const badgeIcon = ember ? '' : reward.icon || cat?.icon || '📦';
 
+  const action = pending ? (
+    <View style={styles.pendingBadge}>
+      <Text style={[styles.pendingText, rtl.textCenter]}>{t('pending')}</Text>
+    </View>
+  ) : (
+    <Button
+      title={canAfford ? t('redeem') : t('notEnoughPoints')}
+      onPress={() => onRedeem(reward)}
+      loading={loading}
+      disabled={!canAfford}
+      variant={canAfford ? 'primary' : 'outline'}
+      compact
+    />
+  );
+
   return (
     <FadeInUp index={index} style={styles.cardWrap}>
       <Card style={!canAfford ? [styles.card, styles.cardDisabled] : styles.card} glow={canAfford && !pending}>
-        <View style={styles.header}>
-          {ember && art?.chest ? <Image source={art.chest} style={styles.thumb} resizeMode="contain" /> : null}
-          <RtlText style={styles.title} numberOfLines={2}>
-            {reward.title}
-          </RtlText>
-          {reward.description ? (
-            <RtlText style={styles.description}>{reward.description}</RtlText>
-          ) : null}
-          <View style={[styles.costRow, rtl.row]}>
-            <View style={[styles.categoryBadge, rtl.rowInline]}>
+        <View style={[styles.row, rtl.headerSplit]}>
+          <View style={styles.action}>{action}</View>
+          <View style={styles.info}>
+            <RtlText style={styles.title} numberOfLines={1}>
+              {reward.title}
+            </RtlText>
+            {reward.description ? (
+              <RtlText style={styles.description} numberOfLines={1}>
+                {reward.description}
+              </RtlText>
+            ) : null}
+            <View style={[styles.meta, rtl.rowInline]}>
+              <View style={[styles.costPair, rtl.rowInline]}>
+                <Text style={[styles.cost, !canAfford && styles.costDisabled]}>{reward.cost}</Text>
+                <PointsMark size={12} />
+              </View>
               <Text style={styles.categoryText}>
                 {badgeIcon ? `${badgeIcon} ` : ''}
                 {cat?.label}
               </Text>
             </View>
-            <View style={[styles.costPair, rtl.rowInline]}>
-              <Text style={[styles.cost, !canAfford && styles.costDisabled]}>{reward.cost}</Text>
-              <PointsMark size={16} />
-            </View>
+            {onSetGoal ? (
+              <TouchableOpacity
+                onPress={() => {
+                  playSfx('tap');
+                  onSetGoal(reward);
+                }}
+                style={styles.goalLink}
+                hitSlop={6}
+              >
+                <RtlText style={styles.goalText}>{t('setPersonalGoal')}</RtlText>
+              </TouchableOpacity>
+            ) : null}
           </View>
         </View>
-        {pending ? (
-          <View style={styles.pendingBadge}>
-            <Text style={[styles.pendingText, rtl.textCenter]}>{t('pending')}</Text>
-          </View>
-        ) : (
-          <Button
-            title={canAfford ? t('redeem') : t('notEnoughPoints')}
-            onPress={() => onRedeem(reward)}
-            loading={loading}
-            disabled={!canAfford}
-            variant={canAfford ? 'primary' : 'outline'}
-            style={styles.button}
-          />
-        )}
       </Card>
     </FadeInUp>
   );

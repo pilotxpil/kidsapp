@@ -166,6 +166,7 @@ export default function KidLoginScreen() {
             keyboardType="number-pad"
             maxLength={6}
             placeholder="123456"
+            ltr
           />
           {!keyboardOpen ? <Text style={styles.hint}>{t('familyCodeHint')}</Text> : null}
 
@@ -178,6 +179,7 @@ export default function KidLoginScreen() {
             autoCorrect={false}
             textContentType="username"
             autoComplete="username"
+            ltr
           />
           <Input
             compact
@@ -188,6 +190,7 @@ export default function KidLoginScreen() {
             secureTextEntry
             maxLength={4}
             placeholder="••••"
+            ltr
           />
           <Button title={t('login')} onPress={handleLogin} loading={loading} />
           {error ? <Text style={styles.error}>{error}</Text> : null}

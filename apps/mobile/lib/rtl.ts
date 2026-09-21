@@ -66,7 +66,7 @@ export const rtl = {
   get rowBetween(): ViewStyle {
     if (Platform.OS === 'web') {
       return {
-        flexDirection: 'row',
+        flexDirection: 'row-reverse',
         justifyContent: 'space-between',
         alignItems: 'center',
         ...webDirection(),
@@ -77,6 +77,16 @@ export const rtl = {
       justifyContent: 'space-between',
       alignItems: 'center',
       width: '100%',
+    };
+  },
+
+  /** Tag/chip rows: first item on the right, wrap RTL. */
+  get chips(): ViewStyle {
+    return {
+      flexDirection: 'row-reverse',
+      flexWrap: 'wrap',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
     };
   },
 

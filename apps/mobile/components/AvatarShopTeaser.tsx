@@ -6,7 +6,6 @@ import { useTheme } from '../lib/theme-context';
 import { Card } from './Card';
 import { BouncyPressable } from './animations/BouncyPressable';
 import { KidAvatar } from './KidAvatar';
-import { playSfx } from '../lib/sfx';
 import { t } from '../lib/i18n';
 
 const FACE = 44;
@@ -20,10 +19,7 @@ export function AvatarShopTeaser({ onPress }: { onPress: () => void }) {
   return (
     <Card>
       <BouncyPressable
-        onPress={() => {
-          playSfx('tap');
-          onPress();
-        }}
+        onPress={onPress}
         style={styles.press}
       >
         <View style={styles.row}>

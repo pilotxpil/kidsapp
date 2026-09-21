@@ -1,12 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { KeyboardScroll } from '../../components/KeyboardSheet';
 import { ThemePicker } from '../../components/ThemePicker';
+import { AudioSettings } from '../../components/AudioSettings';
 import { FamilyInviteCard } from '../../components/FamilyInviteCard';
 import { AvatarPickerModal } from '../../components/AvatarPicker';
 import { KidAvatar } from '../../components/KidAvatar';
@@ -82,7 +84,7 @@ export default function ParentProfileScreen() {
 
   return (
     <ThemedScreen tabs>
-      <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
+      <KeyboardScroll contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
         <SectionHeader title={t('profile')} icon="🛡️" />
 
         <View style={styles.avatarSection}>
@@ -113,10 +115,12 @@ export default function ParentProfileScreen() {
           <ThemePicker />
         </View>
 
+        <AudioSettings />
+
         <Button title={t('privacyPolicy')} variant="outline" onPress={() => router.push('/privacy')} />
         <Button title={t('logout')} onPress={logout} variant="danger" style={styles.logout} />
         <AppVersionLabel />
-      </ScrollView>
+      </KeyboardScroll>
 
       <AvatarPickerModal visible={avatarOpen} onClose={() => setAvatarOpen(false)} mode="parent" />
     </ThemedScreen>

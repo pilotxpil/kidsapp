@@ -6,7 +6,6 @@ import {
   ScrollView,
   Modal,
   TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
   Dimensions,
   Pressable,
@@ -28,6 +27,7 @@ import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
 import { t } from '../../lib/i18n';
 import { KidLoginQrModal } from '../../components/KidLoginQrModal';
+import { KeyboardSheet, KeyboardScroll, useKeyboardHeight } from '../../components/KeyboardSheet';
 
 const BONUS_PRESETS = [10, 20, 50, 100];
 
@@ -50,8 +50,13 @@ export default function ParentKidsScreen() {
   const [bonusReason, setBonusReason] = useState('');
   const [bonusLoading, setBonusLoading] = useState(false);
   const savingRef = useRef(false);
-
-  const modalMaxHeight = Dimensions.get('window').height - insets.top - insets.bottom - spacing.lg * 2;
+  const keyboardHeight = useKeyboardHeight();
+  const modalMaxHeight =
+    Dimensions.get('window').height -
+    insets.top -
+    insets.bottom -
+    spacing.lg * 2 -
+    (Platform.OS === 'android' ? keyboardHeight : 0);
 
   const styles = useMemo(
     () =>
@@ -84,18 +89,21 @@ export default function ParentKidsScreen() {
         qrIcon: { fontSize: 20 },
         historyBtn: { marginTop: spacing.sm, alignSelf: 'stretch' },
         actionRow: { marginTop: spacing.sm, gap: spacing.sm, width: '100%' },
-        actionBtn: { flex: 1 },
+        actionBtn: { alignSelf: 'stretch', width: '100%' },
         presetRow: {
           flexDirection: 'row',
           flexWrap: 'wrap',
           gap: spacing.sm,
-          justifyContent: 'flex-end',
           marginBottom: spacing.md,
           width: '100%',
         },
         presetChip: {
+          flexGrow: 1,
+          flexBasis: '46%',
+          minWidth: 0,
+          alignItems: 'center',
           paddingVertical: spacing.sm,
-          paddingHorizontal: spacing.md,
+          paddingHorizontal: spacing.sm,
           borderRadius: borderRadius.full,
           backgroundColor: colors.bgCardLight,
           borderWidth: 2,
@@ -139,11 +147,11 @@ export default function ParentKidsScreen() {
           writingDirection: 'rtl',
         },
         chipRow: {
-          flexDirection: 'row',
+          flexDirection: 'row-reverse',
           flexWrap: 'wrap',
           gap: spacing.sm,
           marginBottom: spacing.md,
-          justifyContent: 'flex-end',
+          justifyContent: 'flex-start',
           width: '100%',
         },
         avatarGrid: { width: '100%', marginBottom: spacing.md },
@@ -165,6 +173,7 @@ export default function ParentKidsScreen() {
           paddingTop: spacing.sm,
           borderTopWidth: 1,
           borderTopColor: colors.border,
+          width: '100%',
         },
       }),
     [themeId, colors, borderRadius, cardBorder]
@@ -331,7 +340,7 @@ export default function ParentKidsScreen() {
                   <Text style={styles.editIcon}>✏️</Text>
                 </TouchableOpacity>
               </View>
-              <View style={[styles.actionRow, rtl.row]}>
+              <View style={styles.actionRow}>
                 <Button
                   title={t('awardBonus')}
                   style={styles.actionBtn}
@@ -352,14 +361,10 @@ export default function ParentKidsScreen() {
       </ScrollView>
 
       <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={closeModal}>
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
+        <KeyboardSheet style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={closeModal} />
           <View style={[styles.modal, { maxHeight: modalMaxHeight }]}>
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
+            <KeyboardScroll
               contentContainerStyle={styles.modalScroll}
               showsVerticalScrollIndicator
             >
@@ -409,14 +414,14 @@ export default function ParentKidsScreen() {
               <View style={styles.avatarGrid}>
                 <ShopAvatarGrid selected={avatar} onSelect={setAvatar} />
               </View>
-            </ScrollView>
+            </KeyboardScroll>
 
-            <View style={[styles.modalActions, rtl.row]}>
-              <Button title={t('save')} onPress={handleSave} loading={loading} style={{ flex: 1 }} />
-              <Button title={t('cancel')} onPress={closeModal} variant="outline" style={{ flex: 1 }} />
+            <View style={styles.modalActions}>
+              <Button title={t('save')} onPress={handleSave} loading={loading} />
+              <Button title={t('cancel')} onPress={closeModal} variant="outline" />
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardSheet>
       </Modal>
 
       <KidLoginQrModal kid={qrKid} visible={!!qrKid} onClose={() => setQrKid(null)} />
@@ -427,14 +432,10 @@ export default function ParentKidsScreen() {
         transparent
         onRequestClose={closeBonusModal}
       >
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
+        <KeyboardSheet style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={closeBonusModal} />
           <View style={[styles.modal, { maxHeight: modalMaxHeight }]}>
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
+            <KeyboardScroll
               contentContainerStyle={styles.modalScroll}
               showsVerticalScrollIndicator
             >
@@ -472,24 +473,22 @@ export default function ParentKidsScreen() {
                 onChangeText={setBonusReason}
                 placeholder={t('awardBonusReasonPlaceholder')}
               />
-            </ScrollView>
+            </KeyboardScroll>
 
-            <View style={[styles.modalActions, rtl.row]}>
+            <View style={styles.modalActions}>
               <Button
                 title={t('awardBonusSubmit')}
                 onPress={handleAwardBonus}
                 loading={bonusLoading}
-                style={{ flex: 1 }}
               />
               <Button
                 title={t('cancel')}
                 onPress={closeBonusModal}
                 variant="outline"
-                style={{ flex: 1 }}
               />
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardSheet>
       </Modal>
     </ThemedScreen>
   );

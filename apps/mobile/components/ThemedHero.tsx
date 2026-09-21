@@ -11,7 +11,6 @@ import { ThemeGlyph } from './icons/ThemeGlyph';
 import { KidAvatar } from './KidAvatar';
 import { shopAvatarImage } from '../lib/avatar-images';
 import { BouncyPressable } from './animations/BouncyPressable';
-import { playSfx } from '../lib/sfx';
 
 interface AvatarFrameProps {
   avatar: string;
@@ -23,8 +22,8 @@ export function AvatarFrame({ avatar, size = 'md' }: AvatarFrameProps) {
   const art = getThemeArt(themeId);
   const helm = art?.icons?.profile;
   const ember = themeId === 'ember';
-  const dim = size === 'lg' ? 88 : 64;
-  const fontSize = size === 'lg' ? 48 : 36;
+  const dim = size === 'lg' ? 104 : 64;
+  const fontSize = size === 'lg' ? 56 : 36;
 
   const styles = useMemo(
     () =>
@@ -55,7 +54,7 @@ export function AvatarFrame({ avatar, size = 'md' }: AvatarFrameProps) {
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          backgroundColor: ember ? '#0A0A0C' : undefined,
+          backgroundColor: 'transparent',
         },
         art: { width: '100%', height: '100%' },
         emoji: { fontSize },
@@ -124,10 +123,7 @@ export function HomeAvatarSlot({
     >
       {onPress ? (
         <BouncyPressable
-          onPress={() => {
-            playSfx('tap');
-            onPress();
-          }}
+          onPress={onPress}
           accessibilityRole="button"
           accessibilityLabel={t('changeAvatar')}
         >
@@ -145,6 +141,7 @@ interface ThemedHeroProps {
   avatar: string;
   streak: number;
   level?: number;
+  tagline?: string;
   onAvatarPress?: () => void;
   avatarHidden?: boolean;
   avatarAnchorRef?: React.Ref<View>;
@@ -156,6 +153,7 @@ export function ThemedHero({
   avatar,
   streak,
   level,
+  tagline,
   onAvatarPress,
   avatarHidden,
   avatarAnchorRef,
@@ -176,7 +174,7 @@ export function ThemedHero({
           marginBottom: spacing.lg,
           ...cardBorder(3),
         },
-        gradient: { padding: spacing.lg, minHeight: vector ? 168 : 140 },
+        gradient: { padding: spacing.lg, minHeight: 148 },
         heroImg: {
           ...StyleSheet.absoluteFill,
           width: '100%',
@@ -210,7 +208,7 @@ export function ThemedHero({
         },
         name: {
           color: '#fff',
-          fontSize: 26,
+          fontSize: 28,
           fontWeight: '800',
           textShadowColor: 'rgba(0,0,0,0.65)',
           textShadowOffset: { width: 1, height: 2 },
@@ -224,17 +222,31 @@ export function ThemedHero({
           alignItems: 'flex-start',
         },
         pill: {
-          backgroundColor: 'rgba(0,0,0,0.45)',
+          backgroundColor: `${colors.bgDeep}99`,
           paddingHorizontal: spacing.sm,
-          paddingVertical: 5,
-          borderRadius: borderRadius.full,
-          gap: 4,
+          paddingVertical: 6,
+          borderRadius: borderRadius.md,
+          gap: 6,
           alignSelf: 'flex-start',
           flexGrow: 0,
+          borderWidth: 1,
+          borderColor: colors.borderLight,
         },
-        pillText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+        pillText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+        streakPill: {
+          backgroundColor: `${colors.bgDeep}99`,
+          paddingHorizontal: spacing.sm,
+          paddingVertical: 6,
+          borderRadius: borderRadius.md,
+          gap: 6,
+          alignSelf: 'flex-start',
+          flexGrow: 0,
+          borderWidth: 1,
+          borderColor: colors.streak,
+        },
+        streakPillText: { color: colors.streak, fontSize: 13, fontWeight: '800' },
       }),
-    [themeId, borderRadius, cardBorder, vector, type.ui, type.display]
+    [themeId, borderRadius, cardBorder, vector, type.ui, type.display, colors]
   );
 
   return (
@@ -266,25 +278,23 @@ export function ThemedHero({
             onAnchorLayout={onAvatarLayout}
           />
           <View style={styles.textBlock}>
-            <Text style={[styles.tagline, rtl.text]}>{heroTagline}</Text>
+            <Text style={[styles.tagline, rtl.text]}>{tagline?.trim() || heroTagline}</Text>
             <Text style={[styles.name, rtl.text]}>{displayName}</Text>
-            <View style={[styles.meta, rtl.row]}>
+            <View style={[styles.meta, rtl.chips]}>
               {level != null && level > 0 && (
                 <View style={[styles.pill, rtl.rowInline]}>
-                  {vector ? <ThemeGlyph name="level" size={12} color={colors.primary} /> : null}
+                  <ThemeGlyph name="level" size={14} color={colors.primaryLight} />
                   <Text style={styles.pillText}>
                     {t('level')} {level}
                   </Text>
                 </View>
               )}
-              {streak > 0 && (
-                <View style={[styles.pill, rtl.rowInline]}>
-                  {vector ? <ThemeGlyph name="streak" size={12} color={colors.streak} /> : null}
-                  <Text style={styles.pillText}>
-                    {streak} {t('days')}
-                  </Text>
-                </View>
-              )}
+              <View style={[styles.streakPill, rtl.rowInline]}>
+                <ThemeGlyph name="streak" size={16} color={colors.streak} />
+                <Text style={styles.streakPillText}>
+                  {t('streak')} {streak}
+                </Text>
+              </View>
             </View>
           </View>
         </View>

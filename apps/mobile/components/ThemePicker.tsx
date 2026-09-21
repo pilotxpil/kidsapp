@@ -43,6 +43,7 @@ export function ThemePicker() {
         return (
           <BouncyPressable
             key={opt.id}
+            sound={false}
             style={[
               styles.cardOuter,
               { width: cardWidth, height: CARD_HEIGHT, borderRadius: borderRadius.lg },

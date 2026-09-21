@@ -308,6 +308,7 @@ export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
 
                 <BouncyPressable
                   onPress={handleSpin}
+                  sound={false}
                   disabled={spinning || celebrate}
                   style={[styles.spinBtn, (spinning || celebrate) && styles.spinBtnDisabled]}
                 >

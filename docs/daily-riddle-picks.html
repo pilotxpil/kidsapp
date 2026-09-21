@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>חידה יומית — סגנון האחוזון העליון</title>
+  <style>
+    :root {
+      --bg: #121014;
+      --card: #1c1917;
+      --line: #3f322c;
+      --text: #f5efe8;
+      --muted: #b7a79a;
+      --accent: #ff8a3d;
+      --ok: #3dd68c;
+      --no: #f07171;
+      --hard: #c9a4ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Heebo, "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(800px 380px at 10% -10%, #3a1c48 0%, transparent 50%),
+        var(--bg);
+      color: var(--text);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(18, 16, 20, 0.94);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 20px;
+      backdrop-filter: blur(10px);
+    }
+    header .row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    .hint { color: var(--muted); font-size: 13px; margin: 6px 0 0; line-height: 1.5; max-width: 620px; }
+    .count {
+      background: #2a211c;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .filters {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 12px 20px 0;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filters button {
+      border: 1px solid var(--line);
+      background: #2a211c;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .filters button.on { background: var(--accent); color: #1a0e08; border-color: var(--accent); }
+    main { max-width: 860px; margin: 0 auto; padding: 16px 20px 40px; }
+    h2.sec { font-size: 15px; color: var(--accent); margin: 22px 0 10px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .card.yes { border-color: #2e6a4a; box-shadow: 0 0 0 1px #3dd68c44; }
+    .card.no { opacity: 0.45; }
+    .top { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .num { font-size: 13px; font-weight: 800; color: var(--accent); }
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag { font-size: 11px; font-weight: 800; border-radius: 999px; padding: 3px 9px; }
+    .tag.logic { background: #2a211c; color: var(--accent); }
+    .tag.pic { background: #1c2a33; color: #7ec8ff; }
+    .tag.odd { background: #33281c; color: #ffd37e; }
+    .tag.idiom { background: #2a1c33; color: var(--hard); }
+    .tag.math { background: #1c3320; color: #7dff9a; }
+    .tag.hard { background: #3a1c1c; color: #ffb4b4; }
+    .q { font-size: 18px; font-weight: 800; line-height: 1.45; margin: 12px 0 8px; }
+    .mono {
+      font-family: "Cascadia Code", Consolas, monospace;
+      letter-spacing: 0.06em;
+      font-size: 22px;
+      font-weight: 800;
+      direction: ltr;
+      text-align: right;
+    }
+    .board {
+      background: #0e0c0b;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      margin: 8px 0 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .rowish { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .tiny { font-size: 11px; font-weight: 800; }
+    .huge { font-size: 42px; font-weight: 900; line-height: 1; }
+    .mid { font-size: 22px; font-weight: 800; }
+    .cells { display: grid; grid-template-columns: repeat(3, 28px); grid-template-rows: repeat(3, 28px); border: 2px solid #f5efe8; }
+    .cells i { border: 1px solid #f5efe8; display: block; }
+    .tri { width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent; border-bottom: 30px solid #f5efe8; }
+    .forest { font-size: 22px; letter-spacing: 2px; position: relative; line-height: 1.4; text-align: center; }
+    .forest .hid { font-size: 11px; opacity: 0.55; }
+    .bag { border: 3px solid #d4b48c; border-top: 0; width: 70px; height: 54px; border-radius: 0 0 18px 18px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .heart { font-size: 48px; }
+    .timer { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--muted); font-size: 13px; }
+    .timer.run { color: var(--accent); }
+    .timer.done { color: var(--no); }
+    .row-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+    }
+    .ghost { background: #2a211c; color: var(--text); border: 1px solid var(--line); }
+    .ok { background: #1b3a2c; color: var(--ok); border: 1px solid #2e6a4a; }
+    .bad { background: #3a1b1b; color: var(--no); border: 1px solid #6a2e2e; }
+    .reveal, .hintbox {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    .hintbox { background: #241c14; color: var(--muted); }
+    .reveal { background: #14241c; color: var(--ok); }
+    .reveal b { color: #c8f5d8; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <div>
+        <h1>חידות יומיות — כמה משפחות, לא רק היגיון</h1>
+        <p class="hint">
+          כמו באחוזון העליון: תמונה, יוצא דופן, ביטוי שמסתתר, חישוב מתחכם, וגם היגיון.
+          שעון של שתי דקות. סמנו «זה הסגנון» לפי משפחה — נשמור את הסימון.
+        </p>
+      </div>
+      <div class="count" id="score">0 נבחרו</div>
+    </div>
+  </header>
+  <div class="filters" id="filters"></div>
+  <main id="list"></main>
+  <script>
+    const CATS = [
+      ["all", "הכל"],
+      ["pic", "תמונה"],
+      ["odd", "יוצא דופן"],
+      ["idiom", "ביטוי מסתתר"],
+      ["math", "חישוב"],
+      ["logic", "היגיון / מצב"],
+    ];
+
+    const RIDDLES = [
+      {
+        cat: "pic",
+        tags: [["pic", "תמונה"]],
+        q: "כמה ריבועים יש בתמונה?",
+        visual: `<div class="cells">${"<i></i>".repeat(9)}</div>`,
+        hint: "אל תספרו רק את הקטנים. יש גם ריבועים של 2×2 ושל 3×3.",
+        a: "14",
+        why: "9 קטנים + 4 בינוניים (2×2) + 1 גדול."
+      },
+      {
+        cat: "pic",
+        tags: [["pic", "תמונה"]],
+        q: "איזה ביטוי מסתתר בתמונה?",
+        visual: `<div class="rowish"><span class="mid">בית</span><span class="mid">+</span><span class="huge">📖</span></div>`,
+        hint: "שתי מילים שנצמדות בחיי בית ספר.",
+        a: "בית ספר",
+        why: "בית + ספר."
+      },
+      {
+        cat: "pic",
+        tags: [["pic", "תמונה"]],
+        q: "כמה משולשים?",
+        visual: `<div>
+          <div class="rowish"><div class="tri"></div></div>
+          <div class="rowish"><div class="tri"></div><div class="tri"></div></div>
+        </div>`,
+        hint: "יש קטנים, ויש אחד שיושב על שניים.",
+        a: "4",
+        why: "3 משולשים קטנים + 1 גדול שמורכב משניים התחתונים והרווח ביניהם (בציור הקלאסי). כאן בגרסה הפשוטה: 3 קטנים + המשולש הגדול שנוצר מהמבנה כולו = 4."
+      },
+      {
+        cat: "pic",
+        tags: [["pic", "תמונה"], ["idiom", "ביטוי"]],
+        q: "איזה ביטוי?",
+        visual: `<div class="mid">תיכון</div><div class="huge">ים</div>`,
+        hint: "ים ששוחים בו בקיץ, עם «ה».",
+        a: "הים התיכון",
+        why: "ים מתחת לתיכון → הים התיכון."
+      },
+      {
+        cat: "pic",
+        tags: [["pic", "תמונה"]],
+        q: "מה חסר בהמשך?\n○ □ ○ □ ○ ?",
+        hint: "לא צבע — צורה.",
+        a: "□",
+        why: "עיגול, ריבוע, עיגול, ריבוע…"
+      },
+      {
+        cat: "odd",
+        tags: [["odd", "יוצא דופן"]],
+        q: "מה יוצא הדופן?\n3,  5,  7,  9,  11",
+        hint: "לא «הכי גדול». תחשבו מה אפשר לחלק.",
+        a: "9",
+        why: "כל השאר ראשוניים. 9 מתחלק ב־3."
+      },
+      {
+        cat: "odd",
+        tags: [["odd", "יוצא דופן"]],
+        q: "מה יוצא הדופן?\n16,  25,  36,  49,  64,  81,  99",
+        hint: "שורש ריבועי.",
+        a: "99",
+        why: "כל השאר ריבועים מושלמים (4²…9²). 99 לא."
+      },
+      {
+        cat: "odd",
+        tags: [["odd", "יוצא דופן"]],
+        q: "מה יוצא הדופן?\nשמש,  תות,  אבא,  נגן,  דלת",
+        hint: "קראו גם מהסוף להתחלה.",
+        a: "דלת",
+        why: "כל השאר פלינדרום. דלת הפוך זה תלד."
+      },
+      {
+        cat: "odd",
+        tags: [["odd", "יוצא דופן"]],
+        q: "מה יוצא הדופן?\nאפריל,  יוני,  ספטמבר,  נובמבר,  אוגוסט",
+        hint: "כמה ימים בחודש.",
+        a: "אוגוסט",
+        why: "לאפריל/יוני/ספטמבר/נובמבר יש 30 ימים. לאוגוסט 31."
+      },
+      {
+        cat: "odd",
+        tags: [["odd", "יוצא דופן"]],
+        q: "מה יוצא הדופן?\nעיגול,  משולש,  ריבוע,  מלבן,  כדור",
+        hint: "שטוח מול לא-שטוח.",
+        a: "כדור",
+        why: "כל השאר צורות דו-ממדיות. כדור הוא תלת-ממד."
+      },
+      {
+        cat: "odd",
+        tags: [["odd", "יוצא דופן"]],
+        q: "מה יוצא הדופן?\n11,  22,  33,  44,  55,  66,  77,  88,  90",
+        hint: "שתי ספרות זהות.",
+        a: "90",
+        why: "כל השאר מספר כפול-ספרה (אותה ספרה פעמיים)."
+      },
+      {
+        cat: "idiom",
+        tags: [["idiom", "ביטוי"], ["pic", "תמונה"]],
+        q: "איזה ביטוי מסתתר?",
+        visual: `<div class="huge">🐦 🐦</div><div class="huge">🔨</div>`,
+        hint: "פתרון לשתי בעיות בבת אחת.",
+        a: "שתי ציפורים במכה אחת",
+        why: "שתי ציפורים ומכה (פטיש)."
+      },
+      {
+        cat: "idiom",
+        tags: [["idiom", "ביטוי"], ["pic", "תמונה"]],
+        q: "איזה ביטוי?",
+        visual: `<div class="rowish"><span class="huge">🧺</span><span class="mid">🥚🥚🥚🥚</span></div>`,
+        hint: "סיכון — הכול במקום אחד.",
+        a: "לשים את כל הביצים בסל אחד",
+        why: "כל הביצים באותו סל."
+      },
+      {
+        cat: "idiom",
+        tags: [["idiom", "ביטוי"], ["pic", "תמונה"]],
+        q: "איזה ביטוי?",
+        visual: `<div class="forest">🌲🌲🌲🌲🌲<br>🌲🌲<span class="hid">בית</span>🌲🌲<br>🌲🌲🌲🌲🌲</div>`,
+        hint: "מרוב פרטים לא רואים את התמונה.",
+        a: "לא רואים את היער מרוב עצים",
+        why: "הבית כמעט נבלע בין העצים — אי אפשר לראות את העיקר."
+      },
+      {
+        cat: "idiom",
+        tags: [["idiom", "ביטוי"]],
+        q: "איזה ביטוי?",
+        visual: `<div class="rowish"><span class="mid">סוף</span><span style="opacity:.3">————————</span><span class="mid">עולם</span></div>`,
+        hint: "הקצה הכי רחוק.",
+        a: "סוף העולם",
+        why: "המילה סוף בהתחלה, עולם בסוף."
+      },
+      {
+        cat: "idiom",
+        tags: [["idiom", "ביטוי"], ["pic", "תמונה"]],
+        q: "איזה ביטוי?",
+        visual: `<div class="bag">🐱</div>`,
+        hint: "קונים בלי לבדוק.",
+        a: "חתול בשק",
+        why: "החתול בתוך השק."
+      },
+      {
+        cat: "idiom",
+        tags: [["idiom", "ביטוי"], ["pic", "תמונה"]],
+        q: "איזה ביטוי?",
+        visual: `<div class="heart">💔</div>`,
+        hint: "רגש אחרי פרידה.",
+        a: "לב שבור",
+        why: "הלב עצמו שבור."
+      },
+      {
+        cat: "idiom",
+        tags: [["idiom", "ביטוי"]],
+        q: "איזה ביטוי?",
+        visual: `<div class="rowish"><span class="huge">👁️</span><span class="mid">ב</span><span class="huge">👁️</span></div>`,
+        hint: "לשלם באותו מטבע, פנים אל פנים.",
+        a: "עין בעין",
+        why: "עין, האות ב, עין."
+      },
+      {
+        cat: "math",
+        tags: [["math", "חישוב"]],
+        q: "איך מגיעים ל־6 רק עם שלושה 8?",
+        extra: "8   8   8   =   6",
+        hint: "שורש שלישי, לא חיבור רגיל.",
+        a: "∛8 + ∛8 + ∛8 = 6",
+        why: "שורש שלישי של 8 הוא 2. שלוש פעמים 2 = 6."
+      },
+      {
+        cat: "math",
+        tags: [["math", "חישוב"]],
+        q: "השתמשו במספרים 1 עד 9 לפי הסדר, ורק + ו־, כדי לקבל 100.",
+        extra: "123  45  67  89  =  100",
+        hint: "יש חיבור אחד וחיסורים.",
+        a: "123 − 45 − 67 + 89 = 100",
+        why: "123 - 45 = 78, 78 - 67 = 11, 11 + 89 = 100."
+      },
+      {
+        cat: "math",
+        tags: [["math", "חישוב"]],
+        q: "אם 1 + 4 = 5,  2 + 5 = 12,  3 + 6 = 21  — אז 5 + 8 = ?",
+        hint: "כל שורה משתמשת גם בתוצאה הקודמת, או בכפל מוסתר.",
+        a: "45",
+        why: "a × b + a:  5×8 + 5 = 45. (גם: 1×4+1=5, 2×5+2=12, 3×6+3=21.)"
+      },
+      {
+        cat: "math",
+        tags: [["math", "חישוב"]],
+        q: "3 חתולים תופסים 3 עכברים ב־3 דקות. כמה זמן ייקח ל־100 חתולים לתפוס 100 עכברים?",
+        hint: "הם עובדים במקביל, לא בתור.",
+        a: "3 דקות",
+        why: "כל חתול תופס עכבר אחד ב־3 דקות. מאה חתולים = מאה עכברים באותו זמן."
+      },
+      {
+        cat: "math",
+        tags: [["math", "חישוב"]],
+        q: "מלאו את החסר:  (5 × 5 + 5) ÷ 5 = ?",
+        extra: "5  5  5  5  =  6",
+        hint: "הסדר: כפל, חיבור, חילוק.",
+        a: "6",
+        why: "(25 + 5) ÷ 5 = 6. ארבעה חמשים נותנים שש."
+      },
+      {
+        cat: "math",
+        tags: [["math", "חישוב"], ["hard", "קשה"]],
+        q: "כמה פעמים מופיעה הספרה 9 במספרים מ־1 עד 100?",
+        hint: "אל תשכחו את 90 עד 99 — שם יש הרבה תשעות.",
+        a: "20",
+        why: "9,19…89 = 9 פעמים. ב־90–99: עשר תשעות בעשרות + עוד אחת ב־99 = 11. סה״כ 20. (100 אין 9.)"
+      },
+      {
+        cat: "logic",
+        tags: [["logic", "היגיון"]],
+        q: "לארבע אחיות יש אח אחד. כמה ילדים יש במשפחה?",
+        hint: "האח לא מתחלק לארבעה אחים שונים.",
+        a: "5",
+        why: "ארבע בנות + בן אחד משותף לכולן."
+      },
+      {
+        cat: "logic",
+        tags: [["logic", "מצב"]],
+        q: "בחדר סגור מצאו שלולית מים, כובע וצעיף. מי היה בחדר?",
+        hint: "מישהו שהמים היו פעם הגוף שלו.",
+        a: "איש שלג",
+        why: "הוא נמס. נשארו המים והבגדים."
+      },
+      {
+        cat: "logic",
+        tags: [["logic", "טוויסט"]],
+        q: "באיזה חודש יש 28 ימים?",
+        hint: "פברואר הוא התשובה שכולם ממהרים אליה.",
+        a: "בכולם",
+        why: "לכל חודש יש לפחות 28 ימים."
+      },
+      {
+        cat: "logic",
+        tags: [["logic", "סדרה"]],
+        q: "מה האות הבאה?\nא, ש, ש, א, ח, ש, ש, ?",
+        hint: "תחשבו איך אומרים מספרים בעברית.",
+        a: "ש",
+        why: "האות הראשונה: אחת, שתיים, שלוש, ארבע, חמש, שש, שבע, שמונה."
+      },
+      {
+        cat: "logic",
+        tags: [["logic", "היגיון"]],
+        q: "שני אבות ושני בנים חילקו שלושה תפוחים, לכל אחד תפוח שלם. איך?",
+        hint: "לא ארבעה אנשים.",
+        a: "סבא, אבא ובן",
+        why: "שלושה אנשים בלבד."
+      },
+    ];
+
+    const KEY = "kq-riddle-votes-v2";
+    const votes = new Map(Object.entries(JSON.parse(localStorage.getItem(KEY) || "{}")));
+    const clocks = new Map();
+    let filter = "all";
+
+    const list = document.getElementById("list");
+    const scoreEl = document.getElementById("score");
+    const filtersEl = document.getElementById("filters");
+
+    function fmt(t) {
+      return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0");
+    }
+    function save() {
+      localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(votes)));
+    }
+    function renderScore() {
+      const yes = [...votes.values()].filter((v) => v === "yes").length;
+      const no = [...votes.values()].filter((v) => v === "no").length;
+      scoreEl.textContent = yes + " בסגנון · " + no + " לא";
+    }
+
+    CATS.forEach(([id, label]) => {
+      const b = document.createElement("button");
+      b.textContent = label;
+      b.className = id === "all" ? "on" : "";
+      b.addEventListener("click", () => {
+        filter = id;
+        [...filtersEl.children].forEach((c) => c.classList.remove("on"));
+        b.classList.add("on");
+        render();
+      });
+      filtersEl.appendChild(b);
+    });
+
+    function render() {
+      list.innerHTML = "";
+      clocks.forEach((id) => clearInterval(id));
+      clocks.clear();
+      const items = RIDDLES.map((r, i) => ({ r, i })).filter(({ r }) => filter === "all" || r.cat === filter || r.tags.some((t) => t[0] === filter));
+      let lastCat = "";
+      items.forEach(({ r, i }) => {
+        if (filter === "all" && r.cat !== lastCat) {
+          lastCat = r.cat;
+          const h = document.createElement("h2");
+          h.className = "sec";
+          h.textContent = CATS.find((c) => c[0] === r.cat)?.[1] || r.cat;
+          list.appendChild(h);
+        }
+        const card = document.createElement("article");
+        card.className = "card";
+        if (votes.get(String(i)) === "yes") card.classList.add("yes");
+        if (votes.get(String(i)) === "no") card.classList.add("no");
+        card.innerHTML = `
+          <div class="top">
+            <span class="num">#${i + 1}</span>
+            <div class="tags">${r.tags.map(([k, t]) => `<span class="tag ${k}">${t}</span>`).join("")}</div>
+          </div>
+          <div class="q">${r.q.replace(/\n/g, "<br>")}</div>
+          ${r.visual ? `<div class="board">${r.visual}</div>` : ""}
+          ${r.extra ? `<div class="mono">${r.extra}</div>` : ""}
+          <div class="timer">שעון: 2:00</div>
+          <div class="row-btns">
+            <button class="ghost" data-act="clock">התחילו שעון</button>
+            <button class="ghost" data-act="hint">רמז</button>
+            <button class="ghost" data-act="ans">תשובה</button>
+            <button class="ok" data-act="yes">זה הסגנון</button>
+            <button class="bad" data-act="no">לא ממש</button>
+          </div>
+          <div class="hintbox">${r.hint}</div>
+          <div class="reveal"><b>${r.a}</b><br>${r.why}</div>
+        `;
+        const timer = card.querySelector(".timer");
+        const hintbox = card.querySelector(".hintbox");
+        const reveal = card.querySelector(".reveal");
+        card.addEventListener("click", (ev) => {
+          const btn = ev.target.closest("button");
+          if (!btn) return;
+          const act = btn.dataset.act;
+          if (act === "hint") hintbox.style.display = hintbox.style.display === "block" ? "none" : "block";
+          if (act === "ans") {
+            reveal.style.display = "block";
+            const id = clocks.get(i);
+            if (id) clearInterval(id);
+          }
+          if (act === "clock") {
+            if (clocks.get(i)) return;
+            let left = 120;
+            timer.classList.add("run");
+            timer.textContent = "שעון: " + fmt(left);
+            const id = setInterval(() => {
+              left -= 1;
+              if (left <= 0) {
+                clearInterval(id);
+                timer.classList.remove("run");
+                timer.classList.add("done");
+                timer.textContent = "נגמר הזמן";
+                return;
+              }
+              timer.textContent = "שעון: " + fmt(left);
+            }, 1000);
+            clocks.set(i, id);
+          }
+          if (act === "yes" || act === "no") {
+            votes.set(String(i), act);
+            save();
+            card.classList.toggle("yes", act === "yes");
+            card.classList.toggle("no", act === "no");
+            renderScore();
+          }
+        });
+        list.appendChild(card);
+      });
+      renderScore();
+    }
+
+    render();
+  </script>
+</body>
+</html>

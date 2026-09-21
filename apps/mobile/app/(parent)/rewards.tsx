@@ -6,7 +6,6 @@ import {
   ScrollView,
   Modal,
   TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
   Dimensions,
   Pressable,
@@ -18,7 +17,8 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
-import { REWARD_CATEGORIES, REWARD_TEMPLATES } from '@kidsapp/shared';
+import { KeyboardSheet, KeyboardScroll, useKeyboardHeight } from '../../components/KeyboardSheet';
+import { REWARD_CATEGORIES, REWARD_TEMPLATES, resolvedRewardIcon, suggestedRewardIcon } from '@kidsapp/shared';
 import type { Reward, RewardCategory, RewardTemplate } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
@@ -29,6 +29,13 @@ const DEFAULT_REWARDS = REWARD_TEMPLATES;
 
 export default function ParentRewardsScreen() {
   const insets = useSafeAreaInsets();
+  const keyboardHeight = useKeyboardHeight();
+  const modalMaxHeight =
+    Dimensions.get('window').height -
+    insets.top -
+    insets.bottom -
+    spacing.lg * 2 -
+    (Platform.OS === 'android' ? keyboardHeight : 0);
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -40,8 +47,6 @@ export default function ParentRewardsScreen() {
   const [icon, setIcon] = useState('🎁');
   const [loading, setLoading] = useState(false);
   const savingRef = useRef(false);
-
-  const modalMaxHeight = Dimensions.get('window').height - insets.top - insets.bottom - spacing.lg * 2;
 
   const styles = useMemo(
     () =>
@@ -121,11 +126,11 @@ export default function ParentRewardsScreen() {
           writingDirection: 'rtl',
         },
         chipRow: {
-          flexDirection: 'row',
+          flexDirection: 'row-reverse',
           flexWrap: 'wrap',
           gap: spacing.sm,
           marginBottom: spacing.md,
-          justifyContent: 'flex-end',
+          justifyContent: 'flex-start',
           width: '100%',
         },
         chip: {
@@ -137,7 +142,7 @@ export default function ParentRewardsScreen() {
           borderColor: colors.border,
         },
         chipContent: {
-          flexDirection: 'row',
+          flexDirection: 'row-reverse',
           alignItems: 'center',
           gap: 4,
         },
@@ -204,7 +209,7 @@ export default function ParentRewardsScreen() {
         description,
         cost: parseInt(cost) || 100,
         category,
-        icon,
+        icon: resolvedRewardIcon(title.trim(), icon, category),
       };
       if (editingReward) {
         await api.updateReward(editingReward._id, payload);
@@ -285,19 +290,24 @@ export default function ParentRewardsScreen() {
       </ScrollView>
 
       <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={closeModal}>
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
+        <KeyboardSheet style={styles.modalOverlay}>
           <Pressable style={styles.modalBackdrop} onPress={closeModal} />
           <View style={[styles.modal, { maxHeight: modalMaxHeight }]}>
-            <ScrollView
+            <KeyboardScroll
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.modalScroll}
               showsVerticalScrollIndicator
             >
               <Text style={styles.modalTitle}>{editingReward ? t('editReward') : t('addReward')}</Text>
-              <Input label={t('title')} value={title} onChangeText={setTitle} />
+              <Input
+                label={t('title')}
+                value={title}
+                onChangeText={(v) => {
+                  setTitle(v);
+                  const next = suggestedRewardIcon(v);
+                  if (next) setIcon(next);
+                }}
+              />
               <Input label={t('description')} value={description} onChangeText={setDescription} />
               <Input label={t('cost')} value={cost} onChangeText={setCost} keyboardType="number-pad" />
 
@@ -309,7 +319,7 @@ export default function ParentRewardsScreen() {
                     style={[styles.chip, category === key && styles.chipActive]}
                     onPress={() => {
                       setCategory(key);
-                      setIcon(val.icon);
+                      setIcon(suggestedRewardIcon(title) || val.icon);
                     }}
                   >
                     <View style={styles.chipContent}>
@@ -321,14 +331,14 @@ export default function ParentRewardsScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
-            </ScrollView>
+            </KeyboardScroll>
 
-            <View style={[styles.modalActions, rtl.row]}>
-              <Button title={t('save')} onPress={handleSave} loading={loading} style={{ flex: 1 }} />
-              <Button title={t('cancel')} onPress={closeModal} variant="outline" style={{ flex: 1 }} />
+            <View style={styles.modalActions}>
+              <Button title={t('save')} onPress={handleSave} loading={loading} />
+              <Button title={t('cancel')} onPress={closeModal} variant="outline" />
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardSheet>
       </Modal>
     </ThemedScreen>
   );

@@ -28,10 +28,15 @@ export function AvatarZoomModal({ visible, avatar, onClose, onShop }: AvatarZoom
   const label = COSMETIC_ITEMS.find((c) => c.id === current)?.label;
 
   const ownedIds = useMemo(() => {
-    const ids = new Set<string>([...FREE_AVATAR_IDS, ...(user?.ownedCosmetics ?? []), ...(ownedFromApi ?? [])]);
+    const ids = new Set<string>([
+      ...FREE_AVATAR_IDS,
+      ...(user?.ownedCosmetics ?? []),
+      ...(ownedFromApi ?? []),
+    ]);
+    if (user?.rentalAvatar) ids.add(user.rentalAvatar);
     if (current && shopAvatarImage(current)) ids.add(current);
     return COSMETIC_ITEMS.filter((c) => c.type === 'avatar' && ids.has(c.id)).map((c) => c.id);
-  }, [user?.ownedCosmetics, ownedFromApi, current]);
+  }, [user?.ownedCosmetics, user?.rentalAvatar, ownedFromApi, current]);
 
   useEffect(() => {
     if (!visible) return;
@@ -62,8 +67,9 @@ export function AvatarZoomModal({ visible, avatar, onClose, onShop }: AvatarZoom
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View
           style={[
             styles.card,
             {
@@ -72,9 +78,13 @@ export function AvatarZoomModal({ visible, avatar, onClose, onShop }: AvatarZoom
               ...cardBorder(3),
             },
           ]}
-          onPress={(e) => e.stopPropagation()}
         >
-          <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollInner}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollInner}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+          >
             <KidAvatar avatar={current} size={200} />
             {label ? <Text style={[styles.name, { color: colors.text }]}>{label}</Text> : null}
             <Text style={[styles.section, { color: colors.text }]}>{t('ownedAvatars')}</Text>
@@ -91,8 +101,8 @@ export function AvatarZoomModal({ visible, avatar, onClose, onShop }: AvatarZoom
             <Button title={t('buyOtherAvatar')} onPress={onShop} />
             <Button title={t('close')} onPress={onClose} variant="outline" />
           </View>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -111,6 +121,7 @@ const styles = StyleSheet.create({
     maxHeight: '88%',
     padding: spacing.lg,
     alignItems: 'center',
+    zIndex: 1,
   },
   scroll: { width: '100%' },
   scrollInner: { alignItems: 'center', paddingBottom: spacing.sm },

@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>אישור מילים יומיות — KidsQuest</title>
+  <style>
+    :root {
+      --bg: #121014;
+      --card: #1c1917;
+      --line: #3f322c;
+      --text: #f5efe8;
+      --muted: #b7a79a;
+      --accent: #ff8a3d;
+      --ok: #3dd68c;
+      --no: #f07171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Heebo, "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #1a1512;
+      border-bottom: 1px solid var(--line);
+      padding: 14px 20px;
+    }
+    header .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    .hint { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+    .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .count {
+      background: #2a211c;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 700;
+    }
+    button, .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .primary { background: var(--accent); color: #1a0e08; }
+    .ghost { background: #2a211c; color: var(--text); border: 1px solid var(--line); }
+    .ok { background: #1b3a2c; color: var(--ok); border: 1px solid #2e6a4a; }
+    main { max-width: 980px; margin: 0 auto; padding: 20px; }
+    .add {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr 1.6fr auto;
+      gap: 10px;
+      background: var(--card);
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 18px;
+    }
+    .add input, .word-input, .hint-input, .def-input {
+      background: #0e0c0b;
+      border: 1px solid var(--line);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 15px;
+      width: 100%;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      align-items: start;
+      background: var(--card);
+      border: 2px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .card.on { border-color: var(--ok); background: #1b2420; }
+    .card.off { border-color: #4a2a2a; opacity: 0.55; }
+    .num { color: var(--accent); font-size: 12px; font-weight: 700; }
+    .word-input { font-weight: 800; font-size: 18px; margin: 4px 0; }
+    .def-input, .hint-input { font-size: 13px; min-height: 58px; resize: vertical; margin-top: 6px; }
+    textarea.hint-input, textarea.def-input { display: block; }
+    input[type="checkbox"] { width: 18px; height: 18px; margin-top: 8px; accent-color: var(--ok); }
+    .picked {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      max-width: 980px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.5;
+    }
+    #copied { display: none; color: var(--ok); font-weight: 700; }
+    @media (max-width: 700px) {
+      .add { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <div>
+        <h1>מילים יומיות — לאישור</h1>
+        <p class="hint">סמני מה שנשאר. לכל מילה יש הגדרה מילונית ודוגמת שימוש. בטלי סימון כדי להסיר.</p>
+      </div>
+      <div class="actions">
+        <span class="count">נשארות <span id="n">0</span> / <span id="total">0</span></span>
+        <button class="ghost" id="all">סמן הכל</button>
+        <button class="ghost" id="clear">נקה</button>
+        <button class="ok" id="copyKeep">העתק מאושרות</button>
+        <button class="ghost" id="copyDrop">העתק להסרה</button>
+        <button class="primary" id="copyAll">העתק הודעה לסוכן</button>
+        <span id="copied">הועתק</span>
+      </div>
+    </div>
+    <p class="picked" id="picked"></p>
+  </header>
+  <main>
+    <form class="add" id="addForm">
+      <input id="newWord" placeholder="מילה" required />
+      <input id="newDef" placeholder="הגדרה מילונית" required />
+      <input id="newHint" placeholder="דוגמה לשימוש" required />
+      <button class="primary" type="submit">הוסיפי</button>
+    </form>
+    <div class="grid" id="app"></div>
+  </main>
+  <script>
+    const BUILTIN = [
+      {
+            "id": "hatmada",
+            "word": "התמדה",
+            "definition": "להמשיך במעשה גם כשקשה, ולא לוותר באמצע.",
+            "hint": "רק התמדה תביא אותך לסוף הספר, לא קסם."
+      },
+      {
+            "id": "hashraa",
+            "word": "השראה",
+            "definition": "רעיון או כוח שגורמים לרצות ליצור או להשתפר.",
+            "hint": "הציור של סבתא נתן לי השראה לנסות גם."
+      },
+      {
+            "id": "tzniut",
+            "word": "צניעות",
+            "definition": "לא להתפאר ולא לקחת יותר מדי תשומת לב.",
+            "hint": "הוא ניצח בשקט, בלי צעקות — זו צניעות."
+      },
+      {
+            "id": "hitkhashvut",
+            "word": "התחשבות",
+            "definition": "לחשוב איך המעשה שלך משפיע על מי שנמצא לידך.",
+            "hint": "לסגור את הדלת בשקט בלילה זו התחשבות."
+      },
+      {
+            "id": "dilema",
+            "word": "דילמה",
+            "definition": "מצב שבו קשה לבחור, כי לכל אפשרות יש מחיר.",
+            "hint": "יש דילמה: מסיבה אצל חבר או ביקור אצל סבא."
+      },
+      {
+            "id": "adifut",
+            "word": "עדיפות",
+            "definition": "מה שבא קודם כי זה חשוב יותר מדברים אחרים.",
+            "hint": "שיעורים קודם — זו העדיפות הערב, לא משחק."
+      },
+      {
+            "id": "izun",
+            "word": "איזון",
+            "definition": "לא להגזים לשום כיוון; למצוא מידה נכונה.",
+            "hint": "איזון זה גם לרוץ בחוץ וגם לנוח, לא רק מסך."
+      },
+      {
+            "id": "mekoriut",
+            "word": "מקוריות",
+            "definition": "לעשות משהו בדרך משלך, לא להעתיק מאחרים.",
+            "hint": "הסיפור שלך מלא מקוריות — לא שמעתי אותו באף ספר."
+      },
+      {
+            "id": "yozma",
+            "word": "יוזמה",
+            "definition": "להתחיל מעשה טוב בלי שיבקשו ממך.",
+            "hint": "לקפל כביסה בלי שביקשו זו יוזמה."
+      },
+      {
+            "id": "kavod",
+            "word": "כבוד",
+            "definition": "יחס שמכיר בערך של אדם, של כלל או של רגש.",
+            "hint": "לא נכנסים לחדר של מישהו בלי כבוד לפרטיות שלו."
+      },
+      {
+            "id": "emun",
+            "word": "אמון",
+            "definition": "ביטחון שאפשר לסמוך על מישהו שיגיד אמת וישמור הבטחה.",
+            "hint": "כשאומרים אמת בונים אמון, וכשמשקרים שוברים אותו."
+      },
+      {
+            "id": "haginut",
+            "word": "הגינות",
+            "definition": "לנהוג בצדק כלפי כולם, בלי לקפח מישהו.",
+            "hint": "לחלק שווה־שווה זו הגינות, לא טובה."
+      },
+      {
+            "id": "shkadnut",
+            "word": "שקדנות",
+            "definition": "מאמץ שקט ומתמשך, יום אחרי יום.",
+            "hint": "שקדנות בנגינה זה חזרה קצרה כל ערב, לא רק לפני ההופעה."
+      },
+      {
+            "id": "eranut",
+            "word": "ערנות",
+            "definition": "להיות קשוב למה שקורה מסביב ולא לישון על הרגליים.",
+            "hint": "ערנות בכביש זה להסתכל לשני הצדדים לפני שחוצים."
+      },
+      {
+            "id": "ipuk",
+            "word": "איפוק",
+            "definition": "לעצור תגובה חזקה ולא להתפרץ גם כשכועסים.",
+            "hint": "איפוק זה לספור עד עשר במקום לצעוק."
+      },
+      {
+            "id": "shalva",
+            "word": "שלווה",
+            "definition": "מצב של שקט פנימי, בלי מתח ולחץ.",
+            "hint": "בערב בלי מסכים יש בבית יותר שלווה."
+      },
+      {
+            "id": "hemla",
+            "word": "חמלה",
+            "definition": "רחמים ורצון להקל על סבל של מישהו אחר.",
+            "hint": "חמלה זה להביא מים למי שנפל, לא רק להגיד \"קם\"."
+      },
+      {
+            "id": "solidariut",
+            "word": "סולידריות",
+            "definition": "לעמוד לצד מישהו בקושי, כאילו זה גם העניין שלך.",
+            "hint": "סולידריות זה להצטרף לחבר שהושאר בחוץ מהמשחק."
+      },
+      {
+            "id": "neemanut",
+            "word": "נאמנות",
+            "definition": "לא לבגוד בחבר, במשפחה או בהבטחה שנתת.",
+            "hint": "נאמנות זה לא לספר סוד שמישהו בטח בך."
+      },
+      {
+            "id": "aminut",
+            "word": "אמינות",
+            "definition": "שאפשר לסמוך שהמילים שלך אמת ושהמעשים יבואו אחריהן.",
+            "hint": "אמינות נבנית כשמגיעים בזמן כמו שהבטחת."
+      },
+      {
+            "id": "diyknut",
+            "word": "דייקנות",
+            "definition": "לעשות דברים בזמן הנכון ובצורה מדויקת, בלי קירוב מרושל.",
+            "hint": "דייקנות בחשבון חוסכת טעויות מיותרות."
+      },
+      {
+            "id": "mesirut",
+            "word": "מסירות",
+            "definition": "לתת את הלב למשימה או לאדם לאורך זמן.",
+            "hint": "מסירות לכדורגל נראית גם בימים שאין חשק לצאת."
+      },
+      {
+            "id": "harata",
+            "word": "חרטה",
+            "definition": "צער על מעשה שעשית, עם רצון לתקן ולא לחזור עליו.",
+            "hint": "יש חרטה כששוברים צעצוע בכוונה ואחר כך מצטערים."
+      },
+      {
+            "id": "safek",
+            "word": "ספק",
+            "definition": "אי-ודאות אם משהו נכון או אם כדאי לעשות אותו.",
+            "hint": "יש לי ספק אם הסיפור הזה באמת קרה — כדאי לבדוק."
+      },
+      {
+            "id": "optimiyut",
+            "word": "אופטימיות",
+            "definition": "נטייה לראות את הצד האפשרי והטוב, בלי להתעלם מהקושי.",
+            "hint": "אופטימיות זה להגיד \"ננסה דרך אחרת\", לא \"הכול אבוד\"."
+      },
+      {
+            "id": "pesimiyut",
+            "word": "פסימיות",
+            "definition": "נטייה לצפות שהדברים ישתבשו, לפעמים יותר ממה שצריך.",
+            "hint": "פסימיות הופכת גשם קטן ל\"הכול נהרס\"."
+      },
+      {
+            "id": "hasahat-daat",
+            "word": "הסחת דעת",
+            "definition": "משהו שמושך את המחשבה מהעיקר ומקשה לסיים.",
+            "hint": "הטלפון הוא הסחת דעת כשצריך לסיים חשבון."
+      },
+      {
+            "id": "gmishut",
+            "word": "גמישות",
+            "definition": "היכולת להתאים את עצמך כשהתוכנית משתנה.",
+            "hint": "גמישות זה להסכים לפארק אחר כשהראשון סגור."
+      },
+      {
+            "id": "anava",
+            "word": "ענווה",
+            "definition": "לדעת את ערכך בלי להתנשא על אחרים.",
+            "hint": "ענווה זה לנצח ולשבח גם את הקבוצה השנייה."
+      },
+      {
+            "id": "yehirut",
+            "word": "יהירות",
+            "definition": "לחשוב שאתה טוב מאחרים יותר מדי, ולהראות את זה.",
+            "hint": "יהירות אחרי ניצחון פוגעת בחברים יותר מההפסד עצמו."
+      },
+      {
+            "id": "teum",
+            "word": "תיאום",
+            "definition": "לסדר שכולם יפעלו באותו זמן וכיוון, בלי הפתעות מיותרות.",
+            "hint": "תיאום יציאה זה שכולם מוכנים באותה שעה, לא אחד בנעליים ואחד במקלחת."
+      },
+      {
+            "id": "irgun",
+            "word": "ארגון",
+            "definition": "לסדר דברים במבנה ברור כדי שאפשר יהיה למצוא ולהשתמש.",
+            "hint": "ארגון בתיק חוסך חיפושים בבוקר."
+      },
+      {
+            "id": "iltur",
+            "word": "אלתור",
+            "definition": "להמציא פתרון בלי הכנה מראש, מתוך מה שיש.",
+            "hint": "כששכחנו כדור עשינו אלתור ושיחקנו בבקבוק מים."
+      },
+      {
+            "id": "yeilut",
+            "word": "יעילות",
+            "definition": "להגיע לתוצאה טובה עם פחות בזבוז של זמן או כוח.",
+            "hint": "יעילות בבוקר: בגדים מהערב, לא חיפוש גרביים בדקה התשע."
+      },
+      {
+            "id": "gasut",
+            "word": "גסות",
+            "definition": "דיבור או מעשה גסים, בלי התחשבות ברגש של אחרים.",
+            "hint": "גסות בפה לא הופכת בדיחה לחכמה יותר."
+      },
+      {
+            "id": "nimus",
+            "word": "נימוס",
+            "definition": "כללי התנהגות מכבדת בחברה: בבקשה, תודה, לא לדחוף.",
+            "hint": "נימוס בתור זה לחכות, לא לעקוף."
+      },
+      {
+            "id": "kenut",
+            "word": "כנות",
+            "definition": "להגיד את האמת כמו שהיא, בלי ליפוף מיותר.",
+            "hint": "כנות עדיפה על תירוץ יצירתי כששברת משהו."
+      },
+      {
+            "id": "gvul",
+            "word": "גבול",
+            "definition": "קו שמציין עד איפה מותר, כדי להגן על מישהו או על כלל.",
+            "hint": "יש גבול לכמה ממתקים אוכלים ביום, גם אם נשאר בשקית."
+      },
+      {
+            "id": "zechut",
+            "word": "זכות",
+            "definition": "דבר שמגיע לאדם לפי דין או מוסר, גם אם מישהו חזק יותר לא אוהב.",
+            "hint": "לכל ילד יש זכות להגיד מה הוא מרגיש בלי שילעגו לו."
+      },
+      {
+            "id": "pratiut",
+            "word": "פרטיות",
+            "definition": "המרחב האישי שאחרים לא נכנסים אליו בלי רשות.",
+            "hint": "לקרוא יומן של אח בלי לשאול זה לפגוע בפרטיות."
+      },
+      {
+            "id": "hergel",
+            "word": "הרגל",
+            "definition": "מעשה שחוזרים עליו עד שהוא כמעט אוטומטי.",
+            "hint": "צחצוח שיניים כל ערב הוא הרגל ששומר על הפה."
+      },
+      {
+            "id": "ikaron",
+            "word": "עיקרון",
+            "definition": "כלל יסוד חשוב שלא מוותרים עליו בקלות.",
+            "hint": "עיקרון בבית: לא צועקים על מי שחלש ממך."
+      },
+      {
+            "id": "erech",
+            "word": "ערך",
+            "definition": "דבר חשוב שמשפיע איך מתנהגים, מעבר לנוחות הרגע.",
+            "hint": "יושר הוא ערך: מחזירים גם אם אפשר לברוח עם זה."
+      },
+      {
+            "id": "etgar",
+            "word": "אתגר",
+            "definition": "דבר קשה שדורש מאמץ כדי להצליח, לא משימה קלה.",
+            "hint": "ללמוד לשחות זה אתגר, לא קסם של שיעור אחד."
+      },
+      {
+            "id": "heseg",
+            "word": "הישג",
+            "definition": "תוצאה טובה שהגענו אליה אחרי מאמץ.",
+            "hint": "לסיים ספר שלם זה הישג שכדאי לחגוג."
+      },
+      {
+            "id": "lekach",
+            "word": "לקח",
+            "definition": "מה שלומדים מטעות או מחוויה, כדי לא לחזור עליה.",
+            "hint": "הלקח מהגשם: לבדוק תחזית לפני טיול בלי מעיל."
+      },
+      {
+            "id": "motivatzya",
+            "word": "מוטיבציה",
+            "definition": "הסיבה הפנימית שדוחפת לפעול, גם בלי שמישהו יעמוד מעליך.",
+            "hint": "מוטיבציה לאימון עולה כשיש משחק בסוף השבוע."
+      },
+      {
+            "id": "mishmaat",
+            "word": "משמעת",
+            "definition": "היכולת לעשות מה שצריך גם כשאין חשק.",
+            "hint": "משמעת זה לכבות מסך בזמן, לא רק כשלוקחים אותו."
+      },
+      {
+            "id": "perspektiva",
+            "word": "פרספקטיבה",
+            "definition": "נקודת מבט רחבה יותר על מצב; לראות מעבר לרגע הכואב.",
+            "hint": "פרספקטיבה: הריב על הכפתור יישכח מחר, החברות חשובה יותר."
+      },
+      {
+            "id": "heksher",
+            "word": "הקשר",
+            "definition": "המצב שמסביב שעוזר להבין למה משהו נאמר או קרה.",
+            "hint": "בלי הקשר, משפט בצ׳אט יכול להישמע גס בטעות."
+      },
+      {
+            "id": "ashlaya",
+            "word": "אשליה",
+            "definition": "משהו שנראה אמיתי אבל אינו כך.",
+            "hint": "הקסם על הבמה הוא אשליה; היד לא באמת נעלמה."
+      },
+      {
+            "id": "shayachut",
+            "word": "שייכות",
+            "definition": "הרגשה שאתה חלק מקבוצה ושמישהו רוצה אותך שם.",
+            "hint": "שייכות במשפחה נראית כששואלים לדעתך בארוחה."
+      },
+      {
+            "id": "zehut",
+            "word": "זהות",
+            "definition": "מי אתה ומה מייחד אותך — לא רק מה אחרים מצפים.",
+            "hint": "זהות זה גם מה שאוהבים, לא רק איך שנראים."
+      }
+];
+
+    const KEEP_KEY = "kidsquest-daily-words-keep-v3";
+    const EDIT_KEY = "kidsquest-daily-words-edits-v2";
+    const EXTRA_KEY = "kidsquest-daily-words-extra-v2";
+
+    const extras = JSON.parse(localStorage.getItem(EXTRA_KEY) || "[]");
+    const edits = JSON.parse(localStorage.getItem(EDIT_KEY) || "{}");
+    const savedKeep = localStorage.getItem(KEEP_KEY);
+    const words = () => [...BUILTIN, ...extras];
+    const selected = new Set(
+      savedKeep ? JSON.parse(savedKeep) : words().map((w) => w.id)
+    );
+
+    function entry(w) {
+      const e = edits[w.id] || {};
+      return {
+        id: w.id,
+        word: (e.word || w.word).trim() || w.word,
+        definition: (e.definition || w.definition || "").trim() || w.definition || "",
+        hint: (e.hint || w.hint).trim() || w.hint,
+      };
+    }
+
+    function keepList() {
+      return words().filter((w) => selected.has(w.id)).map(entry);
+    }
+    function dropList() {
+      return words().filter((w) => !selected.has(w.id)).map(entry);
+    }
+
+    function persist() {
+      localStorage.setItem(KEEP_KEY, JSON.stringify([...selected]));
+      localStorage.setItem(EDIT_KEY, JSON.stringify(edits));
+      localStorage.setItem(EXTRA_KEY, JSON.stringify(extras));
+    }
+
+    function flashCopied() {
+      const el = document.getElementById("copied");
+      el.style.display = "inline";
+      setTimeout(() => (el.style.display = "none"), 1500);
+    }
+
+    async function copyText(text) {
+      await navigator.clipboard.writeText(text);
+      flashCopied();
+    }
+
+    function agentMessage() {
+      const keep = keepList();
+      const drop = dropList();
+      const lines = ["עדכון מילים יומיות:"];
+      lines.push("");
+      lines.push("להשאיר (" + keep.length + "):");
+      keep.forEach((w, i) => {
+        lines.push((i + 1) + ". " + w.word);
+        lines.push("   הגדרה: " + w.definition);
+        lines.push("   דוגמה: " + w.hint);
+      });
+      lines.push("");
+      lines.push("להסיר (" + drop.length + "):");
+      if (!drop.length) lines.push("(אין)");
+      drop.forEach((w) => lines.push("- " + w.word));
+      return lines.join("\n");
+    }
+
+    function save() {
+      persist();
+      const keep = keepList();
+      document.getElementById("n").textContent = keep.length;
+      document.getElementById("total").textContent = words().length;
+      document.getElementById("picked").textContent = keep.length
+        ? "נשארות: " + keep.map((w) => w.word).join(" · ")
+        : "לא נשארה אף מילה";
+      document.querySelectorAll("div.card").forEach((el) => {
+        const on = selected.has(el.dataset.id);
+        el.classList.toggle("on", on);
+        el.classList.toggle("off", !on);
+        const cb = el.querySelector("input[type=checkbox]");
+        if (cb) cb.checked = on;
+      });
+    }
+
+    function esc(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function render() {
+      const app = document.getElementById("app");
+      app.innerHTML = "";
+      words().forEach((raw, i) => {
+        const w = entry(raw);
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.id = raw.id;
+        const on = selected.has(raw.id);
+        card.innerHTML =
+          '<input type="checkbox" ' + (on ? "checked" : "") + " />" +
+          "<div>" +
+          '<div class="num">#' + (i + 1) + "</div>" +
+          '<input class="word-input" type="text" value="' + esc(w.word) + '" />' +
+          '<textarea class="def-input" rows="2" placeholder="הגדרה">' + esc(w.definition) + "</textarea>" +
+          '<textarea class="hint-input" rows="2" placeholder="דוגמה">' + esc(w.hint) + "</textarea>" +
+          "</div>";
+        card.querySelector("input[type=checkbox]").addEventListener("change", (e) => {
+          if (e.target.checked) selected.add(raw.id);
+          else selected.delete(raw.id);
+          save();
+        });
+        card.querySelector(".word-input").addEventListener("input", (e) => {
+          edits[raw.id] = { ...(edits[raw.id] || {}), word: e.target.value };
+          persist();
+        });
+        card.querySelector(".def-input").addEventListener("input", (e) => {
+          edits[raw.id] = { ...(edits[raw.id] || {}), definition: e.target.value };
+          persist();
+        });
+        card.querySelector(".hint-input").addEventListener("input", (e) => {
+          edits[raw.id] = { ...(edits[raw.id] || {}), hint: e.target.value };
+          persist();
+        });
+        app.appendChild(card);
+      });
+      save();
+    }
+
+    document.getElementById("all").onclick = () => {
+      words().forEach((w) => selected.add(w.id));
+      render();
+    };
+    document.getElementById("clear").onclick = () => {
+      selected.clear();
+      save();
+    };
+    document.getElementById("copyKeep").onclick = () => {
+      const keep = keepList();
+      copyText(keep.length ? keep.map((w, i) => (i + 1) + ". " + w.word).join("\n") : "אין מאושרות");
+    };
+    document.getElementById("copyDrop").onclick = () => {
+      const drop = dropList();
+      copyText(drop.length ? drop.map((w) => w.word).join("\n") : "אין להסרה");
+    };
+    document.getElementById("copyAll").onclick = () => copyText(agentMessage());
+    document.getElementById("addForm").onsubmit = (e) => {
+      e.preventDefault();
+      const word = document.getElementById("newWord").value.trim();
+      const definition = document.getElementById("newDef").value.trim();
+      const hint = document.getElementById("newHint").value.trim();
+      if (!word || !definition || !hint) return;
+      const id = "custom-" + Date.now();
+      extras.push({ id, word, definition, hint });
+      selected.add(id);
+      document.getElementById("newWord").value = "";
+      document.getElementById("newDef").value = "";
+      document.getElementById("newHint").value = "";
+      persist();
+      render();
+    };
+
+    render();
+  </script>
+</body>
+</html>

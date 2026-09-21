@@ -13,11 +13,11 @@ export type ThemeArt = {
   icons?: Partial<Record<ThemeTabArtKey, ImageSourcePropType>>;
 };
 
-/** Optional illustrated art per theme. Ember is the first full pack. */
+/** Optional illustrated art per theme. Ember and Minecraft have painted tab icons. */
 export const THEME_ART: Partial<Record<UiThemeId, ThemeArt>> = {
   ember: {
     hero: require('../assets/themes/ember/hero.jpg'),
-    gem: require('../assets/themes/ember/gem.jpg'),
+    gem: require('../assets/themes/ember/gem.png'),
     picker: require('../assets/themes/ember/picker.png'),
     bg: require('../assets/themes/ember/bg.jpg'),
     chest: require('../assets/themes/ember/chest.jpg'),
@@ -32,11 +32,19 @@ export const THEME_ART: Partial<Record<UiThemeId, ThemeArt>> = {
   },
   brawl: {
     hero: require('../assets/themes/brawl/hero.jpg'),
-    gem: require('../assets/themes/brawl/gem.jpg'),
+    gem: require('../assets/themes/brawl/gem.png'),
     picker: require('../assets/themes/brawl/picker.png'),
   },
   minecraft: {
-    picker: require('../assets/themes/minecraft/picker.png'),
+    picker: require('../assets/themes/minecraft/icons/home.png'),
+    gem: require('../assets/themes/minecraft/gem.png'),
+    icons: {
+      home: require('../assets/themes/minecraft/icons/home.png'),
+      tasks: require('../assets/themes/minecraft/icons/tasks.png'),
+      learn: require('../assets/themes/minecraft/icons/learn.png'),
+      shop: require('../assets/themes/minecraft/icons/shop.png'),
+      profile: require('../assets/themes/minecraft/icons/profile.png'),
+    },
   },
   roblox: {
     picker: require('../assets/themes/roblox/picker.png'),

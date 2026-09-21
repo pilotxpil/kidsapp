@@ -20,6 +20,7 @@
     "android": {
       "package": "com.kidsapp.quest",
       "versionCode": 15,
+      "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#1a1a1a",

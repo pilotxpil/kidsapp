@@ -6,6 +6,7 @@ import {
   Pressable,
   TouchableOpacity,
   ScrollView,
+  View,
 } from 'react-native';
 import {
   PARENT_AVATARS,
@@ -38,10 +39,15 @@ export function AvatarPickerModal({ visible, onClose, mode, onOpenShop }: Avatar
   const current = user?.avatar ?? (isParent ? PARENT_AVATARS[0] : FREE_AVATAR_IDS[0]);
 
   const ownedIds = useMemo(() => {
-    const ids = new Set<string>([...FREE_AVATAR_IDS, ...(user?.ownedCosmetics ?? []), ...(ownedFromApi ?? [])]);
+    const ids = new Set<string>([
+      ...FREE_AVATAR_IDS,
+      ...(user?.ownedCosmetics ?? []),
+      ...(ownedFromApi ?? []),
+    ]);
+    if (user?.rentalAvatar) ids.add(user.rentalAvatar);
     if (current && shopAvatarImage(current)) ids.add(current);
     return COSMETIC_ITEMS.filter((c) => c.type === 'avatar' && ids.has(c.id)).map((c) => c.id);
-  }, [user?.ownedCosmetics, ownedFromApi, current]);
+  }, [user?.ownedCosmetics, user?.rentalAvatar, ownedFromApi, current]);
 
   useEffect(() => {
     if (!visible || isParent) return;
@@ -81,8 +87,9 @@ export function AvatarPickerModal({ visible, onClose, mode, onOpenShop }: Avatar
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable
+      <View style={styles.overlay}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <View
           style={[
             styles.card,
             {
@@ -91,13 +98,17 @@ export function AvatarPickerModal({ visible, onClose, mode, onOpenShop }: Avatar
               ...cardBorder(3),
             },
           ]}
-          onPress={(e) => e.stopPropagation()}
         >
           <Text style={[styles.title, { color: colors.text }]}>{t('selectAvatar')}</Text>
           <Text style={[styles.hint, { color: colors.textMuted }]}>
             {t(isParent ? 'selectAvatarHintParent' : 'selectAvatarHintKid')}
           </Text>
-          <ScrollView style={styles.scroll} contentContainerStyle={styles.gridWrap}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.gridWrap}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+          >
             {isParent ? (
               <ShopAvatarGrid selected={current} onSelect={handleSelect} savingId={saving} />
             ) : (
@@ -125,8 +136,8 @@ export function AvatarPickerModal({ visible, onClose, mode, onOpenShop }: Avatar
           <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
             <Text style={[styles.closeText, { color: colors.primary }]}>{t('close')}</Text>
           </TouchableOpacity>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -145,6 +156,7 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     padding: spacing.lg,
     alignItems: 'center',
+    zIndex: 1,
   },
   title: {
     fontSize: 20,

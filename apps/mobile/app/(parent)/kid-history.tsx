@@ -47,15 +47,15 @@ export default function ParentKidHistoryScreen() {
         scroll: { padding: spacing.lg, maxWidth: 800, alignSelf: 'center', width: '100%' },
         backRow: { marginBottom: spacing.md },
         chips: {
-          flexDirection: 'row',
+          flexDirection: 'row-reverse',
           flexWrap: 'wrap',
           gap: spacing.sm,
-          justifyContent: 'flex-end',
+          justifyContent: 'flex-start',
           marginBottom: spacing.lg,
           width: '100%',
         },
         chip: {
-          flexDirection: 'row',
+          flexDirection: 'row-reverse',
           alignItems: 'center',
           gap: spacing.xs,
           paddingVertical: spacing.sm,

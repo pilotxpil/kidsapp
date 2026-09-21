@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>בחירת אייקוני Ember</title>
+  <style>
+    :root {
+      --bg: #120c0a;
+      --bar: #0a0604;
+      --card: #1c1410;
+      --line: #4a3224;
+      --text: #f6eee6;
+      --muted: #b7a08c;
+      --accent: #ff8a3d;
+      --ok: #3dd68c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Heebo, "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(18, 10, 8, 0.94);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 20px;
+      backdrop-filter: blur(10px);
+    }
+    header .row {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    .hint { color: var(--muted); font-size: 13px; margin: 6px 0 0; line-height: 1.5; max-width: 640px; }
+    .picks {
+      background: #2a211c;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      min-width: 220px;
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 20px; }
+    h2 { font-size: 16px; margin: 22px 0 10px; }
+    .note { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .opt {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .opt.pick { border-color: var(--ok); box-shadow: 0 0 0 1px #3dd68c55; }
+    .preview {
+      height: 88px;
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at 50% 60%, #3a1608 0%, var(--bar) 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .preview.outline img {
+      outline: 1.5px solid rgba(255, 210, 150, 0.9);
+      outline-offset: 3px;
+      border-radius: 8px;
+    }
+    .preview img { width: 56px; height: 56px; object-fit: contain; }
+    .name { font-size: 13px; font-weight: 800; }
+    .desc { color: var(--muted); font-size: 11px; margin-top: 4px; line-height: 1.35; }
+    .bar-demo {
+      margin-top: 28px;
+      background: var(--bar);
+      border: 1px solid #5a2208;
+      border-radius: 16px;
+      padding: 14px 10px 10px;
+    }
+    .bar-demo h2 { margin-top: 0; }
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      gap: 6px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .tab img { width: 36px; height: 36px; object-fit: contain; display: block; margin: 0 auto 4px; }
+    .tab.on { color: var(--accent); }
+    .tab.on img { outline: 1.5px solid rgba(255, 210, 150, 0.95); outline-offset: 3px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <div>
+        <h1>אייקוני Ember — בחרו סגנון לכל טאב</h1>
+        <p class="hint">
+          הורדתי את עיגולי הזוהר. באפליקציה בינתיים יש רק קו בהיר סביב התמונה.
+          כאן 5 כיוונים לכל פונקציה, על רקע שחור כמו שורת הטאבים. פרופיל יכול להישאר אווטאר.
+        </p>
+      </div>
+      <div class="picks" id="summary">עדיין לא נבחרו</div>
+    </div>
+  </header>
+  <main>
+    <div class="bar-demo">
+      <h2>איך זה יישב בשורה</h2>
+      <p class="note">מתעדכן לפי הבחירות. הטאב הפעיל עם הקו הבהיר.</p>
+      <div class="tabs" id="demo"></div>
+    </div>
+    <div id="sections"></div>
+  </main>
+  <script>
+    const STYLES = [
+      { id: "now", name: "עכשיו", desc: "התלת־ממד הנוכחי, כהה ומפורט" },
+      { id: "glow", name: "זוהר אפוי", desc: "הזוהר בתוך התמונה, לא עיגול מאחור" },
+      { id: "rim", name: "קו בהיר", desc: "אותו אובייקט עם מסגרת זהב על הצורה" },
+      { id: "bright", name: "בהיר וקריא", desc: "פחות דיטייל, מתכת בהירה יותר" },
+      { id: "toy", name: "צעצוע תלת־ממד", desc: "צורות גדולות, עדיין לא שטוח" },
+    ];
+    const SLOTS = [
+      { id: "home", label: "בית" },
+      { id: "tasks", label: "משימות" },
+      { id: "learn", label: "לימודים" },
+      { id: "shop", label: "חנות" },
+      { id: "profile", label: "פרופיל (אופציונלי — עכשיו אווטאר)" },
+    ];
+    const chosen = {
+      home: "rim",
+      tasks: "rim",
+      learn: "rim",
+      shop: "rim",
+      profile: "now",
+    };
+
+    const sections = document.getElementById("sections");
+    const summary = document.getElementById("summary");
+    const demo = document.getElementById("demo");
+
+    function src(slot, style) {
+      return "ember-tab-picks/" + slot + "-" + style + ".png";
+    }
+
+    function renderDemo() {
+      demo.innerHTML = SLOTS.map((s, i) => `
+        <div class="tab ${i === 0 ? "on" : ""}">
+          <img src="${src(s.id, chosen[s.id])}" alt="" />
+          ${s.label.split(" ")[0]}
+        </div>
+      `).join("");
+    }
+
+    function renderSummary() {
+      summary.innerHTML = SLOTS.map((s) => {
+        const st = STYLES.find((x) => x.id === chosen[s.id]);
+        return "<b>" + s.label.split(" ")[0] + "</b>: " + st.name;
+      }).join("<br>");
+    }
+
+    SLOTS.forEach((slot) => {
+      const wrap = document.createElement("section");
+      wrap.innerHTML = `<h2>${slot.label}</h2><p class="note">לחצו על כרטיס כדי לבחור</p>`;
+      const grid = document.createElement("div");
+      grid.className = "grid";
+      STYLES.forEach((st) => {
+        const el = document.createElement("div");
+        el.className = "opt" + (chosen[slot.id] === st.id ? " pick" : "");
+        el.innerHTML = `
+          <div class="preview">
+            <img src="${src(slot.id, st.id)}" alt="${st.name}" />
+          </div>
+          <div class="name">${st.name}</div>
+          <div class="desc">${st.desc}</div>
+        `;
+        el.addEventListener("click", () => {
+          chosen[slot.id] = st.id;
+          wrap.querySelectorAll(".opt").forEach((o) => o.classList.remove("pick"));
+          el.classList.add("pick");
+          renderSummary();
+          renderDemo();
+        });
+        grid.appendChild(el);
+      });
+      wrap.appendChild(grid);
+      sections.appendChild(wrap);
+    });
+
+    renderSummary();
+    renderDemo();
+  </script>
+</body>
+</html>

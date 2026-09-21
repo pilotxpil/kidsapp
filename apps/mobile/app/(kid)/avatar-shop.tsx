@@ -68,6 +68,7 @@ export default function KidAvatarShopScreen() {
         },
         cost: { color: colors.gold, fontSize: 11, fontWeight: '800', marginTop: 2, ...type.ui },
         costLocked: { color: colors.textMuted },
+        rentalBadge: { color: colors.accent, fontSize: 11, fontWeight: '800', marginTop: 2, ...type.ui },
       }),
     [themeId, colors, type.ui, type.body]
   );
@@ -85,8 +86,14 @@ export default function KidAvatarShopScreen() {
   useFocusLoad(load, !!user);
 
   const ownedSet = useMemo(
-    () => new Set<string>([...FREE_AVATAR_IDS, ...owned, ...(user?.ownedCosmetics ?? [])]),
-    [owned, user?.ownedCosmetics]
+    () =>
+      new Set<string>([
+        ...FREE_AVATAR_IDS,
+        ...owned,
+        ...(user?.ownedCosmetics ?? []),
+        ...(user?.rentalAvatar ? [user.rentalAvatar] : []),
+      ]),
+    [owned, user?.ownedCosmetics, user?.rentalAvatar]
   );
   const ownedItems = useMemo(
     () => cosmetics.filter((item) => ownedSet.has(item.id)),
@@ -129,6 +136,8 @@ export default function KidAvatarShopScreen() {
     <ThemedScreen tabs>
       <ScrollView
         contentContainerStyle={[styles.scroll, rtl.scrollContent]}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -156,11 +165,12 @@ export default function KidAvatarShopScreen() {
             <View style={styles.grid}>
               {ownedItems.map((item) => {
                   const equipped = user?.avatar === item.id;
+                  const rentalOnly =
+                    user?.rentalAvatar === item.id && !(user?.ownedCosmetics ?? []).includes(item.id);
                   return (
                     <BouncyPressable
                       key={item.id}
                       onPress={() => {
-                        playSfx('tap');
                         setPreview(item);
                       }}
                       style={[
@@ -181,8 +191,12 @@ export default function KidAvatarShopScreen() {
                       <Text numberOfLines={1} style={styles.label}>
                         {item.label}
                       </Text>
-                      <Text style={styles.cost}>
-                        {equipped ? t('avatarEquipped') : t('freeToChoose')}
+                      <Text style={rentalOnly ? styles.rentalBadge : styles.cost}>
+                        {rentalOnly
+                          ? t('shopDailyRentalBadge')
+                          : equipped
+                            ? t('avatarEquipped')
+                            : t('freeToChoose')}
                       </Text>
                     </BouncyPressable>
                   );
@@ -199,7 +213,6 @@ export default function KidAvatarShopScreen() {
                 <BouncyPressable
                   key={item.id}
                   onPress={() => {
-                    playSfx('tap');
                     setPreview(item);
                   }}
                   style={[

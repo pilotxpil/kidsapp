@@ -1,24 +1,48 @@
-import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
+import { createAudioPlayer, setIsAudioActiveAsync, type AudioPlayer } from 'expo-audio';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ensureAudioSession } from './sfx';
 
-const BGM_FILE = require('../assets/bgm/quest-loop.mp3');
+const QUEST_BGM = require('../assets/bgm/quest-loop.mp3');
+/** Ember BGM: "Heroic Age" by Kevin MacLeod (incompetech.com), CC BY 3.0 */
+const EMBER_BGM = require('../assets/bgm/ember-loop.mp3');
 const MUTE_KEY = 'quest_bgm_muted';
-const VOLUME = 0.16;
-const FADE_MS = 800;
+const OLD_VOLUME_KEY = 'quest_bgm_volume';
+const BASE_VOLUME = 0.5;
 
 let player: AudioPlayer | null = null;
 let muted = false;
-let starting = false;
+let prefsLoaded = false;
+let activeThemeId = 'ember';
+let playingThemeId: string | null = null;
+let seq = 0;
+
+function sourceFor(themeId: string) {
+  return themeId === 'ember' ? EMBER_BGM : QUEST_BGM;
+}
+
+function releasePlayer(target: AudioPlayer | null) {
+  if (!target) return;
+  try {
+    target.pause();
+    target.release();
+  } catch {
+    // ignore
+  }
+  if (player === target) {
+    player = null;
+    playingThemeId = null;
+  }
+}
 
 export async function initBgm() {
   try {
-    const stored = await AsyncStorage.getItem(MUTE_KEY);
-    muted = stored === '1';
-    await setAudioModeAsync({
-      playsInSilentMode: true,
-      shouldPlayInBackground: false,
-      interruptionMode: 'mixWithOthers',
-    });
+    if (!prefsLoaded) {
+      const storedMute = await AsyncStorage.getItem(MUTE_KEY);
+      muted = storedMute === '1';
+      await AsyncStorage.removeItem(OLD_VOLUME_KEY);
+      prefsLoaded = true;
+    }
+    await ensureAudioSession();
   } catch {
     // ignore
   }
@@ -34,70 +58,51 @@ export async function setBgmMuted(value: boolean) {
   if (value) {
     await stopBgm();
   } else {
-    await startBgm();
+    await stopBgm();
+    await startBgm(activeThemeId);
   }
 }
 
-async function fadeTo(target: number) {
-  if (!player) return;
-  const start = player.volume;
-  const steps = 8;
-  const stepMs = FADE_MS / steps;
-  for (let i = 1; i <= steps; i++) {
-    player.volume = start + ((target - start) * i) / steps;
-    await sleep(stepMs);
-  }
-}
-
-async function fadeOutAndStop() {
-  if (!player) return;
-  const current = player;
-  const start = current.volume;
-  const steps = 6;
-  const stepMs = FADE_MS / steps;
-  for (let i = steps - 1; i >= 0; i--) {
-    current.volume = (start * i) / steps;
-    await sleep(stepMs);
-  }
-  current.pause();
-  current.release();
-  if (player === current) player = null;
-}
-
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-export async function startBgm() {
-  if (muted || starting || player) return;
-  starting = true;
+export async function startBgm(themeId?: string) {
+  if (themeId) activeThemeId = themeId;
+  const my = ++seq;
   try {
     await initBgm();
-    if (muted) return;
+    if (muted || my !== seq) return;
+    await setIsAudioActiveAsync(true);
 
-    const next = createAudioPlayer(BGM_FILE);
-    next.loop = true;
-    next.volume = 0;
-    player = next;
-    next.play();
-    await fadeTo(VOLUME);
-  } catch {
-    player?.release();
+    const old = player;
     player = null;
-  } finally {
-    starting = false;
+    playingThemeId = null;
+    releasePlayer(old);
+    if (my !== seq) return;
+
+    const next = createAudioPlayer(sourceFor(activeThemeId), { keepAudioSessionActive: true });
+    next.loop = true;
+    next.muted = false;
+    next.volume = BASE_VOLUME;
+    if (my !== seq) {
+      releasePlayer(next);
+      return;
+    }
+    player = next;
+    playingThemeId = activeThemeId;
+    next.play();
+    next.muted = false;
+    next.volume = BASE_VOLUME;
+  } catch {
+    if (my === seq) {
+      releasePlayer(player);
+    }
   }
 }
 
 export async function stopBgm() {
-  starting = false;
-  if (!player) return;
-  try {
-    await fadeOutAndStop();
-  } catch {
-    player?.release();
-    player = null;
-  }
+  seq += 1;
+  const current = player;
+  player = null;
+  playingThemeId = null;
+  releasePlayer(current);
 }
 
 export async function pauseBgm() {
@@ -112,9 +117,10 @@ export async function pauseBgm() {
 export async function resumeBgm() {
   if (muted || !player) return;
   try {
-    if (!player.playing) {
-      player.play();
-    }
+    await setIsAudioActiveAsync(true);
+    player.muted = false;
+    player.volume = BASE_VOLUME;
+    player.play();
   } catch {
     // ignore
   }

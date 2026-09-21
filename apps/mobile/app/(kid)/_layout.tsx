@@ -9,19 +9,29 @@ import { RtlTabBar } from '../../components/RtlTabBar';
 import { ThemeTabIcon } from '../../components/icons/ThemeGlyph';
 import { t } from '../../lib/i18n';
 import { startBgm, stopBgm, resumeBgm, pauseBgm } from '../../lib/bgm';
+import { initSfx, playSfx } from '../../lib/sfx';
 import { resetKidGiftDismissals } from '../../lib/kid-gift-dismiss';
 import { BadgeCelebrationProvider } from '../../lib/badge-celebration';
 
 const TAB_CONTENT_HEIGHT = 64;
+const EMBER_TAB_HEIGHT = 70;
 
 export default function KidLayout() {
   const insets = useSafeAreaInsets();
   const { colors, tabIcons, id: themeId } = useTheme();
   const { refreshUser } = useAuth();
   const appState = useRef(AppState.currentState);
+  const ember = themeId === 'ember';
+  const voxel = themeId === 'minecraft';
+  const paintedTabs = ember || voxel;
+  const tabBody = paintedTabs ? EMBER_TAB_HEIGHT : TAB_CONTENT_HEIGHT;
 
   useEffect(() => {
-    void startBgm();
+    void initSfx();
+    void startBgm(themeId);
+  }, [themeId]);
+
+  useEffect(() => {
     return () => {
       void stopBgm();
     };
@@ -46,33 +56,43 @@ export default function KidLayout() {
     <Tabs
       key={themeId}
       tabBar={(props) => <RtlTabBar {...props} />}
+      screenListeners={{
+        tabPress: () => {
+          playSfx('whoosh');
+        },
+      }}
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: themeId === 'ember' ? 'rgba(6,4,4,0.96)' : colors.bgCard,
-          borderTopWidth: themeId === 'ember' ? 1 : 3,
+          backgroundColor: paintedTabs
+            ? themeId === 'minecraft'
+              ? 'rgba(8,14,6,0.96)'
+              : 'rgba(6,4,4,0.96)'
+            : colors.bgCard,
+          borderTopWidth: paintedTabs ? 1 : 3,
           borderTopColor: colors.primary,
-          height: TAB_CONTENT_HEIGHT + insets.bottom,
-          paddingTop: themeId === 'ember' ? 4 : 6,
+          height: tabBody + insets.bottom,
+          paddingTop: 6,
           paddingBottom: insets.bottom,
-          overflow: 'hidden',
+          overflow: paintedTabs ? 'visible' : 'hidden',
           shadowColor: colors.glow,
-          shadowOpacity: themeId === 'ember' ? 0.8 : 0.45,
+          shadowOpacity: paintedTabs ? 0.8 : 0.45,
           shadowRadius: 14,
           shadowOffset: { width: 0, height: -4 },
           elevation: 16,
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarIconStyle: paintedTabs ? { width: 44, height: 38 } : undefined,
         tabBarItemStyle: {
           paddingVertical: 0,
-          overflow: 'hidden',
+          overflow: paintedTabs ? 'visible' : 'hidden',
         },
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '600',
           includeFontPadding: false,
-          ...(themeId === 'ember' ? { fontFamily: Heebo.semibold, fontWeight: 'normal' as const } : {}),
+          ...(paintedTabs ? { fontFamily: Heebo.semibold, fontWeight: 'normal' as const } : {}),
         },
       }}
     >

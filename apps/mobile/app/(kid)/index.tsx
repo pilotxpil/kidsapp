@@ -4,25 +4,21 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
-import { PointsBadge, LevelBar, Card } from '../../components/Card';
-import { TaskCard } from '../../components/TaskCard';
-import { Celebration } from '../../components/Celebration';
+import { PointsBadge, LevelBar } from '../../components/Card';
 import { DailyStar } from '../../components/DailyStar';
 import { FortuneWheel } from '../../components/FortuneWheel';
-import { TreasureChest } from '../../components/TreasureChest';
 import { AvatarGiftModal } from '../../components/AvatarGiftModal';
 import { AvatarZoomModal } from '../../components/AvatarZoomModal';
 import { ThemedScreen } from '../../components/ThemedScreen';
-import { ThemedHero, SectionHeader } from '../../components/ThemedHero';
-import { EmberHome } from '../../components/EmberHome';
+import { ThemedHero } from '../../components/ThemedHero';
+import { DailyWord } from '../../components/DailyWord';
+import { DailyRiddle } from '../../components/DailyRiddle';
 import { FadeInUp } from '../../components/animations/FadeInUp';
+import { SparkleGem } from '../../components/icons/ThemeGlyph';
 import type {
-  Task,
   KidProfile,
   DailyStarClaimResult,
   FortuneWheelSpinResult,
-  TreasureChestOpenResult,
-  FamilyChallenge,
   PersonalGoal,
 } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
@@ -47,14 +43,9 @@ export default function KidHomeScreen() {
   const art = getThemeArt(themeId);
   const userId = user?._id;
   const [profile, setProfile] = useState<KidProfile | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [challenge, setChallenge] = useState<FamilyChallenge | null>(null);
   const [goal, setGoal] = useState<PersonalGoal | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [celebrate, setCelebrate] = useState(false);
-  const [completingId, setCompletingId] = useState<string | null>(null);
   const [starKey, setStarKey] = useState(0);
-  const [chestKey, setChestKey] = useState(0);
   const [giftOpen, setGiftOpen] = useState(false);
   const [avatarZoom, setAvatarZoom] = useState(false);
 
@@ -71,50 +62,47 @@ export default function KidHomeScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        scroll: { padding: spacing.lg, width: '100%' },
+        scroll: { padding: spacing.lg, paddingTop: spacing.lg, width: '100%' },
         content: { width: '100%', alignSelf: 'stretch' },
+        wordSlot: { width: '100%', gap: spacing.md, marginTop: spacing.lg, marginBottom: spacing.md },
         statsCard: {
           backgroundColor: colors.bgCard,
           borderRadius: borderRadius.lg,
           overflow: 'hidden',
-          marginBottom: spacing.lg,
+          marginBottom: spacing.md,
           ...cardBorder(2),
         },
         statsInner: {
-          padding: spacing.lg,
+          padding: spacing.md,
           alignItems: 'center',
         },
         gemArt: {
-          width: 88,
-          height: 88,
+          width: 72,
+          height: 72,
           marginBottom: spacing.sm,
+          backgroundColor: 'transparent',
         },
         pointsLabel: {
           color: colors.textMuted,
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: '700',
-          letterSpacing: 2,
           marginBottom: spacing.sm,
           width: '100%',
           textAlign: 'center',
         },
-        levelSection: { width: '100%', marginTop: spacing.md },
-        empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.xl },
+        levelSection: { width: '100%', marginTop: spacing.sm },
+        line: { color: colors.textMuted, marginTop: spacing.sm, writingDirection: 'rtl' },
       }),
     [themeId, colors, borderRadius, cardBorder]
   );
 
   const load = useCallback(async () => {
     if (!userId) return;
-    const [profileRes, tasksRes, ch, goalRes] = await Promise.all([
+    const [profileRes, goalRes] = await Promise.all([
       api.getKidProfile(userId),
-      api.getTasks(userId),
-      api.getFamilyChallenge().catch(() => null),
       api.getPersonalGoal().catch(() => ({ goal: null })),
     ]);
     setProfile(profileRes.profile);
-    setTasks(tasksRes.tasks.slice(0, 5));
-    if (ch) setChallenge(ch.challenge);
     setGoal(goalRes.goal);
     const p = profileRes.profile;
     patchUser({
@@ -133,7 +121,6 @@ export default function KidHomeScreen() {
     setRefreshing(true);
     await load();
     setStarKey((k) => k + 1);
-    setChestKey((k) => k + 1);
     setRefreshing(false);
   };
 
@@ -167,42 +154,19 @@ export default function KidHomeScreen() {
     if (result.newBadges?.length) celebrateBadges(result.newBadges);
   };
 
-  const handleChestOpened = (result: TreasureChestOpenResult) => {
-    applyPoints(result);
-    if (result.newBadges?.length) celebrateBadges(result.newBadges);
-  };
-
-  const handleComplete = async (task: Task) => {
-    setCompletingId(task._id);
-    try {
-      await api.completeTask(task._id);
-      setTasks((prev) =>
-        prev.map((t) => (t._id === task._id ? { ...t, completionStatus: 'pending' as const } : t))
-      );
-      setCelebrate(true);
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setCompletingId(null);
-    }
-  };
+  const dailyWord = userId ? <DailyWord kidId={userId} /> : null;
+  const dailyRiddle = userId ? (
+    <DailyRiddle
+      kidId={userId}
+      onWon={(result) => {
+        applyPoints(result);
+        if (result.newBadges?.length) celebrateBadges(result.newBadges);
+      }}
+    />
+  ) : null;
 
   return (
     <ThemedScreen tabs>
-      {themeId === 'ember' ? (
-        <EmberHome
-          displayName={user?.displayName ?? ''}
-          avatar={user?.avatar ?? '🎮'}
-          points={profile?.points ?? user?.points ?? 0}
-          profile={profile}
-          tasks={tasks}
-          completingId={completingId}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          onComplete={handleComplete}
-          onAvatarPress={() => setAvatarZoom(true)}
-        />
-      ) : (
       <ScrollView
         contentContainerStyle={[styles.scroll, rtl.scrollContent]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
@@ -214,17 +178,31 @@ export default function KidHomeScreen() {
               avatar={user?.avatar ?? '🎮'}
               streak={profile?.streak ?? user?.streak ?? 0}
               level={profile?.level ?? user?.level}
+              tagline={user?.heroLine}
               onAvatarPress={() => setAvatarZoom(true)}
             />
           </FadeInUp>
+
+          {dailyWord || dailyRiddle ? (
+            <View style={styles.wordSlot}>
+              {dailyWord}
+              {dailyRiddle}
+            </View>
+          ) : null}
 
           <FadeInUp index={1}>
             <View style={styles.statsCard}>
               <View style={styles.statsInner}>
                 {art?.gem ? (
-                  <Image source={art.gem} style={styles.gemArt} resizeMode="contain" />
+                  themeId === 'minecraft' ? (
+                    <SparkleGem source={art.gem} size={72} />
+                  ) : (
+                    <Image source={art.gem} style={styles.gemArt} resizeMode="contain" />
+                  )
                 ) : null}
-                <Text style={styles.pointsLabel}>{t('points').toUpperCase()}</Text>
+                <Text style={styles.pointsLabel}>
+                  {themeId === 'ember' ? t('emberFireStones') : t('points')}
+                </Text>
                 <PointsBadge points={profile?.points ?? user?.points ?? 0} size="lg" />
                 {profile && (
                   <View style={styles.levelSection}>
@@ -236,88 +214,28 @@ export default function KidHomeScreen() {
                   </View>
                 )}
                 {(profile?.learningStreak ?? user?.learningStreak ?? 0) > 0 ? (
-                  <Text style={{ color: colors.textMuted, marginTop: spacing.sm, writingDirection: 'rtl' }}>
+                  <Text style={styles.line}>
                     📚 {t('learningStreak')}: {profile?.learningStreak ?? user?.learningStreak} {t('days')}
                   </Text>
+                ) : null}
+                {goal ? (
+                  <>
+                    <Text style={[styles.line, { color: colors.text, fontWeight: '700' }]}>
+                      {goal.rewardIcon} {t('personalGoal')}: {goal.rewardTitle}
+                    </Text>
+                    <ProgressBar progress={goal.progress} />
+                  </>
                 ) : null}
               </View>
             </View>
           </FadeInUp>
-
-          {challenge ? (
-            <FadeInUp index={2}>
-              <Card style={{ marginBottom: spacing.md }}>
-                <Text style={{ color: colors.text, fontWeight: '700', writingDirection: 'rtl', marginBottom: spacing.sm }}>
-                  {t('familyChallenge')}: {challenge.title}
-                </Text>
-                <ProgressBar
-                  progress={challenge.targetCount > 0 ? challenge.progress / challenge.targetCount : 0}
-                />
-                <Text style={{ color: colors.textMuted, marginTop: spacing.sm, writingDirection: 'rtl' }}>
-                  {challenge.completed
-                    ? t('familyChallengeDone')
-                    : t('familyChallengeProgress')
-                        .replace('{current}', String(challenge.progress))
-                        .replace('{target}', String(challenge.targetCount))}
-                </Text>
-              </Card>
-            </FadeInUp>
-          ) : null}
-
-          {goal ? (
-            <FadeInUp index={3}>
-              <Card style={{ marginBottom: spacing.md }}>
-                <Text style={{ color: colors.text, fontWeight: '700', writingDirection: 'rtl', marginBottom: spacing.sm }}>
-                  {goal.rewardIcon} {t('personalGoal')}: {goal.rewardTitle}
-                </Text>
-                <ProgressBar progress={goal.progress} />
-                <Text style={{ color: colors.textMuted, marginTop: spacing.sm, writingDirection: 'rtl' }}>
-                  {t('goalProgress')
-                    .replace('{current}', String(goal.currentPoints))
-                    .replace('{cost}', String(goal.rewardCost))}
-                </Text>
-              </Card>
-            </FadeInUp>
-          ) : null}
-
-          {userId ? (
-            <FadeInUp index={4}>
-              <TreasureChest kidId={userId} refreshKey={chestKey} onOpened={handleChestOpened} />
-            </FadeInUp>
-          ) : null}
-
-          <FadeInUp index={5}>
-            <SectionHeader title={t('tasks')} icon="📜" />
-          </FadeInUp>
-          {tasks.length === 0 ? (
-            <Text style={styles.empty}>{t('noTasks')}</Text>
-          ) : (
-            tasks.map((task, i) => (
-              <TaskCard
-                key={task._id}
-                task={task}
-                index={i + 4}
-                onComplete={handleComplete}
-                loading={completingId === task._id}
-              />
-            ))
-          )}
         </View>
       </ScrollView>
-      )}
 
       {userId ? (
         <>
-          <DailyStar
-            key={starKey}
-            kidId={userId}
-            onClaimed={handleStarClaimed}
-          />
-          <FortuneWheel
-            key={`wheel-${starKey}`}
-            kidId={userId}
-            onWon={handleWheelWon}
-          />
+          <DailyStar key={starKey} kidId={userId} onClaimed={handleStarClaimed} />
+          <FortuneWheel key={`wheel-${starKey}`} kidId={userId} onWon={handleWheelWon} />
         </>
       ) : null}
 
@@ -344,11 +262,6 @@ export default function KidHomeScreen() {
           }
           setGiftOpen(false);
         }}
-      />
-      <Celebration
-        visible={celebrate}
-        message={t('taskSubmitted')}
-        onDone={() => setCelebrate(false)}
       />
     </ThemedScreen>
   );
