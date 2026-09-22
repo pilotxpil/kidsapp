@@ -126,8 +126,7 @@ export function AuthScreenShell({
     <LinearGradient colors={[...theme.gradientBg]} style={styles.container}>
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.62)']}
-        style={styles.vignette}
-        pointerEvents="none"
+        style={[styles.vignette, { pointerEvents: 'none' }]}
       />
       {theme.chrome !== 'vector' && (
         <FloatingEmojis emojis={emojis} count={emojiCount} opacity={0.24} />

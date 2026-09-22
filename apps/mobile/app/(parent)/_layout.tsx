@@ -11,6 +11,7 @@ import { ThemeTabIcon } from '../../components/icons/ThemeGlyph';
 import { t } from '../../lib/i18n';
 import { startBgm, stopBgm, resumeBgm, pauseBgm } from '../../lib/bgm';
 import { initSfx, playSfx } from '../../lib/sfx';
+import { toBoxShadow } from '../../lib/shadow';
 
 const TAB_CONTENT_HEIGHT = 64;
 const EMBER_TAB_HEIGHT = 70;
@@ -75,10 +76,12 @@ export default function ParentLayout() {
           paddingTop: 6,
           paddingBottom: insets.bottom,
           overflow: paintedTabs ? 'visible' : 'hidden',
-          shadowColor: colors.glow,
-          shadowOpacity: paintedTabs ? 0.8 : 0.3,
-          shadowRadius: paintedTabs ? 14 : 12,
-          shadowOffset: { width: 0, height: -4 },
+          boxShadow: toBoxShadow({
+            color: colors.glow,
+            offset: { width: 0, height: -4 },
+            opacity: paintedTabs ? 0.8 : 0.3,
+            radius: paintedTabs ? 14 : 12,
+          }),
           elevation: 16,
         },
         tabBarActiveTintColor: paintedTabs ? colors.primary : colors.accent,

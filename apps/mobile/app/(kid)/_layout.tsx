@@ -13,6 +13,7 @@ import { initSfx, playSfx } from '../../lib/sfx';
 import { resetKidGiftDismissals } from '../../lib/kid-gift-dismiss';
 import { prefetchKidScreens } from '../../lib/prefetch-tabs';
 import { BadgeCelebrationProvider } from '../../lib/badge-celebration';
+import { toBoxShadow } from '../../lib/shadow';
 
 const TAB_CONTENT_HEIGHT = 64;
 const EMBER_TAB_HEIGHT = 70;
@@ -80,10 +81,12 @@ export default function KidLayout() {
           paddingTop: 6,
           paddingBottom: insets.bottom,
           overflow: paintedTabs ? 'visible' : 'hidden',
-          shadowColor: colors.glow,
-          shadowOpacity: paintedTabs ? 0.8 : 0.45,
-          shadowRadius: 14,
-          shadowOffset: { width: 0, height: -4 },
+          boxShadow: toBoxShadow({
+            color: colors.glow,
+            offset: { width: 0, height: -4 },
+            opacity: paintedTabs ? 0.8 : 0.45,
+            radius: 14,
+          }),
           elevation: 16,
         },
         tabBarActiveTintColor: colors.primary,

@@ -13,6 +13,7 @@ import { spacing } from '../constants/theme';
 import { useTheme } from '../lib/theme-context';
 import { useType } from '../lib/typography';
 import { BouncyPressable } from './animations/BouncyPressable';
+import { toBoxShadow, toTextShadow } from '../lib/shadow';
 
 interface ButtonProps {
   title: string;
@@ -81,10 +82,12 @@ export function Button({
               maxWidth: '100%',
               minWidth: 0,
               flexShrink: 1,
-              shadowColor: colors.primary,
-              shadowOpacity: variant === 'outline' || compact ? 0 : 0.8,
-              shadowRadius: compact ? 0 : 16,
-              shadowOffset: { width: 0, height: compact ? 0 : 8 },
+              boxShadow: toBoxShadow({
+                color: colors.primary,
+                offset: { width: 0, height: compact ? 0 : 8 },
+                opacity: variant === 'outline' || compact ? 0 : 0.8,
+                radius: compact ? 0 : 16,
+              }),
               elevation: variant === 'outline' || compact ? 0 : 14,
             }
           : {
@@ -97,10 +100,12 @@ export function Button({
               ...cardBorder(compact ? 1 : 2),
               borderBottomColor: colors.buttonShadow,
               borderRightColor: colors.buttonShadow,
-              shadowColor: colors.glow,
-              shadowOpacity: compact ? 0.2 : 0.45,
-              shadowRadius: compact ? 4 : 10,
-              shadowOffset: { width: 0, height: compact ? 1 : 4 },
+              boxShadow: toBoxShadow({
+                color: colors.glow,
+                offset: { width: 0, height: compact ? 1 : 4 },
+                opacity: compact ? 0.2 : 0.45,
+                radius: compact ? 4 : 10,
+              }),
               elevation: compact ? 2 : 8,
             },
         fill: {
@@ -121,6 +126,7 @@ export function Button({
           right: 0,
           height: '46%',
           backgroundColor: 'rgba(255,255,255,0.26)',
+          pointerEvents: 'none',
         },
         text: {
           color: ember ? colors.textDark : '#fff',
@@ -128,9 +134,7 @@ export function Button({
           fontWeight: ember ? 'normal' : ('800' as const),
           textAlign: 'center' as const,
           letterSpacing: ember ? 0.35 : 0,
-          textShadowColor: ember || compact ? 'transparent' : 'rgba(0,0,0,0.4)',
-          textShadowOffset: { width: 1, height: 1 },
-          textShadowRadius: 0,
+          ...toTextShadow(ember || compact ? 'transparent' : 'rgba(0,0,0,0.4)', { width: 1, height: 1 }, 0),
           flexShrink: 1,
           ...type.title,
         },
@@ -139,13 +143,13 @@ export function Button({
           ? {
               borderWidth: 1.5,
               borderColor: colors.primary,
-              shadowOpacity: 0,
+              boxShadow: '0px 0px 0px transparent',
               elevation: 0,
             }
           : {
               borderBottomColor: colors.primary,
               borderRightColor: colors.primary,
-              shadowOpacity: 0,
+              boxShadow: '0px 0px 0px transparent',
               elevation: 0,
             },
       }),
@@ -165,7 +169,7 @@ export function Button({
       minimumFontScale={0.75}
       style={[
         styles.text,
-        variant === 'outline' && { color: ember ? colors.primaryLight : colors.primaryLight, textShadowRadius: 0 },
+        variant === 'outline' && { color: colors.primaryLight },
         textStyle,
       ]}
     >
@@ -191,7 +195,7 @@ export function Button({
           end={ember ? { x: 0.5, y: 1 } : { x: 1, y: 0 }}
           style={[styles.fill, innerStyle]}
         >
-          {ember && !compact ? <View style={styles.sheen} pointerEvents="none" /> : null}
+          {ember && !compact ? <View style={styles.sheen} /> : null}
           {content}
         </LinearGradient>
       </BouncyPressable>
@@ -221,7 +225,7 @@ export function Button({
         colors={[fillColors[variant] ?? colors.secondary, fillColors[variant] ?? colors.secondary]}
         style={[styles.fill, innerStyle]}
       >
-        {ember && variant !== 'outline' && !compact ? <View style={styles.sheen} pointerEvents="none" /> : null}
+        {ember && variant !== 'outline' && !compact ? <View style={styles.sheen} /> : null}
         {content}
       </LinearGradient>
     </BouncyPressable>

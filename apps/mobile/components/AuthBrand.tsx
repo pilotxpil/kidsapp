@@ -13,6 +13,7 @@ import { FadeInUp } from './animations/FadeInUp';
 import { AuthLogo3D, type AuthLogoVariant } from './AuthLogo3D';
 import { getTheme } from '../constants/themes';
 import { spacing } from '../constants/theme';
+import { toTextShadow } from '../lib/shadow';
 import { t } from '../lib/i18n';
 import { Heebo } from '../lib/typography';
 
@@ -64,9 +65,7 @@ export function AuthBrand({ variant, compact }: AuthBrandProps) {
           color: theme.colors.text,
           letterSpacing: compact ? 1 : 4,
           textAlign: 'center',
-          textShadowColor: 'rgba(0,0,0,0.55)',
-          textShadowOffset: { width: 0, height: 3 },
-          textShadowRadius: 8,
+          ...toTextShadow('rgba(0,0,0,0.55)', { width: 0, height: 3 }, 8),
         },
         appNameAccent: { color: theme.colors.primary },
         subTag: {

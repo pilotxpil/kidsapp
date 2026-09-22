@@ -9,6 +9,7 @@ import { playSfx, SfxName } from '../lib/sfx';
 import { Confetti } from './animations/Confetti';
 import { useModalEnter } from './animations/modalEnter';
 import { ThemeGlyph } from './icons/ThemeGlyph';
+import { toTextShadow } from '../lib/shadow';
 
 interface CelebrationProps {
   visible: boolean;
@@ -58,7 +59,7 @@ export function Celebration({
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.overlay, overlayStyle]} pointerEvents="none">
+    <Animated.View style={[styles.overlay, overlayStyle, { pointerEvents: 'none' }]}>
       <Confetti active={visible} count={confettiCount} />
       <Animated.View style={enterStyle}>
         <LinearGradient
@@ -111,18 +112,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 3,
     marginBottom: spacing.sm,
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    ...toTextShadow('rgba(0,0,0,0.4)', { width: 1, height: 1 }, 2),
   },
   message: {
     color: '#fff',
     fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    ...toTextShadow('rgba(0,0,0,0.3)', { width: 1, height: 1 }, 2),
   },
   huge: {
     fontSize: 44,

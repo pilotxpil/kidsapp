@@ -207,7 +207,7 @@ export function AuthLogo3D({ variant = 'gem', size = 120, style }: Props) {
   }
 
   return (
-    <View style={[{ width: size, height: size }, style]} pointerEvents="none">
+    <View style={[{ width: size, height: size }, style, { pointerEvents: 'none' }]}>
       <GLView style={styles.gl} onContextCreate={onContextCreate} />
     </View>
   );

@@ -25,7 +25,7 @@ function StarPattern({ colors: [c1, c2, c3] }: { colors: [string, string, string
     { x: W * 0.3, y: H * 0.62, s: 2 },
   ];
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
       {orbs.map((o, i) => (
         <View
           key={i}
@@ -84,7 +84,7 @@ function GridPattern({ color, step = 56 }: { color: string; step?: number }) {
     }
   }
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
       {cells}
     </View>
   );
@@ -98,7 +98,7 @@ function HeartPattern({ colors: [c1, c2, c3] }: { colors: [string, string, strin
     { size: 100, x: W * 0.7, y: H * 0.4, color: c1, opacity: 0.1 },
   ];
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
       {orbs.map((o, i) => (
         <View
           key={i}
@@ -124,7 +124,7 @@ export function ThemeBackground() {
   const emojiKey = useMemo(() => `${id}-${decorEmojis.join('')}`, [id, decorEmojis]);
 
   return (
-    <View style={styles.wrap} pointerEvents="none">
+    <View style={[styles.wrap, { pointerEvents: 'none' }]}>
       <LinearGradient colors={[...gradientBg]} style={StyleSheet.absoluteFill} />
       {pattern === 'blocks' && <GridPattern color={colors.primary} step={48} />}
       {pattern === 'stars' && (

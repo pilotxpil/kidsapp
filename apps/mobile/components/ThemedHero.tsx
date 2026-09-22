@@ -10,6 +10,7 @@ import { t } from '../lib/i18n';
 import { ThemeGlyph } from './icons/ThemeGlyph';
 import { KidAvatar } from './KidAvatar';
 import { shopAvatarImage } from '../lib/avatar-images';
+import { toBoxShadow, toTextShadow } from '../lib/shadow';
 import { BouncyPressable } from './animations/BouncyPressable';
 
 interface AvatarFrameProps {
@@ -36,9 +37,7 @@ export function AvatarFrame({ avatar, size = 'md' }: AvatarFrameProps) {
               padding: 3,
               borderWidth: 1.5,
               borderColor: colors.primaryLight,
-              shadowColor: colors.glow,
-              shadowOpacity: 0.8,
-              shadowRadius: 14,
+              boxShadow: toBoxShadow({ color: colors.glow, opacity: 0.8, radius: 14 }),
               elevation: 10,
             }
           : {
@@ -210,9 +209,7 @@ export function ThemedHero({
           color: '#fff',
           fontSize: 28,
           fontWeight: '800',
-          textShadowColor: 'rgba(0,0,0,0.65)',
-          textShadowOffset: { width: 1, height: 2 },
-          textShadowRadius: 6,
+          ...toTextShadow('rgba(0,0,0,0.65)', { width: 1, height: 2 }, 6),
           ...type.display,
         },
         meta: {

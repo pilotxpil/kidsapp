@@ -67,7 +67,7 @@ export function Confetti({ active, count = 28 }: ConfettiProps) {
   if (!active) return null;
 
   return (
-    <Animated.View pointerEvents="none" style={styles.container}>
+    <Animated.View style={[styles.container, { pointerEvents: 'none' }]}>
       {pieces.map((p) => (
         <ConfettiPiece key={p.id} x={p.x} delay={p.delay} color={p.color} />
       ))}

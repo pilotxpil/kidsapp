@@ -13,6 +13,7 @@ import Animated, {
 import type { ImageSourcePropType } from 'react-native';
 import type { TaskCategory } from '@kidsapp/shared';
 import { useTheme } from '../../lib/theme-context';
+import { toBoxShadow, toTextShadow } from '../../lib/shadow';
 import { useAuth } from '../../lib/auth';
 import { getThemeArt, type ThemeTabArtKey } from '../../constants/theme-art';
 import { KidAvatar } from '../KidAvatar';
@@ -323,9 +324,7 @@ export function ThemeTabIcon({ name, fallback, focused }: ThemeTabIconProps) {
             borderColor: focused ? colors.primaryLight : 'rgba(158, 174, 142, 0.55)',
           },
           focused && !ember && !voxel && {
-            shadowColor: colors.primary,
-            shadowOpacity: 0.95,
-            shadowRadius: 14,
+            boxShadow: toBoxShadow({ color: colors.primary, opacity: 0.95, radius: 14 }),
             elevation: 10,
           },
         ]}
@@ -368,9 +367,7 @@ export function ThemeTabIcon({ name, fallback, focused }: ThemeTabIconProps) {
         ember && styles.tabWrapEmber,
         focused && {
           backgroundColor: `${colors.primary}${ember ? '40' : '2E'}`,
-          shadowColor: colors.primary,
-          shadowOpacity: ember ? 0.9 : 0.7,
-          shadowRadius: 10,
+          boxShadow: toBoxShadow({ color: colors.primary, opacity: ember ? 0.9 : 0.7, radius: 10 }),
           elevation: 8,
         },
       ]}
@@ -472,7 +469,7 @@ export function SparkleGem({
   return (
     <Animated.View style={[{ width: dim, height: dim, alignItems: 'center', justifyContent: 'center' }, pulse]}>
       <Image source={source} style={[{ width: dim, height: dim, backgroundColor: 'transparent' }, style]} resizeMode="contain" />
-      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, glint, sparkleStyles.glint]}>
+      <Animated.View style={[StyleSheet.absoluteFill, glint, sparkleStyles.glint, { pointerEvents: 'none' }]}>
         <Text style={[sparkleStyles.star, { fontSize: dim * 0.22 }]}>✦</Text>
       </Animated.View>
     </Animated.View>
@@ -487,9 +484,7 @@ const sparkleStyles = StyleSheet.create({
   },
   star: {
     color: '#FFFFFF',
-    textShadowColor: '#7DF9FF',
-    textShadowRadius: 10,
-    textShadowOffset: { width: 0, height: 0 },
+    ...toTextShadow('#7DF9FF', { width: 0, height: 0 }, 10),
   },
 });
 

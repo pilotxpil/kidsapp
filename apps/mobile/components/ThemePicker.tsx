@@ -10,6 +10,7 @@ import { useType } from '../lib/typography';
 import { playSfx } from '../lib/sfx';
 import { BouncyPressable } from './animations/BouncyPressable';
 import { rtl } from '../lib/rtl';
+import { toBoxShadow } from '../lib/shadow';
 
 const CARD_HEIGHT = 148;
 const GRID_PADDING = spacing.lg;
@@ -50,9 +51,11 @@ export function ThemePicker() {
               {
                 borderColor: selected ? opt.accent : colors.border,
                 borderWidth: selected ? 3 : 1,
-                shadowColor: selected ? opt.accent : '#000',
-                shadowOpacity: selected ? 0.5 : 0.2,
-                shadowRadius: selected ? 12 : 4,
+                boxShadow: toBoxShadow({
+                  color: selected ? opt.accent : '#000',
+                  opacity: selected ? 0.5 : 0.2,
+                  radius: selected ? 12 : 4,
+                }),
                 elevation: selected ? 10 : 3,
               },
             ]}

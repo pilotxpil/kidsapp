@@ -1,4 +1,5 @@
 import { ViewStyle } from 'react-native';
+import { toBoxShadow } from '../lib/shadow';
 import type { TaskCategory, UiThemeId } from '@kidsapp/shared';
 
 type SfxName = 'tap' | 'complete' | 'gem' | 'coin' | 'error';
@@ -74,10 +75,7 @@ function glowBorder(colors: ThemeColors, width = 2): ViewStyle {
   return {
     borderWidth: width,
     borderColor: colors.primary,
-    shadowColor: colors.glow,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.65,
-    shadowRadius: 14,
+    boxShadow: toBoxShadow({ color: colors.glow, opacity: 0.65, radius: 14 }),
     elevation: 10,
   };
 }
@@ -87,10 +85,12 @@ function emberPanel(colors: ThemeColors, _width = 1): ViewStyle {
   return {
     borderWidth: 1,
     borderColor: 'rgba(255, 138, 61, 0.38)',
-    shadowColor: colors.glow,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.28,
-    shadowRadius: 20,
+    boxShadow: toBoxShadow({
+      color: colors.glow,
+      offset: { width: 0, height: 10 },
+      opacity: 0.28,
+      radius: 20,
+    }),
     elevation: 8,
   };
 }
@@ -99,10 +99,12 @@ function flatBorder(colors: ThemeColors, width = 2): ViewStyle {
   return {
     borderWidth: width,
     borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
+    boxShadow: toBoxShadow({
+      color: '#000',
+      offset: { width: 0, height: 4 },
+      opacity: 0.35,
+      radius: 6,
+    }),
     elevation: 4,
   };
 }

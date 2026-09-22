@@ -238,7 +238,7 @@ export const Star3D = forwardRef<Star3DHandle, Props>(function Star3D({ size = 1
   }
 
   return (
-    <View style={[{ width: size, height: size }, style]} pointerEvents="none">
+    <View style={[{ width: size, height: size }, style, { pointerEvents: 'none' }]}>
       <GLView style={styles.gl} onContextCreate={onContextCreate} />
     </View>
   );

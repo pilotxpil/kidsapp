@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { DailyStarClaimResult, DailyStarStatus } from '@kidsapp/shared';
 import { spacing } from '../constants/theme';
+import { toTextShadow } from '../lib/shadow';
 import { useTheme } from '../lib/theme-context';
 import { playSfx, playStarTapSfx } from '../lib/sfx';
 import { t } from '../lib/i18n';
@@ -84,9 +85,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
           fontSize: 22,
           fontWeight: '800',
           textAlign: 'center',
-          textShadowColor: 'rgba(0,0,0,0.4)',
-          textShadowOffset: { width: 1, height: 1 },
-          textShadowRadius: 3,
+          ...toTextShadow('rgba(0,0,0,0.4)', { width: 1, height: 1 }, 3),
         },
         hint: {
           color: 'rgba(255,255,255,0.9)',
@@ -266,7 +265,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
                 >
                   <Text style={styles.closeBtnText}>✕</Text>
                 </Pressable>
-                <Animated.View style={[styles.flash, flashStyle]} pointerEvents="none" />
+                <Animated.View style={[styles.flash, flashStyle, { pointerEvents: 'none' }]} />
                 <Animated.Text entering={FadeIn.delay(80)} style={styles.title}>
                   {t('dailyStar')}
                 </Animated.Text>

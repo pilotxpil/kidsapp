@@ -70,8 +70,7 @@ function FloatingParticle({ emoji, x, y, size, duration, delay }: {
 
   return (
     <Animated.Text
-      pointerEvents="none"
-      style={[styles.particle, { left: x, top: y, fontSize: size }, style]}
+      style={[styles.particle, { left: x, top: y, fontSize: size, pointerEvents: 'none' }, style]}
     >
       {emoji}
     </Animated.Text>
@@ -98,7 +97,7 @@ export function FloatingEmojis({
   );
 
   return (
-    <View pointerEvents="none" style={[styles.container, { opacity }]}>
+    <View style={[styles.container, { opacity, pointerEvents: 'none' }]}>
       {particles.map((p) => (
         <FloatingParticle key={p.id} {...p} />
       ))}

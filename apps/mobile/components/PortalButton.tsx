@@ -13,6 +13,7 @@ import Animated, {
 import { BouncyPressable } from './animations/BouncyPressable';
 import { getTheme } from '../constants/themes';
 import { rtl } from '../lib/rtl';
+import { toBoxShadow } from '../lib/shadow';
 import type { UiThemeId } from '@kidsapp/shared';
 
 type PortalVariant = 'hero' | 'parent';
@@ -78,7 +79,7 @@ export function PortalButton({ variant, emoji, title, subtitle, onPress, style }
           styles.glowRing,
           {
             borderRadius: theme.borderRadius.lg + 4,
-            shadowColor: glowColor,
+            boxShadow: toBoxShadow({ color: glowColor, opacity: 0.9, radius: 20 }),
             borderColor: isHero ? `${theme.colors.accent}55` : `${theme.colors.primary}66`,
           },
           glowStyle,
@@ -105,7 +106,7 @@ export function PortalButton({ variant, emoji, title, subtitle, onPress, style }
             end={{ x: 1, y: 1 }}
             style={[styles.gradient, { borderRadius: theme.borderRadius.lg }]}
           >
-            <Animated.View style={[styles.shimmer, shimmerStyle]} pointerEvents="none">
+            <Animated.View style={[styles.shimmer, shimmerStyle, { pointerEvents: 'none' }]}>
               <LinearGradient
                 colors={['transparent', 'rgba(255,255,255,0.35)', 'transparent']}
                 start={{ x: 0, y: 0 }}
@@ -155,9 +156,6 @@ const styles = StyleSheet.create({
   glowRing: {
     ...StyleSheet.absoluteFill,
     borderWidth: 2,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 20,
     elevation: 16,
   },
   pressable: {

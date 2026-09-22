@@ -13,6 +13,7 @@ import Animated, {
 import { FadeInUp } from './animations/FadeInUp';
 import { getTheme } from '../constants/themes';
 import { spacing } from '../constants/theme';
+import { toBoxShadow } from '../lib/shadow';
 import type { UiThemeId } from '@kidsapp/shared';
 
 type AuthThemeId = Extract<UiThemeId, 'ember' | 'brawl' | 'roblox'>;
@@ -71,10 +72,7 @@ export function AuthFormCard({ themeId, children, index = 3, style, compact }: A
           borderRadius: theme.borderRadius.lg + 3,
           borderWidth: 1.5,
           borderColor: `${theme.colors.primary}55`,
-          shadowColor: theme.colors.glow,
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.75,
-          shadowRadius: 16,
+          boxShadow: toBoxShadow({ color: theme.colors.glow, opacity: 0.75, radius: 16 }),
           elevation: 12,
         },
         card: {
@@ -135,7 +133,7 @@ export function AuthFormCard({ themeId, children, index = 3, style, compact }: A
   return (
     <FadeInUp index={index}>
       <View style={[styles.wrap, style]}>
-        <Animated.View style={[styles.glow, glowStyle]} pointerEvents="none" />
+        <Animated.View style={[styles.glow, glowStyle, { pointerEvents: 'none' }]} />
         <View style={styles.card}>
           <LinearGradient colors={[...gradientColors]} style={styles.gradient}>
             <LinearGradient
@@ -144,7 +142,7 @@ export function AuthFormCard({ themeId, children, index = 3, style, compact }: A
               end={{ x: 1, y: 0 }}
               style={styles.topAccent}
             />
-            <Animated.View style={[styles.shimmer, shimmerStyle]} pointerEvents="none">
+            <Animated.View style={[styles.shimmer, shimmerStyle, { pointerEvents: 'none' }]}>
               <LinearGradient
                 colors={['transparent', 'rgba(255,255,255,0.22)', 'transparent']}
                 start={{ x: 0, y: 0 }}

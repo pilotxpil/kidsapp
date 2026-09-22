@@ -21,12 +21,11 @@ export function ThemedScreen({ children, tabs, style }: ThemedScreenProps) {
     <View style={[styles.container, { backgroundColor: colors.bg }, style]}>
       {emberWorld ? (
         <>
-          <Image source={art!.bg} style={styles.world} resizeMode="cover" pointerEvents="none" />
+          <Image source={art!.bg} style={[styles.world, { pointerEvents: 'none' }]} resizeMode="cover" />
           <LinearGradient
             colors={['rgba(10,10,12,0.15)', 'rgba(10,10,12,0.55)', 'rgba(10,10,12,0.88)']}
             locations={[0, 0.38, 1]}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
+            style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}
           />
         </>
       ) : (

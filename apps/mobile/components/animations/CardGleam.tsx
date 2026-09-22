@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { toBoxShadow } from '../../lib/shadow';
 import Animated, {
   Easing,
   interpolate,
@@ -35,7 +36,7 @@ export function CardGleam() {
   }));
 
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
       <LinearGradient
         colors={['rgba(255,255,255,0.42)', 'rgba(255,255,255,0)']}
         style={styles.bevel}
@@ -75,10 +76,12 @@ export function GleamCard({
           overflow: 'hidden',
           borderWidth: 1.5,
           borderColor: border,
-          shadowColor: glow,
-          shadowOpacity: 0.55,
-          shadowRadius: 14,
-          shadowOffset: { width: 0, height: 4 },
+          boxShadow: toBoxShadow({
+            color: glow,
+            offset: { width: 0, height: 4 },
+            opacity: 0.55,
+            radius: 14,
+          }),
           elevation: 8,
         }}
       >

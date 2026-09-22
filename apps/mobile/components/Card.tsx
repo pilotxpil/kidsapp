@@ -13,6 +13,7 @@ import { rtl } from '../lib/rtl';
 import { t } from '../lib/i18n';
 import { AnimatedCounter } from './animations/AnimatedCounter';
 import { ThemeGlyph, PointsMark } from './icons/ThemeGlyph';
+import { toBoxShadow, toTextShadow } from '../lib/shadow';
 
 interface CardProps {
   children: React.ReactNode;
@@ -33,10 +34,12 @@ export function Card({ children, style, glow }: CardProps) {
               padding: spacing.md,
               borderWidth: 1,
               borderColor: glow ? 'rgba(255, 179, 0, 0.55)' : 'rgba(255, 138, 61, 0.38)',
-              shadowColor: colors.glow,
-              shadowOpacity: glow ? 0.55 : 0.28,
-              shadowRadius: glow ? 22 : 18,
-              shadowOffset: { width: 0, height: 10 },
+              boxShadow: toBoxShadow({
+                color: colors.glow,
+                offset: { width: 0, height: 10 },
+                opacity: glow ? 0.55 : 0.28,
+                radius: glow ? 22 : 18,
+              }),
               elevation: 8,
               alignSelf: 'stretch',
               width: '100%',
@@ -61,15 +64,13 @@ export function Card({ children, style, glow }: CardProps) {
           right: 0,
           height: 4,
           zIndex: 1,
+          pointerEvents: 'none',
         },
         body: { zIndex: 2, width: '100%', maxWidth: '100%', alignSelf: 'stretch' },
         glow: {
           borderTopColor: colors.accent,
           borderLeftColor: colors.accent,
-          shadowColor: colors.glow,
-          shadowOpacity: 0.35,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 0 },
+          boxShadow: toBoxShadow({ color: colors.glow, opacity: 0.35, radius: 12 }),
           elevation: 8,
         },
       }),
@@ -84,7 +85,6 @@ export function Card({ children, style, glow }: CardProps) {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.shine}
-          pointerEvents="none"
         />
       )}
       <View style={styles.body}>{children}</View>
@@ -107,10 +107,12 @@ export function PointsBadge({ points, size = 'sm' }: PointsBadgeProps) {
         wrap: {
           borderRadius: borderRadius.full,
           overflow: 'hidden',
-          shadowColor: colors.glow,
-          shadowOpacity: 0.4,
-          shadowRadius: 8,
-          shadowOffset: { width: 0, height: 2 },
+          boxShadow: toBoxShadow({
+            color: colors.glow,
+            offset: { width: 0, height: 2 },
+            opacity: 0.4,
+            radius: 8,
+          }),
           elevation: 6,
         },
         pointsBadge: {
@@ -130,9 +132,7 @@ export function PointsBadge({ points, size = 'sm' }: PointsBadgeProps) {
           color: '#fff',
           fontWeight: '800',
           fontSize: 16,
-          textShadowColor: 'rgba(0,0,0,0.4)',
-          textShadowOffset: { width: 1, height: 1 },
-          textShadowRadius: 2,
+          ...toTextShadow('rgba(0,0,0,0.4)', { width: 1, height: 1 }, 2),
           ...type.title,
         },
         pointsTextLg: { fontSize: 28 },
@@ -254,9 +254,7 @@ export function StreakBadge({ streak }: StreakBadgeProps) {
           gap: 8,
           flexShrink: 0,
           ...cardBorder(2),
-          shadowColor: colors.streak,
-          shadowOpacity: 0.35,
-          shadowRadius: 6,
+          boxShadow: toBoxShadow({ color: colors.streak, opacity: 0.35, radius: 6 }),
           elevation: 4,
         },
         streakLabel: {
