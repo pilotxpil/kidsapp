@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>מאגר חידות ומילים — אוקיי</title>
+  <style>
+    :root {
+      --bg: #f4f0ea;
+      --card: #fff;
+      --line: #e4dbd1;
+      --text: #1c1917;
+      --muted: #6f645b;
+      --ok: #1f7a4d;
+      --ok-bg: #e7f6ee;
+      --no: #8a8178;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 18px 10px;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    h1 { font-size: 22px; margin: 0; }
+    .sub { color: var(--muted); font-size: 13px; margin: 4px 0 0; line-height: 1.45; }
+    .stats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .stat {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .saved { font-size: 12px; color: var(--ok); font-weight: 700; margin-top: 6px; min-height: 16px; }
+    .tabs, .filters, .tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+    button, input {
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .tab, .chip, .tool {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .tab.on, .chip.on { background: #1c1917; color: #fff; border-color: #1c1917; }
+    input[type="search"], input[type="text"] {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 12px;
+      min-width: 220px;
+      background: #fff;
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 8px 18px 48px; }
+    h2 { font-size: 16px; margin: 18px 0 6px; }
+    .hint { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+    .item {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 10px;
+      align-items: start;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin: 8px 0;
+    }
+    .item.off { opacity: 0.55; }
+    .ok {
+      border: 1px solid #b7cfc2;
+      background: #fff;
+      color: var(--no);
+      border-radius: 999px;
+      padding: 8px 0;
+      font-weight: 800;
+      cursor: pointer;
+      width: 100%;
+    }
+    .ok.on { background: var(--ok); color: #fff; border-color: var(--ok); }
+    .kicker { font-size: 12px; color: var(--muted); font-weight: 700; }
+    .prompt { font-weight: 800; margin-top: 2px; }
+    .meta { font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+    .answer { font-weight: 800; }
+    .board {
+      background: #1c1917;
+      color: #f5efe8;
+      border-radius: 12px;
+      padding: 16px 12px;
+      margin: 8px 0 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .cells {
+      display: grid;
+      grid-template-columns: repeat(3, 36px);
+      grid-template-rows: repeat(3, 36px);
+      border: 2px solid #f5efe8;
+    }
+    .cells i { border: 1px solid #f5efe8; display: block; }
+    .tri-row { display: flex; justify-content: center; }
+    .tri-row.bot { margin-top: -14px; }
+    .tri-glyph { font-size: 54px; line-height: 0.75; }
+    .rebus-row { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .rebus-stack { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .rebus { font-weight: 800; line-height: 1.15; }
+    .rebus.s { font-size: 16px; opacity: 0.7; }
+    .rebus.m { font-size: 28px; }
+    .rebus.l { font-size: 46px; }
+    .bag {
+      border: 3px dashed #f5efe8;
+      border-radius: 14px;
+      min-width: 96px;
+      min-height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      padding: 14px 20px;
+    }
+    .forest { text-align: center; font-size: 28px; line-height: 1.35; letter-spacing: 2px; }
+    .forest .hid { font-size: 13px; opacity: 0.55; font-weight: 800; letter-spacing: 0; }
+    .seq { font-size: 22px; font-weight: 800; letter-spacing: 0.04em; direction: ltr; text-align: center; }
+    .addbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 4px; }
+    .addbar input { flex: 1; }
+    .note { font-size: 13px; color: var(--ok); font-weight: 700; min-height: 18px; }
+    #summary {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      white-space: pre-wrap;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>מאגר חידות ומילים</h1>
+      <p class="sub">לחצו «אוקיי» על מה שנשאר. הביטול מוריד. הבחירה נשמרת בדפדפן ומתעדכנת מיד.</p>
+      <div class="stats" id="stats"></div>
+      <div class="saved" id="saved"></div>
+      <div class="tabs" id="tabs">
+        <button class="tab on" data-tab="riddles" type="button">חידות</button>
+        <button class="tab" data-tab="words" type="button">אוצר מילים</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div id="riddle-tools">
+      <div class="filters" id="cats"></div>
+      <div class="tools">
+        <input id="q" type="search" placeholder="חיפוש חידה, תשובה או הסבר" />
+        <button class="chip on" data-show="all" type="button">הכול</button>
+        <button class="chip" data-show="keep" type="button">רק עם אוקיי</button>
+        <button class="chip" data-show="drop" type="button">רק בלי אוקיי</button>
+        <button class="tool" id="keep-shown" type="button">אוקיי למה שמוצג</button>
+        <button class="tool" id="drop-shown" type="button">בטל אוקיי למה שמוצג</button>
+      </div>
+    </div>
+    <div id="word-tools" hidden>
+      <div class="addbar">
+        <input id="new-word" type="text" placeholder="מילה חדשה להוספה" />
+        <button class="tool" id="add-word" type="button">הוסף מילה</button>
+      </div>
+      <p class="note" id="add-note"></p>
+      <p class="hint">מילה שתוסיפו כאן תיכנס בלי הגדרה. כשתכתבו לי «החל», אמצא לה הגדרה מילונית ודוגמה.</p>
+      <div class="tools">
+        <input id="wq" type="search" placeholder="חיפוש מילה או הגדרה" />
+      </div>
+    </div>
+    <div id="list"></div>
+    <h2>מה יתעדכן בקוד</h2>
+    <p class="hint">הסיכום הזה מתעדכן עם כל אוקיי. העתיקו אותו, או כתבו לי «החל».</p>
+    <div class="tools">
+      <button class="tool" id="copy" type="button">העתק סיכום</button>
+      <button class="tool" id="download" type="button">הורד קובץ בחירה</button>
+      <button class="tool" id="reset" type="button">אפס הכול לאוקיי</button>
+    </div>
+    <pre id="summary"></pre>
+  </main>
+  <script>
+    const CATS = [
+      ["all", "כל הסוגים"],
+      ["pic", "תמונה"],
+      ["odd", "יוצא דופן"],
+      ["idiom", "ביטוי"],
+      ["math", "חשבון"],
+      ["logic", "היגיון"],
+    ];
+    const CAT_LABEL = Object.fromEntries(CATS);
+
+    const RIDDLES = [
+      { id: "sq14", cat: "pic", prompt: "כמה ריבועים יש בתמונה?", visual: { kind: "grid3" }, answer: "14", why: "9 קטנים + 4 בינוניים (2×2) + 1 גדול." },
+      { id: "beit-sefer", cat: "pic", prompt: "איזה ביטוי מסתתר בתמונה?", visual: { kind: "row", parts: [{ text: "בית", size: "m" }, { text: "+", size: "s" }, { text: "📖", size: "l" }] }, answer: "בית ספר", why: "בית + ספר." },
+      { id: "odd-prime", cat: "odd", prompt: "מה יוצא הדופן?", extra: "3, 5, 7, 9, 11", answer: "9", why: "כל השאר ראשוניים. 9 מתחלק ב־3." },
+      { id: "odd-squares", cat: "odd", prompt: "מה יוצא הדופן?", extra: "16, 25, 36, 49, 64, 81, 99", answer: "99", why: "כל השאר ריבועים מושלמים." },
+      { id: "odd-palindrome", cat: "odd", prompt: "מה יוצא הדופן?", extra: "שמש, תות, אבא, נגן, דלת", answer: "דלת", why: "כל השאר פלינדרום." },
+      { id: "odd-3d", cat: "odd", prompt: "מה יוצא הדופן?", extra: "עיגול, משולש, ריבוע, מלבן, כדור", answer: "כדור", why: "כדור הוא תלת-ממד." },
+      { id: "math-cats", cat: "math", prompt: "3 חתולים תופסים 3 עכברים ב־3 דקות. כמה זמן ל־100 חתולים לתפוס 100 עכברים?", answer: "3 דקות", why: "כל חתול תופס עכבר אחד ב־3 דקות, במקביל." },
+      { id: "math-nines", cat: "math", prompt: "כמה פעמים מופיעה הספרה 9 במספרים מ־1 עד 100?", answer: "20", why: "9 פעמים בעשרות + 11 ב־90 עד 99." },
+      { id: "logic-sisters", cat: "logic", prompt: "לארבע אחיות יש אח אחד. כמה ילדים יש במשפחה?", answer: "5", why: "ארבע בנות + בן אחד משותף." },
+      { id: "logic-letters", cat: "logic", prompt: "מה האות הבאה?", extra: "א, ש, ש, א, ח, ש, ש, ?", answer: "ש", why: "האות הראשונה של אחת, שתיים, שלוש… שמונה." },
+      { id: "logic-fruits", cat: "logic", prompt: "אבא של נועה קורא לחמש בנותיו לפי שמות של פירות: תות, תמר, תאנה, תפוח. איך קוראים לבת החמישית?", answer: "תפוז", why: "כולם מתחילים ב־ת. גם תפוז. «נועה» היא הפתיח." },
+      { id: "logic-hippo", cat: "logic", prompt: "כמה יש בתוך היפופוטם?", extra: "בתוך פיל יש 3 · בתוך ג׳ירפה יש 5 · בתוך צב יש 2", answer: "8", why: "סופרים אותיות: פיל 3, ג׳ירפה 5, צב 2, היפופוטם 8." },
+      { id: "logic-levi", cat: "logic", prompt: "במשפחת לוי יש 6 אחים בנים, ולכל אח יש אחות אחת בדיוק. כמה ילדים יש בסך הכל במשפחה?", answer: "7", why: "שישה בנים + אחות אחת משותפת." },
+    ];
+
+    const WORDS = [
+      { id: "hatmada", word: "התמדה", definition: "להמשיך במעשה גם כשקשה, ולא לוותר באמצע.", hint: "רק התמדה תביא אותך לסוף הספר, לא קסם." },
+      { id: "hashraa", word: "השראה", definition: "רעיון או כוח שגורמים לרצות ליצור או להשתפר.", hint: "הציור של סבתא נתן לי השראה לנסות גם." },
+      { id: "tzniut", word: "צניעות", definition: "לא להתפאר ולא לקחת יותר מדי תשומת לב.", hint: "הוא ניצח בשקט, בלי צעקות — זו צניעות." },
+      { id: "hitkhashvut", word: "התחשבות", definition: "לחשוב איך המעשה שלך משפיע על מי שנמצא לידך.", hint: "לסגור את הדלת בשקט בלילה זו התחשבות." },
+      { id: "dilema", word: "דילמה", definition: "מצב שבו קשה לבחור, כי לכל אפשרות יש מחיר.", hint: "יש דילמה: מסיבה אצל חבר או ביקור אצל סבא." },
+      { id: "adifut", word: "עדיפות", definition: "מה שבא קודם כי זה חשוב יותר מדברים אחרים.", hint: "שיעורים קודם — זו העדיפות הערב, לא משחק." },
+      { id: "izun", word: "איזון", definition: "לא להגזים לשום כיוון; למצוא מידה נכונה.", hint: "איזון זה גם לרוץ בחוץ וגם לנוח, לא רק מסך." },
+      { id: "mekoriut", word: "מקוריות", definition: "לעשות משהו בדרך משלך, לא להעתיק מאחרים.", hint: "הסיפור שלך מלא מקוריות — לא שמעתי אותו באף ספר." },
+      { id: "yozma", word: "יוזמה", definition: "להתחיל מעשה טוב בלי שיבקשו ממך.", hint: "לקפל כביסה בלי שביקשו זו יוזמה." },
+      { id: "kavod", word: "כבוד", definition: "יחס שמכיר בערך של אדם, של כלל או של רגש.", hint: "לא נכנסים לחדר של מישהו בלי כבוד לפרטיות שלו." },
+      { id: "emun", word: "אמון", definition: "ביטחון שאפשר לסמוך על מישהו שיגיד אמת וישמור הבטחה.", hint: "כשאומרים אמת בונים אמון, וכשמשקרים שוברים אותו." },
+      { id: "haginut", word: "הגינות", definition: "לנהוג בצדק כלפי כולם, בלי לקפח מישהו.", hint: "לחלק שווה־שווה זו הגינות, לא טובה." },
+      { id: "shkadnut", word: "שקדנות", definition: "מאמץ שקט ומתמשך, יום אחרי יום.", hint: "שקדנות בנגינה זה חזרה קצרה כל ערב, לא רק לפני ההופעה." },
+      { id: "eranut", word: "ערנות", definition: "להיות קשוב למה שקורה מסביב ולא לישון על הרגליים.", hint: "ערנות בכביש זה להסתכל לשני הצדדים לפני שחוצים." },
+      { id: "ipuk", word: "איפוק", definition: "לעצור תגובה חזקה ולא להתפרץ גם כשכועסים.", hint: "איפוק זה לספור עד עשר במקום לצעוק." },
+      { id: "shalva", word: "שלווה", definition: "מצב של שקט פנימי, בלי מתח ולחץ.", hint: "בערב בלי מסכים יש בבית יותר שלווה." },
+      { id: "hemla", word: "חמלה", definition: "רחמים ורצון להקל על סבל של מישהו אחר.", hint: "חמלה זה להביא מים למי שנפל, לא רק להגיד שקם." },
+      { id: "solidariut", word: "סולידריות", definition: "לעמוד לצד מישהו בקושי, כאילו זה גם העניין שלך.", hint: "סולידריות זה להצטרף לחבר שהושאר בחוץ מהמשחק." },
+      { id: "neemanut", word: "נאמנות", definition: "לא לבגוד בחבר, במשפחה או בהבטחה שנתת.", hint: "נאמנות זה לא לספר סוד שמישהו בטח בך." },
+      { id: "aminut", word: "אמינות", definition: "שאפשר לסמוך שהמילים שלך אמת ושהמעשים יבואו אחריהן.", hint: "אמינות נבנית כשמגיעים בזמן כמו שהבטחת." },
+      { id: "diyknut", word: "דייקנות", definition: "לעשות דברים בזמן הנכון ובצורה מדויקת, בלי קירוב מרושל.", hint: "דייקנות בחשבון חוסכת טעויות מיותרות." },
+      { id: "mesirut", word: "מסירות", definition: "לתת את הלב למשימה או לאדם לאורך זמן.", hint: "מסירות לכדורגל נראית גם בימים שאין חשק לצאת." },
+      { id: "harata", word: "חרטה", definition: "צער על מעשה שעשית, עם רצון לתקן ולא לחזור עליו.", hint: "יש חרטה כששוברים צעצוע בכוונה ואחר כך מצטערים." },
+      { id: "safek", word: "ספק", definition: "אי-ודאות אם משהו נכון או אם כדאי לעשות אותו.", hint: "יש לי ספק אם הסיפור הזה באמת קרה — כדאי לבדוק." },
+      { id: "optimiyut", word: "אופטימיות", definition: "נטייה לראות את הצד האפשרי והטוב, בלי להתעלם מהקושי.", hint: "אופטימיות זה להגיד שננסה דרך אחרת." },
+      { id: "pesimiyut", word: "פסימיות", definition: "נטייה לצפות שהדברים ישתבשו, לפעמים יותר ממה שצריך.", hint: "פסימיות הופכת גשם קטן ל«הכול נהרס»." },
+      { id: "hasahat-daat", word: "הסחת דעת", definition: "משהו שמושך את המחשבה מהעיקר ומקשה לסיים.", hint: "הטלפון הוא הסחת דעת כשצריך לסיים חשבון." },
+      { id: "gmishut", word: "גמישות", definition: "היכולת להתאים את עצמך כשהתוכנית משתנה.", hint: "גמישות זה להסכים לפארק אחר כשהראשון סגור." },
+      { id: "anava", word: "ענווה", definition: "לדעת את ערכך בלי להתנשא על אחרים.", hint: "ענווה זה לנצח ולשבח גם את הקבוצה השנייה." },
+      { id: "yehirut", word: "יהירות", definition: "לחשוב שאתה טוב מאחרים יותר מדי, ולהראות את זה.", hint: "יהירות אחרי ניצחון פוגעת בחברים יותר מההפסד עצמו." },
+      { id: "teum", word: "תיאום", definition: "לסדר שכולם יפעלו באותו זמן וכיוון, בלי הפתעות מיותרות.", hint: "תיאום יציאה זה שכולם מוכנים באותה שעה." },
+      { id: "irgun", word: "ארגון", definition: "לסדר דברים במבנה ברור כדי שאפשר יהיה למצוא ולהשתמש.", hint: "ארגון בתיק חוסך חיפושים בבוקר." },
+      { id: "iltur", word: "אלתור", definition: "להמציא פתרון בלי הכנה מראש, מתוך מה שיש.", hint: "כששכחנו כדור עשינו אלתור ושיחקנו בבקבוק מים." },
+      { id: "yeilut", word: "יעילות", definition: "להגיע לתוצאה טובה עם פחות בזבוז של זמן או כוח.", hint: "יעילות בבוקר: בגדים מהערב, לא חיפוש גרביים בדקה התשע." },
+      { id: "gasut", word: "גסות", definition: "דיבור או מעשה גסים, בלי התחשבות ברגש של אחרים.", hint: "גסות בפה לא הופכת בדיחה לחכמה יותר." },
+      { id: "nimus", word: "נימוס", definition: "כללי התנהגות מכבדת בחברה: בבקשה, תודה, לא לדחוף.", hint: "נימוס בתור זה לחכות, לא לעקוף." },
+      { id: "kenut", word: "כנות", definition: "להגיד את האמת כמו שהיא, בלי ליפוף מיותר.", hint: "כנות עדיפה על תירוץ יצירתי כששברת משהו." },
+      { id: "gvul", word: "גבול", definition: "קו שמציין עד איפה מותר, כדי להגן על מישהו או על כלל.", hint: "יש גבול לכמה ממתקים אוכלים ביום, גם אם נשאר בשקית." },
+      { id: "zechut", word: "זכות", definition: "דבר שמגיע לאדם לפי דין או מוסר, גם אם מישהו חזק יותר לא אוהב.", hint: "לכל ילד יש זכות להגיד מה הוא מרגיש בלי שילעגו לו." },
+      { id: "pratiut", word: "פרטיות", definition: "המרחב האישי שאחרים לא נכנסים אליו בלי רשות.", hint: "לקרוא יומן של אח בלי לשאול זה לפגוע בפרטיות." },
+      { id: "hergel", word: "הרגל", definition: "מעשה שחוזרים עליו עד שהוא כמעט אוטומטי.", hint: "צחצוח שיניים כל ערב הוא הרגל ששומר על הפה." },
+      { id: "ikaron", word: "עיקרון", definition: "כלל יסוד חשוב שלא מוותרים עליו בקלות.", hint: "עיקרון בבית: לא צועקים על מי שחלש ממך." },
+      { id: "erech", word: "ערך", definition: "דבר חשוב שמשפיע איך מתנהגים, מעבר לנוחות הרגע.", hint: "יושר הוא ערך: מחזירים גם אם אפשר לברוח עם זה." },
+      { id: "etgar", word: "אתגר", definition: "דבר קשה שדורש מאמץ כדי להצליח, לא משימה קלה.", hint: "ללמוד לשחות זה אתגר, לא קסם של שיעור אחד." },
+      { id: "heseg", word: "הישג", definition: "תוצאה טובה שהגענו אליה אחרי מאמץ.", hint: "לסיים ספר שלם זה הישג שכדאי לחגוג." },
+      { id: "lekach", word: "לקח", definition: "מה שלומדים מטעות או מחוויה, כדי לא לחזור עליה.", hint: "הלקח מהגשם: לבדוק תחזית לפני טיול בלי מעיל." },
+      { id: "motivatzya", word: "מוטיבציה", definition: "הסיבה הפנימית שדוחפת לפעול, גם בלי שמישהו יעמוד מעליך.", hint: "מוטיבציה לאימון עולה כשיש משחק בסוף השבוע." },
+      { id: "mishmaat", word: "משמעת", definition: "היכולת לעשות מה שצריך גם כשאין חשק.", hint: "משמעת זה לכבות מסך בזמן, לא רק כשלוקחים אותו." },
+      { id: "perspektiva", word: "פרספקטיבה", definition: "נקודת מבט רחבה יותר על מצב; לראות מעבר לרגע הכואב.", hint: "פרספקטיבה: הריב על הכפתור יישכח מחר, החברות חשובה יותר." },
+      { id: "heksher", word: "הקשר", definition: "המצב שמסביב שעוזר להבין למה משהו נאמר או קרה.", hint: "בלי הקשר, משפט בצ׳אט יכול להישמע גס בטעות." },
+      { id: "ashlaya", word: "אשליה", definition: "משהו שנראה אמיתי אבל אינו כך.", hint: "הקסם על הבמה הוא אשליה; היד לא באמת נעלמה." },
+      { id: "shayachut", word: "שייכות", definition: "הרגשה שאתה חלק מקבוצה ושמישהו רוצה אותך שם.", hint: "שייכות במשפחה נראית כששואלים לדעתך בארוחה." },
+      { id: "zehut", word: "זהות", definition: "מי אתה ומה מייחד אותך — לא רק מה אחרים מצפים.", hint: "זהות זה גם מה שאוהבים, לא רק איך שנראים." },
+    ];
+
+    const CANDIDATES = [
+      { id: "achrayut", word: "אחריות", definition: "לעמוד מאחורי מה שעשית, גם כשהתוצאה לא נעימה.", hint: "אחריות זה להגיד «שברתי את הכוס», לא «היא נפלה לבד»." },
+      { id: "savlanut", word: "סבלנות", definition: "לחכות בלי כעס כשמשהו לוקח זמן.", hint: "סבלנות בתור לנדנדה זה לחכות לתור, לא לדחוף." },
+      { id: "ometz", word: "אומץ", definition: "לעשות את הדבר הנכון או הקשה גם כשמפחדים.", hint: "אומץ זה להגיד למורה שמישהו נפגע, גם אם החברים לא אוהבים את זה." },
+      { id: "nedivut", word: "נדיבות", definition: "לתת ממה שיש לך בלי לדרוש תמורה.", hint: "נדיבות זה לחלוק את החטיף, לא רק כשמבקשים בקול." },
+      { id: "sakranut", word: "סקרנות", definition: "רצון להבין איך דברים עובדים ולמה.", hint: "סקרנות זה לשאול למה השמיים כחולים, ואז לבדוק." },
+      { id: "sovlanut", word: "סובלנות", definition: "לקבל שאחרים חושבים או חיים אחרת ממך, בלי לזלזל.", hint: "סובלנות זה לא לצחוק על אוכל או מנהג שזר לך." },
+      { id: "hakshava", word: "הקשבה", definition: "לתת תשומת לב למה שמישהו אומר, לא רק לחכות לתורך לדבר.", hint: "הקשבה זה להניח את הטלפון כשחבר מספר משהו חשוב." },
+      { id: "pshara", word: "פשרה", definition: "שכל צד מוותר קצת כדי שאפשר להתקדם ביחד.", hint: "פשרה במשחק: חצי שעה כדורגל וחצי שעה מסך." },
+      { id: "ikviut", word: "עקביות", definition: "לעשות את הדבר הנכון שוב ושוב, לא רק פעם אחת כשרואים.", hint: "עקביות בשיעורי בית נראית גם ביום שאין מבחן." },
+      { id: "nechishut", word: "נחישות", definition: "להמשיך אל המטרה גם אחרי כישלון.", hint: "נחישות זה לקום אחרי נפילה באופניים ולנסות שוב את אותו קטע." },
+      { id: "yoshra", word: "יושרה", definition: "לנהוג לפי מה שנכון גם כשאף אחד לא מסתכל.", hint: "יושרה זה להחזיר ארנק שנמצא, גם בלי מצלמה." },
+      { id: "empatiya", word: "אמפתיה", definition: "להרגיש מה עובר על אדם אחר, לא רק להבין את הסיפור בראש.", hint: "אמפתיה זה לשבת ליד חבר עצוב, לא להגיד לו «סתם» וללכת." },
+      { id: "hakerat-toda", word: "הכרת תודה", definition: "לשים לב למעשה טוב ולהגיד את זה במפורש.", hint: "הכרת תודה זה «תודה שהסעת אותי», לא רק לצאת מהאוטו בשתיקה." },
+      { id: "rikuz", word: "ריכוז", definition: "להחזיק את תשומת הלב על משימה אחת עד שהיא נגמרת.", hint: "ריכוז בחשבון זה דף אחד בלי קפיצה לטלפון באמצע." },
+      { id: "atzmaut", word: "עצמאות", definition: "להסתדר עם משימה בעצמך כשאתה מסוגל, בלי שמישהו יעשה אותה במקומך.", hint: "עצמאות זה לארוז תיק לבוקר, לא לחכות שמישהו יזכיר כל פריט." },
+      { id: "shituf", word: "שיתוף פעולה", definition: "לעבוד עם אחרים לתוצאה אחת, לא רק כל אחד לעצמו.", hint: "שיתוף פעולה בפרויקט זה לחלק תפקידים ולחבר אותם בסוף." },
+      { id: "zehirut", word: "זהירות", definition: "להאט ולבדוק כדי לא להזיק לעצמך או לאחר.", hint: "זהירות במטבח זה לא לגעת בסיר רותח רק כי סקרנים." },
+      { id: "matzpun", word: "מצפון", definition: "הקול הפנימי שאומר שמעשה היה לא בסדר, גם אם לא נתפסו.", hint: "מצפון זה הכבדות בבטן אחרי שלקחת בלי רשות." },
+      { id: "tikva", word: "תקווה", definition: "אמונה שעדיין אפשר לשנות את התוצאה במאמץ.", hint: "תקווה אחרי ציון חלש זה «אתקן במבחן הבא»." },
+      { id: "shikul", word: "שיקול דעת", definition: "לחשוב על התוצאות לפני שפועלים.", hint: "שיקול דעת זה לא לשלוח הודעה כועסת בשנייה הראשונה." },
+      { id: "mechuyavut", word: "מחויבות", definition: "הבטחה שממשיכים לקיים גם כשזה מפסיק להיות כיף.", hint: "מחויבות לחוג זה להגיע גם ביום גשום, כי נרשמת." },
+      { id: "shkifut", word: "שקיפות", definition: "לספר מה קרה בצורה ברורה, בלי להחביא את החלק החשוב.", hint: "שקיפות זה להגיד ששכחת את הספר, לא להמציא שהמורה לא ביקשה." },
+      { id: "dimyon", word: "דמיון", definition: "תמונות ורעיונות שעוד לא קיימים, ושאפשר לבנות מהם משהו.", hint: "דמיון בסיפור זה דמות שלא הייתה קיימת עד שכתבת אותה." },
+      { id: "kishalon", word: "כישלון", definition: "ניסיון שלא הצליח, וממנו אפשר ללמוד מה לשנות.", hint: "כישלון בעוגה השרופה מלמד לבדוק את הטיימר." },
+      { id: "hatzlacha", word: "הצלחה", definition: "להגיע לתוצאה שכיוונת אליה.", hint: "הצלחה באופניים זה לרכוב בלי גלגלי עזר אחרי שבועות של ניסיונות." },
+      { id: "bitachon", word: "ביטחון", definition: "תחושה שאפשר להתמודד עם מה שמבקשים, בלי לזלזל בקושי.", hint: "ביטחון על הבמה זה לעמוד ולומר את השורה, גם אם הלב דופק." },
+      { id: "adivut", word: "אדיבות", definition: "מעשים קטנים של כבוד כלפי אנשים, גם כשאין חובה להרשים אותם.", hint: "אדיבות זה להחזיק דלת למי שמאחוריך." },
+      { id: "vitur", word: "ויתור", definition: "לוותר על משהו שרצית כדי שמשהו חשוב יותר יוכל לקרות.", hint: "ויתור על המשחק האחרון כי אח קטן מחכה לתור שלו." },
+      { id: "lachatz", word: "לחץ", definition: "תחושה צפופה כשמבקשים יותר מדי בבת אחת.", hint: "לחץ לפני מבחן קטן כשישנים וחוזרים על החומר." },
+      { id: "mashov", word: "משוב", definition: "הערה ברורה על מה עבד ומה כדאי לשנות.", hint: "משוב טוב אומר «הפתיחה חזקה, חסר סוף»." },
+      { id: "yosher", word: "יושר", definition: "לומר ולעשות את האמת, גם כשזה עולה לך.", hint: "יושר במשחק זה להודות בנקודה של היריב." },
+      { id: "tzedek", word: "צדק", definition: "יחס שווה לפי הכלל, לא לפי מי שצועק יותר חזק.", hint: "צדק בתור זה שמי שהגיע קודם מקבל קודם." },
+    ];
+
+    const KEY = "kq-bank-picks-v1";
+    const blank = () => ({ dropRiddles: [], dropWords: [], pickCandidates: [], customWords: [] });
+    let state = blank();
+    try { state = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
+
+    let tab = "riddles";
+    let cat = "all";
+    let show = "all";
+
+    const list = document.getElementById("list");
+    const stats = document.getElementById("stats");
+    const saved = document.getElementById("saved");
+    const summary = document.getElementById("summary");
+
+    function has(arr, id) { return arr.includes(id); }
+    function norm(v) { return v.trim().replace(/\s+/g, " "); }
+
+    function save(msg) {
+      localStorage.setItem(KEY, JSON.stringify(state));
+      const t = new Date();
+      const clock = String(t.getHours()).padStart(2, "0") + ":" + String(t.getMinutes()).padStart(2, "0");
+      saved.textContent = (msg || "הבחירה עודכנה") + " · נשמר בדפדפן " + clock;
+      paintStats();
+    }
+
+    function payload() {
+      return {
+        dropRiddles: RIDDLES.filter((r) => has(state.dropRiddles, r.id)).map((r) => ({ id: r.id, answer: r.answer, prompt: r.prompt })),
+        dropWords: WORDS.filter((w) => has(state.dropWords, w.id)).map((w) => w.word),
+        addCandidates: CANDIDATES.filter((w) => has(state.pickCandidates, w.id)).map((w) => w.word),
+        customWords: state.customWords,
+      };
+    }
+
+    function summaryText() {
+      const p = payload();
+      const lines = [
+        "חידות עם אוקיי: " + (RIDDLES.length - p.dropRiddles.length) + " מתוך " + RIDDLES.length,
+        "חידות בלי אוקיי: " + (p.dropRiddles.map((r) => r.answer + " (" + r.id + ")").join(" · ") || "אין"),
+        "מילים עם אוקיי: " + (WORDS.length - p.dropWords.length) + " מתוך " + WORDS.length,
+        "מילים בלי אוקיי: " + (p.dropWords.join(", ") || "אין"),
+        "מועמדים עם אוקיי: " + (p.addCandidates.join(", ") || "אין"),
+        "מילים שהוספתי (צריך הגדרה): " + (p.customWords.join(", ") || "אין"),
+      ];
+      return lines.join("\n");
+    }
+
+    function paintStats() {
+      const keptR = RIDDLES.length - state.dropRiddles.length;
+      const keptW = WORDS.length - state.dropWords.length;
+      const added = state.pickCandidates.length + state.customWords.length;
+      stats.innerHTML = "";
+      [keptR + " חידות עם אוקיי", keptW + " מילים עם אוקיי", added + " מילים חדשות"].forEach((text) => {
+        const s = document.createElement("div");
+        s.className = "stat";
+        s.textContent = text;
+        stats.appendChild(s);
+      });
+      summary.textContent = summaryText();
+    }
+
+    function drawVisual(v) {
+      if (!v) return null;
+      const board = document.createElement("div");
+      board.className = "board";
+      if (v.kind === "grid3") {
+        const cells = document.createElement("div");
+        cells.className = "cells";
+        for (let i = 0; i < 9; i++) cells.appendChild(document.createElement("i"));
+        board.appendChild(cells);
+      } else if (v.kind === "triangles") {
+        const top = document.createElement("div");
+        top.className = "tri-row";
+        const a = document.createElement("div");
+        a.className = "tri-glyph";
+        a.textContent = "▲";
+        top.appendChild(a);
+        const bot = document.createElement("div");
+        bot.className = "tri-row bot";
+        ["▲", "▲"].forEach((ch) => {
+          const g = document.createElement("div");
+          g.className = "tri-glyph";
+          g.textContent = ch;
+          bot.appendChild(g);
+        });
+        board.append(top, bot);
+      } else if (v.kind === "row" || v.kind === "stack") {
+        const wrap = document.createElement("div");
+        wrap.className = v.kind === "row" ? "rebus-row" : "rebus-stack";
+        v.parts.forEach((part) => {
+          const s = document.createElement("span");
+          s.className = "rebus " + (part.size || "m");
+          s.textContent = part.text;
+          wrap.appendChild(s);
+        });
+        board.appendChild(wrap);
+      } else if (v.kind === "bag") {
+        const bag = document.createElement("div");
+        bag.className = "bag";
+        bag.textContent = v.emoji;
+        board.appendChild(bag);
+      } else if (v.kind === "forest") {
+        const forest = document.createElement("div");
+        forest.className = "forest";
+        const top = document.createElement("div");
+        top.textContent = "🌲🌲🌲🌲🌲";
+        const mid = document.createElement("div");
+        mid.append(document.createTextNode("🌲🌲 "));
+        const hid = document.createElement("span");
+        hid.className = "hid";
+        hid.textContent = v.hidden;
+        mid.append(hid, document.createTextNode(" 🌲🌲"));
+        const bot = document.createElement("div");
+        bot.textContent = "🌲🌲🌲🌲🌲";
+        forest.append(top, mid, bot);
+        board.appendChild(forest);
+      }
+      return board;
+    }
+
+    function drawExtra(extra) {
+      if (!extra) return null;
+      const board = document.createElement("div");
+      board.className = "board";
+      const seq = document.createElement("div");
+      seq.className = "seq";
+      seq.textContent = extra;
+      board.appendChild(seq);
+      return board;
+    }
+
+    function item(on, label, kicker, title, lines, picture) {
+      const row = document.createElement("div");
+      row.className = "item" + (on ? "" : " off");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ok" + (on ? " on" : "");
+      btn.textContent = on ? "אוקיי" : "בלי";
+      btn.addEventListener("click", () => label());
+      const body = document.createElement("div");
+      const k = document.createElement("div");
+      k.className = "kicker";
+      k.textContent = kicker;
+      const p = document.createElement("div");
+      p.className = "prompt";
+      p.textContent = title;
+      body.append(k, p);
+      if (picture) body.appendChild(picture);
+      lines.forEach((line) => {
+        const m = document.createElement("div");
+        m.className = "meta";
+        m.textContent = line;
+        body.appendChild(m);
+      });
+      row.append(btn, body);
+      return row;
+    }
+
+    function visibleRiddles() {
+      const q = norm(document.getElementById("q").value);
+      return RIDDLES.filter((r) => {
+        if (cat !== "all" && r.cat !== cat) return false;
+        const on = !has(state.dropRiddles, r.id);
+        if (show === "keep" && !on) return false;
+        if (show === "drop" && on) return false;
+        if (!q) return true;
+        return [r.prompt, r.extra || "", r.answer, r.why, CAT_LABEL[r.cat]].join(" ").includes(q);
+      });
+    }
+
+    function renderRiddles() {
+      list.innerHTML = "";
+      const rows = visibleRiddles();
+      const h = document.createElement("h2");
+      h.textContent = "חידות יומיות · מוצגות " + rows.length;
+      list.appendChild(h);
+      rows.forEach((r) => {
+        const on = !has(state.dropRiddles, r.id);
+        list.appendChild(item(on, () => {
+          state.dropRiddles = on
+            ? state.dropRiddles.concat(r.id)
+            : state.dropRiddles.filter((id) => id !== r.id);
+          save(on ? "ירד אוקיי מ«" + r.answer + "»" : "אוקיי על «" + r.answer + "»");
+          renderRiddles();
+        }, CAT_LABEL[r.cat], r.prompt, [
+          "תשובה: " + r.answer,
+          r.why,
+        ], r.visual ? drawVisual(r.visual) : drawExtra(r.extra)));
+      });
+    }
+
+    function wordMatch(w, q) {
+      if (!q) return true;
+      return [w.word, w.definition, w.hint].join(" ").includes(q);
+    }
+
+    function renderWords() {
+      const q = norm(document.getElementById("wq").value);
+      list.innerHTML = "";
+
+      const custom = state.customWords.filter((w) => !q || w.includes(q));
+      if (custom.length) {
+        const h = document.createElement("h2");
+        h.textContent = "מילים שהוספתם · ממתינות להגדרה";
+        list.appendChild(h);
+        custom.forEach((word) => {
+          const row = item(true, () => {
+            state.customWords = state.customWords.filter((w) => w !== word);
+            save("«" + word + "» הוסרה");
+            renderWords();
+          }, "חדשה", word, ["הגדרה מילונית תיכתב כשתבקשו להחיל על הקוד.", "לחיצה על אוקיי מסירה את המילה."]);
+          list.appendChild(row);
+        });
+      }
+
+      const bank = WORDS.filter((w) => wordMatch(w, q));
+      const h1 = document.createElement("h2");
+      h1.textContent = "במאגר עכשיו · " + bank.length;
+      list.appendChild(h1);
+      bank.forEach((w) => {
+        const on = !has(state.dropWords, w.id);
+        list.appendChild(item(on, () => {
+          state.dropWords = on
+            ? state.dropWords.concat(w.id)
+            : state.dropWords.filter((id) => id !== w.id);
+          save(on ? "ירד אוקיי מ«" + w.word + "»" : "אוקיי על «" + w.word + "»");
+          renderWords();
+        }, "במאגר", w.word, [w.definition, "דוגמה: " + w.hint]));
+      });
+
+      const cand = CANDIDATES.filter((w) => wordMatch(w, q));
+      const h2 = document.createElement("h2");
+      h2.textContent = "מועמדים להוספה · " + cand.length;
+      const hint = document.createElement("p");
+      hint.className = "hint";
+      hint.textContent = "ההגדרה כבר כתובה. אוקיי מוסיף את המילה למאגר.";
+      list.append(h2, hint);
+      cand.forEach((w) => {
+        const on = has(state.pickCandidates, w.id);
+        list.appendChild(item(on, () => {
+          state.pickCandidates = on
+            ? state.pickCandidates.filter((id) => id !== w.id)
+            : state.pickCandidates.concat(w.id);
+          save(on ? "«" + w.word + "» לא תיווסף" : "אוקיי · «" + w.word + "» תיווסף");
+          renderWords();
+        }, "מועמדת", w.word, [w.definition, "דוגמה: " + w.hint]));
+      });
+    }
+
+    function render() {
+      document.getElementById("riddle-tools").hidden = tab !== "riddles";
+      document.getElementById("word-tools").hidden = tab !== "words";
+      if (tab === "riddles") renderRiddles();
+      else renderWords();
+      paintStats();
+    }
+
+    document.getElementById("tabs").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-tab]");
+      if (!b) return;
+      tab = b.dataset.tab;
+      [...document.querySelectorAll(".tab")].forEach((el) => el.classList.toggle("on", el === b));
+      render();
+    });
+
+    const cats = document.getElementById("cats");
+    CATS.forEach(([id, label]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (id === "all" ? " on" : "");
+      b.textContent = label;
+      b.addEventListener("click", () => {
+        cat = id;
+        [...cats.children].forEach((el) => el.classList.remove("on"));
+        b.classList.add("on");
+        renderRiddles();
+      });
+      cats.appendChild(b);
+    });
+
+    document.querySelectorAll("[data-show]").forEach((b) => {
+      b.addEventListener("click", () => {
+        show = b.dataset.show;
+        document.querySelectorAll("[data-show]").forEach((el) => el.classList.toggle("on", el === b));
+        renderRiddles();
+      });
+    });
+
+    document.getElementById("q").addEventListener("input", renderRiddles);
+    document.getElementById("wq").addEventListener("input", renderWords);
+
+    document.getElementById("keep-shown").addEventListener("click", () => {
+      const ids = new Set(visibleRiddles().map((r) => r.id));
+      state.dropRiddles = state.dropRiddles.filter((id) => !ids.has(id));
+      save("אוקיי למה שמוצג");
+      renderRiddles();
+    });
+    document.getElementById("drop-shown").addEventListener("click", () => {
+      const ids = visibleRiddles().map((r) => r.id);
+      state.dropRiddles = [...new Set(state.dropRiddles.concat(ids))];
+      save("בוטל אוקיי למה שמוצג");
+      renderRiddles();
+    });
+
+    document.getElementById("add-word").addEventListener("click", () => {
+      const input = document.getElementById("new-word");
+      const note = document.getElementById("add-note");
+      const word = norm(input.value);
+      if (!word) return;
+      const known = WORDS.concat(CANDIDATES).some((w) => w.word === word) || state.customWords.includes(word);
+      if (known) {
+        note.textContent = "«" + word + "» כבר ברשימה. סמנו שם אוקיי.";
+        return;
+      }
+      state.customWords.push(word);
+      input.value = "";
+      note.textContent = "«" + word + "» נוספה. בהחלה אמצא לה הגדרה.";
+      save("נוספה «" + word + "»");
+      renderWords();
+    });
+    document.getElementById("new-word").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("add-word").click();
+    });
+
+    document.getElementById("copy").addEventListener("click", async () => {
+      const text = summaryText();
+      try {
+        await navigator.clipboard.writeText(text);
+        saved.textContent = "הסיכום הועתק. אפשר להדביק כאן בצ׳אט.";
+      } catch (e) {
+        saved.textContent = "ההעתקה נחסמה. סמנו את הסיכום למטה והעתיקו ידנית.";
+      }
+    });
+
+    document.getElementById("download").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(payload(), null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "bank-picks.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+      saved.textContent = "קובץ bank-picks.json ירד. שמרו אותו בתיקיית docs ואז כתבו «החל».";
+    });
+
+    document.getElementById("reset").addEventListener("click", () => {
+      state = blank();
+      save("הכול חזר לאוקיי על המאגר הקיים");
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

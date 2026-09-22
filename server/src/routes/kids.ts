@@ -20,7 +20,13 @@ import {
   awardPoints,
 } from '../services/gamification';
 import { getKidDailyWord, listFamilyDailyWords, reviewDailyWord } from '../services/dailyWord';
-import { getKidDailyRiddle, guessDailyRiddle, listFamilyDailyRiddles } from '../services/dailyRiddle';
+import {
+  appealDailyRiddle,
+  getKidDailyRiddle,
+  guessDailyRiddle,
+  listFamilyDailyRiddles,
+  reviewDailyRiddleAppeal,
+} from '../services/dailyRiddle';
 import {
   getShopFreebies,
   claimShopPoints,
@@ -496,6 +502,37 @@ router.post('/:id/daily-riddle/guess', authenticate, async (req: Request, res: R
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'שגיאה בבדיקת החידה' });
+  }
+});
+
+router.post('/:id/daily-riddle/appeal', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role !== 'kid' || req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'רק הילד יכול לערער על החידה' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const result = await appealDailyRiddle(kid);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ dailyRiddle: result.dailyRiddle });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בשליחת הערעור' });
+  }
+});
+
+router.post('/:id/daily-riddle/appeal/review', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    const action = req.body?.action === 'approve' ? 'approve' : req.body?.action === 'reject' ? 'reject' : null;
+    if (!action) return res.status(400).json({ error: 'יש לאשר או לדחות' });
+    const result = await reviewDailyRiddleAppeal(req.user!.familyId, kidId, action);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ ok: true, points: result.points });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטיפול בערעור' });
   }
 });
 

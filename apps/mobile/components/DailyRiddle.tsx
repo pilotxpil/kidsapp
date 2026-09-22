@@ -375,6 +375,11 @@ function useRiddleStyles() {
         forest: { alignItems: 'center', marginVertical: spacing.sm },
         forestLine: { fontSize: 20, lineHeight: 26, textAlign: 'center' },
         forestHidden: { color: look.muted, fontSize: 13, fontWeight: '800' },
+        appealActions: {
+          marginTop: spacing.md,
+          gap: spacing.sm,
+          alignItems: 'center',
+        },
         kidBlock: {
           width: '100%',
           marginTop: spacing.md,
@@ -413,6 +418,9 @@ export function DailyRiddle({
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const statusRef = React.useRef<string | null>(null);
+  const onWonRef = React.useRef(onWon);
+  onWonRef.current = onWon;
 
   useFocusEffect(
     useCallback(() => {
@@ -437,12 +445,44 @@ export function DailyRiddle({
   useEffect(() => {
     setOpen(false);
     setPicked(null);
+    statusRef.current = null;
   }, [kidId, riddle?.date, riddle?.id]);
 
+  useEffect(() => {
+    const prev = statusRef.current;
+    statusRef.current = riddle?.status ?? null;
+    if (prev !== 'appealed' || riddle?.status !== 'won') return;
+    void api.getKidProfile(kidId).then((res) => {
+      playSfx('cheer');
+      onWonRef.current?.({
+        points: res.profile.points,
+        level: res.profile.level,
+        xp: res.profile.xp,
+      });
+    }).catch(() => {});
+  }, [kidId, riddle?.status]);
+
+  const handleAppeal = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await api.appealDailyRiddle(kidId);
+      setRiddle(res.dailyRiddle);
+      setOpen(true);
+      playSfx('tap');
+    } catch {
+      playSfx('error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (!riddle) return null;
+  const canAppeal = riddle.status === 'missed' && !!riddle.guess && riddle.appeal !== 'rejected';
+  const appealPending = riddle.status === 'appealed';
   const locked = riddle.status !== 'open';
-  if (locked && !open) return null;
-  const revealed = open || locked;
+  if (locked && !open && !canAppeal && !appealPending) return null;
+  const revealed = open;
 
   const handleGuess = async (guess: string) => {
     if (busy || locked) return;
@@ -493,6 +533,10 @@ export function DailyRiddle({
               <Text style={[styles.tapHint, rtl.text]}>
                 {t('dailyRiddleWon').replace('{n}', String(riddle.points))}
               </Text>
+            ) : appealPending ? (
+              <Text style={[styles.tapHint, rtl.text]}>{t('dailyRiddleAppealSent')}</Text>
+            ) : riddle.status === 'missed' && riddle.appeal === 'rejected' ? (
+              <Text style={[styles.tapHint, rtl.text]}>{t('dailyRiddleAppealRejected')}</Text>
             ) : riddle.status === 'missed' ? (
               <Text style={[styles.tapHint, rtl.text]}>{t('dailyRiddleMissed')}</Text>
             ) : revealed ? (
@@ -542,6 +586,16 @@ export function DailyRiddle({
               </View>
             </>
           ) : null}
+          {(riddle.status === 'missed' || riddle.status === 'appealed') &&
+          riddle.guess &&
+          riddle.guess !== riddle.answer ? (
+            <>
+              <Text style={[styles.label, rtl.text]}>{t('dailyRiddleYourAnswer')}</Text>
+              <View style={[styles.choice, styles.choiceWrong]}>
+                <Text style={[styles.choiceText, rtl.text]}>{riddle.guess}</Text>
+              </View>
+            </>
+          ) : null}
           {riddle.answer ? (
             <>
               <Text style={[styles.label, rtl.text]}>{t('dailyRiddleAnswer')}</Text>
@@ -549,6 +603,18 @@ export function DailyRiddle({
                 <Text style={[styles.choiceText, rtl.text]}>{riddle.answer}</Text>
               </View>
             </>
+          ) : null}
+          {canAppeal ? (
+            <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
+              <Text style={[styles.why, rtl.text]}>{t('dailyRiddleAppealHint')}</Text>
+              <Button
+                title={t('dailyRiddleAppealSend')}
+                onPress={() => void handleAppeal()}
+                loading={busy}
+                disabled={busy}
+                variant="secondary"
+              />
+            </View>
           ) : null}
           {riddle.why ? (
             <>
@@ -562,13 +628,27 @@ export function DailyRiddle({
   );
 }
 
-export function ParentDailyRiddleList({ items }: { items: ParentDailyRiddleKid[] }) {
+export function ParentDailyRiddleList({
+  items,
+  onReviewAppeal,
+}: {
+  items: ParentDailyRiddleKid[];
+  onReviewAppeal?: (kidId: string, action: 'approve' | 'reject') => void | Promise<void>;
+}) {
   const styles = useRiddleStyles();
   const look = usePuzzleLook();
   const [open, setOpen] = useState(false);
+  const [busyKid, setBusyKid] = useState<string | null>(null);
   const pending = items.filter((item) => item.status === 'open');
+  const appeals = items.filter((item) => item.appeal === 'pending');
 
-  if (!pending.length) return null;
+  if (!pending.length && !appeals.length) return null;
+
+  const review = (kidId: string, action: 'approve' | 'reject') => {
+    if (!onReviewAppeal || busyKid) return;
+    setBusyKid(kidId);
+    Promise.resolve(onReviewAppeal(kidId, action)).finally(() => setBusyKid(null));
+  };
 
   return (
     <PuzzleShell style={{ marginTop: spacing.md, marginBottom: spacing.md }}>
@@ -583,11 +663,54 @@ export function ParentDailyRiddleList({ items }: { items: ParentDailyRiddleKid[]
           <View style={styles.textCol}>
             <Text style={[styles.kicker, rtl.text]}>{t('dailyRiddleTitle')}</Text>
             <Text style={[styles.tapHint, rtl.text]}>
-              {open ? t('dailyRiddleTapToClose') : t('dailyRiddleTapToOpenParent')}
+              {appeals.length
+                ? t('dailyRiddleParentAppeal')
+                : open
+                  ? t('dailyRiddleTapToClose')
+                  : t('dailyRiddleTapToOpenParent')}
             </Text>
           </View>
         </View>
       </BouncyPressable>
+      {appeals.map((item) => (
+        <View key={`appeal-${item.kidId}`} style={styles.kidBlock}>
+          <View style={[styles.kidHead, rtl.row]}>
+            <KidAvatar avatar={item.kid?.avatar ?? '🎮'} size={40} />
+            <View style={styles.textCol}>
+              <Text style={[styles.kidName, rtl.text]}>{item.kid?.displayName ?? t('dailyRiddle')}</Text>
+              <Text style={[styles.kidMeta, rtl.text]}>{t('dailyRiddleParentAppealHint')}</Text>
+            </View>
+          </View>
+          <RiddlePrompt prompt={item.prompt} extra={item.extra} visual={item.visual} />
+          {item.guess ? (
+            <>
+              <Text style={[styles.label, rtl.text]}>{t('dailyRiddleKidAnswer')}</Text>
+              <Text style={[styles.why, rtl.text]}>{item.guess}</Text>
+            </>
+          ) : null}
+          {item.answer ? (
+            <>
+              <Text style={[styles.label, rtl.text]}>{t('dailyRiddleOfficialAnswer')}</Text>
+              <Text style={[styles.kidMeta, rtl.text]}>{item.answer}</Text>
+            </>
+          ) : null}
+          <View style={[styles.appealActions, rtl.row]}>
+            <Button
+              title={t('dailyRiddleAppealYes')}
+              onPress={() => review(item.kidId, 'approve')}
+              variant="success"
+              loading={busyKid === item.kidId}
+              disabled={!!busyKid}
+            />
+            <Button
+              title={t('dailyRiddleAppealNo')}
+              onPress={() => review(item.kidId, 'reject')}
+              variant="outline"
+              disabled={!!busyKid}
+            />
+          </View>
+        </View>
+      ))}
       {open
         ? pending.map((item) => (
             <View key={item.kidId} style={styles.kidBlock}>

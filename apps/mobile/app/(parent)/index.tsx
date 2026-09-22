@@ -249,6 +249,15 @@ export default function ParentDashboardScreen() {
     }
   };
 
+  const handleReviewRiddleAppeal = async (kidId: string, action: 'approve' | 'reject') => {
+    try {
+      await api.reviewDailyRiddleAppeal(kidId, action);
+      await load();
+    } catch (err: any) {
+      Alert.alert('שגיאה', err.message);
+    }
+  };
+
   return (
     <ThemedScreen tabs>
       <ScrollView
@@ -345,7 +354,10 @@ export default function ParentDashboardScreen() {
           items={dashboard?.dailyWords ?? []}
           onApprove={(kidId) => void handleReviewDailyWord(kidId)}
         />
-        <ParentDailyRiddleList items={dashboard?.dailyRiddles ?? []} />
+        <ParentDailyRiddleList
+          items={dashboard?.dailyRiddles ?? []}
+          onReviewAppeal={(kidId, action) => handleReviewRiddleAppeal(kidId, action)}
+        />
 
         <Text style={[styles.sectionTitle, rtl.textFull]}>{t('taskApprovals')}</Text>
         {dashboard?.pendingCompletions.length === 0 ? (

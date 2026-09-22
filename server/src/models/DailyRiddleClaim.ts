@@ -9,6 +9,9 @@ export interface IDailyRiddleClaim extends Document {
   riddleId: string;
   status: DailyRiddleClaimStatus;
   attempts: number;
+  /** The choice or wording the kid submitted. */
+  guess?: string;
+  appeal?: 'pending' | 'rejected' | 'approved';
   createdAt: Date;
 }
 
@@ -20,6 +23,8 @@ const dailyRiddleClaimSchema = new Schema<IDailyRiddleClaim>(
     riddleId: { type: String, required: true },
     status: { type: String, enum: ['open', 'won', 'missed'], required: true },
     attempts: { type: Number, default: 0 },
+    guess: { type: String },
+    appeal: { type: String, enum: ['pending', 'rejected', 'approved'] },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

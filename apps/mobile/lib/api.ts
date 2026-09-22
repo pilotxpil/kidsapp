@@ -308,6 +308,19 @@ export const api = {
     return request<{ dailyRiddle: KidDailyRiddle }>(`/kids/${id}/daily-riddle`);
   },
 
+  appealDailyRiddle(id: string) {
+    return request<{ dailyRiddle: KidDailyRiddle }>(`/kids/${id}/daily-riddle/appeal`, {
+      method: 'POST',
+    });
+  },
+
+  reviewDailyRiddleAppeal(id: string, action: 'approve' | 'reject') {
+    return request<{ ok: true; points?: number }>(`/kids/${id}/daily-riddle/appeal/review`, {
+      method: 'POST',
+      body: JSON.stringify({ action }),
+    });
+  },
+
   guessDailyRiddle(id: string, guess: string) {
     return request<{
       dailyRiddle: KidDailyRiddle;
