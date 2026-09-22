@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,8 @@ import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { KeyboardSheet } from '../../components/KeyboardSheet';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
+import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
 import { SectionHeader } from '../../components/ThemedHero';
 import {
   LEARNING_CATEGORIES,
@@ -77,8 +79,11 @@ export default function ParentLearnScreen() {
   const router = useRouter();
   const { height: windowHeight } = useWindowDimensions();
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
-  const [items, setItems] = useState<LearningCatalogItem[]>([]);
-  const [kids, setKids] = useState<User[]>([]);
+  type LearnCache = { kids: User[]; items: LearningCatalogItem[] };
+  const hadCache = useRef(hasScreenCache(ScreenCacheKey.parentLearn)).current;
+  const cachedLearn = useRef(readScreenCache<LearnCache>(ScreenCacheKey.parentLearn)).current;
+  const [items, setItems] = useState<LearningCatalogItem[]>(cachedLearn?.items ?? []);
+  const [kids, setKids] = useState<User[]>(cachedLearn?.kids ?? []);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<LearningCategory | null>(null);
   const [gradeFilter, setGradeFilter] = useState<number[]>([]);
@@ -94,6 +99,8 @@ export default function ParentLearnScreen() {
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importing, setImporting] = useState(false);
+  const [catalogReady, setCatalogReady] = useState(hadCache);
+  const showSkeleton = !catalogReady && !hadCache;
 
   const styles = useMemo(
     () =>
@@ -131,7 +138,11 @@ export default function ParentLearnScreen() {
           flexShrink: 0,
           paddingHorizontal: 2,
         },
-        previewBody: { maxHeight: Math.min(520, windowHeight * 0.62) },
+        previewBody: {
+          flexShrink: 1,
+          minHeight: 0,
+          maxHeight: Math.min(520, Math.round(windowHeight * 0.62)),
+        },
         previewQ: {
           marginBottom: spacing.md,
           paddingBottom: spacing.sm,
@@ -172,15 +183,7 @@ export default function ParentLearnScreen() {
           flexWrap: 'wrap',
           alignItems: 'center',
         },
-        packActionLink: {
-          paddingHorizontal: spacing.sm,
-          paddingVertical: spacing.xs,
-        },
-        packActionLinkText: {
-          color: colors.primaryLight,
-          fontSize: 13,
-          fontWeight: '700',
-        },
+        packEditBtn: { alignSelf: 'stretch', width: '100%' },
         kidChip: {
           backgroundColor: colors.bgDeep,
           paddingHorizontal: spacing.sm,
@@ -206,13 +209,16 @@ export default function ParentLearnScreen() {
           justifyContent: 'center',
           padding: spacing.lg,
         },
+        modalBackdrop: { ...StyleSheet.absoluteFill },
         modal: {
           backgroundColor: colors.bgCard,
           borderRadius: borderRadius.xl,
           padding: spacing.lg,
           maxWidth: 480,
           width: '100%',
+          maxHeight: Math.round(windowHeight * 0.88),
           alignSelf: 'center',
+          overflow: 'hidden',
           ...cardBorder(2),
         },
         modalTitle: { color: colors.text, fontSize: 18, fontWeight: '800', marginBottom: spacing.md },
@@ -237,15 +243,25 @@ export default function ParentLearnScreen() {
     const res = await api.getKids();
     setKids(res.kids);
     setResultsKidId((prev) => prev || res.kids[0]?._id || null);
+    const prev = readScreenCache<LearnCache>(ScreenCacheKey.parentLearn) ?? { kids: [], items: [] };
+    writeScreenCache(ScreenCacheKey.parentLearn, { ...prev, kids: res.kids });
   }, []);
 
   const loadCatalog = useCallback(async () => {
-    const res = await api.getLearningCatalog({
-      search: search.trim() || undefined,
-      category: categoryFilter ?? undefined,
-      grades: gradeFilter.length ? gradeFilter : undefined,
-    });
-    setItems(res.items);
+    try {
+      const res = await api.getLearningCatalog({
+        search: search.trim() || undefined,
+        category: categoryFilter ?? undefined,
+        grades: gradeFilter.length ? gradeFilter : undefined,
+      });
+      setItems(res.items);
+      if (!search.trim() && !categoryFilter && gradeFilter.length === 0) {
+        const prev = readScreenCache<LearnCache>(ScreenCacheKey.parentLearn) ?? { kids: [], items: [] };
+        writeScreenCache(ScreenCacheKey.parentLearn, { ...prev, items: res.items });
+      }
+    } finally {
+      setCatalogReady(true);
+    }
   }, [search, categoryFilter, gradeFilter]);
 
   useFocusLoad(loadKids);
@@ -539,6 +555,10 @@ export default function ParentLearnScreen() {
           })}
         </View>
 
+        {showSkeleton ? (
+          <ScreenSkeleton cards={5} />
+        ) : (
+          <ScreenReveal animate={!hadCache}>
         {items.length === 0 ? (
           <Text style={styles.empty}>{t('noCatalogResults')}</Text>
         ) : (
@@ -602,41 +622,39 @@ export default function ParentLearnScreen() {
                       })}
                     </View>
                   </View>
-                  {item.isCustom ? (
-                    <View style={[styles.packActions, rtl.row]}>
-                      <TouchableOpacity
-                        style={styles.packActionLink}
-                        onPress={() =>
-                          router.push({
-                            pathname: '/(parent)/learn-pack-edit',
-                            params: { packId: item.id },
-                          })
-                        }
-                        accessibilityRole="button"
-                      >
-                        <Text style={[styles.packActionLinkText, rtl.text]}>
-                          {t('editLearningPackShort')}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : null}
+                  <View style={[styles.packActions, rtl.row]}>
+                    <Button
+                      title={t('editLearningPack')}
+                      variant="outline"
+                      onPress={() =>
+                        router.push({
+                          pathname: '/(parent)/learn-pack-edit',
+                          params: { packId: item.id },
+                        })
+                      }
+                      style={styles.packEditBtn}
+                    />
+                  </View>
                 </Card>
               ))}
             </View>
           ))
         )}
+          </ScreenReveal>
+        )}
       </ScrollView>
 
       <Modal visible={!!previewItem} transparent animationType="fade" onRequestClose={closePreview}>
-        <Pressable style={styles.modalOverlay} onPress={closePreview}>
-          <Pressable style={styles.modal} onPress={(e) => e.stopPropagation()}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={closePreview} />
+          <View style={styles.modal}>
             <Text style={[styles.modalTitle, rtl.text]}>
               {previewItem ? packDisplayTitle(previewItem.title) : ''}
             </Text>
             {previewLoading || !previewPack ? (
               <Text style={[styles.packMeta, rtl.text]}>{t('learningPreviewLoading')}</Text>
             ) : (
-              <ScrollView style={styles.previewBody} nestedScrollEnabled>
+              <ScrollView style={styles.previewBody} nestedScrollEnabled showsVerticalScrollIndicator>
                 {previewPack.passage?.he ? (
                   <Text style={[styles.previewPassage, rtl.text]}>{previewPack.passage.he}</Text>
                 ) : null}
@@ -683,16 +701,17 @@ export default function ParentLearnScreen() {
             <View style={styles.modalActions}>
               <Button title={t('close')} onPress={closePreview} variant="outline" sound={false} />
             </View>
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
 
       <Modal visible={!!review} transparent animationType="fade" onRequestClose={() => setReview(null)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setReview(null)}>
-          <Pressable style={styles.modal} onPress={(e) => e.stopPropagation()}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setReview(null)} />
+          <View style={styles.modal}>
             <Text style={[styles.modalTitle, rtl.text]}>{review?.packTitle ?? ''}</Text>
             {review ? (
-              <ScrollView style={styles.previewBody} nestedScrollEnabled>
+              <ScrollView style={styles.previewBody} nestedScrollEnabled showsVerticalScrollIndicator>
                 <View
                   style={[
                     styles.resultBadge,
@@ -743,8 +762,8 @@ export default function ParentLearnScreen() {
               ) : null}
               <Button title={t('close')} onPress={() => setReview(null)} variant="outline" sound={false} />
             </View>
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
 
       <Modal

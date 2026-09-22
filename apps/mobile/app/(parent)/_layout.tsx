@@ -3,6 +3,8 @@ import { AppState } from 'react-native';
 import { useEffect, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/theme-context';
+import { useAuth } from '../../lib/auth';
+import { prefetchParentScreens } from '../../lib/prefetch-tabs';
 import { Heebo } from '../../lib/typography';
 import { RtlTabBar } from '../../components/RtlTabBar';
 import { ThemeTabIcon } from '../../components/icons/ThemeGlyph';
@@ -15,6 +17,7 @@ const EMBER_TAB_HEIGHT = 70;
 
 export default function ParentLayout() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const { colors, tabIcons, id: themeId } = useTheme();
   const ember = themeId === 'ember';
   const voxel = themeId === 'minecraft';
@@ -26,6 +29,10 @@ export default function ParentLayout() {
     void initSfx();
     void startBgm(themeId);
   }, [themeId]);
+
+  useEffect(() => {
+    if (user?.role === 'parent') prefetchParentScreens();
+  }, [user?._id, user?.role]);
 
   useEffect(() => {
     return () => {

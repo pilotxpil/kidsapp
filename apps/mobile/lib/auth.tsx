@@ -3,6 +3,7 @@ import type { User } from '@kidsapp/shared';
 import { api } from './api';
 import { registerPushNotifications, unregisterPushNotifications } from './push';
 import { markAvatarGiftUnlocked } from './avatar-gift';
+import { clearScreenCache } from './screen-cache';
 
 type UserProgressPatch = Partial<
   Pick<
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     await unregisterPushNotifications();
     await api.clearToken();
+    clearScreenCache();
     setUser(null);
   }, []);
 

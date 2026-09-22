@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
@@ -8,6 +8,8 @@ import { RewardCard } from '../../components/RewardCard';
 import { PointsBadge, Card } from '../../components/Card';
 import { Celebration } from '../../components/Celebration';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
+import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
 import { SectionHeader } from '../../components/ThemedHero';
 import { ProgressBar } from '../../components/ProgressBar';
 import { Button } from '../../components/Button';
@@ -25,8 +27,11 @@ export default function KidShopScreen() {
   const { user, refreshUser } = useAuth();
   const router = useRouter();
   const { colors, pointsEmoji, sfx: themeSfx, id: themeId } = useTheme();
-  const [rewards, setRewards] = useState<Reward[]>([]);
-  const [goal, setGoal] = useState<PersonalGoal | null>(null);
+  type ShopCache = { rewards: Reward[]; goal: PersonalGoal | null };
+  const hadCache = useRef(hasScreenCache(ScreenCacheKey.kidShop)).current;
+  const cachedShop = useRef(readScreenCache<ShopCache>(ScreenCacheKey.kidShop)).current;
+  const [rewards, setRewards] = useState<Reward[]>(cachedShop?.rewards ?? []);
+  const [goal, setGoal] = useState<PersonalGoal | null>(cachedShop?.goal ?? null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
@@ -57,9 +62,11 @@ export default function KidShopScreen() {
     ]);
     setRewards(res.rewards);
     setGoal(goalRes.goal);
+    writeScreenCache(ScreenCacheKey.kidShop, { rewards: res.rewards, goal: goalRes.goal });
   }, [refreshUser]);
 
-  useFocusLoad(load, !!user);
+  const ready = useFocusLoad(load, !!user);
+  const showSkeleton = !ready && !hadCache;
 
   const handleRedeem = (reward: Reward) => {
     Alert.alert(t('confirmRedeem'), `${reward.title} · ${reward.cost} ${themeId === 'ember' ? t('emberFireStones') : pointsEmoji}`, [
@@ -148,6 +155,10 @@ export default function KidShopScreen() {
         <RtlText style={[styles.section, { color: colors.text, fontWeight: '700', fontSize: 18 }]}>
           {t('manageRewards')}
         </RtlText>
+        {showSkeleton ? (
+          <ScreenSkeleton cards={4} />
+        ) : (
+          <ScreenReveal animate={!hadCache}>
         {rewards.length === 0 ? (
           <Text style={styles.empty}>{t('noRewards')}</Text>
         ) : (
@@ -163,6 +174,8 @@ export default function KidShopScreen() {
               onSetGoal={setAsGoal}
             />
           ))
+        )}
+          </ScreenReveal>
         )}
 
         <View style={styles.avatarRow}>

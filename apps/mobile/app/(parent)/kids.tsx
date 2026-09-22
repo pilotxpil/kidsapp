@@ -20,6 +20,8 @@ import { ShopAvatarGrid } from '../../components/ShopAvatarGrid';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
+import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
 import { DEFAULT_SHOP_AVATAR_ID, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS, formatGradeLabel } from '@kidsapp/shared';
 import type { User } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
@@ -35,7 +37,10 @@ export default function ParentKidsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
-  const [kids, setKids] = useState<User[]>([]);
+  const hadCache = useRef(hasScreenCache(ScreenCacheKey.parentKids)).current;
+  const [kids, setKids] = useState<User[]>(
+    () => readScreenCache<User[]>(ScreenCacheKey.parentKids) ?? []
+  );
   const [modalVisible, setModalVisible] = useState(false);
   const [editingKid, setEditingKid] = useState<User | null>(null);
   const [displayName, setDisplayName] = useState('');
@@ -181,10 +186,12 @@ export default function ParentKidsScreen() {
 
   const load = useCallback(async () => {
     const res = await api.getKids();
+    writeScreenCache(ScreenCacheKey.parentKids, res.kids);
     setKids(res.kids);
   }, []);
 
-  useFocusLoad(load);
+  const ready = useFocusLoad(load);
+  const showSkeleton = !ready && !hadCache;
 
   const resetForm = () => {
     setEditingKid(null);
@@ -303,6 +310,10 @@ export default function ParentKidsScreen() {
           <Text style={[styles.title, rtl.textFull]}>{t('manageKids')}</Text>
         </View>
 
+        {showSkeleton ? (
+          <ScreenSkeleton cards={3} />
+        ) : (
+          <ScreenReveal animate={!hadCache}>
         {kids.length === 0 ? (
           <Card style={styles.emptyCard}>
             <View style={styles.emptyInner}>
@@ -357,6 +368,8 @@ export default function ParentKidsScreen() {
               </View>
             </Card>
           ))
+        )}
+          </ScreenReveal>
         )}
       </ScrollView>
 

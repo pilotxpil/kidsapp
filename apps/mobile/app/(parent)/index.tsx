@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import { ParentDailyRiddleList } from '../../components/DailyRiddle';
 import { KidAvatar } from '../../components/KidAvatar';
 import { Button } from '../../components/Button';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
+import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
 import { KeyboardSheet } from '../../components/KeyboardSheet';
 import { ProgressBar } from '../../components/ProgressBar';
 import type {
@@ -36,9 +38,21 @@ import { t } from '../../lib/i18n';
 export default function ParentDashboardScreen() {
   const { user, logout } = useAuth();
   const { colors, borderRadius, cardBorder, pointsEmoji, categoryIcon, id: themeId } = useTheme();
-  const [dashboard, setDashboard] = useState<ParentDashboard | null>(null);
-  const [challenge, setChallenge] = useState<FamilyChallenge | null>(null);
-  const [achievements, setAchievements] = useState<FamilyAchievementEntry[]>([]);
+  type DashCache = {
+    dashboard: ParentDashboard;
+    challenge: FamilyChallenge | null;
+    achievements: FamilyAchievementEntry[];
+  };
+  const hadCache = useRef(hasScreenCache(ScreenCacheKey.parentDashboard)).current;
+  const [dashboard, setDashboard] = useState<ParentDashboard | null>(
+    () => readScreenCache<DashCache>(ScreenCacheKey.parentDashboard)?.dashboard ?? null
+  );
+  const [challenge, setChallenge] = useState<FamilyChallenge | null>(
+    () => readScreenCache<DashCache>(ScreenCacheKey.parentDashboard)?.challenge ?? null
+  );
+  const [achievements, setAchievements] = useState<FamilyAchievementEntry[]>(
+    () => readScreenCache<DashCache>(ScreenCacheKey.parentDashboard)?.achievements ?? []
+  );
   const [refreshing, setRefreshing] = useState(false);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectNote, setRejectNote] = useState('');
@@ -177,12 +191,19 @@ export default function ParentDashboardScreen() {
       api.getFamilyChallenge().catch(() => null),
       api.getFamilyAchievements().catch(() => null),
     ]);
-    setDashboard(dash.dashboard);
-    if (ch) setChallenge(ch.challenge);
-    if (ach) setAchievements(ach.achievements.slice(0, 8));
+    const next: DashCache = {
+      dashboard: dash.dashboard,
+      challenge: ch?.challenge ?? null,
+      achievements: ach?.achievements.slice(0, 8) ?? [],
+    };
+    writeScreenCache(ScreenCacheKey.parentDashboard, next);
+    setDashboard(next.dashboard);
+    setChallenge(next.challenge);
+    setAchievements(next.achievements);
   }, []);
 
-  useFocusLoad(load);
+  const ready = useFocusLoad(load);
+  const showSkeleton = !ready && !hadCache;
 
   const handleApproveCompletion = async (id: string) => {
     await api.approveCompletion(id, 'approve');
@@ -254,6 +275,10 @@ export default function ParentDashboardScreen() {
           </View>
         </View>
 
+        {showSkeleton ? (
+          <ScreenSkeleton />
+        ) : (
+        <ScreenReveal animate={!hadCache}>
         {dashboard && (
           <View style={[styles.statsRow, rtl.row]}>
             <Card style={styles.statCard}>
@@ -409,6 +434,8 @@ export default function ParentDashboardScreen() {
             </Card>
           ))}
         </View>
+        </ScreenReveal>
+        )}
       </ScrollView>
 
       <Modal visible={!!rejectId} transparent animationType="fade" onRequestClose={() => setRejectId(null)}>

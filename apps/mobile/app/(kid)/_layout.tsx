@@ -11,6 +11,7 @@ import { t } from '../../lib/i18n';
 import { startBgm, stopBgm, resumeBgm, pauseBgm } from '../../lib/bgm';
 import { initSfx, playSfx } from '../../lib/sfx';
 import { resetKidGiftDismissals } from '../../lib/kid-gift-dismiss';
+import { prefetchKidScreens } from '../../lib/prefetch-tabs';
 import { BadgeCelebrationProvider } from '../../lib/badge-celebration';
 
 const TAB_CONTENT_HEIGHT = 64;
@@ -19,7 +20,7 @@ const EMBER_TAB_HEIGHT = 70;
 export default function KidLayout() {
   const insets = useSafeAreaInsets();
   const { colors, tabIcons, id: themeId } = useTheme();
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const appState = useRef(AppState.currentState);
   const ember = themeId === 'ember';
   const voxel = themeId === 'minecraft';
@@ -30,6 +31,10 @@ export default function KidLayout() {
     void initSfx();
     void startBgm(themeId);
   }, [themeId]);
+
+  useEffect(() => {
+    if (user?.role === 'kid' && user._id) prefetchKidScreens(user._id);
+  }, [user?._id, user?.role]);
 
   useEffect(() => {
     return () => {

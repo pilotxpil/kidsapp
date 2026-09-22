@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   Text,
   StyleSheet,
@@ -17,6 +17,8 @@ import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { TaskCard, TaskSectionHeader } from '../../components/TaskCard';
 import { Celebration } from '../../components/Celebration';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
+import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
 import { SectionHeader } from '../../components/ThemedHero';
 import { Button } from '../../components/Button';
 import type { Task } from '@kidsapp/shared';
@@ -30,7 +32,10 @@ export default function KidTasksScreen() {
   const { user } = useAuth();
   const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
   const userId = user?._id;
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const hadCache = useRef(hasScreenCache(ScreenCacheKey.kidTasks)).current;
+  const [tasks, setTasks] = useState<Task[]>(
+    () => readScreenCache<Task[]>(ScreenCacheKey.kidTasks) ?? []
+  );
   const [refreshing, setRefreshing] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -78,10 +83,12 @@ export default function KidTasksScreen() {
   const load = useCallback(async () => {
     if (!userId) return;
     const res = await api.getTasks(userId);
+    writeScreenCache(ScreenCacheKey.kidTasks, res.tasks);
     setTasks(res.tasks);
   }, [userId]);
 
-  useFocusLoad(load, !!userId);
+  const ready = useFocusLoad(load, !!userId);
+  const showSkeleton = !ready && !hadCache;
 
   const sections = useMemo(() => {
     const rank = (status: Task['completionStatus']) =>
@@ -160,6 +167,10 @@ export default function KidTasksScreen() {
       >
         <SectionHeader title={t('tasks')} icon="📜" />
 
+        {showSkeleton ? (
+          <ScreenSkeleton cards={4} />
+        ) : (
+          <ScreenReveal animate={!hadCache}>
         {sections.length === 0 ? (
           <Text style={styles.empty}>{t('noTasks')}</Text>
         ) : (
@@ -182,6 +193,8 @@ export default function KidTasksScreen() {
               ))}
             </View>
           ))
+        )}
+          </ScreenReveal>
         )}
       </ScrollView>
 

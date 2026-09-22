@@ -18,6 +18,9 @@ import { TaskSectionHeader } from '../../components/TaskCard';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
+import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
+import { loadParentTasksSnapshot } from '../../lib/prefetch-tabs';
 import { KeyboardSheet, KeyboardScroll, useKeyboardHeight } from '../../components/KeyboardSheet';
 import { TASK_CATEGORIES, TASK_TEMPLATES, TASK_RECURRENCE } from '@kidsapp/shared';
 import type { FamilyTaskTemplate, Task, TaskCategory, TaskRecurrence, TaskTemplate, User } from '@kidsapp/shared';
@@ -82,8 +85,11 @@ export default function ParentTasksScreen() {
     spacing.lg * 2 -
     (Platform.OS === 'android' ? keyboardHeight : 0);
   const { colors, borderRadius, cardBorder, categoryIcon, pointsEmoji, id: themeId } = useTheme();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [kids, setKids] = useState<User[]>([]);
+  type TasksCache = Awaited<ReturnType<typeof loadParentTasksSnapshot>>;
+  const hadCache = useRef(hasScreenCache(ScreenCacheKey.parentTasks)).current;
+  const cachedTasks = useRef(readScreenCache<TasksCache>(ScreenCacheKey.parentTasks)).current;
+  const [tasks, setTasks] = useState<Task[]>(cachedTasks?.tasks ?? []);
+  const [kids, setKids] = useState<User[]>(cachedTasks?.kids ?? []);
   const [modalVisible, setModalVisible] = useState(false);
   const [templatesModalVisible, setTemplatesModalVisible] = useState(false);
   const [editingGroup, setEditingGroup] = useState<TaskGroup | null>(null);
@@ -94,9 +100,11 @@ export default function ParentTasksScreen() {
   const [recurrence, setRecurrence] = useState<TaskRecurrence>('daily');
   const [assignedIds, setAssignedIds] = useState<string[]>([]);
   const [saveAsTemplate, setSaveAsTemplate] = useState(true);
-  const [familyTemplates, setFamilyTemplates] = useState<FamilyTaskTemplate[]>([]);
+  const [familyTemplates, setFamilyTemplates] = useState<FamilyTaskTemplate[]>(cachedTasks?.familyTemplates ?? []);
   const [learningPackId, setLearningPackId] = useState<string | null>(null);
-  const [learningPacks, setLearningPacks] = useState<{ id: string; title: string }[]>([]);
+  const [learningPacks, setLearningPacks] = useState<{ id: string; title: string }[]>(
+    cachedTasks?.learningPacks ?? []
+  );
   const [loading, setLoading] = useState(false);
   const savingRef = useRef(false);
 
@@ -108,8 +116,9 @@ export default function ParentTasksScreen() {
       StyleSheet.create({
         scroll: { padding: spacing.lg, maxWidth: 800, alignSelf: 'center', width: '100%' },
         header: { marginBottom: spacing.lg, gap: spacing.sm },
-        headerActions: { gap: spacing.sm, flexWrap: 'wrap', width: '100%' },
-        headerBtn: { flexGrow: 1, flexBasis: '45%' },
+        headerActions: { gap: spacing.sm, width: '100%', alignItems: 'stretch' },
+        headerBtnWrap: { flex: 1, minWidth: 0 },
+        headerBtn: { width: '100%', alignSelf: 'stretch' },
         title: { color: colors.text, fontSize: 24, fontWeight: '800', width: '100%' },
         taskCard: { marginBottom: spacing.sm },
         firstSection: { marginTop: 0 },
@@ -255,48 +264,20 @@ export default function ParentTasksScreen() {
   );
 
   const load = useCallback(async () => {
-    const kidsRes = await api.getKids();
-    setKids(kidsRes.kids);
+    const snap = await loadParentTasksSnapshot();
+    writeScreenCache(ScreenCacheKey.parentTasks, snap);
+    setKids(snap.kids);
     setAssignedIds((prev) => {
-      if (prev.length > 0) return prev.filter((id) => kidsRes.kids.some((k) => k._id === id));
-      return kidsRes.kids[0] ? [kidsRes.kids[0]._id] : [];
+      if (prev.length > 0) return prev.filter((id) => snap.kids.some((k) => k._id === id));
+      return snap.kids[0] ? [snap.kids[0]._id] : [];
     });
-    if (kidsRes.kids.length > 0) {
-      const allTasks: Task[] = [];
-      const seen = new Set<string>();
-      for (const kid of kidsRes.kids) {
-        const res = await api.getTasks(kid._id);
-        for (const task of res.tasks) {
-          if (!seen.has(task._id)) {
-            seen.add(task._id);
-            allTasks.push(task);
-          }
-        }
-      }
-      setTasks(allTasks);
-    } else {
-      setTasks([]);
-    }
-    try {
-      const templatesRes = await api.getTaskTemplates();
-      setFamilyTemplates(templatesRes.templates);
-    } catch {
-      setFamilyTemplates([]);
-    }
-    try {
-      const catalog = await api.getLearningCatalog();
-      setLearningPacks(
-        catalog.items.slice(0, 40).map((item) => ({
-          id: item.id,
-          title: item.title.he || item.id,
-        }))
-      );
-    } catch {
-      setLearningPacks([]);
-    }
+    setTasks(snap.tasks);
+    setFamilyTemplates(snap.familyTemplates);
+    setLearningPacks(snap.learningPacks);
   }, []);
 
-  useFocusLoad(load);
+  const ready = useFocusLoad(load);
+  const showSkeleton = !ready && !hadCache;
 
   const builtinTemplates = useMemo(
     () => TASK_TEMPLATES.filter((tpl) => !familyTemplates.some((custom) => custom.title === tpl.title)),
@@ -477,18 +458,26 @@ export default function ParentTasksScreen() {
         <View style={styles.header}>
           <Text style={[styles.title, rtl.textFull]}>{t('manageTasks')}</Text>
           <View style={[styles.headerActions, rtl.row]}>
-            <Button title={`+ ${t('addTask')}`} onPress={() => openCreateModal()} style={styles.headerBtn} />
+            <View style={styles.headerBtnWrap}>
+              <Button title={`+ ${t('addTask')}`} onPress={() => openCreateModal()} style={styles.headerBtn} />
+            </View>
             {kids.length > 0 && (
-              <Button
-                title={t('showQuickTasks')}
-                onPress={() => setTemplatesModalVisible(true)}
-                variant="secondary"
-                style={styles.headerBtn}
-              />
+              <View style={styles.headerBtnWrap}>
+                <Button
+                  title={t('showQuickTasks')}
+                  onPress={() => setTemplatesModalVisible(true)}
+                  variant="secondary"
+                  style={styles.headerBtn}
+                />
+              </View>
             )}
           </View>
         </View>
 
+        {showSkeleton ? (
+          <ScreenSkeleton cards={5} />
+        ) : (
+          <ScreenReveal animate={!hadCache}>
         {taskSections.map((section, sectionIndex) => (
           <View key={section.key}>
             <TaskSectionHeader
@@ -533,6 +522,8 @@ export default function ParentTasksScreen() {
             })}
           </View>
         ))}
+          </ScreenReveal>
+        )}
       </ScrollView>
 
       <Modal

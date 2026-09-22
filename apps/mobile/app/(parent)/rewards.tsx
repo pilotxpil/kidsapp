@@ -17,6 +17,8 @@ import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
+import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
 import { KeyboardSheet, KeyboardScroll, useKeyboardHeight } from '../../components/KeyboardSheet';
 import { REWARD_CATEGORIES, REWARD_TEMPLATES, resolvedRewardIcon, suggestedRewardIcon } from '@kidsapp/shared';
 import type { Reward, RewardCategory, RewardTemplate } from '@kidsapp/shared';
@@ -37,7 +39,10 @@ export default function ParentRewardsScreen() {
     spacing.lg * 2 -
     (Platform.OS === 'android' ? keyboardHeight : 0);
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
-  const [rewards, setRewards] = useState<Reward[]>([]);
+  const hadCache = useRef(hasScreenCache(ScreenCacheKey.parentRewards)).current;
+  const [rewards, setRewards] = useState<Reward[]>(
+    () => readScreenCache<Reward[]>(ScreenCacheKey.parentRewards) ?? []
+  );
   const [modalVisible, setModalVisible] = useState(false);
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [title, setTitle] = useState('');
@@ -163,10 +168,12 @@ export default function ParentRewardsScreen() {
 
   const load = useCallback(async () => {
     const res = await api.getRewards();
+    writeScreenCache(ScreenCacheKey.parentRewards, res.rewards);
     setRewards(res.rewards);
   }, []);
 
-  useFocusLoad(load);
+  const ready = useFocusLoad(load);
+  const showSkeleton = !ready && !hadCache;
 
   const resetForm = () => {
     setEditingReward(null);
@@ -262,6 +269,10 @@ export default function ParentRewardsScreen() {
           ))}
         </View>
 
+        {showSkeleton ? (
+          <ScreenSkeleton cards={4} />
+        ) : (
+          <ScreenReveal animate={!hadCache}>
         {rewards.map((reward) => {
           const cat = REWARD_CATEGORIES[reward.category];
           return (
@@ -287,6 +298,8 @@ export default function ParentRewardsScreen() {
             </Card>
           );
         })}
+          </ScreenReveal>
+        )}
       </ScrollView>
 
       <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={closeModal}>

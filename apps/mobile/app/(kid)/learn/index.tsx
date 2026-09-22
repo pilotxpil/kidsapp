@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../../lib/auth';
@@ -7,6 +7,8 @@ import { useFocusLoad } from '../../../hooks/useFocusLoad';
 import { Card } from '../../../components/Card';
 import { PointsBadge } from '../../../components/Card';
 import { ThemedScreen } from '../../../components/ThemedScreen';
+import { ScreenReveal, ScreenSkeleton } from '../../../components/ScreenSkeleton';
+import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../../lib/screen-cache';
 import { SectionHeader } from '../../../components/ThemedHero';
 import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, LEARNING_PACK_KIND_LABELS, packDisplayTitle, packDisplaySubtitle, formatGradeLabel } from '@kidsapp/shared';
 import type { LearningPackSummary, LearningCategory } from '@kidsapp/shared';
@@ -33,8 +35,11 @@ export default function LearnIndexScreen() {
   const router = useRouter();
   const { colors, borderRadius, id: themeId } = useTheme();
   const type = useType();
-  const [packs, setPacks] = useState<LearningPackSummary[]>([]);
-  const [assignedOnly, setAssignedOnly] = useState(false);
+  type LearnCache = { packs: LearningPackSummary[]; assignedOnly: boolean };
+  const hadCache = useRef(hasScreenCache(ScreenCacheKey.kidLearn)).current;
+  const cachedLearn = useRef(readScreenCache<LearnCache>(ScreenCacheKey.kidLearn)).current;
+  const [packs, setPacks] = useState<LearningPackSummary[]>(cachedLearn?.packs ?? []);
+  const [assignedOnly, setAssignedOnly] = useState(cachedLearn?.assignedOnly ?? false);
   const [refreshing, setRefreshing] = useState(false);
 
   const styles = useMemo(
@@ -83,9 +88,11 @@ export default function LearnIndexScreen() {
     const [, res] = await Promise.all([refreshUser(), api.getLearningPacks()]);
     setPacks(res.packs);
     setAssignedOnly(!!res.assignedOnly);
+    writeScreenCache(ScreenCacheKey.kidLearn, { packs: res.packs, assignedOnly: !!res.assignedOnly });
   }, [refreshUser]);
 
-  useFocusLoad(load, !!user);
+  const ready = useFocusLoad(load, !!user);
+  const showSkeleton = !ready && !hadCache;
 
   const grouped = useMemo(() => groupByCategory(packs), [packs]);
 
@@ -112,6 +119,10 @@ export default function LearnIndexScreen() {
           </View>
         </View>
 
+        {showSkeleton ? (
+          <ScreenSkeleton cards={4} />
+        ) : (
+          <ScreenReveal animate={!hadCache}>
         {packs.length === 0 ? (
           <Text style={styles.empty}>
             {assignedOnly ? t('noLearningAssignedKid') : t('noLearningPacks')}
@@ -179,6 +190,8 @@ export default function LearnIndexScreen() {
               </View>
             );
           })
+        )}
+          </ScreenReveal>
         )}
       </ScrollView>
     </ThemedScreen>

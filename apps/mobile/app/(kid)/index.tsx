@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../lib/auth';
@@ -10,6 +10,7 @@ import { FortuneWheel } from '../../components/FortuneWheel';
 import { AvatarGiftModal } from '../../components/AvatarGiftModal';
 import { AvatarZoomModal } from '../../components/AvatarZoomModal';
 import { ThemedScreen } from '../../components/ThemedScreen';
+import { ScreenSkeleton } from '../../components/ScreenSkeleton';
 import { ThemedHero } from '../../components/ThemedHero';
 import { DailyWord } from '../../components/DailyWord';
 import { DailyRiddle } from '../../components/DailyRiddle';
@@ -34,6 +35,7 @@ import {
   subscribeAvatarGift,
 } from '../../lib/avatar-gift';
 import { FREE_AVATAR_ID } from '@kidsapp/shared';
+import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
 
 export default function KidHomeScreen() {
   const { user, patchUser, refreshUser } = useAuth();
@@ -42,8 +44,11 @@ export default function KidHomeScreen() {
   const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
   const art = getThemeArt(themeId);
   const userId = user?._id;
-  const [profile, setProfile] = useState<KidProfile | null>(null);
-  const [goal, setGoal] = useState<PersonalGoal | null>(null);
+  type HomeCache = { profile: KidProfile; goal: PersonalGoal | null };
+  const hadCache = useRef(hasScreenCache(ScreenCacheKey.kidHome)).current;
+  const cachedHome = useRef(readScreenCache<HomeCache>(ScreenCacheKey.kidHome)).current;
+  const [profile, setProfile] = useState<KidProfile | null>(cachedHome?.profile ?? null);
+  const [goal, setGoal] = useState<PersonalGoal | null>(cachedHome?.goal ?? null);
   const [refreshing, setRefreshing] = useState(false);
   const [starKey, setStarKey] = useState(0);
   const [giftOpen, setGiftOpen] = useState(false);
@@ -104,6 +109,7 @@ export default function KidHomeScreen() {
     ]);
     setProfile(profileRes.profile);
     setGoal(goalRes.goal);
+    writeScreenCache(ScreenCacheKey.kidHome, { profile: profileRes.profile, goal: goalRes.goal });
     const p = profileRes.profile;
     patchUser({
       points: p.points,
@@ -115,7 +121,8 @@ export default function KidHomeScreen() {
     });
   }, [userId, patchUser]);
 
-  useFocusLoad(load, !!userId);
+  const ready = useFocusLoad(load, !!userId);
+  const showSkeleton = !ready && !hadCache && !profile;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -190,6 +197,9 @@ export default function KidHomeScreen() {
             </View>
           ) : null}
 
+          {showSkeleton ? (
+            <ScreenSkeleton cards={1} />
+          ) : (
           <FadeInUp index={1}>
             <View style={styles.statsCard}>
               <View style={styles.statsInner}>
@@ -229,6 +239,7 @@ export default function KidHomeScreen() {
               </View>
             </View>
           </FadeInUp>
+          )}
         </View>
       </ScrollView>
 
