@@ -7,6 +7,7 @@ import {
   TextInputProps,
   ViewStyle,
   Pressable,
+  Platform,
 } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { spacing } from '../constants/theme';
@@ -102,10 +103,29 @@ export function Input({
   // Credentials / username-style fields: open keyboard in lowercase by default.
   const resolvedAutoCapitalize =
     autoCapitalize ?? (secureTextEntry || isEmailField || ltr ? 'none' : undefined);
-  const resolvedAutoCorrect = autoCorrect ?? (secureTextEntry || isEmailField || ltr ? false : undefined);
   const resolvedTextContentType =
-    textContentType ?? (isEmailField ? 'emailAddress' : undefined);
-  const resolvedAutoComplete = autoComplete ?? (isEmailField ? 'email' : undefined);
+    textContentType ?? (isEmailField ? 'emailAddress' : isSecretField ? 'password' : undefined);
+  const resolvedAutoComplete =
+    autoComplete ?? (isEmailField ? 'email' : isSecretField ? 'current-password' : undefined);
+  const isCredentialField =
+    isSecretField ||
+    isEmailField ||
+    resolvedAutoComplete === 'username' ||
+    resolvedAutoComplete === 'email' ||
+    resolvedAutoComplete === 'password' ||
+    resolvedAutoComplete === 'current-password' ||
+    resolvedAutoComplete === 'new-password' ||
+    resolvedTextContentType === 'username' ||
+    resolvedTextContentType === 'password' ||
+    resolvedTextContentType === 'emailAddress';
+  // Password fields must stay a real password (no autocorrect) or Android will not offer to save.
+  // The account field must allow suggestions, or the saved-login chip never appears.
+  const resolvedAutoCorrect =
+    Platform.OS === 'android' && isSecretField
+      ? false
+      : Platform.OS === 'android' && isCredentialField
+        ? true
+        : (autoCorrect ?? (secureTextEntry || isEmailField || ltr ? false : undefined));
 
   const handleChangeText = (text: string) => {
     const prev = typeof value === 'string' ? value : '';
@@ -188,10 +208,20 @@ export function Input({
       {...props}
       value={value}
       onChangeText={handleChangeText}
+      onChange={(event) => {
+        props.onChange?.(event);
+        const text = event.nativeEvent.text;
+        if (typeof text === 'string') handleChangeText(text);
+      }}
       keyboardType={keyboardType}
       autoComplete={resolvedAutoComplete}
       textContentType={resolvedTextContentType}
-      importantForAutofill="yes"
+      importantForAutofill={isCredentialField ? 'yes' : props.importantForAutofill}
+      {...(Platform.OS === 'android' && isCredentialField && !isSecretField
+        ? { disableFullscreenUI: true }
+        : null)}
+      accessibilityLabel={props.accessibilityLabel ?? label}
+      collapsable={false}
       style={[
         styles.input,
         isSecretField && styles.inputWithToggle,
@@ -205,7 +235,7 @@ export function Input({
   );
 
   const wrapped = ltr || isSecretField ? (
-    <View style={styles.fieldWrap}>
+    <View style={styles.fieldWrap} collapsable={false}>
       {input}
       {isSecretField ? (
         <Pressable
@@ -213,6 +243,8 @@ export function Input({
           style={styles.toggle}
           accessibilityRole="button"
           accessibilityLabel={passwordVisible ? t('hidePassword') : t('showPassword')}
+          importantForAutofill="no"
+          focusable={false}
           hitSlop={8}
         >
           <EyeIcon crossed={passwordVisible} color={colors.textMuted} />

@@ -26,6 +26,9 @@ interface AuthScreenShellProps {
 export function useKeyboardOpen() {
   const [open, setOpen] = useState(false);
   useEffect(() => {
+    // Android already resizes the window. Hiding views when the keyboard opens
+    // changes the hierarchy and Android cancels password autofill.
+    if (Platform.OS === 'android') return;
     const show = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       () => setOpen(true)
@@ -53,6 +56,8 @@ export function AuthScreenShell({
 }: AuthScreenShellProps) {
   const theme = getTheme(themeId);
   const keyboardOpen = useKeyboardOpen();
+  // Android autofill is cancelled if the form relayouts when the keyboard opens.
+  const shiftForKeyboard = Platform.OS === 'ios' && keyboardOpen;
 
   const styles = useMemo(
     () =>
@@ -64,9 +69,9 @@ export function AuthScreenShell({
         inner: {
           flexGrow: 1,
           paddingHorizontal: spacing.lg,
-          paddingBottom: keyboardOpen ? spacing.sm : spacing.lg,
-          paddingTop: keyboardOpen ? spacing.xs : spacing.lg,
-          justifyContent: keyboardOpen ? 'flex-start' : 'center',
+          paddingBottom: shiftForKeyboard ? spacing.sm : spacing.lg,
+          paddingTop: shiftForKeyboard ? spacing.xs : spacing.lg,
+          justifyContent: shiftForKeyboard ? 'flex-start' : 'center',
         },
         back: {
           position: 'absolute',
@@ -101,12 +106,12 @@ export function AuthScreenShell({
           alignSelf: 'center',
         },
       }),
-    [theme, keyboardOpen]
+    [theme, shiftForKeyboard]
   );
 
   const content = (
     <View style={[styles.body, contentStyle]}>
-      {scroll && onBack && !keyboardOpen ? (
+      {scroll && onBack && !shiftForKeyboard ? (
         <BouncyPressable onPress={onBack} style={styles.backInline}>
           <RtlText style={styles.backText} wrap={false}>
             ← {t('back')}
@@ -127,8 +132,8 @@ export function AuthScreenShell({
       {theme.chrome !== 'vector' && (
         <FloatingEmojis emojis={emojis} count={emojiCount} opacity={0.24} />
       )}
-      <SafeAreaView style={styles.safe} edges={keyboardOpen ? ['top', 'left', 'right'] : ['top', 'bottom', 'left', 'right']}>
-        {!scroll && onBack && !keyboardOpen ? (
+      <SafeAreaView style={styles.safe} edges={shiftForKeyboard ? ['top', 'left', 'right'] : ['top', 'bottom', 'left', 'right']}>
+        {!scroll && onBack && !shiftForKeyboard ? (
           <BouncyPressable onPress={onBack} style={styles.back}>
             <RtlText style={styles.backText} wrap={false}>
               ← {t('back')}
@@ -139,9 +144,9 @@ export function AuthScreenShell({
           <ScrollView
             contentContainerStyle={styles.inner}
             keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="interactive"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'none'}
             showsVerticalScrollIndicator={false}
-            automaticallyAdjustKeyboardInsets
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
           >
             {content}
           </ScrollView>

@@ -16,6 +16,7 @@ export function FadeInUp({ children, delay = 0, index = 0, style }: FadeInUpProp
   return (
     <Animated.View
       entering={FadeInDown.duration(420).delay(wait).springify().damping(16).stiffness(120)}
+      collapsable={false}
       style={[{ overflow: 'visible' }, style]}
     >
       {children}

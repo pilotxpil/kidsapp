@@ -152,7 +152,9 @@ export function AuthFormCard({ themeId, children, index = 3, style, compact }: A
                 style={styles.shimmerGrad}
               />
             </Animated.View>
-            <View style={styles.inner}>{children}</View>
+            <View style={styles.inner} collapsable={false}>
+              {children}
+            </View>
           </LinearGradient>
         </View>
       </View>

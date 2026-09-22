@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useCallback, useState, useMemo } from 'react';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { AuthBrand } from '../components/AuthBrand';
@@ -13,12 +13,34 @@ import { useAuth } from '../lib/auth';
 import { colors, spacing } from '../constants/theme';
 import { t } from '../lib/i18n';
 
+/** Native stack screens omit the fields from Android's autofill tree until they remount. */
+function useAndroidAutofillRemountKey() {
+  const [key, setKey] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'android') return;
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      const idleId = requestIdleCallback(() => {
+        timeout = setTimeout(() => setKey((current) => current + 1), 50);
+      });
+      return () => {
+        cancelIdleCallback(idleId);
+        if (timeout) clearTimeout(timeout);
+      };
+    }, [])
+  );
+
+  return key;
+}
+
 export default function ParentLoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const autofillKey = useAndroidAutofillRemountKey();
 
   const styles = useMemo(
     () =>
@@ -57,28 +79,33 @@ export default function ParentLoginScreen() {
       <AuthBrand variant="parent" compact />
 
       <AuthFormCard themeId="roblox">
-        <Input
-          label={t('email')}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          textContentType="emailAddress"
-          autoComplete="email"
-          ltr
-        />
-        <Input
-          label={t('password')}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
-          textContentType="password"
-          autoComplete="password"
-          ltr
-        />
+        <View key={autofillKey} collapsable={false}>
+          <Input
+            label={t('email')}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            inputMode="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            textContentType="username"
+            autoComplete={Platform.OS === 'android' ? 'username' : 'email'}
+            nativeID="parent-login-username"
+            ltr
+          />
+          <Input
+            label={t('password')}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            spellCheck={false}
+            textContentType="password"
+            autoComplete="current-password"
+            nativeID="parent-login-password"
+            ltr
+          />
+        </View>
         <Button title={t('login')} onPress={handleLogin} loading={loading} />
         <BouncyPressable onPress={() => router.push('/parent-register')} style={styles.link}>
           <RtlText style={styles.linkText} wrap={false}>
