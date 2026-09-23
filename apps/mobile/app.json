@@ -2,7 +2,7 @@
   "expo": {
     "name": "KidsQuest",
     "slug": "kidsquest",
-    "version": "1.1.5",
+    "version": "1.1.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "kidsquest",
@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.kidsapp.quest",
-      "versionCode": 17,
+      "versionCode": 19,
       "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
