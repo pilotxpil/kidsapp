@@ -131,8 +131,10 @@ export default function ParentDashboardScreen() {
           backgroundColor: colors.bgCard,
           borderRadius: borderRadius.md,
           padding: spacing.sm,
-          minWidth: '47%',
           flexGrow: 1,
+          flexShrink: 1,
+          flexBasis: '46%',
+          maxWidth: '48%',
           ...cardBorder(1),
         },
         achievementIcon: { fontSize: 22, textAlign: 'center' },
@@ -149,6 +151,12 @@ export default function ParentDashboardScreen() {
           textAlign: 'center',
           marginTop: 2,
           writingDirection: 'rtl',
+        },
+        achievementKid: {
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 4,
+          marginTop: 4,
         },
         modalBackdrop: {
           flex: 1,
@@ -333,23 +341,6 @@ export default function ParentDashboardScreen() {
           </>
         )}
 
-        {achievements.length > 0 && (
-          <>
-            <Text style={[styles.sectionTitle, rtl.textFull]}>{t('familyAchievements')}</Text>
-            <View style={[styles.achievementRow, rtl.row]}>
-              {achievements.map((a) => (
-                <View key={a.id} style={styles.achievementChip}>
-                  <Text style={styles.achievementIcon}>{a.icon}</Text>
-                  <Text style={styles.achievementLabel}>{a.label}</Text>
-                  <Text style={styles.achievementDesc}>
-                    {a.kidName ? `${a.kidAvatar || ''} ${a.kidName}` : a.description}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </>
-        )}
-
         <ParentDailyWordList
           items={dashboard?.dailyWords ?? []}
           onApprove={(kidId) => void handleReviewDailyWord(kidId)}
@@ -446,6 +437,27 @@ export default function ParentDashboardScreen() {
             </Card>
           ))}
         </View>
+
+        {achievements.length > 0 && (
+          <>
+            <Text style={[styles.sectionTitle, rtl.textFull]}>{t('familyAchievements')}</Text>
+            <View style={[styles.achievementRow, rtl.row]}>
+              {achievements.map((a) => (
+                <View key={a.id} style={styles.achievementChip}>
+                  <Text style={styles.achievementIcon}>{a.icon}</Text>
+                  <Text style={styles.achievementLabel}>{a.label}</Text>
+                  {a.kidName ? (
+                    <View style={[styles.achievementKid, rtl.rowInline]}>
+                      <KidAvatar avatar={a.kidAvatar || '🎮'} size={16} />
+                      <Text style={styles.achievementDesc}>{a.kidName}</Text>
+                    </View>
+                  ) : null}
+                  <Text style={styles.achievementDesc}>{a.description}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
         </ScreenReveal>
         )}
       </ScrollView>

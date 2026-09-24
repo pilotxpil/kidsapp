@@ -9,7 +9,7 @@ import { rtl } from '../lib/rtl';
 import { t } from '../lib/i18n';
 import { ThemeGlyph } from './icons/ThemeGlyph';
 import { KidAvatar } from './KidAvatar';
-import { shopAvatarImage } from '../lib/avatar-images';
+import { avatarFallbackGlyph, shopAvatarImage } from '../lib/avatar-images';
 import { toBoxShadow, toTextShadow } from '../lib/shadow';
 import { BouncyPressable } from './animations/BouncyPressable';
 
@@ -83,7 +83,7 @@ export function AvatarFrame({ avatar, size = 'md' }: AvatarFrameProps) {
         ) : ember && helm ? (
           <Image source={helm} style={styles.art} resizeMode="cover" />
         ) : (
-          <Text style={styles.emoji}>{avatar}</Text>
+          <Text style={styles.emoji}>{avatarFallbackGlyph(avatar)}</Text>
         )}
       </LinearGradient>
       {ember ? null : (

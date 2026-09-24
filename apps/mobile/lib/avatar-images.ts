@@ -30,3 +30,9 @@ export function shopAvatarImage(id?: string | null): ImageSourcePropType | undef
   if (!id) return undefined;
   return SHOP_AVATAR_IMAGES[id];
 }
+
+/** Shop ids like `classic-noob` are not emoji. Never show them as text. */
+export function avatarFallbackGlyph(avatar?: string | null): string {
+  if (!avatar || /^[a-z0-9-]+$/i.test(avatar)) return '🎮';
+  return avatar;
+}

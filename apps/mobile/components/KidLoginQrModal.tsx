@@ -16,6 +16,7 @@ import * as Clipboard from 'expo-clipboard';
 import { buildKidLoginShareLink, KID_LOGIN_WEB_ORIGIN } from '@kidsapp/shared';
 import type { User } from '@kidsapp/shared';
 import { Button } from './Button';
+import { KidAvatar } from './KidAvatar';
 import { api } from '../lib/api';
 import { useTheme } from '../lib/theme-context';
 import { spacing } from '../constants/theme';
@@ -114,11 +115,16 @@ export function KidLoginQrModal({ kid, visible, onClose }: KidLoginQrModalProps)
           marginBottom: spacing.lg,
         },
         kidLine: {
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: spacing.sm,
+          marginBottom: spacing.md,
+          width: '100%',
+        },
+        kidLineText: {
           color: colors.primaryLight,
           fontSize: 16,
           fontWeight: '700',
-          marginBottom: spacing.md,
-          textAlign: 'center',
         },
         qrWrap: {
           backgroundColor: '#fff',
@@ -195,9 +201,12 @@ export function KidLoginQrModal({ kid, visible, onClose }: KidLoginQrModalProps)
           <Text style={[styles.hint, rtl.textFull]}>{t('kidLoginQrHint')}</Text>
 
           {kid ? (
-            <Text style={styles.kidLine}>
-              {kid.avatar} {kid.displayName} · @{kid.username}
-            </Text>
+            <View style={[styles.kidLine, rtl.row]}>
+              <KidAvatar avatar={kid.avatar} size={28} />
+              <Text style={[styles.kidLineText, rtl.text]}>
+                {kid.displayName} · @{kid.username}
+              </Text>
+            </View>
           ) : null}
 
           {loading ? (

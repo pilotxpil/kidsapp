@@ -146,7 +146,6 @@ export function Input({
         },
         fieldWrap: {
           position: 'relative',
-          direction: 'ltr',
         },
         input: ember
           ? {
@@ -183,7 +182,6 @@ export function Input({
         ltrText: {
           textAlign: 'left',
           writingDirection: 'ltr',
-          direction: 'ltr',
         },
         inputWithToggle: {
           paddingRight: 44,

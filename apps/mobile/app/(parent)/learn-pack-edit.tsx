@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { api } from '../../lib/api';
 import { Button } from '../../components/Button';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { KeyboardScroll } from '../../components/KeyboardSheet';
@@ -145,6 +145,7 @@ export default function LearnPackEditScreen() {
   const editing = !!packId;
 
   const [title, setTitle] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [category, setCategory] = useState<LearningCategory>('language');
   const [kind, setKind] = useState<LearningPackKind>('quiz');
   const [grade, setGrade] = useState<number | null>(4);
@@ -595,30 +596,29 @@ export default function LearnPackEditScreen() {
               <Button
                 title={t('deleteLearningPack')}
                 variant="danger"
-                onPress={() => {
-                  Alert.alert(t('deleteLearningPack'), t('deleteLearningPackConfirm'), [
-                    { text: t('cancel'), style: 'cancel' },
-                    {
-                      text: t('delete'),
-                      style: 'destructive',
-                      onPress: () => {
-                        void (async () => {
-                          try {
-                            await api.deleteCustomLearningPack(packId);
-                            router.back();
-                          } catch (err: unknown) {
-                            alert(err instanceof Error ? err.message : 'שגיאה');
-                          }
-                        })();
-                      },
-                    },
-                  ]);
-                }}
+                onPress={() => setConfirmDelete(true)}
                 sound={false}
               />
             ) : null}
           </View>
         </KeyboardScroll>
+      <ConfirmDialog
+        visible={confirmDelete}
+        title={t('deleteConfirmTitle')}
+        message={t('deleteConfirmBody').replace('{name}', title.trim() || t('deleteLearningPack'))}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => {
+          setConfirmDelete(false);
+          void (async () => {
+            try {
+              await api.deleteCustomLearningPack(packId!);
+              router.back();
+            } catch (err: unknown) {
+              alert(err instanceof Error ? err.message : 'שגיאה');
+            }
+          })();
+        }}
+      />
     </ThemedScreen>
   );
 }

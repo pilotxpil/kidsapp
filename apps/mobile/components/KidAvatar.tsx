@@ -9,7 +9,7 @@ import {
   TextStyle,
   ViewStyle,
 } from 'react-native';
-import { shopAvatarImage } from '../lib/avatar-images';
+import { avatarFallbackGlyph, shopAvatarImage } from '../lib/avatar-images';
 
 interface KidAvatarProps {
   avatar: string;
@@ -63,7 +63,7 @@ export function KidAvatar({ avatar, size, style }: KidAvatarProps) {
         style as TextStyle,
       ]}
     >
-      {avatar}
+      {avatarFallbackGlyph(avatar)}
     </Text>
   );
 }

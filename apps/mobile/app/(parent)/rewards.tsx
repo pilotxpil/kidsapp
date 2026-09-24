@@ -15,6 +15,7 @@ import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
@@ -51,6 +52,7 @@ export default function ParentRewardsScreen() {
   const [category, setCategory] = useState<RewardCategory>('gaming');
   const [icon, setIcon] = useState('🎁');
   const [loading, setLoading] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<null | { name: string; id: string }>(null);
   const savingRef = useRef(false);
 
   const styles = useMemo(
@@ -290,7 +292,9 @@ export default function ParentRewardsScreen() {
                   <TouchableOpacity onPress={() => openEdit(reward)}>
                     <Text style={styles.actionIcon}>✏️</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDelete(reward._id)}>
+                  <TouchableOpacity
+                    onPress={() => setPendingDelete({ name: reward.title, id: reward._id })}
+                  >
                     <Text style={styles.actionIcon}>🗑️</Text>
                   </TouchableOpacity>
                 </View>
@@ -353,6 +357,17 @@ export default function ParentRewardsScreen() {
           </View>
         </KeyboardSheet>
       </Modal>
+      <ConfirmDialog
+        visible={!!pendingDelete}
+        title={t('deleteConfirmTitle')}
+        message={t('deleteConfirmBody').replace('{name}', pendingDelete?.name ?? '')}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          const id = pendingDelete?.id;
+          setPendingDelete(null);
+          if (id) void handleDelete(id);
+        }}
+      />
     </ThemedScreen>
   );
 }

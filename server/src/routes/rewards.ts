@@ -9,6 +9,48 @@ import { resolvedRewardIcon } from '@kidsapp/shared';
 
 const router = Router();
 
+function formatRedemption(r: {
+  _id: { toString(): string };
+  rewardId: unknown;
+  kidId: unknown;
+  familyId: { toString(): string };
+  status: string;
+  cost: number;
+  requestedAt: Date;
+  reviewedAt?: Date;
+  usedAt?: Date;
+}) {
+  const reward = r.rewardId && typeof r.rewardId === 'object' ? (r.rewardId as any) : null;
+  const kid = r.kidId && typeof r.kidId === 'object' ? (r.kidId as any) : null;
+  return {
+    _id: r._id.toString(),
+    rewardId: reward?._id?.toString?.() ?? String(r.rewardId),
+    kidId: kid?._id?.toString?.() ?? String(r.kidId),
+    familyId: r.familyId.toString(),
+    status: r.status,
+    cost: r.cost,
+    requestedAt: r.requestedAt.toISOString(),
+    reviewedAt: r.reviewedAt?.toISOString(),
+    usedAt: r.usedAt?.toISOString(),
+    reward: reward
+      ? {
+          _id: reward._id.toString(),
+          title: reward.title,
+          icon: resolvedRewardIcon(reward.title, reward.icon, reward.category),
+          cost: reward.cost,
+        }
+      : undefined,
+    kid: kid
+      ? {
+          _id: kid._id.toString(),
+          displayName: kid.displayName,
+          avatar: kid.avatar,
+          points: kid.points,
+        }
+      : undefined,
+  };
+}
+
 router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
     const rewards = await Reward.find({
@@ -152,6 +194,55 @@ router.post('/:id/redeem', authenticate, async (req: Request, res: Response) => 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'שגיאה בבקשת מימוש' });
+  }
+});
+
+router.get('/redemptions', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const kidId = typeof req.query.kidId === 'string' ? req.query.kidId : undefined;
+    if (kidId) {
+      const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+      if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    }
+
+    const filter: Record<string, unknown> = {
+      familyId: req.user!.familyId,
+      status: { $in: ['pending', 'approved', 'fulfilled'] },
+    };
+    if (kidId) filter.kidId = kidId;
+
+    const redemptions = await Redemption.find(filter)
+      .populate('rewardId')
+      .populate('kidId', 'displayName avatar points')
+      .sort({ requestedAt: -1 })
+      .limit(200);
+
+    res.json({ redemptions: redemptions.map((r) => formatRedemption(r)) });
+  } catch (err) {
+    res.status(500).json({ error: 'שגיאה בטעינת מתנות' });
+  }
+});
+
+router.post('/redemptions/:id/use', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const redemption = await Redemption.findOne({
+      _id: req.params.id,
+      familyId: req.user!.familyId,
+      status: { $in: ['approved', 'fulfilled'] },
+    })
+      .populate('rewardId')
+      .populate('kidId', 'displayName avatar points');
+
+    if (!redemption) return res.status(404).json({ error: 'מתנה לא נמצאה' });
+    if (redemption.usedAt) return res.status(400).json({ error: 'המתנה כבר סומנה כנוצלה' });
+
+    redemption.usedAt = new Date();
+    if (redemption.status === 'approved') redemption.status = 'fulfilled';
+    await redemption.save();
+
+    res.json({ redemption: formatRedemption(redemption) });
+  } catch (err) {
+    res.status(500).json({ error: 'שגיאה בסימון המתנה' });
   }
 });
 

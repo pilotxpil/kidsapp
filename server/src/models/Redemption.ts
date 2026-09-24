@@ -9,6 +9,7 @@ export interface IRedemption extends Document {
   requestedAt: Date;
   reviewedAt?: Date;
   reviewedBy?: Types.ObjectId;
+  usedAt?: Date;
 }
 
 const redemptionSchema = new Schema<IRedemption>({
@@ -24,6 +25,7 @@ const redemptionSchema = new Schema<IRedemption>({
   requestedAt: { type: Date, default: Date.now },
   reviewedAt: { type: Date },
   reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  usedAt: { type: Date },
 });
 
 export const Redemption = mongoose.model<IRedemption>('Redemption', redemptionSchema);

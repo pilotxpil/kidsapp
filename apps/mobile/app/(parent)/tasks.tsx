@@ -14,8 +14,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusLoad } from '../../hooks/useFocusLoad';
 import { api } from '../../lib/api';
 import { Card } from '../../components/Card';
+import { KidAvatar } from '../../components/KidAvatar';
 import { TaskSectionHeader } from '../../components/TaskCard';
 import { Button } from '../../components/Button';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Input } from '../../components/Input';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
@@ -102,6 +104,7 @@ export default function ParentTasksScreen() {
   const [saveAsTemplate, setSaveAsTemplate] = useState(true);
   const [familyTemplates, setFamilyTemplates] = useState<FamilyTaskTemplate[]>(cachedTasks?.familyTemplates ?? []);
   const [learningPackId, setLearningPackId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<null | { name: string; run: () => Promise<void> }>(null);
   const [learningPacks, setLearningPacks] = useState<{ id: string; title: string }[]>(
     cachedTasks?.learningPacks ?? []
   );
@@ -128,6 +131,8 @@ export default function ParentTasksScreen() {
         taskInfo: { flex: 1, minWidth: 0 },
         taskTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
         taskMeta: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
+        assignedRow: { flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs, marginTop: 4, width: '100%' },
+        assignedKid: { alignItems: 'center', gap: 4 },
         modalOverlay: {
           flex: 1,
           backgroundColor: 'rgba(0,0,0,0.7)',
@@ -441,7 +446,15 @@ export default function ParentTasksScreen() {
           </Text>
         </TouchableOpacity>
         {template._id ? (
-          <TouchableOpacity style={styles.templateDelete} onPress={() => handleDeleteTemplate(template._id!)}>
+          <TouchableOpacity
+            style={styles.templateDelete}
+            onPress={() =>
+              setPendingDelete({
+                name: template.title,
+                run: () => handleDeleteTemplate(template._id!),
+              })
+            }
+          >
             <Text style={styles.actionIcon}>🗑️</Text>
           </TouchableOpacity>
         ) : null}
@@ -488,10 +501,7 @@ export default function ParentTasksScreen() {
             />
             {section.items.map((group) => {
           const assignedKids = kids.filter((k) => group.assignedTo.includes(k._id));
-          const kidsLabel =
-            assignedKids.length === kids.length && kids.length > 1
-              ? t('selectAllKids')
-              : assignedKids.map((k) => `${k.avatar} ${k.displayName}`).join(' · ');
+          const allKids = assignedKids.length === kids.length && kids.length > 1;
           const cat = TASK_CATEGORIES[group.category];
           const rec = TASK_RECURRENCE[group.recurrence];
           return (
@@ -501,9 +511,19 @@ export default function ParentTasksScreen() {
                   <Text style={[styles.taskTitle, rtl.textFull]}>
                     {categoryIcon(group.category)} {group.title}
                   </Text>
-                  <Text style={[styles.taskMeta, rtl.textFull]}>
-                    {t('assignedKids')}: {kidsLabel}
-                  </Text>
+                  <View style={[styles.assignedRow, rtl.row]}>
+                    <Text style={[styles.taskMeta, rtl.text]}>{t('assignedKids')}:</Text>
+                    {allKids ? (
+                      <Text style={[styles.taskMeta, rtl.text]}>{t('selectAllKids')}</Text>
+                    ) : (
+                      assignedKids.map((k) => (
+                        <View key={k._id} style={[styles.assignedKid, rtl.row]}>
+                          <KidAvatar avatar={k.avatar} size={18} />
+                          <Text style={[styles.taskMeta, rtl.text]}>{k.displayName}</Text>
+                        </View>
+                      ))
+                    )}
+                  </View>
                   <Text style={[styles.taskMeta, rtl.textFull]}>
                     {cat.label} · {rec.icon} {rec.label} · +{group.points} {pointsEmoji}
                   </Text>
@@ -512,7 +532,14 @@ export default function ParentTasksScreen() {
                   <TouchableOpacity onPress={() => openEditModal(group)}>
                     <Text style={styles.actionIcon}>✏️</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDelete(group)}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setPendingDelete({
+                        name: group.title,
+                        run: () => handleDelete(group),
+                      })
+                    }
+                  >
                     <Text style={styles.actionIcon}>🗑️</Text>
                   </TouchableOpacity>
                 </View>
@@ -671,7 +698,7 @@ export default function ParentTasksScreen() {
                     >
                       <View style={styles.chipContent}>
                         {selected ? <Text style={styles.chipIcon}>✓</Text> : null}
-                        <Text style={styles.chipIcon}>{kid.avatar}</Text>
+                        <KidAvatar avatar={kid.avatar} size={18} />
                         <Text style={[styles.chipText, selected && styles.chipTextActive]}>
                           {kid.displayName}
                         </Text>
@@ -710,6 +737,17 @@ export default function ParentTasksScreen() {
           </View>
         </KeyboardSheet>
       </Modal>
+      <ConfirmDialog
+        visible={!!pendingDelete}
+        title={t('deleteConfirmTitle')}
+        message={t('deleteConfirmBody').replace('{name}', pendingDelete?.name ?? '')}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          const run = pendingDelete?.run;
+          setPendingDelete(null);
+          void run?.();
+        }}
+      />
     </ThemedScreen>
   );
 }

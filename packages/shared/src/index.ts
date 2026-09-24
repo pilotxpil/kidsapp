@@ -331,6 +331,8 @@ export interface Redemption {
   requestedAt: string;
   reviewedAt?: string;
   reviewedBy?: string;
+  /** Set when a parent marks the purchased gift as used. */
+  usedAt?: string;
   reward?: Reward;
   kid?: User;
 }

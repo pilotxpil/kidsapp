@@ -149,6 +149,10 @@ export default function ParentLayout() {
         options={{ href: null, title: t('pointsHistory') }}
       />
       <Tabs.Screen
+        name="kid-gifts"
+        options={{ href: null, title: t('kidGifts') }}
+      />
+      <Tabs.Screen
         name="learn-pack-edit"
         options={{ href: null, title: t('createLearningPack') }}
       />

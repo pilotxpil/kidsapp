@@ -365,6 +365,14 @@ export default function ParentKidsScreen() {
                     router.push({ pathname: '/(parent)/kid-history', params: { kidId: kid._id } })
                   }
                 />
+                <Button
+                  title={t('viewKidGifts')}
+                  variant="outline"
+                  style={styles.actionBtn}
+                  onPress={() =>
+                    router.push({ pathname: '/(parent)/kid-gifts', params: { kidId: kid._id } })
+                  }
+                />
               </View>
             </Card>
           ))

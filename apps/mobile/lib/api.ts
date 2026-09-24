@@ -20,6 +20,7 @@ import type {
   LearningPackDetail,
   LearningCheckResult,
   PointTransaction,
+  Redemption,
   LearningCatalogItem,
   LearningCategory,
   PushPlatform,
@@ -222,6 +223,19 @@ export const api = {
 
   getPendingRedemptions() {
     return request<{ redemptions: any[] }>('/rewards/redemptions/pending');
+  },
+
+  getKidGifts(kidId: string) {
+    return request<{ redemptions: Redemption[] }>(
+      `/rewards/redemptions?kidId=${encodeURIComponent(kidId)}`
+    );
+  },
+
+  markGiftUsed(id: string) {
+    return request<{ redemption: Redemption }>(
+      `/rewards/redemptions/${id}/use`,
+      { method: 'POST' }
+    );
   },
 
   approveRedemption(id: string, action: 'approve' | 'reject') {
