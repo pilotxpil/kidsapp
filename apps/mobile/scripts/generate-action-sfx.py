@@ -1,4 +1,4 @@
-"""UI SFX: crowd cheer (task done) + whoosh/ding (tab switch)."""
+"""UI SFX: crowd cheer (task done). Tab switches reuse the theme tap."""
 from __future__ import annotations
 
 import math
@@ -109,37 +109,6 @@ def make_cheer() -> list[float]:
     return buf
 
 
-def make_whoosh() -> list[float]:
-    rng = random.Random(3)
-    dur = 0.26
-    n = int(SR * dur)
-    raw = [noise(rng) for _ in range(n)]
-    buf = [0.0] * n
-    for i in range(n):
-        t = i / SR
-        # Sweep: starts bright, falls (page turn)
-        pos = t / dur
-        coef = 0.55 - 0.42 * pos
-        # running high-ish pass via mixing with delayed
-        air = raw[i] * env(t, dur, 0.012, 0.12) * (0.55 + 0.45 * (1 - pos))
-        buf[i] += air * (0.35 + coef)
-
-    buf = bandpass(buf, 0.22, 0.62)
-
-    # Ding on the landing
-    ding_at = 0.09
-    for freq, amp, decay in ((1480, 0.28, 0.11), (2210, 0.16, 0.08), (980, 0.10, 0.07)):
-        i0 = int(ding_at * SR)
-        for j in range(int(decay * 8 * SR)):
-            if i0 + j >= n:
-                break
-            tt = j / SR
-            buf[i0 + j] += math.sin(2 * math.pi * freq * tt) * amp * math.exp(-tt / decay)
-
-    return buf
-
-
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     write_wav("cheer.wav", make_cheer())
-    write_wav("whoosh.wav", make_whoosh())

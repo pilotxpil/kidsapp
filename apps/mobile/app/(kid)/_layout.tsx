@@ -64,7 +64,7 @@ export default function KidLayout() {
       tabBar={(props) => <RtlTabBar {...props} />}
       screenListeners={{
         tabPress: () => {
-          playSfx('whoosh');
+          playSfx('whoosh', { volume: 0.55 });
         },
       }}
       screenOptions={{

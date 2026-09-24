@@ -59,7 +59,7 @@ export default function ParentLayout() {
       tabBar={(props) => <RtlTabBar {...props} />}
       screenListeners={{
         tabPress: () => {
-          playSfx('whoosh');
+          playSfx('whoosh', { volume: 0.55 });
         },
       }}
       screenOptions={{

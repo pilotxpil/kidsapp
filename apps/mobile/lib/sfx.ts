@@ -23,7 +23,7 @@ const FILES: Record<SfxName, number> = {
   coin: require('../assets/sfx/coin.wav'),
   error: require('../assets/sfx/error.wav'),
   cheer: require('../assets/sfx/cheer.wav'),
-  whoosh: require('../assets/sfx/whoosh.wav'),
+  whoosh: require('../assets/sfx/soft-click-3.wav'),
   star1: require('../assets/sfx/star1.wav'),
   star2: require('../assets/sfx/star2.wav'),
   star3: require('../assets/sfx/star3.wav'),

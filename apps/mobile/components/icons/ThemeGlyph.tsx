@@ -305,6 +305,31 @@ export function ThemeTabIcon({ name, fallback, focused }: ThemeTabIconProps) {
     );
   }
 
+  if (name === 'kids' && (themeId === 'ember' || themeId === 'minecraft')) {
+    const ember = themeId === 'ember';
+    const voxel = themeId === 'minecraft';
+    const dim = focused ? 20 : 17;
+    return (
+      <View
+        style={[
+          styles.tabArtWrap,
+          ember && styles.tabArtWrapEmber,
+          voxel && styles.tabArtWrapMc,
+          ember && {
+            borderWidth: focused ? 1.5 : 1,
+            borderColor: focused ? 'rgba(255, 210, 150, 0.95)' : 'rgba(255, 190, 130, 0.4)',
+          },
+          voxel && {
+            borderWidth: focused ? 2 : 1,
+            borderColor: focused ? colors.primaryLight : 'rgba(158, 174, 142, 0.55)',
+          },
+        ]}
+      >
+        <Text style={{ fontSize: dim, lineHeight: dim, textAlign: 'center' }}>{fallback}</Text>
+      </View>
+    );
+  }
+
   if (painted) {
     const ember = themeId === 'ember';
     const voxel = themeId === 'minecraft';
