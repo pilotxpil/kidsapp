@@ -1,6 +1,6 @@
 ---
 name: kidsquest-deploy
-description: Deploys KidsQuest API, web UI, or Android builds to production (GCP VM Synaboard, EAS). Use when deploying to server, publishing web at kids.synaboard.com, EAS build/submit, gcloud SSH, nginx, or production API URL.
+description: Deploys KidsQuest API, web UI, or Android builds to production (GCP VM Synaboard, EAS) and uploads the store build to Google Play internal testing. Use when deploying to server, publishing web at kids.synaboard.com, EAS build/submit, Play internal testing, gcloud SSH, nginx, or production API URL.
 ---
 
 # KidsQuest deploy
@@ -67,7 +67,46 @@ Config template: `deploy/vm/nginx-kidsquest.conf`. New API top-level mount → u
 - Production build requires EAS env `EXPO_PUBLIC_API_URL=https://kids.synaboard.com` (no trailing slash).
 - `app.config.js` enforces HTTPS for `production` profile builds.
 - After `eas init`, `app.json` has `extra.eas.projectId` — do not hand-edit UUID.
+- `eas` is not on PATH. From `apps/mobile`, use `npx eas-cli`. Do not rely on root `npm run build:android` for a non-interactive build.
+- Production `autoIncrement: true` bumps `android.versionCode` during the build and writes it back to `app.json`. Package `com.kidsapp.quest`. Same Play signing key replaces an existing Play install when `versionCode` is higher. Sideload and Expo Go are not upgraded in place.
 - gcloud deploy scripts use `pilotxpil@` for scp/ssh.
+
+## Google Play internal testing
+
+When the user asks for a new store version (or to ship everything and build for the store), upload that AAB to the **internal** track and roll it out. A draft does not reach testers.
+
+Submit profile in `apps/mobile/eas.json` stays `track: internal`, `releaseStatus: draft`. Do not change it to `completed`. Promoting in the same Play edit as halting the previous completed release fails.
+
+Service account (Play Console → Users and permissions, release to testing tracks; API: Google Play Android Developer):
+
+| | |
+|---|---|
+| Email | `eas-play-submit@synaboard-482321.iam.gserviceaccount.com` |
+| Key file | `/Users/koby/Downloads/synaboard-482321-ef559c81f342.json` |
+
+Never commit the JSON, never print `private_key`, and never leave `serviceAccountKeyPath` in `eas.json`.
+
+From `apps/mobile`, after the version bump and `./deploy/vm/deploy.sh`:
+
+```bash
+npx eas-cli build --platform android --profile production --non-interactive --wait
+```
+
+Set `submit.production.android.serviceAccountKeyPath` to the key file only for the next command, then remove that field before finishing:
+
+```bash
+npx eas-cli submit --platform android --profile production --id <build-id> --non-interactive --wait
+```
+
+Then roll out the draft (stdlib + openssl; no extra packages):
+
+```bash
+python3 .cursor/skills/kidsquest-deploy/scripts/publish-internal.py \
+  --key /Users/koby/Downloads/synaboard-482321-ef559c81f342.json \
+  --version-code <versionCode>
+```
+
+The script replaces the internal track with that release at status `completed`. If it is already the completed release, it prints `already-published` and does not upload again. Testers may need a few minutes, or to open the store listing, before the update appears.
 
 ## Web production build
 
