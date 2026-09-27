@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>צייר ונחש — 5 כיווני עיצוב</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Heebo, "Segoe UI", Arial, sans-serif;
+      background: #07080d;
+      color: white;
+    }
+    nav {
+      position: fixed;
+      z-index: 20;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 999px;
+      background: rgba(8, 10, 16, 0.72);
+      border: 1px solid rgba(255,255,255,0.14);
+      backdrop-filter: blur(16px);
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 8px 14px;
+      border-radius: 999px;
+    }
+    nav a:hover, nav a:focus { background: rgba(255,255,255,0.14); }
+    section {
+      min-height: 100vh;
+      scroll-snap-align: start;
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+    .caption {
+      position: absolute;
+      z-index: 5;
+      top: 84px;
+      right: 28px;
+      max-width: 360px;
+      text-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    }
+    .caption b {
+      display: block;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+    .caption h2 { margin: 0 0 6px; font-size: 36px; }
+    .caption p { margin: 0; font-size: 16px; line-height: 1.45; opacity: 0.92; }
+    .stage { position: relative; width: min(920px, 92vw); height: min(560px, 68vh); }
+    .board-wrap {
+      position: absolute;
+      z-index: 2;
+      inset: 8% 12% 20%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .sign {
+      padding: 6px 22px 8px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: clamp(18px, 2vw, 28px);
+      letter-spacing: 0.02em;
+    }
+    .floor, .island { z-index: 1; }
+    .sheet {
+      width: min(100%, 640px);
+      flex: 1;
+      min-height: 240px;
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 30% 40%, transparent 18px, #1b1b1b 19px, transparent 20px),
+        linear-gradient(#fff, #f7f7f4);
+      background-size: 100% 100%, auto;
+      box-shadow: 0 24px 50px rgba(0,0,0,0.28);
+      position: relative;
+    }
+    .sheet svg { position: absolute; inset: 12% 14%; width: 72%; height: 76%; }
+    .floor {
+      position: absolute;
+      left: -10%;
+      right: -10%;
+      bottom: -8%;
+      height: 42%;
+      transform: perspective(400px) rotateX(58deg);
+      transform-origin: center top;
+    }
+
+    /* 1 neon */
+    #m1 { background: radial-gradient(circle at 50% 20%, #1a1440, #070712 62%); }
+    #m1 .floor {
+      background:
+        linear-gradient(rgba(90, 230, 255, 0.35) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(90, 230, 255, 0.35) 1px, transparent 1px),
+        linear-gradient(#12081f, #05040c);
+      background-size: 48px 48px, 48px 48px, auto;
+      box-shadow: 0 0 80px rgba(80, 220, 255, 0.25);
+    }
+    #m1 .sign { color: #effbff; background: #10182e; box-shadow: 0 0 18px #35e4ff, 0 0 36px #a15cff; }
+    #m1 .sheet { box-shadow: 0 0 0 3px #39e7ff, 0 0 0 8px rgba(161, 92, 255, 0.85), 0 0 40px #39e7ff; }
+    #m1 .orb { position: absolute; width: 180px; height: 180px; border-radius: 50%; filter: blur(8px); opacity: 0.85; }
+    #m1 .orb.a { left: 6%; top: 18%; background: radial-gradient(circle, #39e7ff, transparent 68%); }
+    #m1 .orb.b { right: 8%; bottom: 16%; background: radial-gradient(circle, #c45cff, transparent 68%); }
+
+    /* 2 sky */
+    #m2 { background: linear-gradient(#8fd4ff, #e7f7ff 55%, #b7e2c2); }
+    #m2 .cloud { position: absolute; background: white; border-radius: 40px; filter: blur(0.2px); opacity: 0.92; }
+    #m2 .island {
+      position: absolute; left: 8%; right: 8%; bottom: 8%; height: 34%;
+      background: linear-gradient(#7dca6a, #4e9a45);
+      border-radius: 50% 50% 18px 18px;
+      box-shadow: 0 30px 0 #8a6244, 0 48px 0 #6d4b34;
+    }
+    #m2 .sign { background: #fff8e8; color: #24506a; }
+    #m2 .sheet { box-shadow: 0 0 0 8px #f4e2b5, 0 18px 30px rgba(40, 70, 90, 0.2); }
+
+    /* 3 studio */
+    #m3 { background: linear-gradient(#f7f1e6, #e7dccb); color: #2a2118; }
+    #m3 .caption { text-shadow: none; }
+    #m3 .pencil {
+      position: absolute; left: 4%; bottom: 8%; width: 70px; height: 78%;
+      background: linear-gradient(#f2c14e, #e0a82a);
+      border-radius: 8px 8px 0 0;
+      transform: rotate(8deg);
+    }
+    #m3 .pencil:before {
+      content: ""; position: absolute; left: 0; right: 0; bottom: -70px; height: 70px;
+      background: linear-gradient(#f3d7b0, #d9a679 40%, #2b2b2b 41%, #2b2b2b 70%, transparent 71%);
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+    }
+    #m3 .brush {
+      position: absolute; right: 6%; bottom: 6%; width: 36px; height: 70%;
+      background: #3d342c; border-radius: 18px; transform: rotate(-10deg);
+    }
+    #m3 .brush:after {
+      content: ""; position: absolute; left: -8px; right: -8px; bottom: -46px; height: 58px;
+      background: #5aa6a0; border-radius: 0 0 20px 20px;
+    }
+    #m3 .blob { position: absolute; border-radius: 50%; opacity: 0.85; }
+    #m3 .sign { background: #2a2118; color: #fff8ee; }
+    #m3 .sheet {
+      background: #fffdf8;
+      box-shadow: 0 10px 0 #efe6d6, 0 16px 24px rgba(60,40,20,0.16);
+    }
+
+    /* 4 crystal */
+    #m4 { background: radial-gradient(circle at 50% 80%, #2a1548, #0c0614 60%); }
+    #m4 .crystal {
+      position: absolute; width: 90px; background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(120, 210, 255, 0.2));
+      clip-path: polygon(50% 0, 100% 38%, 78% 100%, 22% 100%, 0 38%);
+      filter: drop-shadow(0 0 16px rgba(140, 220, 255, 0.65));
+    }
+    #m4 .sign { background: rgba(18, 10, 32, 0.8); color: #f4fbff; border: 1px solid rgba(190, 240, 255, 0.7); }
+    #m4 .sheet { box-shadow: 0 0 0 6px rgba(210, 245, 255, 0.55), 0 0 32px rgba(150, 120, 255, 0.45); background: linear-gradient(#f8fbff, #eef3f8); }
+    #m4 .beam {
+      position: absolute; top: -10%; width: 80px; height: 120%;
+      background: linear-gradient(rgba(180,140,255,0.28), transparent);
+      transform: rotate(12deg); filter: blur(6px);
+    }
+
+    /* 5 festival */
+    #m5 { background: linear-gradient(#1d3358, #c46a4a 58%, #efb15a); }
+    #m5 .lights { position: absolute; top: 108px; left: 0; right: 0; height: 4px; background: rgba(255,255,255,0.35); z-index: 1; }
+    #m5 .bulb {
+      position: absolute; top: -7px; width: 16px; height: 16px; border-radius: 50%;
+      box-shadow: 0 0 12px currentColor;
+    }
+    #m5 .lantern {
+      position: absolute; width: 36px; height: 48px; border-radius: 10px 10px 16px 16px;
+      background: linear-gradient(#ffe08a, #ff8a3d); box-shadow: 0 0 24px rgba(255, 170, 60, 0.8);
+    }
+    #m5 .sign { background: #2a211c; color: #ffe7bf; }
+    #m5 .sheet { box-shadow: 0 0 0 10px #6b3a2a, 0 0 0 16px #e7b15a; }
+    #m5 .floor { background: linear-gradient(#5d3a78, #2a2148); border-radius: 18px 18px 0 0; transform: none; height: 22%; bottom: 0; left: 0; right: 0; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="#m1">1 ניאון</a>
+    <a href="#m2">2 שמיים</a>
+    <a href="#m3">3 סטודיו</a>
+    <a href="#m4">4 קריסטל</a>
+    <a href="#m5">5 פסטיבל</a>
+  </nav>
+
+  <section id="m1">
+    <div class="orb a"></div>
+    <div class="orb b"></div>
+    <div class="caption">
+      <b>01</b>
+      <h2>חצות ניאון</h2>
+      <p>רצפה שחורה מבריקה, מסגרת שזוהרת תכלת וסגול, והלוח הלבן הוא המסך. חד, לא ילדותי ולא מגדרי.</p>
+    </div>
+    <div class="stage">
+      <div class="floor"></div>
+      <div class="board-wrap">
+        <div class="sign">צייר ונחש</div>
+        <div class="sheet">
+          <svg viewBox="0 0 200 120" fill="none" stroke="#243044" stroke-width="3" stroke-linecap="round">
+            <circle cx="58" cy="48" r="16"></circle>
+            <path d="M48 70c6 10 22 10 28 0"></path>
+            <path d="M120 78l18-34 18 34"></path>
+            <path d="M128 66h20"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="m2">
+    <div class="cloud" style="width:180px;height:54px;top:16%;left:8%"></div>
+    <div class="cloud" style="width:240px;height:64px;top:22%;right:6%"></div>
+    <div class="cloud" style="width:120px;height:40px;top:12%;left:42%"></div>
+    <div class="caption">
+      <b>02</b>
+      <h2>אי בעננים</h2>
+      <p>במה לבנה שצפה מעל העננים, אור יום רך, והלוח כמו שלט ענק בשמיים. פתוח ומואר.</p>
+    </div>
+    <div class="stage">
+      <div class="island"></div>
+      <div class="board-wrap" style="inset:8% 14% 28%">
+        <div class="sign">צייר ונחש</div>
+        <div class="sheet">
+          <svg viewBox="0 0 200 120" fill="none" stroke="#24506a" stroke-width="3" stroke-linecap="round">
+            <circle cx="58" cy="48" r="16"></circle>
+            <path d="M48 70c6 10 22 10 28 0"></path>
+            <path d="M120 78l18-34 18 34"></path>
+            <path d="M128 66h20"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="m3">
+    <div class="blob" style="width:140px;height:90px;background:#e07a5f;left:8%;top:18%;transform:rotate(-12deg)"></div>
+    <div class="blob" style="width:90px;height:90px;background:#3d9b8f;right:14%;top:20%"></div>
+    <div class="blob" style="width:70px;height:70px;background:#e6b325;left:18%;bottom:16%"></div>
+    <div class="pencil"></div>
+    <div class="brush"></div>
+    <div class="caption">
+      <b>03</b>
+      <h2>סטודיו ענק</h2>
+      <p>העולם עצמו הוא דף ציור: עיפרון ומכחול בגודל של בניין, נייר, וכתמי צבע. המקום מרגיש כמו המשחק.</p>
+    </div>
+    <div class="stage">
+      <div class="board-wrap">
+        <div class="sign">צייר ונחש</div>
+        <div class="sheet">
+          <svg viewBox="0 0 200 120" fill="none" stroke="#2a2118" stroke-width="3" stroke-linecap="round">
+            <circle cx="58" cy="48" r="16"></circle>
+            <path d="M48 70c6 10 22 10 28 0"></path>
+            <path d="M120 78l18-34 18 34"></path>
+            <path d="M128 66h20"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="m4">
+    <div class="beam" style="left:18%"></div>
+    <div class="beam" style="right:16%;transform:rotate(-14deg)"></div>
+    <div class="crystal" style="left:7%;bottom:12%;height:220px"></div>
+    <div class="crystal" style="left:14%;bottom:8%;height:140px;width:60px;filter:drop-shadow(0 0 14px rgba(255,170,230,0.7));background:linear-gradient(#fff, rgba(255,160,220,0.25))"></div>
+    <div class="crystal" style="right:8%;bottom:10%;height:260px"></div>
+    <div class="crystal" style="right:16%;bottom:14%;height:160px;width:54px"></div>
+    <div class="caption">
+      <b>04</b>
+      <h2>מערת קריסטל</h2>
+      <p>חושך, גבישים שקופים, ואלומות אור. הלוח הלבן יושב באמצע כמו במה. דרמטי ושקט.</p>
+    </div>
+    <div class="stage">
+      <div class="board-wrap">
+        <div class="sign">צייר ונחש</div>
+        <div class="sheet">
+          <svg viewBox="0 0 200 120" fill="none" stroke="#243044" stroke-width="3" stroke-linecap="round">
+            <circle cx="58" cy="48" r="16"></circle>
+            <path d="M48 70c6 10 22 10 28 0"></path>
+            <path d="M120 78l18-34 18 34"></path>
+            <path d="M128 66h20"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="m5">
+    <div class="lights"></div>
+    <div class="bulb" style="left:8%;color:#7dffe1;background:#7dffe1"></div>
+    <div class="bulb" style="left:22%;color:#ffe28a;background:#ffe28a"></div>
+    <div class="bulb" style="left:36%;color:#ff8f8f;background:#ff8f8f"></div>
+    <div class="bulb" style="left:50%;color:#9ec1ff;background:#9ec1ff"></div>
+    <div class="bulb" style="left:64%;color:#7dffe1;background:#7dffe1"></div>
+    <div class="bulb" style="left:78%;color:#ffe28a;background:#ffe28a"></div>
+    <div class="bulb" style="left:90%;color:#ff8f8f;background:#ff8f8f"></div>
+    <div class="lantern" style="left:10%;top:24%"></div>
+    <div class="lantern" style="right:12%;top:20%;height:64px"></div>
+    <div class="caption">
+      <b>05</b>
+      <h2>ליל פסטיבל</h2>
+      <p>בין ערביים, שרשרת נורות ופנסים. הלוח הוא מסך הבמה. חגיגי, חם, ומתאים לכולם.</p>
+    </div>
+    <div class="stage">
+      <div class="floor"></div>
+      <div class="board-wrap" style="inset:16% 16% 24%">
+        <div class="sign">צייר ונחש</div>
+        <div class="sheet">
+          <svg viewBox="0 0 200 120" fill="none" stroke="#3a241c" stroke-width="3" stroke-linecap="round">
+            <circle cx="58" cy="48" r="16"></circle>
+            <path d="M48 70c6 10 22 10 28 0"></path>
+            <path d="M120 78l18-34 18 34"></path>
+            <path d="M128 66h20"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+  <script>
+    const only = new URLSearchParams(location.search).get("only");
+    if (only) {
+      document.querySelectorAll("section").forEach((section, index) => {
+        section.style.display = String(index + 1) === only ? "grid" : "none";
+      });
+    }
+  </script>
+</body>
+</html>

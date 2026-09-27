@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>מילים לצייר ונחש</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0c1020;
+      --card: #151b30;
+      --line: #2c3658;
+      --text: #f4f7ff;
+      --muted: #9aa6c8;
+      --yes: #3dd68c;
+      --yes-bg: #143028;
+      --no: #f07171;
+      --no-bg: #2a1820;
+      --accent: #5ce1ff;
+      --phrase: #ffd27a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Heebo, "Segoe UI", Arial, sans-serif;
+      background: radial-gradient(1200px 500px at 100% -10%, #1a2748 0%, var(--bg) 55%);
+      color: var(--text);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(12, 16, 32, 0.94);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 20px 10px;
+      backdrop-filter: blur(8px);
+    }
+    .row, nav, .filters { max-width: 1100px; margin: 0 auto; }
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    h1 { font-size: 22px; margin: 0; }
+    .hint { color: var(--muted); font-size: 14px; margin: 4px 0 0; max-width: 640px; }
+    .actions, .filters, nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    nav { margin-top: 10px; }
+    nav a {
+      color: var(--accent);
+      text-decoration: none;
+      background: #1c243c;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .count {
+      background: #1c243c;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 700;
+    }
+    .count b.yes { color: var(--yes); }
+    .count b.no { color: var(--no); }
+    .count b.phrase { color: var(--phrase); }
+    button, select, input[type="search"], input[type="text"] {
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 700;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    button { cursor: pointer; }
+    .primary { background: var(--accent); color: #062028; }
+    .ghost { background: #1c243c; color: var(--text); border: 1px solid var(--line); }
+    .ghost.on { border-color: var(--accent); color: var(--accent); }
+    #copied { display: none; color: var(--yes); font-weight: 800; }
+    main { max-width: 1100px; margin: 0 auto; padding: 18px 20px 48px; }
+    .add {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr auto;
+      gap: 10px;
+      background: var(--card);
+      border: 1px dashed #3d4d78;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 8px;
+    }
+    .add input, .add select, .filters input {
+      background: #0c1020;
+      border: 1px solid var(--line);
+      color: var(--text);
+      width: 100%;
+    }
+    .filters { margin: 0 0 16px; }
+    .filters input { max-width: 220px; font-weight: 400; }
+    .err { color: var(--no); min-height: 1.2em; margin: 0 0 14px; font-size: 14px; }
+    section { margin-bottom: 22px; scroll-margin-top: 150px; }
+    .section-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+    h2 { font-size: 16px; margin: 0; color: var(--accent); }
+    .mini { padding: 4px 8px; font-size: 12px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--yes-bg);
+      border: 2px solid var(--yes);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 8px 6px 12px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      font-size: 15px;
+    }
+    .chip.no { background: var(--no-bg); border-color: #6a3038; color: #c9b0b4; }
+    .chip.phrase { box-shadow: inset 0 0 0 1px var(--phrase); }
+    .chip .tag {
+      font-size: 12px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: #123226;
+      color: var(--yes);
+    }
+    .chip.no .tag { background: #3a1c22; color: var(--no); }
+    .chip .space { font-size: 11px; font-weight: 700; color: var(--phrase); }
+    .chip.new::before { content: "חדשה"; font-size: 11px; font-weight: 700; color: var(--accent); }
+    .empty { color: var(--muted); font-size: 14px; }
+    @media (max-width: 700px) { .add { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <div>
+        <h1>מילים לצייר ונחש</h1>
+        <p class="hint">לחצי על מילה כדי להחליף בין כן ללא. תג «רווח» אומר שיש יותר ממילה אחת, ובמקלדת של המשחק עדיין אין מקש רווח. יהלום נמצא בטבע. הבחירה נשמרת בדפדפן.</p>
+      </div>
+      <div class="actions">
+        <span class="count">כן <b class="yes" id="yesCount">0</b> · לא <b class="no" id="noCount">0</b> · רווח <b class="phrase" id="phraseCount">0</b></span>
+        <button class="ghost" id="allYes" type="button">הכל כן</button>
+        <button class="ghost" id="allNo" type="button">הכל לא</button>
+        <button class="ghost" id="phrasesNo" type="button">רווחים → לא</button>
+        <button class="primary" id="copy" type="button">העתק לסוכן</button>
+        <span id="copied">הועתק</span>
+      </div>
+    </div>
+    <nav id="nav"></nav>
+  </header>
+  <main>
+    <form class="add" id="addForm">
+      <input id="newWord" type="text" placeholder="מילה חדשה" autocomplete="off" />
+      <select id="newCat"></select>
+      <button class="primary" type="submit">הוסיפי</button>
+    </form>
+    <p class="err" id="err"></p>
+    <div class="filters">
+      <button class="ghost on" type="button" data-filter="all">הכל</button>
+      <button class="ghost" type="button" data-filter="yes">רק כן</button>
+      <button class="ghost" type="button" data-filter="no">רק לא</button>
+      <button class="ghost" type="button" data-filter="phrase">עם רווח</button>
+      <input id="search" type="search" placeholder="חיפוש" />
+    </div>
+    <div id="app"></div>
+  </main>
+  <script>
+    const DATA = {"order":["חיות","אוכל","בית","חפצים","טבע","תחבורה","מקומות","גוף","דמויות","ספורט"],"titles":{"חיות":"חיות, ציפורים, יצורי ים וחרקים","אוכל":"אוכל, פירות, ירקות וממתקים","בית":"חפצי בית, ריהוט וחדרים","חפצים":"חפצים אישיים, ביגוד, אקססוריז וצעצועים","טבע":"טבע, נוף, חלל ומזג אוויר","תחבורה":"כלי תחבורה, נסיעות ודרכים","מקומות":"מקומות, מבנים ומבני ציבור","גוף":"גוף האדם, אימוג'ים והבעות","דמויות":"מקצועות, דמויות ודמויות דמיון","ספורט":"ספורט, פנאי ומשחקים"},"words":[{"category":"חיות","word":"כלב"},{"category":"חיות","word":"חתול"},{"category":"חיות","word":"דג"},{"category":"חיות","word":"ארנב"},{"category":"חיות","word":"פיל"},{"category":"חיות","word":"פרפר"},{"category":"חיות","word":"ברווז"},{"category":"חיות","word":"ציפור"},{"category":"חיות","word":"פרה"},{"category":"חיות","word":"סוס"},{"category":"חיות","word":"צב"},{"category":"חיות","word":"אריה"},{"category":"חיות","word":"דוב"},{"category":"חיות","word":"כבשה"},{"category":"חיות","word":"צפרדע"},{"category":"חיות","word":"פינגווין"},{"category":"חיות","word":"ג'ירפה"},{"category":"חיות","word":"קוף"},{"category":"חיות","word":"תרנגולת"},{"category":"חיות","word":"דולפין"},{"category":"חיות","word":"נחש"},{"category":"חיות","word":"ינשוף"},{"category":"חיות","word":"דבורה"},{"category":"חיות","word":"תמנון"},{"category":"חיות","word":"כריש"},{"category":"חיות","word":"זברה"},{"category":"חיות","word":"פנדה"},{"category":"חיות","word":"חילזון"},{"category":"חיות","word":"תוכי"},{"category":"חיות","word":"גמל"},{"category":"חיות","word":"עכבר"},{"category":"חיות","word":"נמר"},{"category":"חיות","word":"צבי"},{"category":"חיות","word":"שועל"},{"category":"חיות","word":"זאב"},{"category":"חיות","word":"תנין"},{"category":"חיות","word":"היפופוטם"},{"category":"חיות","word":"קרנף"},{"category":"חיות","word":"קיפוד"},{"category":"חיות","word":"עטלף"},{"category":"חיות","word":"קואלה"},{"category":"חיות","word":"קנגורו"},{"category":"חיות","word":"חמור"},{"category":"חיות","word":"עז"},{"category":"חיות","word":"ברבור"},{"category":"חיות","word":"פלמינגו"},{"category":"חיות","word":"נשר"},{"category":"חיות","word":"יונה"},{"category":"חיות","word":"טווס"},{"category":"חיות","word":"עורב"},{"category":"חיות","word":"שחף"},{"category":"חיות","word":"שקנאי"},{"category":"חיות","word":"נקר"},{"category":"חיות","word":"יען"},{"category":"חיות","word":"לוויתן"},{"category":"חיות","word":"מדוזה"},{"category":"חיות","word":"סרטן"},{"category":"חיות","word":"כוכב ים"},{"category":"חיות","word":"סוסון ים"},{"category":"חיות","word":"צלופח"},{"category":"חיות","word":"צדף"},{"category":"חיות","word":"דיונון"},{"category":"חיות","word":"נמלה"},{"category":"חיות","word":"עכביש"},{"category":"חיות","word":"חיפושית"},{"category":"חיות","word":"פרת משה רבנו"},{"category":"חיות","word":"זבוב"},{"category":"חיות","word":"יתוש"},{"category":"חיות","word":"צרצר"},{"category":"חיות","word":"גמל שלמה"},{"category":"חיות","word":"שפירית"},{"category":"חיות","word":"תולעת"},{"category":"חיות","word":"זחל"},{"category":"חיות","word":"עקרב"},{"category":"חיות","word":"סנאי"},{"category":"חיות","word":"בונה"},{"category":"חיות","word":"בואש"},{"category":"חיות","word":"דביבון"},{"category":"חיות","word":"אוגר"},{"category":"חיות","word":"שרקן"},{"category":"חיות","word":"למור"},{"category":"חיות","word":"זיקית"},{"category":"חיות","word":"לטאה"},{"category":"חיות","word":"חפרפרת"},{"category":"חיות","word":"פוני"},{"category":"חיות","word":"איל"},{"category":"חיות","word":"דוב קוטב"},{"category":"חיות","word":"דוב נמלים"},{"category":"חיות","word":"עצלן"},{"category":"חיות","word":"דינוזאור"},{"category":"חיות","word":"חד קרן"},{"category":"חיות","word":"דרקון"},{"category":"חיות","word":"בת ים"},{"category":"חיות","word":"חמוס"},{"category":"חיות","word":"צבוע"},{"category":"חיות","word":"בבון"},{"category":"חיות","word":"שימפנזה"},{"category":"חיות","word":"גורילה"},{"category":"חיות","word":"שור"},{"category":"חיות","word":"יאק"},{"category":"חיות","word":"אלפקה"},{"category":"חיות","word":"שפן"},{"category":"חיות","word":"קוברה"},{"category":"חיות","word":"אנקונדה"},{"category":"חיות","word":"חסידה"},{"category":"חיות","word":"אנפה"},{"category":"חיות","word":"כריש פטיש"},{"category":"חיות","word":"חתול ים"},{"category":"חיות","word":"ברקודה"},{"category":"חיות","word":"דג זהב"},{"category":"חיות","word":"דג ליצן"},{"category":"חיות","word":"דג חרב"},{"category":"חיות","word":"שפמנון"},{"category":"חיות","word":"טונה"},{"category":"חיות","word":"סלמון"},{"category":"חיות","word":"כינה"},{"category":"חיות","word":"פשפש"},{"category":"חיות","word":"מרבה רגליים"},{"category":"חיות","word":"גחלילית"},{"category":"חיות","word":"פרפר לילה"},{"category":"חיות","word":"איגואנה"},{"category":"חיות","word":"חרדון"},{"category":"חיות","word":"ראשן"},{"category":"חיות","word":"יגואר"},{"category":"חיות","word":"פומה"},{"category":"חיות","word":"אנטילופה"},{"category":"חיות","word":"יעל"},{"category":"חיות","word":"ארמדיל"},{"category":"אוכל","word":"תפוח"},{"category":"אוכל","word":"בננה"},{"category":"אוכל","word":"עוגה"},{"category":"אוכל","word":"פיצה"},{"category":"אוכל","word":"גלידה"},{"category":"אוכל","word":"גזר"},{"category":"אוכל","word":"עוגיה"},{"category":"אוכל","word":"אבטיח"},{"category":"אוכל","word":"ענבים"},{"category":"אוכל","word":"תות"},{"category":"אוכל","word":"לימון"},{"category":"אוכל","word":"תפוז"},{"category":"אוכל","word":"אגס"},{"category":"אוכל","word":"גבינה"},{"category":"אוכל","word":"לחם"},{"category":"אוכל","word":"ביצה"},{"category":"אוכל","word":"סוכריה"},{"category":"אוכל","word":"ארטיק"},{"category":"אוכל","word":"המבורגר"},{"category":"אוכל","word":"תירס"},{"category":"אוכל","word":"שוקולד"},{"category":"אוכל","word":"סופגניה"},{"category":"אוכל","word":"פלאפל"},{"category":"אוכל","word":"חומוס"},{"category":"אוכל","word":"פיתה"},{"category":"אוכל","word":"אננס"},{"category":"אוכל","word":"אפרסק"},{"category":"אוכל","word":"ופל"},{"category":"אוכל","word":"מלפפון"},{"category":"אוכל","word":"עגבניה"},{"category":"אוכל","word":"בצל"},{"category":"אוכל","word":"שום"},{"category":"אוכל","word":"תפוח אדמה"},{"category":"אוכל","word":"פלפל"},{"category":"אוכל","word":"חסה"},{"category":"אוכל","word":"כרוב"},{"category":"אוכל","word":"ברוקולי"},{"category":"אוכל","word":"כרובית"},{"category":"אוכל","word":"חציל"},{"category":"אוכל","word":"קישוא"},{"category":"אוכל","word":"בטטה"},{"category":"אוכל","word":"דלעת"},{"category":"אוכל","word":"אפונה"},{"category":"אוכל","word":"שעועית"},{"category":"אוכל","word":"פטרוזיליה"},{"category":"אוכל","word":"נענע"},{"category":"אוכל","word":"צנון"},{"category":"אוכל","word":"סלק"},{"category":"אוכל","word":"פטריות"},{"category":"אוכל","word":"זית"},{"category":"אוכל","word":"אבוקדו"},{"category":"אוכל","word":"מנגו"},{"category":"אוכל","word":"קיווי"},{"category":"אוכל","word":"דובדבן"},{"category":"אוכל","word":"שזיף"},{"category":"אוכל","word":"משמש"},{"category":"אוכל","word":"מלון"},{"category":"אוכל","word":"רימון"},{"category":"אוכל","word":"תמר"},{"category":"אוכל","word":"אשכולית"},{"category":"אוכל","word":"קלמנטינה"},{"category":"אוכל","word":"פטל"},{"category":"אוכל","word":"אוכמניות"},{"category":"אוכל","word":"קוקוס"},{"category":"אוכל","word":"קרמבולה"},{"category":"אוכל","word":"לחמניה"},{"category":"אוכל","word":"בגט"},{"category":"אוכל","word":"קרואסון"},{"category":"אוכל","word":"בייגל"},{"category":"אוכל","word":"טוסט"},{"category":"אוכל","word":"מצה"},{"category":"אוכל","word":"פנקייק"},{"category":"אוכל","word":"קרפ"},{"category":"אוכל","word":"וופל בלגי"},{"category":"אוכל","word":"צ'יפס"},{"category":"אוכל","word":"טבעות בצל"},{"category":"אוכל","word":"נקניקיה"},{"category":"אוכל","word":"שווארמה"},{"category":"אוכל","word":"טאקו"},{"category":"אוכל","word":"בוריטו"},{"category":"אוכל","word":"סושי"},{"category":"אוכל","word":"נודלס"},{"category":"אוכל","word":"ספגטי"},{"category":"אוכל","word":"מקרוני"},{"category":"אוכל","word":"לזניה"},{"category":"אוכל","word":"מרק"},{"category":"אוכל","word":"דייסה"},{"category":"אוכל","word":"קורנפלקס"},{"category":"אוכל","word":"כריך"},{"category":"אוכל","word":"סלט"},{"category":"אוכל","word":"פשטידה"},{"category":"אוכל","word":"סטייק"},{"category":"אוכל","word":"קציצה"},{"category":"אוכל","word":"שיפוד"},{"category":"אוכל","word":"קבב"},{"category":"אוכל","word":"שניצל"},{"category":"אוכל","word":"אורז"},{"category":"אוכל","word":"פסטה"},{"category":"אוכל","word":"פופקורן"},{"category":"אוכל","word":"נאצ'וס"},{"category":"אוכל","word":"בייגלה"},{"category":"אוכל","word":"דוריטוס"},{"category":"אוכל","word":"ביסלי"},{"category":"אוכל","word":"במבה"},{"category":"אוכל","word":"מסטיק"},{"category":"אוכל","word":"מרשמלו"},{"category":"אוכל","word":"קאפקייק"},{"category":"אוכל","word":"מאפין"},{"category":"אוכל","word":"דונאט"},{"category":"אוכל","word":"פאי"},{"category":"אוכל","word":"פאי תפוחים"},{"category":"אוכל","word":"מוס"},{"category":"אוכל","word":"ג'לי"},{"category":"אוכל","word":"פודינג"},{"category":"אוכל","word":"סופלה"},{"category":"אוכל","word":"בקלאווה"},{"category":"אוכל","word":"כנאפה"},{"category":"אוכל","word":"קרמבו"},{"category":"אוכל","word":"חלווה"},{"category":"אוכל","word":"ריבה"},{"category":"אוכל","word":"דבש"},{"category":"אוכל","word":"מייפל"},{"category":"אוכל","word":"קטשופ"},{"category":"אוכל","word":"מיונז"},{"category":"אוכל","word":"חרדל"},{"category":"אוכל","word":"חמאת בוטנים"},{"category":"אוכל","word":"מים"},{"category":"אוכל","word":"מיץ תפוזים"},{"category":"אוכל","word":"לימונדה"},{"category":"אוכל","word":"קולה"},{"category":"אוכל","word":"חלב"},{"category":"אוכל","word":"שוקו"},{"category":"אוכל","word":"תה"},{"category":"אוכל","word":"קפה"},{"category":"אוכל","word":"מילקשייק"},{"category":"אוכל","word":"שייק פירות"},{"category":"אוכל","word":"מיץ תפוחים"},{"category":"אוכל","word":"שוקו חם"},{"category":"אוכל","word":"אייס קפה"},{"category":"אוכל","word":"קנקן מיץ"},{"category":"בית","word":"בית"},{"category":"בית","word":"כיסא"},{"category":"בית","word":"שולחן"},{"category":"בית","word":"ספר"},{"category":"בית","word":"דלת"},{"category":"בית","word":"חלון"},{"category":"בית","word":"מיטה"},{"category":"בית","word":"מנורה"},{"category":"בית","word":"שעון"},{"category":"בית","word":"מפתח"},{"category":"בית","word":"טלוויזיה"},{"category":"בית","word":"מקרר"},{"category":"בית","word":"כוס"},{"category":"בית","word":"צלחת"},{"category":"בית","word":"כרית"},{"category":"בית","word":"סולם"},{"category":"בית","word":"מטאטא"},{"category":"בית","word":"סבון"},{"category":"בית","word":"ספה"},{"category":"בית","word":"מראה"},{"category":"בית","word":"עציץ"},{"category":"בית","word":"נר"},{"category":"בית","word":"פעמון"},{"category":"בית","word":"קומקום"},{"category":"בית","word":"שולחן כתיבה"},{"category":"בית","word":"כיסא נדנדה"},{"category":"בית","word":"ספסל"},{"category":"בית","word":"שרפרף"},{"category":"בית","word":"ארון בגדים"},{"category":"בית","word":"ארון מטבח"},{"category":"בית","word":"מדף"},{"category":"בית","word":"שידה"},{"category":"בית","word":"מגירה"},{"category":"בית","word":"מזנון"},{"category":"בית","word":"שולחן קפה"},{"category":"בית","word":"כורסה"},{"category":"בית","word":"מיטת קומותיים"},{"category":"בית","word":"מזרן"},{"category":"בית","word":"שמיכה"},{"category":"בית","word":"סדין"},{"category":"בית","word":"ציפית"},{"category":"בית","word":"שמיכת פוך"},{"category":"בית","word":"כרית נוי"},{"category":"בית","word":"אהיל"},{"category":"בית","word":"נברשת"},{"category":"בית","word":"שקע"},{"category":"בית","word":"תקע"},{"category":"בית","word":"ידית"},{"category":"בית","word":"מנעול"},{"category":"בית","word":"פעמון דלת"},{"category":"בית","word":"שטיח כניסה"},{"category":"בית","word":"שטיח"},{"category":"בית","word":"וילון"},{"category":"בית","word":"תריס"},{"category":"בית","word":"זכוכית"},{"category":"בית","word":"קיר"},{"category":"בית","word":"רצפה"},{"category":"בית","word":"תקרה"},{"category":"בית","word":"גג"},{"category":"בית","word":"ארובה"},{"category":"בית","word":"מרפסת"},{"category":"בית","word":"גינה"},{"category":"בית","word":"גדר"},{"category":"בית","word":"שער"},{"category":"בית","word":"שביל"},{"category":"בית","word":"מדרגות"},{"category":"בית","word":"מעקה"},{"category":"בית","word":"תנור"},{"category":"בית","word":"מיקרוגל"},{"category":"בית","word":"טוסטר"},{"category":"בית","word":"בלנדר"},{"category":"בית","word":"מיקסר"},{"category":"בית","word":"קומקום חשמלי"},{"category":"בית","word":"מדיח כלים"},{"category":"בית","word":"כיור"},{"category":"בית","word":"ברז"},{"category":"בית","word":"ספוג"},{"category":"בית","word":"סבון כלים"},{"category":"בית","word":"סיר"},{"category":"בית","word":"מחבת"},{"category":"בית","word":"תבנית אפייה"},{"category":"בית","word":"מצקת"},{"category":"בית","word":"מרית"},{"category":"בית","word":"כף עץ"},{"category":"בית","word":"סכין מטבח"},{"category":"בית","word":"קרש חיתוך"},{"category":"בית","word":"פותחן"},{"category":"בית","word":"קולפן"},{"category":"בית","word":"פומפיה"},{"category":"בית","word":"מסננת"},{"category":"בית","word":"קערה"},{"category":"בית","word":"מזלג"},{"category":"בית","word":"כף"},{"category":"בית","word":"כפית"},{"category":"בית","word":"כוס זכוכית"},{"category":"בית","word":"ספל"},{"category":"בית","word":"קש שתיה"},{"category":"בית","word":"בקבוק"},{"category":"בית","word":"פקק"},{"category":"בית","word":"קנקן"},{"category":"בית","word":"מגש"},{"category":"בית","word":"מלחיה"},{"category":"בית","word":"פלפליה"},{"category":"בית","word":"מפיות"},{"category":"בית","word":"שולחן אוכל"},{"category":"בית","word":"מפה"},{"category":"בית","word":"פח אשפה"},{"category":"בית","word":"שקית זבל"},{"category":"בית","word":"יעה"},{"category":"בית","word":"מגב"},{"category":"בית","word":"דלי"},{"category":"בית","word":"סמרטוט"},{"category":"בית","word":"נוצת אבק"},{"category":"בית","word":"שואב אבק"},{"category":"בית","word":"מכונת כביסה"},{"category":"בית","word":"מייבש כביסה"},{"category":"בית","word":"חבל כביסה"},{"category":"בית","word":"אטב כביסה"},{"category":"בית","word":"סל כביסה"},{"category":"בית","word":"קרש גיהוץ"},{"category":"בית","word":"מגהץ"},{"category":"בית","word":"אמבטיה"},{"category":"בית","word":"וילון מקלחת"},{"category":"בית","word":"אסלה"},{"category":"בית","word":"נייר טואלט"},{"category":"בית","word":"מברשת שיניים"},{"category":"בית","word":"משחת שיניים"},{"category":"בית","word":"שמפו"},{"category":"בית","word":"מרכך"},{"category":"בית","word":"מגבת"},{"category":"בית","word":"חלוק רחצה"},{"category":"בית","word":"שטיח אמבטיה"},{"category":"בית","word":"פן לשיער"},{"category":"בית","word":"מסרק"},{"category":"בית","word":"מברשת שיער"},{"category":"בית","word":"קוצץ ציפורניים"},{"category":"בית","word":"פינצטה"},{"category":"בית","word":"קיסם"},{"category":"בית","word":"צמר גפן"},{"category":"בית","word":"תרופה"},{"category":"בית","word":"פלסטר"},{"category":"בית","word":"תחבושת"},{"category":"בית","word":"מדחום"},{"category":"חפצים","word":"כדור"},{"category":"חפצים","word":"כובע"},{"category":"חפצים","word":"נעל"},{"category":"חפצים","word":"מתנה"},{"category":"חפצים","word":"בלון"},{"category":"חפצים","word":"משקפיים"},{"category":"חפצים","word":"גיטרה"},{"category":"חפצים","word":"מטריה"},{"category":"חפצים","word":"עיפרון"},{"category":"חפצים","word":"מחברת"},{"category":"חפצים","word":"תיק"},{"category":"חפצים","word":"כתר"},{"category":"חפצים","word":"מצלמה"},{"category":"חפצים","word":"טלפון"},{"category":"חפצים","word":"מחשב"},{"category":"חפצים","word":"רובוט"},{"category":"חפצים","word":"דגל"},{"category":"חפצים","word":"קוביה"},{"category":"חפצים","word":"בובה"},{"category":"חפצים","word":"אוהל"},{"category":"חפצים","word":"מצנח"},{"category":"חפצים","word":"עפיפון"},{"category":"חפצים","word":"תוף"},{"category":"חפצים","word":"פסנתר"},{"category":"חפצים","word":"פנס"},{"category":"חפצים","word":"גרב"},{"category":"חפצים","word":"חולצה"},{"category":"חפצים","word":"שמלה"},{"category":"חפצים","word":"צעיף"},{"category":"חפצים","word":"מספריים"},{"category":"חפצים","word":"סרגל"},{"category":"חפצים","word":"מברשת"},{"category":"חפצים","word":"קסדה"},{"category":"חפצים","word":"נדנדה"},{"category":"חפצים","word":"מגלשה"},{"category":"חפצים","word":"בריכה"},{"category":"חפצים","word":"גופיה"},{"category":"חפצים","word":"סוודר"},{"category":"חפצים","word":"קפוצ'ון"},{"category":"חפצים","word":"מעיל"},{"category":"חפצים","word":"ג'קט"},{"category":"חפצים","word":"מכנסיים"},{"category":"חפצים","word":"ג'ינס"},{"category":"חפצים","word":"מכנסיים קצרים"},{"category":"חפצים","word":"טייטס"},{"category":"חפצים","word":"טרנינג"},{"category":"חפצים","word":"חצאית"},{"category":"חפצים","word":"חצאית מיני"},{"category":"חפצים","word":"סרבל"},{"category":"חפצים","word":"פיג'מה"},{"category":"חפצים","word":"בגד ים"},{"category":"חפצים","word":"ביקיני"},{"category":"חפצים","word":"כובע צמר"},{"category":"חפצים","word":"כובע מצחיה"},{"category":"חפצים","word":"כובע טמבל"},{"category":"חפצים","word":"כובע קש"},{"category":"חפצים","word":"כומתה"},{"category":"חפצים","word":"מגבעת"},{"category":"חפצים","word":"כפפות"},{"category":"חפצים","word":"כפפות אגרוף"},{"category":"חפצים","word":"חגורה"},{"category":"חפצים","word":"עניבה"},{"category":"חפצים","word":"פפיון"},{"category":"חפצים","word":"שלייקס"},{"category":"חפצים","word":"נעלי ספורט"},{"category":"חפצים","word":"נעלי עקב"},{"category":"חפצים","word":"מגפיים"},{"category":"חפצים","word":"מגפי גשם"},{"category":"חפצים","word":"סנדלים"},{"category":"חפצים","word":"כפכפים"},{"category":"חפצים","word":"נעלי בית"},{"category":"חפצים","word":"שרוכים"},{"category":"חפצים","word":"תרמיל"},{"category":"חפצים","word":"תיק יד"},{"category":"חפצים","word":"ארנק"},{"category":"חפצים","word":"קלמר"},{"category":"חפצים","word":"מזוודה"},{"category":"חפצים","word":"שקית קניות"},{"category":"חפצים","word":"צמיד"},{"category":"חפצים","word":"שרשרת"},{"category":"חפצים","word":"טבעת"},{"category":"חפצים","word":"עגילים"},{"category":"חפצים","word":"שעון יד"},{"category":"חפצים","word":"שעון כיס"},{"category":"חפצים","word":"סיכת ראש"},{"category":"חפצים","word":"גומיה לשיער"},{"category":"חפצים","word":"קשת לשיער"},{"category":"חפצים","word":"סיכת ביטחון"},{"category":"חפצים","word":"כפתור"},{"category":"חפצים","word":"רוכסן"},{"category":"חפצים","word":"חוט"},{"category":"חפצים","word":"מחט"},{"category":"חפצים","word":"סליל חוט"},{"category":"חפצים","word":"צמר"},{"category":"חפצים","word":"מסרגות"},{"category":"חפצים","word":"בובת דובי"},{"category":"חפצים","word":"לגו"},{"category":"חפצים","word":"פאזל"},{"category":"חפצים","word":"יו יו"},{"category":"חפצים","word":"סביבון"},{"category":"חפצים","word":"רעשן"},{"category":"חפצים","word":"שבשבת"},{"category":"חפצים","word":"בועות סבון"},{"category":"חפצים","word":"אקדח מים"},{"category":"חפצים","word":"רובה חיצים"},{"category":"חפצים","word":"קלפים"},{"category":"חפצים","word":"לוח שחמט"},{"category":"חפצים","word":"חייל שחמט"},{"category":"חפצים","word":"דמקה"},{"category":"חפצים","word":"דומינו"},{"category":"חפצים","word":"קוביות משחק"},{"category":"חפצים","word":"גולות"},{"category":"חפצים","word":"סלינקי"},{"category":"חפצים","word":"סקייטבורד"},{"category":"חפצים","word":"גלגיליות"},{"category":"חפצים","word":"רולרבליידס"},{"category":"חפצים","word":"כינור"},{"category":"חפצים","word":"חצוצרה"},{"category":"חפצים","word":"חליל"},{"category":"חפצים","word":"סקסופון"},{"category":"חפצים","word":"צ'לו"},{"category":"חפצים","word":"נבל"},{"category":"חפצים","word":"דרבוקה"},{"category":"חפצים","word":"מצלתיים"},{"category":"חפצים","word":"משולש נגינה"},{"category":"חפצים","word":"מיקרופון"},{"category":"חפצים","word":"אוזניות"},{"category":"חפצים","word":"רמקול"},{"category":"חפצים","word":"שלט רחוק"},{"category":"חפצים","word":"סוללה"},{"category":"חפצים","word":"מטען"},{"category":"חפצים","word":"כבל"},{"category":"חפצים","word":"דיסק און קי"},{"category":"חפצים","word":"טאבלט"},{"category":"חפצים","word":"מקלדת"},{"category":"חפצים","word":"עכבר מחשב"},{"category":"חפצים","word":"מסך"},{"category":"חפצים","word":"מדפסת"},{"category":"חפצים","word":"פנס כיס"},{"category":"חפצים","word":"זכוכית מגדלת"},{"category":"חפצים","word":"משקפת"},{"category":"חפצים","word":"טלסקופ"},{"category":"חפצים","word":"מצפן"},{"category":"חפצים","word":"מפה גיאוגרפית"},{"category":"חפצים","word":"גלובוס"},{"category":"חפצים","word":"מעטפה"},{"category":"חפצים","word":"בול"},{"category":"חפצים","word":"גלויה"},{"category":"חפצים","word":"מכתב"},{"category":"חפצים","word":"עט"},{"category":"חפצים","word":"מרקר"},{"category":"חפצים","word":"צבע פנדה"},{"category":"חפצים","word":"גיר"},{"category":"חפצים","word":"לוח גיר"},{"category":"חפצים","word":"לוח מחיק"},{"category":"חפצים","word":"מחק"},{"category":"חפצים","word":"מחדד"},{"category":"חפצים","word":"דבק"},{"category":"חפצים","word":"שדכן"},{"category":"חפצים","word":"מהדק נייר"},{"category":"חפצים","word":"סיכה"},{"category":"חפצים","word":"קלסר"},{"category":"חפצים","word":"תיקייה"},{"category":"חפצים","word":"יומן"},{"category":"טבע","word":"שמש"},{"category":"טבע","word":"עץ"},{"category":"טבע","word":"פרח"},{"category":"טבע","word":"ירח"},{"category":"טבע","word":"כוכב"},{"category":"טבע","word":"ענן"},{"category":"טבע","word":"גשם"},{"category":"טבע","word":"קשת"},{"category":"טבע","word":"שלג"},{"category":"טבע","word":"הר"},{"category":"טבע","word":"ים"},{"category":"טבע","word":"עלה"},{"category":"טבע","word":"ברק"},{"category":"טבע","word":"אגם"},{"category":"טבע","word":"קקטוס"},{"category":"טבע","word":"פטריה"},{"category":"טבע","word":"אבן"},{"category":"טבע","word":"גזע"},{"category":"טבע","word":"ענף"},{"category":"טבע","word":"שורש"},{"category":"טבע","word":"ניצן"},{"category":"טבע","word":"קליפת עץ"},{"category":"טבע","word":"יער"},{"category":"טבע","word":"חורשה"},{"category":"טבע","word":"שיח"},{"category":"טבע","word":"דשא"},{"category":"טבע","word":"גבעול"},{"category":"טבע","word":"זרעים"},{"category":"טבע","word":"שדה"},{"category":"טבע","word":"חיטה"},{"category":"טבע","word":"חמניה"},{"category":"טבע","word":"שושנה"},{"category":"טבע","word":"ורד"},{"category":"טבע","word":"צבעוני"},{"category":"טבע","word":"רקפת"},{"category":"טבע","word":"חרצית"},{"category":"טבע","word":"סביון"},{"category":"טבע","word":"לוטוס"},{"category":"טבע","word":"שן הארי"},{"category":"טבע","word":"עץ דקל"},{"category":"טבע","word":"עץ אורן"},{"category":"טבע","word":"עץ אלון"},{"category":"טבע","word":"עץ ברוש"},{"category":"טבע","word":"אי"},{"category":"טבע","word":"חוף ים"},{"category":"טבע","word":"חול"},{"category":"טבע","word":"דיונה"},{"category":"טבע","word":"צוק"},{"category":"טבע","word":"מערה"},{"category":"טבע","word":"מפל"},{"category":"טבע","word":"נהר"},{"category":"טבע","word":"נחל"},{"category":"טבע","word":"גיא"},{"category":"טבע","word":"עמק"},{"category":"טבע","word":"געש"},{"category":"טבע","word":"הרי געש"},{"category":"טבע","word":"לבה"},{"category":"טבע","word":"מכתש"},{"category":"טבע","word":"מדבר"},{"category":"טבע","word":"נווה מדבר"},{"category":"טבע","word":"קרחון"},{"category":"טבע","word":"נטיף"},{"category":"טבע","word":"שלולית"},{"category":"טבע","word":"גל"},{"category":"טבע","word":"מערבולת"},{"category":"טבע","word":"בוץ"},{"category":"טבע","word":"אדמה"},{"category":"טבע","word":"סלע"},{"category":"טבע","word":"חלוק נחל"},{"category":"טבע","word":"קריסטל"},{"category":"טבע","word":"יהלום"},{"category":"טבע","word":"מאובן"},{"category":"טבע","word":"שמיים"},{"category":"טבע","word":"זריחה"},{"category":"טבע","word":"שקיעה"},{"category":"טבע","word":"שקיעת שמש"},{"category":"טבע","word":"ירח מלא"},{"category":"טבע","word":"חצי ירח"},{"category":"טבע","word":"סהר"},{"category":"טבע","word":"כוכב נופל"},{"category":"טבע","word":"שביל החלב"},{"category":"טבע","word":"מטאור"},{"category":"טבע","word":"אסטרואיד"},{"category":"טבע","word":"כוכב שביט"},{"category":"טבע","word":"כוכב לכת"},{"category":"טבע","word":"כדור הארץ"},{"category":"טבע","word":"שבתאי"},{"category":"טבע","word":"מאדים"},{"category":"טבע","word":"צדק"},{"category":"טבע","word":"חללית"},{"category":"טבע","word":"תחנת חלל"},{"category":"טבע","word":"לווין"},{"category":"טבע","word":"חליפת חלל"},{"category":"טבע","word":"ערפל"},{"category":"טבע","word":"עשן"},{"category":"טבע","word":"אש"},{"category":"טבע","word":"להבה"},{"category":"טבע","word":"מדורה"},{"category":"טבע","word":"גחלים"},{"category":"טבע","word":"ענן גשם"},{"category":"טבע","word":"ענן סערה"},{"category":"טבע","word":"סופת רעמים"},{"category":"טבע","word":"רעם"},{"category":"טבע","word":"ברד"},{"category":"טבע","word":"פתית שלג"},{"category":"טבע","word":"איש שלג"},{"category":"טבע","word":"כדור שלג"},{"category":"טבע","word":"סופת שלגים"},{"category":"טבע","word":"טורנדו"},{"category":"טבע","word":"סופה"},{"category":"טבע","word":"הוריקן"},{"category":"טבע","word":"צונאמי"},{"category":"טבע","word":"רוח"},{"category":"טבע","word":"טל"},{"category":"טבע","word":"כפור"},{"category":"תחבורה","word":"קורקינט"},{"category":"תחבורה","word":"קורקינט חשמלי"},{"category":"תחבורה","word":"מכונית"},{"category":"תחבורה","word":"אופניים"},{"category":"תחבורה","word":"סירה"},{"category":"תחבורה","word":"מטוס"},{"category":"תחבורה","word":"רכבת"},{"category":"תחבורה","word":"אוטובוס"},{"category":"תחבורה","word":"משאית"},{"category":"תחבורה","word":"אופנוע"},{"category":"תחבורה","word":"מסוק"},{"category":"תחבורה","word":"רקטה"},{"category":"תחבורה","word":"מונית"},{"category":"תחבורה","word":"ניידת משטרה"},{"category":"תחבורה","word":"אמבולנס"},{"category":"תחבורה","word":"כבאית"},{"category":"תחבורה","word":"משאית זבל"},{"category":"תחבורה","word":"משאית גרר"},{"category":"תחבורה","word":"טרקטור"},{"category":"תחבורה","word":"דחפור"},{"category":"תחבורה","word":"מערבל בטון"},{"category":"תחבורה","word":"מנוף"},{"category":"תחבורה","word":"מלגזה"},{"category":"תחבורה","word":"טנק"},{"category":"תחבורה","word":"ג'יפ"},{"category":"תחבורה","word":"טרקטורון"},{"category":"תחבורה","word":"כרכרה"},{"category":"תחבורה","word":"חד אופן"},{"category":"תחבורה","word":"תלת אופן"},{"category":"תחבורה","word":"רכבת תחתית"},{"category":"תחבורה","word":"חשמלית"},{"category":"תחבורה","word":"קרון רכבת"},{"category":"תחבורה","word":"קטר"},{"category":"תחבורה","word":"רכבת הרים"},{"category":"תחבורה","word":"רכבל"},{"category":"תחבורה","word":"מעבורת"},{"category":"תחבורה","word":"יאכטה"},{"category":"תחבורה","word":"סירת מפרש"},{"category":"תחבורה","word":"סירת משוטים"},{"category":"תחבורה","word":"סירת גומי"},{"category":"תחבורה","word":"קאנו"},{"category":"תחבורה","word":"קיאק"},{"category":"תחבורה","word":"גלשן"},{"category":"תחבורה","word":"אופנוע ים"},{"category":"תחבורה","word":"ספינת תענוגות"},{"category":"תחבורה","word":"ספינת משא"},{"category":"תחבורה","word":"ספינת פיראטים"},{"category":"תחבורה","word":"צוללת"},{"category":"תחבורה","word":"מצוף"},{"category":"תחבורה","word":"גלגל הצלה"},{"category":"תחבורה","word":"עוגן"},{"category":"תחבורה","word":"משוט"},{"category":"תחבורה","word":"הגה של ספינה"},{"category":"תחבורה","word":"הגה מכונית"},{"category":"תחבורה","word":"צמיג"},{"category":"תחבורה","word":"גלגל"},{"category":"תחבורה","word":"אגזוז"},{"category":"תחבורה","word":"שמשה"},{"category":"תחבורה","word":"מגבים"},{"category":"תחבורה","word":"מכסה מנוע"},{"category":"תחבורה","word":"לוחית רישוי"},{"category":"תחבורה","word":"רמזור"},{"category":"תחבורה","word":"תמרור עצור"},{"category":"תחבורה","word":"תמרור"},{"category":"תחבורה","word":"מעבר חציה"},{"category":"תחבורה","word":"כיכר"},{"category":"תחבורה","word":"מחלום"},{"category":"תחבורה","word":"כביש"},{"category":"תחבורה","word":"גשר"},{"category":"תחבורה","word":"מנהרה"},{"category":"תחבורה","word":"פסי רכבת"},{"category":"תחבורה","word":"תחנת דלק"},{"category":"תחבורה","word":"משאבת דלק"},{"category":"תחבורה","word":"שדה תעופה"},{"category":"תחבורה","word":"מסלול המראה"},{"category":"תחבורה","word":"כדור פורח"},{"category":"תחבורה","word":"דאון"},{"category":"תחבורה","word":"צפלין"},{"category":"מקומות","word":"בית ספר"},{"category":"מקומות","word":"גן ילדים"},{"category":"מקומות","word":"בית חולים"},{"category":"מקומות","word":"מרפאה"},{"category":"מקומות","word":"תחנת משטרה"},{"category":"מקומות","word":"תחנת כיבוי"},{"category":"מקומות","word":"סופרמרקט"},{"category":"מקומות","word":"מכולת"},{"category":"מקומות","word":"קניון"},{"category":"מקומות","word":"חנות"},{"category":"מקומות","word":"מאפייה"},{"category":"מקומות","word":"מסעדה"},{"category":"מקומות","word":"בית קפה"},{"category":"מקומות","word":"גלידריה"},{"category":"מקומות","word":"פיצריה"},{"category":"מקומות","word":"בית מלון"},{"category":"מקומות","word":"מוזיאון"},{"category":"מקומות","word":"תיאטרון"},{"category":"מקומות","word":"קולנוע"},{"category":"מקומות","word":"קרקס"},{"category":"מקומות","word":"לונה פארק"},{"category":"מקומות","word":"גן חיות"},{"category":"מקומות","word":"אקווריום"},{"category":"מקומות","word":"פארק"},{"category":"מקומות","word":"גן שעשועים"},{"category":"מקומות","word":"מגרש כדורגל"},{"category":"מקומות","word":"אצטדיון"},{"category":"מקומות","word":"בריכת שחיה"},{"category":"מקומות","word":"נמל"},{"category":"מקומות","word":"תחנת רכבת"},{"category":"מקומות","word":"תחנת אוטובוס"},{"category":"מקומות","word":"טירה"},{"category":"מקומות","word":"ארמון"},{"category":"מקומות","word":"מבצר"},{"category":"מקומות","word":"מגדל"},{"category":"מקומות","word":"מגדלור"},{"category":"מקומות","word":"גורד שחקים"},{"category":"מקומות","word":"אסם"},{"category":"מקומות","word":"טחנת רוח"},{"category":"מקומות","word":"צריף"},{"category":"מקומות","word":"איגלו"},{"category":"מקומות","word":"אוהל טיפי"},{"category":"מקומות","word":"פירמידה"},{"category":"מקומות","word":"מקדש"},{"category":"מקומות","word":"כנסייה"},{"category":"מקומות","word":"מסגד"},{"category":"מקומות","word":"בית כנסת"},{"category":"מקומות","word":"ספרייה"},{"category":"מקומות","word":"בנק"},{"category":"מקומות","word":"כספומט"},{"category":"מקומות","word":"תחנת דואר"},{"category":"מקומות","word":"תיבת דואר"},{"category":"מקומות","word":"גשר תלוי"},{"category":"מקומות","word":"שער ניצחון"},{"category":"גוף","word":"לב"},{"category":"גוף","word":"עין"},{"category":"גוף","word":"יד"},{"category":"גוף","word":"פנים"},{"category":"גוף","word":"ראש"},{"category":"גוף","word":"שיער"},{"category":"גוף","word":"אוזן"},{"category":"גוף","word":"אף"},{"category":"גוף","word":"פה"},{"category":"גוף","word":"שפתיים"},{"category":"גוף","word":"שן"},{"category":"גוף","word":"שיניים"},{"category":"גוף","word":"לשון"},{"category":"גוף","word":"סנטר"},{"category":"גוף","word":"לחי"},{"category":"גוף","word":"מצח"},{"category":"גוף","word":"גבה"},{"category":"גוף","word":"ריסים"},{"category":"גוף","word":"צוואר"},{"category":"גוף","word":"כתף"},{"category":"גוף","word":"זרוע"},{"category":"גוף","word":"מרפק"},{"category":"גוף","word":"כף יד"},{"category":"גוף","word":"אצבע"},{"category":"גוף","word":"אגודל"},{"category":"גוף","word":"ציפורן"},{"category":"גוף","word":"אגרוף"},{"category":"גוף","word":"חזה"},{"category":"גוף","word":"בטן"},{"category":"גוף","word":"פופיק"},{"category":"גוף","word":"גב"},{"category":"גוף","word":"מותן"},{"category":"גוף","word":"רגל"},{"category":"גוף","word":"ברך"},{"category":"גוף","word":"שוק"},{"category":"גוף","word":"קרסול"},{"category":"גוף","word":"כף רגל"},{"category":"גוף","word":"עקב"},{"category":"גוף","word":"אצבעות ברגליים"},{"category":"גוף","word":"שלד"},{"category":"גוף","word":"גולגולת"},{"category":"גוף","word":"עצם"},{"category":"גוף","word":"מוח"},{"category":"גוף","word":"חיוך"},{"category":"גוף","word":"פרצוף שמח"},{"category":"גוף","word":"פרצוף עצוב"},{"category":"גוף","word":"פרצוף צוחק"},{"category":"גוף","word":"פרצוף בוכה"},{"category":"גוף","word":"פרצוף כועס"},{"category":"גוף","word":"פרצוף מופתע"},{"category":"גוף","word":"פרצוף מפוחד"},{"category":"גוף","word":"קריצה"},{"category":"גוף","word":"פרצוף ישן"},{"category":"גוף","word":"פרצוף חולה"},{"category":"גוף","word":"נשיקה"},{"category":"גוף","word":"חיבוק"},{"category":"גוף","word":"כפיים"},{"category":"גוף","word":"לייק"},{"category":"גוף","word":"דיסלייק"},{"category":"גוף","word":"שלום עם היד"},{"category":"דמויות","word":"אסטרונאוט"},{"category":"דמויות","word":"מורה"},{"category":"דמויות","word":"תלמיד"},{"category":"דמויות","word":"רופא"},{"category":"דמויות","word":"אחות"},{"category":"דמויות","word":"שוטר"},{"category":"דמויות","word":"כבאי"},{"category":"דמויות","word":"חייל"},{"category":"דמויות","word":"טייס"},{"category":"דמויות","word":"דייל"},{"category":"דמויות","word":"נהג"},{"category":"דמויות","word":"נהג אוטובוס"},{"category":"דמויות","word":"קברניט"},{"category":"דמויות","word":"שף"},{"category":"דמויות","word":"טבח"},{"category":"דמויות","word":"מלצר"},{"category":"דמויות","word":"אופה"},{"category":"דמויות","word":"קצב"},{"category":"דמויות","word":"דייג"},{"category":"דמויות","word":"חקלאי"},{"category":"דמויות","word":"גנן"},{"category":"דמויות","word":"צבעי"},{"category":"דמויות","word":"בנאי"},{"category":"דמויות","word":"נגר"},{"category":"דמויות","word":"חשמלאי"},{"category":"דמויות","word":"שרברב"},{"category":"דמויות","word":"מכונאי"},{"category":"דמויות","word":"צייר"},{"category":"דמויות","word":"פסל"},{"category":"דמויות","word":"זמר"},{"category":"דמויות","word":"מוזיקאי"},{"category":"דמויות","word":"נגן"},{"category":"דמויות","word":"רקדן"},{"category":"דמויות","word":"רקדנית בלט"},{"category":"דמויות","word":"שחקן"},{"category":"דמויות","word":"ליצן"},{"category":"דמויות","word":"קוסם"},{"category":"דמויות","word":"להטוטן"},{"category":"דמויות","word":"ספורטאי"},{"category":"דמויות","word":"שחיין"},{"category":"דמויות","word":"אצן"},{"category":"דמויות","word":"מתעמל"},{"category":"דמויות","word":"כדורגלן"},{"category":"דמויות","word":"כדורסלן"},{"category":"דמויות","word":"מדען"},{"category":"דמויות","word":"בלש"},{"category":"דמויות","word":"שופט"},{"category":"דמויות","word":"עורך דין"},{"category":"דמויות","word":"מלך"},{"category":"דמויות","word":"מלכה"},{"category":"דמויות","word":"נסיך"},{"category":"דמויות","word":"נסיכה"},{"category":"דמויות","word":"אביר"},{"category":"דמויות","word":"פיראט"},{"category":"דמויות","word":"שודד ים"},{"category":"דמויות","word":"קאובוי"},{"category":"דמויות","word":"אינדיאני"},{"category":"דמויות","word":"נינג'ה"},{"category":"דמויות","word":"סמוראי"},{"category":"דמויות","word":"סוכן חשאי"},{"category":"דמויות","word":"בלרינה"},{"category":"דמויות","word":"גיבור על"},{"category":"דמויות","word":"נבל על"},{"category":"דמויות","word":"מכשפה"},{"category":"דמויות","word":"פיה"},{"category":"דמויות","word":"גמד"},{"category":"דמויות","word":"ענק"},{"category":"דמויות","word":"גובלין"},{"category":"דמויות","word":"שדון"},{"category":"דמויות","word":"טרול"},{"category":"דמויות","word":"ערפד"},{"category":"דמויות","word":"זומבי"},{"category":"דמויות","word":"רוח רפאים"},{"category":"דמויות","word":"מומיה"},{"category":"דמויות","word":"איש זאב"},{"category":"דמויות","word":"חייזר"},{"category":"דמויות","word":"איש רובוט"},{"category":"דמויות","word":"בובת שלג"},{"category":"ספורט","word":"כדורגל"},{"category":"ספורט","word":"כדורסל"},{"category":"ספורט","word":"משקולות"},{"category":"ספורט","word":"מתח"},{"category":"ספורט","word":"טרמפולינה"},{"category":"ספורט","word":"חבל קפיצה"},{"category":"ספורט","word":"חישוק הולה הופ"},{"category":"ספורט","word":"קסדת אופניים"},{"category":"ספורט","word":"כדורעף"},{"category":"ספורט","word":"כדור בסיס"},{"category":"ספורט","word":"כדור טניס"},{"category":"ספורט","word":"מחבט טניס"},{"category":"ספורט","word":"כדור פינג פונג"},{"category":"ספורט","word":"מחבט פינג פונג"},{"category":"ספורט","word":"שולחן פינג פונג"},{"category":"ספורט","word":"כדור באולינג"},{"category":"ספורט","word":"פין באולינג"},{"category":"ספורט","word":"שער כדורגל"},{"category":"ספורט","word":"סל כדורסל"},{"category":"ספורט","word":"רשת טניס"},{"category":"ספורט","word":"שק אגרוף"},{"category":"ספורט","word":"כפפת בייסבול"},{"category":"ספורט","word":"אלת בייסבול"},{"category":"ספורט","word":"מגלשי סקי"},{"category":"ספורט","word":"מקלות סקי"},{"category":"ספורט","word":"סנובורד"},{"category":"ספורט","word":"גלשן גלים"},{"category":"ספורט","word":"סנפירי צלילה"},{"category":"ספורט","word":"שנורקל"},{"category":"ספורט","word":"מסיכת צלילה"},{"category":"ספורט","word":"חכה"},{"category":"ספורט","word":"פיתיון"},{"category":"ספורט","word":"רשת דיג"},{"category":"ספורט","word":"חץ וקשת"},{"category":"ספורט","word":"לוח מטרה"},{"category":"ספורט","word":"גביע"},{"category":"ספורט","word":"מדליה"},{"category":"ספורט","word":"פודיום"},{"category":"ספורט","word":"משרוקית"},{"category":"ספורט","word":"סטופר"},{"category":"ספורט","word":"כרטיס אדום"},{"category":"ספורט","word":"כרטיס צהוב"},{"category":"ספורט","word":"לפיד"},{"category":"ספורט","word":"מדורת שבט"},{"category":"ספורט","word":"גיטרת רוק"},{"category":"ספורט","word":"תופי ג'אז"},{"category":"ספורט","word":"מיקרופון במה"},{"category":"ספורט","word":"מסכת תיאטרון"},{"category":"ספורט","word":"לוח צבעים"},{"category":"ספורט","word":"כן ציור"},{"category":"ספורט","word":"בלון הליום"},{"category":"ספורט","word":"מסיבת יום הולדת"},{"category":"ספורט","word":"כובע מסיבה"},{"category":"ספורט","word":"משרוקית יום הולדת"},{"category":"ספורט","word":"זיקוקים"},{"category":"ספורט","word":"קונפטי"},{"category":"ספורט","word":"עוגת חתונה"},{"category":"ספורט","word":"זר פרחים"},{"category":"ספורט","word":"טבעת יהלום"},{"category":"ספורט","word":"תיבת אוצר"},{"category":"ספורט","word":"מפת אוצר"},{"category":"ספורט","word":"מטבע זהב"},{"category":"ספורט","word":"שק מטבעות"},{"category":"ספורט","word":"מטיל זהב"}]};
+    const STORAGE_KEY = "draw-guess-words-v2";
+    const state = load();
+    let filter = "all";
+    let query = "";
+
+    function load() {
+      const base = { choices: {}, custom: [] };
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return base;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return base;
+        base.choices = parsed.choices && typeof parsed.choices === "object" ? parsed.choices : {};
+        base.custom = Array.isArray(parsed.custom) ? parsed.custom.filter((item) => item && item.word && item.category) : [];
+      } catch (err) {
+        return base;
+      }
+      return base;
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function keyOf(item) {
+      return item.category + "\n" + item.word;
+    }
+
+    function choiceOf(item) {
+      return state.choices[keyOf(item)] === "no" ? "no" : "yes";
+    }
+
+    function allItems() {
+      return DATA.words.concat(state.custom);
+    }
+
+    function categories() {
+      const names = DATA.order.slice();
+      for (const item of state.custom) {
+        if (!names.includes(item.category)) names.push(item.category);
+      }
+      return names;
+    }
+
+    function titleOf(category) {
+      return DATA.titles[category] || category;
+    }
+
+    function isPhrase(word) {
+      return /\s/.test(word);
+    }
+
+    function visible(item) {
+      const choice = choiceOf(item);
+      if (filter === "phrase" && !isPhrase(item.word)) return false;
+      if ((filter === "yes" || filter === "no") && choice !== filter) return false;
+      if (query && !item.word.includes(query) && !titleOf(item.category).includes(query)) return false;
+      return true;
+    }
+
+    function renderNav() {
+      const nav = document.getElementById("nav");
+      nav.innerHTML = "";
+      for (const category of categories()) {
+        const link = document.createElement("a");
+        link.href = "#cat-" + category;
+        link.textContent = category;
+        nav.appendChild(link);
+      }
+    }
+
+    function renderCats() {
+      const select = document.getElementById("newCat");
+      const current = select.value;
+      select.innerHTML = "";
+      for (const name of categories()) {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = titleOf(name);
+        select.appendChild(option);
+      }
+      const extra = document.createElement("option");
+      extra.value = "__new__";
+      extra.textContent = "קטגוריה חדשה…";
+      select.appendChild(extra);
+      if ([...select.options].some((option) => option.value === current)) select.value = current;
+    }
+
+    function setChoice(item, choice) {
+      state.choices[keyOf(item)] = choice;
+    }
+
+    function render() {
+      const app = document.getElementById("app");
+      app.innerHTML = "";
+      let yes = 0;
+      let no = 0;
+      let phrase = 0;
+      for (const item of allItems()) {
+        if (choiceOf(item) === "no") no += 1;
+        else yes += 1;
+        if (isPhrase(item.word)) phrase += 1;
+      }
+      document.getElementById("yesCount").textContent = String(yes);
+      document.getElementById("noCount").textContent = String(no);
+      document.getElementById("phraseCount").textContent = String(phrase);
+
+      const customKeys = new Set(state.custom.map(keyOf));
+      for (const category of categories()) {
+        const items = allItems().filter((item) => item.category === category && visible(item));
+        if (items.length === 0) continue;
+        const section = document.createElement("section");
+        section.id = "cat-" + category;
+        const head = document.createElement("div");
+        head.className = "section-head";
+        const title = document.createElement("h2");
+        const total = allItems().filter((item) => item.category === category).length;
+        title.textContent = titleOf(category) + " (" + total + ")";
+        head.appendChild(title);
+        const yesBtn = document.createElement("button");
+        yesBtn.type = "button";
+        yesBtn.className = "ghost mini";
+        yesBtn.textContent = "כן לקטגוריה";
+        yesBtn.addEventListener("click", () => {
+          for (const item of allItems()) if (item.category === category) setChoice(item, "yes");
+          save();
+          render();
+        });
+        const noBtn = document.createElement("button");
+        noBtn.type = "button";
+        noBtn.className = "ghost mini";
+        noBtn.textContent = "לא לקטגוריה";
+        noBtn.addEventListener("click", () => {
+          for (const item of allItems()) if (item.category === category) setChoice(item, "no");
+          save();
+          render();
+        });
+        head.append(yesBtn, noBtn);
+        section.appendChild(head);
+        const chips = document.createElement("div");
+        chips.className = "chips";
+        for (const item of items) {
+          const choice = choiceOf(item);
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "chip" + (choice === "no" ? " no" : "") + (isPhrase(item.word) ? " phrase" : "") + (customKeys.has(keyOf(item)) ? " new" : "");
+          button.append(document.createTextNode(item.word));
+          if (isPhrase(item.word)) {
+            const space = document.createElement("span");
+            space.className = "space";
+            space.textContent = "רווח";
+            button.appendChild(space);
+          }
+          const tag = document.createElement("span");
+          tag.className = "tag";
+          tag.textContent = choice === "no" ? "לא" : "כן";
+          button.appendChild(tag);
+          button.addEventListener("click", () => {
+            setChoice(item, choice === "no" ? "yes" : "no");
+            save();
+            render();
+          });
+          chips.appendChild(button);
+        }
+        section.appendChild(chips);
+        app.appendChild(section);
+      }
+      if (!app.children.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "אין מילים בתצוגה הזו.";
+        app.appendChild(empty);
+      }
+    }
+
+    function messageForAgent() {
+      const groups = new Map();
+      const droppedWords = [];
+      const added = [];
+      const builtinKeys = new Set(DATA.words.map(keyOf));
+      for (const item of allItems()) {
+        const choice = choiceOf(item);
+        const custom = !builtinKeys.has(keyOf(item));
+        if (choice === "yes") {
+          if (!groups.has(item.category)) groups.set(item.category, []);
+          groups.get(item.category).push(item.word);
+          if (custom) added.push(titleOf(item.category) + ": " + item.word);
+        } else if (!custom) {
+          droppedWords.push(item.word);
+        }
+      }
+      const lines = ["עדכני את רשימת המילים בצייר ונחש לפי הבחירה הזו.", "", "נשארות:"];
+      for (const [category, list] of groups) {
+        lines.push(titleOf(category) + ": " + list.join(", "));
+      }
+      lines.push("", "יוצאות: " + (droppedWords.length ? droppedWords.join(", ") : "אין"));
+      lines.push("", "הוספתי: " + (added.length ? added.join(" | ") : "אין"));
+      return lines.join("\n");
+    }
+
+    document.getElementById("addForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const err = document.getElementById("err");
+      const word = document.getElementById("newWord").value.trim().replace(/\s+/g, " ");
+      let category = document.getElementById("newCat").value;
+      if (category === "__new__") {
+        category = (window.prompt("שם הקטגוריה", "") || "").trim();
+      }
+      if (!word) {
+        err.textContent = "חסרה מילה.";
+        return;
+      }
+      if (!category) {
+        err.textContent = "חסרה קטגוריה.";
+        return;
+      }
+      if (allItems().some((item) => item.word === word)) {
+        err.textContent = "המילה כבר ברשימה.";
+        return;
+      }
+      state.custom.push({ category, word });
+      setChoice({ category, word }, "yes");
+      save();
+      document.getElementById("newWord").value = "";
+      err.textContent = "";
+      renderNav();
+      renderCats();
+      render();
+    });
+
+    document.getElementById("allYes").addEventListener("click", () => {
+      for (const item of allItems()) setChoice(item, "yes");
+      save();
+      render();
+    });
+    document.getElementById("allNo").addEventListener("click", () => {
+      for (const item of allItems()) setChoice(item, "no");
+      save();
+      render();
+    });
+    document.getElementById("phrasesNo").addEventListener("click", () => {
+      for (const item of allItems()) if (isPhrase(item.word)) setChoice(item, "no");
+      save();
+      render();
+    });
+    document.getElementById("copy").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(messageForAgent());
+      const copied = document.getElementById("copied");
+      copied.style.display = "inline";
+      setTimeout(() => { copied.style.display = "none"; }, 1600);
+    });
+    document.querySelectorAll("[data-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        filter = button.dataset.filter;
+        document.querySelectorAll("[data-filter]").forEach((other) => other.classList.toggle("on", other === button));
+        render();
+      });
+    });
+    document.getElementById("search").addEventListener("input", (event) => {
+      query = event.target.value.trim();
+      render();
+    });
+
+    renderNav();
+    renderCats();
+    render();
+  </script>
+</body>
+</html>

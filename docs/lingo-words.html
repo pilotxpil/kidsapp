@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>מילים ללינגו</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #eef1f8;
+      --card: #ffffff;
+      --line: #d5dced;
+      --text: #2a2c36;
+      --muted: #6e7484;
+      --yes: #53ad62;
+      --yes-bg: #e7f6ea;
+      --no: #c45050;
+      --no-bg: #f8ecec;
+      --accent: #3e54a8;
+      --yellow: #e8b831;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Heebo, "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(238, 241, 248, 0.94);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 20px 12px;
+      backdrop-filter: blur(8px);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    h1 { font-size: 26px; margin: 0; }
+    .hint { color: var(--muted); font-size: 14px; margin: 4px 0 0; max-width: 640px; }
+    .actions, .filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .count {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 700;
+    }
+    .count b.yes { color: var(--yes); }
+    .count b.no { color: var(--no); }
+    .count b.new { color: var(--accent); }
+    button, input[type="search"], input[type="text"] {
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 700;
+      font-family: inherit;
+      font-size: 15px;
+    }
+    button { cursor: pointer; }
+    .primary { background: var(--accent); color: white; }
+    .ghost { background: var(--card); color: var(--text); border: 1px solid var(--line); }
+    .ghost.on { border-color: var(--accent); color: var(--accent); }
+    #copied { display: none; color: var(--yes); font-weight: 800; }
+    main { max-width: 980px; margin: 0 auto; padding: 18px 20px 48px; }
+    .add {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      background: var(--card);
+      border: 1px dashed #b7c3e4;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 8px;
+    }
+    .add input, .filters input {
+      background: #f7f8fc;
+      border: 1px solid var(--line);
+      color: var(--text);
+      width: 100%;
+      font-weight: 400;
+    }
+    .filters { margin: 0 0 16px; }
+    .filters input { max-width: 220px; }
+    .err { color: var(--no); min-height: 1.2em; margin: 0 0 14px; font-size: 14px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--yes-bg);
+      border: 2px solid var(--yes);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 8px 6px 14px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .chip.no { background: var(--no-bg); border-color: #e3b4b4; color: #8d4a4a; }
+    .chip .tag {
+      font-size: 12px;
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: #d7f0dc;
+      color: #1f7a38;
+    }
+    .chip.no .tag { background: #f3d4d4; color: var(--no); }
+    .chip.new { box-shadow: inset 0 0 0 2px var(--yellow); }
+    .empty { color: var(--muted); font-size: 14px; }
+    @media (max-width: 700px) { .add { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap row">
+      <div>
+        <h1>מילים ללינגו</h1>
+        <p class="hint">לחצי על מילה כדי להחליף בין כן ללא. מילה חדשה צריכה 5 אותיות בעברית. האות האחרונה נשמרת בצורתה הסופית. הבחירה נשמרת בדפדפן.</p>
+      </div>
+      <div class="actions">
+        <span class="count">כן <b class="yes" id="yesCount">0</b> · לא <b class="no" id="noCount">0</b> · חדשות <b class="new" id="newCount">0</b></span>
+        <button class="ghost" id="allYes" type="button">הכל כן</button>
+        <button class="ghost" id="allNo" type="button">הכל לא</button>
+        <button class="primary" id="copy" type="button">העתק לסוכן</button>
+        <span id="copied">הועתק</span>
+      </div>
+    </div>
+  </header>
+  <main>
+    <form class="add" id="addForm">
+      <input id="newWord" type="text" placeholder="מילה חדשה, 5 אותיות" autocomplete="off" maxlength="12" />
+      <button class="primary" type="submit">הוסיפי</button>
+    </form>
+    <p class="err" id="err"></p>
+    <div class="filters">
+      <button class="ghost on" type="button" data-filter="all">הכל</button>
+      <button class="ghost" type="button" data-filter="yes">רק כן</button>
+      <button class="ghost" type="button" data-filter="no">רק לא</button>
+      <button class="ghost" type="button" data-filter="new">רק חדשות</button>
+      <input id="search" type="search" placeholder="חיפוש" />
+    </div>
+    <div class="chips" id="app"></div>
+  </main>
+  <script>
+    const WORDS = ["אבטיח","אוניה","איגלו","אלבום","אלמוג","ארטיק","ארמון","ארנבת","אשכול","בננות","בקבוק","בריכה","ברקים","גבינה","גבעול","גזרים","גיבור","גיטרה","גלידה","גמלים","גפרור","דחפור","דלתות","דרקון","הדבקה","הפסקה","הפתעה","ורדים","זיתים","זרעים","חברים","חוטים","חולצה","חומוס","חיבוק","חלוקי","חללית","חמניה","חנוכה","חרקים","חתולה","טבחים","טושים","טלפון","ילקוט","ינשוף","כוסות","כורסה","כלבלב","כפפות","כפתור","כרטיס","כתרים","לביבה","לוטרה","לימון","מגלשה","מגשים","מדבקה","מדורה","מחברת","מחוגה","מטאטא","מכחול","מנהרה","מנורה","מסגרת","מסיבה","מסלול","מעטפה","מפלצת","מצלמה","מקלדת","מקלות","מריצה","מרפסת","משאית","משפחה","משקפת","מתנות","נדנדה","נחלים","נמרים","נסיכה","נסיעה","נשיקה","סוסים","ספריה","ספרים","סרטים","ענבים","עננים","פורים","פטריה","פילים","פיתות","פלאפל","פנסים","פסנתר","פקקים","פרחים","צבעים","צדפים","ציפור","צלחות","צלצול","צעצוע","צפרדע","קוביה","קופסה","קיווי","קלפים","קפיצה","קרמבו","קשתות","רובוט","ריקוד","רכבות","רמזור","שבלול","שולחן","שושנה","שיעור","שירים","שמיים","שמיכה","שניצל","שרשרת","תוכים","תותים","תינוק","תלמיד","תמונה"];
+    const STORAGE_KEY = "lingo-words-v1";
+    const SOFIT_TO_REGULAR = { "ך": "כ", "ם": "מ", "ן": "נ", "ף": "פ", "ץ": "צ" };
+    const REGULAR_TO_SOFIT = { "כ": "ך", "מ": "ם", "נ": "ן", "פ": "ף", "צ": "ץ" };
+    const state = load();
+    let filter = "all";
+    let query = "";
+
+    function load() {
+      const base = { choices: {}, custom: [] };
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return base;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return base;
+        base.choices = parsed.choices && typeof parsed.choices === "object" ? parsed.choices : {};
+        base.custom = Array.isArray(parsed.custom) ? parsed.custom.filter((word) => typeof word === "string") : [];
+      } catch (err) {
+        return base;
+      }
+      return base;
+    }
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function allWords() {
+      return WORDS.concat(state.custom);
+    }
+
+    function choiceOf(word) {
+      return state.choices[word] === "no" ? "no" : "yes";
+    }
+
+    function isCustom(word) {
+      return state.custom.includes(word);
+    }
+
+    function visible(word) {
+      if (filter === "new" && !isCustom(word)) return false;
+      if ((filter === "yes" || filter === "no") && choiceOf(word) !== filter) return false;
+      if (query && !word.includes(query)) return false;
+      return true;
+    }
+
+    function normalize(raw) {
+      const chars = Array.from(String(raw || "").trim().replace(/\s+/g, ""));
+      if (chars.length !== 5) return { error: "צריך בדיוק 5 אותיות." };
+      for (const char of chars) {
+        if (!/^[\u05D0-\u05EA]$/.test(char)) return { error: "רק אותיות בעברית, בלי ניקוד ובלי רווח." };
+      }
+      const word = chars.map((char, index) => {
+        const regular = SOFIT_TO_REGULAR[char] || char;
+        return index === 4 ? (REGULAR_TO_SOFIT[regular] || regular) : regular;
+      }).join("");
+      if (allWords().includes(word)) return { error: "המילה כבר ברשימה." };
+      return { word };
+    }
+
+    function render() {
+      const app = document.getElementById("app");
+      app.innerHTML = "";
+      const words = allWords();
+      let yes = 0;
+      let no = 0;
+      for (const word of words) {
+        if (choiceOf(word) === "no") no += 1;
+        else yes += 1;
+      }
+      document.getElementById("yesCount").textContent = String(yes);
+      document.getElementById("noCount").textContent = String(no);
+      document.getElementById("newCount").textContent = String(state.custom.length);
+
+      const shown = words.filter(visible).sort((a, b) => a.localeCompare(b, "he"));
+      for (const word of shown) {
+        const choice = choiceOf(word);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "chip" + (choice === "no" ? " no" : "") + (isCustom(word) ? " new" : "");
+        button.append(document.createTextNode(word));
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.textContent = choice === "no" ? "לא" : "כן";
+        button.appendChild(tag);
+        button.addEventListener("click", () => {
+          state.choices[word] = choice === "no" ? "yes" : "no";
+          save();
+          render();
+        });
+        app.appendChild(button);
+      }
+      if (!shown.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "אין מילים בתצוגה הזו.";
+        app.appendChild(empty);
+      }
+    }
+
+    function messageForAgent() {
+      const kept = [];
+      const dropped = [];
+      const added = [];
+      const builtin = new Set(WORDS);
+      for (const word of allWords()) {
+        if (choiceOf(word) === "no") dropped.push(word);
+        else if (!builtin.has(word)) added.push(word);
+        else kept.push(word);
+      }
+      const lines = [
+        "רשימת מילים ללינגו אחרי הסינון שלי:",
+        "",
+        "להשאיר (" + kept.length + "):",
+        kept.join("\n") || "(אין)",
+        "",
+        "להוריד (" + dropped.length + "):",
+        dropped.join("\n") || "(אין)",
+        "",
+        "להוסיף (" + added.length + "):",
+        added.join("\n") || "(אין)"
+      ];
+      return lines.join("\n");
+    }
+
+    document.getElementById("addForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const input = document.getElementById("newWord");
+      const err = document.getElementById("err");
+      const result = normalize(input.value);
+      if (result.error) {
+        err.textContent = result.error;
+        return;
+      }
+      err.textContent = "";
+      state.custom.push(result.word);
+      state.choices[result.word] = "yes";
+      input.value = "";
+      save();
+      render();
+    });
+
+    document.getElementById("allYes").addEventListener("click", () => {
+      for (const word of allWords()) state.choices[word] = "yes";
+      save();
+      render();
+    });
+
+    document.getElementById("allNo").addEventListener("click", () => {
+      for (const word of allWords()) state.choices[word] = "no";
+      save();
+      render();
+    });
+
+    document.getElementById("copy").addEventListener("click", async () => {
+      const text = messageForAgent();
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (err) {
+        const area = document.createElement("textarea");
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand("copy");
+        area.remove();
+      }
+      const copied = document.getElementById("copied");
+      copied.style.display = "inline";
+      setTimeout(() => { copied.style.display = "none"; }, 1600);
+    });
+
+    for (const button of document.querySelectorAll("[data-filter]")) {
+      button.addEventListener("click", () => {
+        filter = button.dataset.filter;
+        for (const other of document.querySelectorAll("[data-filter]")) other.classList.toggle("on", other === button);
+        render();
+      });
+    }
+
+    document.getElementById("search").addEventListener("input", (event) => {
+      query = event.target.value.trim();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
