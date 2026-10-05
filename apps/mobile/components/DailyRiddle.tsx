@@ -400,6 +400,20 @@ function useRiddleStyles() {
           marginTop: 2,
           ...type.ui,
         },
+        kidMetaOk: {
+          color: look.ok,
+          fontSize: 13,
+          fontWeight: '800',
+          marginTop: 2,
+          ...type.ui,
+        },
+        kidMetaWrong: {
+          color: look.wrong,
+          fontSize: 13,
+          fontWeight: '800',
+          marginTop: 2,
+          ...type.ui,
+        },
       }),
     [themeId, type.ui, type.body, type.display, type.heading, look]
   );
@@ -641,8 +655,9 @@ export function ParentDailyRiddleList({
   const [busyKid, setBusyKid] = useState<string | null>(null);
   const pending = items.filter((item) => item.status === 'open');
   const appeals = items.filter((item) => item.appeal === 'pending');
+  const settled = items.filter((item) => item.status === 'won' || item.status === 'missed');
 
-  if (!pending.length && !appeals.length) return null;
+  if (!items.length) return null;
 
   const review = (kidId: string, action: 'approve' | 'reject') => {
     if (!onReviewAppeal || busyKid) return;
@@ -650,28 +665,38 @@ export function ParentDailyRiddleList({
     Promise.resolve(onReviewAppeal(kidId, action)).finally(() => setBusyKid(null));
   };
 
+  const hint = appeals.length
+    ? t('dailyRiddleParentAppeal')
+    : pending.length
+      ? open
+        ? t('dailyRiddleTapToClose')
+        : t('dailyRiddleTapToOpenParent')
+      : t('dailyRiddleParentResults');
+
+  const header = (
+    <View style={[styles.header, rtl.row]}>
+      <PuzzlePiece
+        size={62}
+        light={look.pieceLight}
+        mid={look.pieceMid}
+        dark={look.pieceDark}
+      />
+      <View style={styles.textCol}>
+        <Text style={[styles.kicker, rtl.text]}>{t('dailyRiddleTitle')}</Text>
+        <Text style={[styles.tapHint, rtl.text]}>{hint}</Text>
+      </View>
+    </View>
+  );
+
   return (
     <PuzzleShell style={{ marginTop: spacing.md, marginBottom: spacing.md }}>
-      <BouncyPressable onPress={() => setOpen((v) => !v)} scaleDown={0.98}>
-        <View style={[styles.header, rtl.row]}>
-          <PuzzlePiece
-            size={62}
-            light={look.pieceLight}
-            mid={look.pieceMid}
-            dark={look.pieceDark}
-          />
-          <View style={styles.textCol}>
-            <Text style={[styles.kicker, rtl.text]}>{t('dailyRiddleTitle')}</Text>
-            <Text style={[styles.tapHint, rtl.text]}>
-              {appeals.length
-                ? t('dailyRiddleParentAppeal')
-                : open
-                  ? t('dailyRiddleTapToClose')
-                  : t('dailyRiddleTapToOpenParent')}
-            </Text>
-          </View>
-        </View>
-      </BouncyPressable>
+      {pending.length ? (
+        <BouncyPressable onPress={() => setOpen((v) => !v)} scaleDown={0.98}>
+          {header}
+        </BouncyPressable>
+      ) : (
+        header
+      )}
       {appeals.map((item) => (
         <View key={`appeal-${item.kidId}`} style={styles.kidBlock}>
           <View style={[styles.kidHead, rtl.row]}>
@@ -711,6 +736,47 @@ export function ParentDailyRiddleList({
           </View>
         </View>
       ))}
+      {settled.map((item) => {
+        const correct = item.status === 'won';
+        return (
+          <View key={`settled-${item.kidId}`} style={styles.kidBlock}>
+            <View style={[styles.kidHead, rtl.row]}>
+              <KidAvatar avatar={item.kid?.avatar ?? '🎮'} size={40} />
+              <View style={styles.textCol}>
+                <Text style={[styles.kidName, rtl.text]}>
+                  {item.kid?.displayName ?? t('dailyRiddle')}
+                </Text>
+                <Text style={[correct ? styles.kidMetaOk : styles.kidMetaWrong, rtl.text]}>
+                  {correct ? t('dailyRiddleParentWon') : t('dailyRiddleParentMissed')}
+                </Text>
+              </View>
+            </View>
+            <RiddlePrompt prompt={item.prompt} extra={item.extra} visual={item.visual} />
+            {item.guess ? (
+              <>
+                <Text style={[styles.label, rtl.text]}>{t('dailyRiddleKidAnswer')}</Text>
+                <View style={[styles.choice, correct ? styles.choiceOk : styles.choiceWrong]}>
+                  <Text style={[styles.choiceText, rtl.text]}>{item.guess}</Text>
+                </View>
+              </>
+            ) : null}
+            {item.answer ? (
+              <>
+                <Text style={[styles.label, rtl.text]}>{t('dailyRiddleOfficialAnswer')}</Text>
+                <View style={[styles.choice, styles.choiceOk]}>
+                  <Text style={[styles.choiceText, rtl.text]}>{item.answer}</Text>
+                </View>
+              </>
+            ) : null}
+            {item.why ? (
+              <>
+                <Text style={[styles.label, rtl.text]}>{t('dailyRiddleWhy')}</Text>
+                <Text style={[styles.why, rtl.text]}>{item.why}</Text>
+              </>
+            ) : null}
+          </View>
+        );
+      })}
       {open
         ? pending.map((item) => (
             <View key={item.kidId} style={styles.kidBlock}>
