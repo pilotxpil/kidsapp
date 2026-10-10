@@ -6,7 +6,8 @@ export interface IPointTransaction extends Document {
   amount: number;
   type: 'task' | 'redemption' | 'bonus' | 'streak' | 'daily';
   description: string;
-  referenceId?: Types.ObjectId;
+  /** Task, redemption, or cosmetic id. Cosmetic ids are not ObjectIds. */
+  referenceId?: string;
   createdAt: Date;
 }
 
@@ -21,7 +22,7 @@ const pointTransactionSchema = new Schema<IPointTransaction>(
       required: true,
     },
     description: { type: String, required: true },
-    referenceId: { type: Schema.Types.ObjectId },
+    referenceId: { type: String },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

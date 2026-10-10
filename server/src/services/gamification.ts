@@ -386,10 +386,7 @@ export async function awardPoints(
 }
 
 export async function deductPoints(kid: IUser, amount: number, description: string, referenceId?: string) {
-  kid.points -= amount;
-  await saveKidProgress(kid);
-
-  await PointTransaction.create({
+  const txn = await PointTransaction.create({
     kidId: kid._id,
     familyId: kid.familyId,
     amount: -amount,
@@ -397,6 +394,14 @@ export async function deductPoints(kid: IUser, amount: number, description: stri
     description,
     referenceId,
   });
+  kid.points -= amount;
+  try {
+    await saveKidProgress(kid);
+  } catch (err) {
+    kid.points += amount;
+    await PointTransaction.deleteOne({ _id: txn._id });
+    throw err;
+  }
 }
 
 async function updateLevelAndBadges(kid: IUser): Promise<BadgeUnlock[]> {

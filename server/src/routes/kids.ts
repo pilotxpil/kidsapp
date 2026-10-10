@@ -675,7 +675,7 @@ router.post('/cosmetics/:itemId/buy', authenticate, async (req: Request, res: Re
     res.json({ kid: formatUser(kid), item });
   } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: err.message || 'שגיאה בקניית פריט' });
+    res.status(500).json({ error: 'שגיאה בקניית פריט' });
   }
 });
 
