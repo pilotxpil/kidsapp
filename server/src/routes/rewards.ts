@@ -5,7 +5,8 @@ import { Redemption } from '../models/Redemption';
 import { User } from '../models/User';
 import { deductPoints } from '../services/gamification';
 import { formatUser, formatReward } from '../utils/format';
-import { resolvedRewardIcon } from '@kidsapp/shared';
+import { COSMETIC_ITEMS, resolvedRewardIcon } from '@kidsapp/shared';
+import { PointTransaction } from '../models/PointTransaction';
 
 const router = Router();
 
@@ -217,7 +218,31 @@ router.get('/redemptions', authenticate, requireParent, async (req: Request, res
       .sort({ requestedAt: -1 })
       .limit(200);
 
-    res.json({ redemptions: redemptions.map((r) => formatRedemption(r)) });
+    const paidCosmetics = COSMETIC_ITEMS.filter((item) => item.cost > 0);
+    const cosmeticById = new Map(paidCosmetics.map((item) => [item.id, item]));
+    const txnFilter: Record<string, unknown> = {
+      familyId: req.user!.familyId,
+      type: 'redemption',
+      referenceId: { $in: paidCosmetics.map((item) => item.id) },
+    };
+    if (kidId) txnFilter.kidId = kidId;
+    const shopTxns = await PointTransaction.find(txnFilter).sort({ createdAt: -1 }).limit(200);
+
+    res.json({
+      redemptions: redemptions.map((r) => formatRedemption(r)),
+      shopPurchases: shopTxns.map((txn) => {
+        const item = cosmeticById.get(String(txn.referenceId));
+        return {
+          _id: txn._id.toString(),
+          kidId: txn.kidId.toString(),
+          itemId: String(txn.referenceId),
+          label: item?.label ?? txn.description.replace(/^קנייה:\s*/, ''),
+          icon: item?.icon ?? String(txn.referenceId),
+          cost: Math.abs(txn.amount),
+          boughtAt: txn.createdAt.toISOString(),
+        };
+      }),
+    });
   } catch (err) {
     res.status(500).json({ error: 'שגיאה בטעינת מתנות' });
   }

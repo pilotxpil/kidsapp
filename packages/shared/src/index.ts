@@ -337,6 +337,17 @@ export interface Redemption {
   kid?: User;
 }
 
+/** Avatar (or other cosmetic) bought in the kid shop. Shown with gift redemptions. */
+export interface KidShopPurchase {
+  _id: string;
+  kidId: string;
+  itemId: string;
+  label: string;
+  icon: string;
+  cost: number;
+  boughtAt: string;
+}
+
 export interface PointTransaction {
   _id: string;
   kidId: string;

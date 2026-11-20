@@ -16,7 +16,7 @@ import { KidAvatar } from '../../components/KidAvatar';
 import { Button } from '../../components/Button';
 import { ThemedScreen } from '../../components/ThemedScreen';
 import { SectionHeader } from '../../components/ThemedHero';
-import type { Redemption, User } from '@kidsapp/shared';
+import type { KidShopPurchase, Redemption, User } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
@@ -35,6 +35,7 @@ export default function ParentKidGiftsScreen() {
   const [kids, setKids] = useState<User[]>([]);
   const [selectedKidId, setSelectedKidId] = useState<string | null>(null);
   const [gifts, setGifts] = useState<Redemption[]>([]);
+  const [shopPurchases, setShopPurchases] = useState<KidShopPurchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [markingId, setMarkingId] = useState<string | null>(null);
@@ -93,8 +94,9 @@ export default function ParentKidGiftsScreen() {
   );
 
   const loadForKid = useCallback(async (kidId: string) => {
-    const { redemptions } = await api.getKidGifts(kidId);
+    const { redemptions, shopPurchases: bought } = await api.getKidGifts(kidId);
     setGifts(redemptions);
+    setShopPurchases(bought ?? []);
   }, []);
 
   const load = useCallback(async () => {
@@ -120,11 +122,26 @@ export default function ParentKidGiftsScreen() {
         await loadForKid(id);
       } else {
         setGifts([]);
+        setShopPurchases([]);
       }
     } finally {
       setLoading(false);
     }
   }, [kidIdParam, loadForKid]);
+
+  const rows = useMemo(() => {
+    const rewardRows = gifts.map((gift) => ({
+      kind: 'reward' as const,
+      at: gift.reviewedAt || gift.requestedAt,
+      gift,
+    }));
+    const shopRows = shopPurchases.map((purchase) => ({
+      kind: 'shop' as const,
+      at: purchase.boughtAt,
+      purchase,
+    }));
+    return [...rewardRows, ...shopRows].sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+  }, [gifts, shopPurchases]);
 
   useFocusLoad(load);
 
@@ -136,6 +153,7 @@ export default function ParentKidGiftsScreen() {
       await loadForKid(id);
     } catch {
       setGifts([]);
+      setShopPurchases([]);
     } finally {
       setLoading(false);
     }
@@ -199,10 +217,29 @@ export default function ParentKidGiftsScreen() {
 
             {loading ? (
               <ActivityIndicator style={styles.loader} color={colors.primary} />
-            ) : gifts.length === 0 ? (
+            ) : rows.length === 0 ? (
               <Text style={styles.empty}>{t('noKidGifts')}</Text>
             ) : (
-              gifts.map((gift) => {
+              rows.map((row) => {
+                if (row.kind === 'shop') {
+                  const purchase = row.purchase;
+                  return (
+                    <Card key={`shop-${purchase._id}`} style={styles.giftCard}>
+                      <View style={[styles.giftRow, rtl.row]}>
+                        <KidAvatar avatar={purchase.icon} size={36} />
+                        <View style={styles.giftInfo}>
+                          <Text style={[styles.giftTitle, rtl.textFull]}>{purchase.label}</Text>
+                          <Text style={[styles.giftMeta, rtl.textFull]}>
+                            {purchase.cost} {pointsEmoji}
+                            {` · ${t('giftBoughtAt').replace('{date}', formatWhen(purchase.boughtAt))}`}
+                          </Text>
+                          <Text style={[styles.giftMeta, rtl.textFull]}>{t('shopGiftKind')}</Text>
+                        </View>
+                      </View>
+                    </Card>
+                  );
+                }
+                const gift = row.gift;
                 const bought = gift.status === 'approved' || gift.status === 'fulfilled';
                 const pending = gift.status === 'pending';
                 return (

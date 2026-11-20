@@ -665,13 +665,12 @@ export function ParentDailyRiddleList({
     Promise.resolve(onReviewAppeal(kidId, action)).finally(() => setBusyKid(null));
   };
 
-  const hint = appeals.length
-    ? t('dailyRiddleParentAppeal')
-    : pending.length
-      ? open
+  const hint =
+    !open && appeals.length
+      ? t('dailyRiddleParentAppeal')
+      : open
         ? t('dailyRiddleTapToClose')
-        : t('dailyRiddleTapToOpenParent')
-      : t('dailyRiddleParentResults');
+        : t('dailyRiddleTapToOpenParent');
 
   const header = (
     <View style={[styles.header, rtl.row]}>
@@ -690,14 +689,10 @@ export function ParentDailyRiddleList({
 
   return (
     <PuzzleShell style={{ marginTop: spacing.md, marginBottom: spacing.md }}>
-      {pending.length ? (
-        <BouncyPressable onPress={() => setOpen((v) => !v)} scaleDown={0.98}>
-          {header}
-        </BouncyPressable>
-      ) : (
-        header
-      )}
-      {appeals.map((item) => (
+      <BouncyPressable onPress={() => setOpen((v) => !v)} scaleDown={0.98}>
+        {header}
+      </BouncyPressable>
+      {open ? appeals.map((item) => (
         <View key={`appeal-${item.kidId}`} style={styles.kidBlock}>
           <View style={[styles.kidHead, rtl.row]}>
             <KidAvatar avatar={item.kid?.avatar ?? '🎮'} size={40} />
@@ -735,8 +730,8 @@ export function ParentDailyRiddleList({
             />
           </View>
         </View>
-      ))}
-      {settled.map((item) => {
+      )) : null}
+      {open ? settled.map((item) => {
         const correct = item.status === 'won';
         return (
           <View key={`settled-${item.kidId}`} style={styles.kidBlock}>
@@ -776,7 +771,7 @@ export function ParentDailyRiddleList({
             ) : null}
           </View>
         );
-      })}
+      }) : null}
       {open
         ? pending.map((item) => (
             <View key={item.kidId} style={styles.kidBlock}>

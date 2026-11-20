@@ -323,6 +323,7 @@ export const he = {
   kidGifts: 'מתנות שנקנו',
   viewKidGifts: 'מתנות שנקנו',
   giftBoughtAt: 'נקנה {date}',
+  shopGiftKind: 'אייקון בחנות',
   giftPendingApproval: 'ממתין לאישור',
   giftNotUsed: 'עדיין לא נוצל',
   giftUsedAt: 'נוצל {date}',

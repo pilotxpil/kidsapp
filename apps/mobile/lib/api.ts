@@ -21,6 +21,7 @@ import type {
   LearningCheckResult,
   PointTransaction,
   Redemption,
+  KidShopPurchase,
   LearningCatalogItem,
   LearningCategory,
   PushPlatform,
@@ -226,7 +227,7 @@ export const api = {
   },
 
   getKidGifts(kidId: string) {
-    return request<{ redemptions: Redemption[] }>(
+    return request<{ redemptions: Redemption[]; shopPurchases: KidShopPurchase[] }>(
       `/rewards/redemptions?kidId=${encodeURIComponent(kidId)}`
     );
   },
