@@ -1,6 +1,5 @@
 import { Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../../lib/auth';
 import { prefetchParentScreens } from '../../lib/prefetch-tabs';
 import { initSfx } from '../../lib/sfx';
@@ -27,7 +26,6 @@ export default function ParentLayout() {
 
   return (
     <>
-      <StatusBar style="dark" />
       <Tabs tabBar={(props) => <ToyTabBar {...props} badges={{ index: pending }} />} screenOptions={{ headerShown: false }}>
         <Tabs.Screen name="index" options={{ title: c.parent.tabHome }} />
         <Tabs.Screen name="tasks" options={{ title: c.parent.tabTasks }} />

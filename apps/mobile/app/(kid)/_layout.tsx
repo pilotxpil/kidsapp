@@ -1,7 +1,6 @@
 import { Tabs } from 'expo-router';
 import { AppState } from 'react-native';
 import { useEffect, useRef } from 'react';
-import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../../lib/auth';
 import { useTheme } from '../../lib/theme-context';
 import { t } from '../../lib/i18n';
@@ -44,7 +43,6 @@ export default function KidLayout() {
 
   return (
     <BadgeCelebrationProvider>
-      <StatusBar style="light" />
       <Tabs tabBar={(props) => <ToyTabBar {...props} />} screenOptions={{ headerShown: false }}>
         <Tabs.Screen name="index" options={{ title: t('home') }} />
         <Tabs.Screen name="tasks" options={{ title: t('tasks') }} />

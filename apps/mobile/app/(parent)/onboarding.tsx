@@ -9,7 +9,7 @@ import { useTheme } from '../../lib/theme-context';
 import { useErrorHandler, usePremium } from '../../lib/premium';
 import { haptic } from '../../lib/haptics';
 import { INK, LINE, MINT, WHITE } from '../../constants/themes';
-import { Coin, Icon, Piko, Row, Sticker, ToyButton, Txt, GUTTER, type PikoMood } from '../../components/ui';
+import { Coin, Icon, Piko, Row, Sticker, ToyButton, Txt, GUTTER, useStatusBar, type PikoMood } from '../../components/ui';
 import { KidForm, kidDraftFrom, validateKid, type KidDraft } from '../../components/parent/KidForm';
 import { KidLoginQrModal } from '../../components/KidLoginQrModal';
 import { RewardBurst } from '../../components/kid/RewardBurst';
@@ -61,6 +61,7 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { world } = useTheme();
   const { refresh } = usePremium();
+  useStatusBar('dark');
   const onError = useErrorHandler();
   const [step, setStep] = useState<Step>(0);
   const [kidDraft, setKidDraft] = useState<KidDraft>(kidDraftFrom(null));

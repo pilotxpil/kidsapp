@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useCallback } from 'react';
+import { setStatusBarStyle } from 'expo-status-bar';
 import { RefreshControl, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path, G, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useTheme } from '../../lib/theme-context';
 import { INK, WHITE, type Scenery } from '../../constants/themes';
 import { Txt } from './Txt';
@@ -108,10 +109,20 @@ function edgePath(scenery: Scenery): string {
   }
 }
 
+/** Status bar icons follow the focused screen: light over painted skies, dark on paper. */
+export function useStatusBar(style: 'light' | 'dark') {
+  useFocusEffect(
+    useCallback(() => {
+      setStatusBarStyle(style, true);
+    }, [style])
+  );
+}
+
 /** The painted sky band at the top of every kid screen. */
 export function WorldSky({ children, compact }: { children?: React.ReactNode; compact?: boolean }) {
   const { world } = useTheme();
   const insets = useSafeAreaInsets();
+  useStatusBar('light');
   return (
     <View style={{ paddingTop: insets.top + (compact ? 8 : 12) }}>
       <LinearGradient colors={[world.sky[0], world.sky[1]]} style={StyleSheet.absoluteFill} />
@@ -203,6 +214,7 @@ export function CalmScreen({
   const { world } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  useStatusBar('dark');
   const header = (
     <View style={{ paddingTop: insets.top + 10, paddingHorizontal: GUTTER, paddingBottom: 12 }}>
       <Row justify="between" align="center" gap={10}>

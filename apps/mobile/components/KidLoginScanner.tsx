@@ -1,12 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Modal, Pressable, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, Platform, StyleSheet, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { parseKidLoginQr } from '@kidsapp/shared';
-import { Button } from './Button';
-import { useTheme } from '../lib/theme-context';
-import { spacing } from '../constants/theme';
-import { rtl } from '../lib/rtl';
+import { INK, WHITE } from '../constants/themes';
+import { haptic } from '../lib/haptics';
 import { t } from '../lib/i18n';
+import { Piko, ToyButton, Txt } from './ui';
 
 interface KidLoginScannerProps {
   visible: boolean;
@@ -14,8 +13,8 @@ interface KidLoginScannerProps {
   onScan: (payload: { familyCode: string; username: string; displayName?: string }) => void;
 }
 
+/** Scan the login QR a parent shows from the Family screen. */
 export function KidLoginScanner({ visible, onClose, onScan }: KidLoginScannerProps) {
-  const { colors, borderRadius, cardBorder } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
 
@@ -23,113 +22,86 @@ export function KidLoginScanner({ visible, onClose, onScan }: KidLoginScannerPro
     if (visible) setScanned(false);
   }, [visible]);
 
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        overlay: {
-          flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.9)',
-          justifyContent: 'center',
-          padding: spacing.lg,
-        },
-        card: {
-          backgroundColor: colors.bgCard,
-          borderRadius: borderRadius.xl,
-          overflow: 'hidden',
-          maxWidth: 400,
-          width: '100%',
-          alignSelf: 'center',
-          ...cardBorder(2),
-        },
-        header: {
-          padding: spacing.lg,
-          paddingBottom: spacing.sm,
-        },
-        title: {
-          color: colors.text,
-          fontSize: 20,
-          fontFamily: 'Fredoka_700Bold',
-          textAlign: 'center',
-        },
-        hint: {
-          color: colors.textMuted,
-          fontSize: 13,
-          textAlign: 'center',
-          marginTop: spacing.sm,
-        },
-        cameraWrap: {
-          aspectRatio: 1,
-          width: '100%',
-          backgroundColor: '#000',
-        },
-        camera: { flex: 1 },
-        footer: {
-          padding: spacing.lg,
-          gap: spacing.sm,
-        },
-        denied: {
-          color: colors.textMuted,
-          textAlign: 'center',
-          padding: spacing.xl,
-        },
-      }),
-    [colors, borderRadius, cardBorder]
-  );
-
   const handleBarcode = ({ data }: { data: string }) => {
     if (scanned) return;
     const payload = parseKidLoginQr(data);
     if (!payload) return;
     setScanned(true);
+    haptic.success();
     onScan(payload);
     onClose();
   };
 
-  if (Platform.OS === 'web') {
-    return (
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-        <View style={styles.overlay}>
-          <View style={styles.card}>
-            <Text style={[styles.denied, rtl.textFull]}>{t('kidLoginQrWebUnsupported')}</Text>
-            <View style={styles.footer}>
-              <Button title={t('close')} onPress={onClose} variant="outline" />
-            </View>
-          </View>
-        </View>
-      </Modal>
-    );
-  }
-
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <View style={styles.header}>
-            <Text style={[styles.title, rtl.textFull]}>{t('scanKidLogin')}</Text>
-            <Text style={[styles.hint, rtl.textFull]}>{t('kidLoginQrScanHint')}</Text>
+          <View style={{ gap: 4 }}>
+            <Txt v="h1">{t('scanKidLogin')}</Txt>
+            <Txt v="body" muted>
+              {t('kidLoginQrScanHint')}
+            </Txt>
           </View>
 
-          <View style={styles.cameraWrap}>
-            {!permission?.granted ? (
-              <View style={[styles.camera, { justifyContent: 'center', alignItems: 'center' }]}>
-                <Text style={[styles.denied, rtl.textFull]}>{t('cameraPermissionNeeded')}</Text>
-                <Button title={t('allowCamera')} onPress={() => void requestPermission()} />
-              </View>
-            ) : (
-              <CameraView
-                style={styles.camera}
-                facing="back"
-                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-                onBarcodeScanned={scanned ? undefined : handleBarcode}
-              />
-            )}
-          </View>
+          {Platform.OS === 'web' ? (
+            <Txt v="body" muted align="center">
+              {t('kidLoginQrWebUnsupported')}
+            </Txt>
+          ) : (
+            <View style={styles.cameraWrap}>
+              {permission?.granted ? (
+                <CameraView
+                  style={StyleSheet.absoluteFill}
+                  facing="back"
+                  barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                  onBarcodeScanned={scanned ? undefined : handleBarcode}
+                />
+              ) : (
+                <View style={styles.ask}>
+                  <Piko size={72} mood="wink" />
+                  <Txt v="strong" align="center" color={WHITE}>
+                    {t('cameraPermissionNeeded')}
+                  </Txt>
+                  <ToyButton title={t('allowCamera')} icon="camera" size="md" onPress={() => void requestPermission()} style={{ alignSelf: 'center' }} />
+                </View>
+              )}
+            </View>
+          )}
 
-          <View style={styles.footer}>
-            <Button title={t('cancel')} onPress={onClose} variant="outline" />
-          </View>
+          <ToyButton title={t('cancel')} variant="secondary" size="md" full onPress={onClose} sound={false} />
         </View>
       </View>
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(36,21,71,0.7)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  card: {
+    backgroundColor: WHITE,
+    borderRadius: 28,
+    borderWidth: 2.5,
+    borderColor: INK,
+    padding: 18,
+    gap: 14,
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+    boxShadow: `0px 6px 0px ${INK}`,
+  },
+  cameraWrap: {
+    aspectRatio: 1,
+    width: '100%',
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#1B1240',
+    borderWidth: 2.5,
+    borderColor: INK,
+  },
+  ask: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 16 },
+});
