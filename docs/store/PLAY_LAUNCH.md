@@ -70,8 +70,8 @@ request; it is real data in the production database, so it needs your go-ahead.
 
 ## 6. Release
 
-1. Testing → Internal testing already has **2.1.0 (25)**. Optionally add a closed track for a few more families first.
-2. Production → Create release → **Promote** 2.1.0 (25) from internal testing.
+1. Testing → Internal testing already has **2.2.0 (26)**. Optionally add a closed track for a few more families first.
+2. Production → Create release → **Promote** 2.2.0 (26) from internal testing.
 3. Countries: start with **Israel**.
 4. Use a **staged rollout** (e.g. 20%), watch Android vitals / crashes for a few days, then 100%.
 5. After it is live, the web app already serves the same version; nothing else to deploy.

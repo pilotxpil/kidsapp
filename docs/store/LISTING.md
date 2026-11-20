@@ -30,7 +30,7 @@ KidsQuest הופכת את המשימות של הבית ללימוד, לעזרה 
 • מתנה יומית: כוכב יומי, גלגל מזל ותיבת אוצר
 • חגיגות על כל משימה, עליית שלבים, תגים ורצף ימים
 • חנות פרסים עם "החלום שלי": רואים כמה נשאר עד הפרס הבא
-• חבילות לימוד לפי כיתה, מילה יומית וחידה יומית
+• 41 חבילות לימוד לפי כיתה, מילה יומית ושתי חידות בכל יום: חידת חשבון וחידת שפה
 
 👨‍👩‍👧 להורים: פשוט ושקט
 • הוספת ילד, משימות ופרסים תוך דקה, עם משימות ופרסים מוכנים
@@ -51,7 +51,7 @@ KidsQuest הופכת את המשימות של הבית ללימוד, לעזרה 
 **מה חדש** (עד 500 תווים)
 
 ```
-גרסה 2.1: עיצוב חדש לגמרי! פיקו בתלת־ממד, מוזיקה מקורית לכל עולם, צלילים חדשים, שמיים חיים, חגיגות עליית שלב ואשף התחלה מהיר להורים.
+גרסה 2.2: שתי חידות בכל יום, חידת חשבון וחידת שפה! מאות חידות ומילים חדשות שמותאמות לכיתה של הילד, ו־16 חבילות לימוד חדשות: ספירה, חיסור, כסף, שעון, לוח הכפל, חרוזים, צמחים, החלל ועוד.
 ```
 
 ---
@@ -81,7 +81,7 @@ KidsQuest turns chores, homework and daily routines into a real adventure. Kids 
 • A daily gift: daily star, lucky wheel and treasure chest
 • Celebrations for every quest, level-ups, badges and streaks
 • A rewards shop with "My dream": see how close the next reward is
-• Learning packs by grade, a word of the day and a daily riddle
+• 41 learning packs by grade, a word of the day and two daily riddles: one math, one language
 
 👨‍👩‍👧 For parents: simple and calm
 • Add a child, quests and rewards in a minute, with ready-made ideas
