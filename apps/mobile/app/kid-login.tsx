@@ -1,42 +1,32 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Text, StyleSheet, Alert, Platform, View, Pressable } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Input } from '../components/Input';
-import { Button } from '../components/Button';
-import { Celebration } from '../components/Celebration';
-import { AuthBrand } from '../components/AuthBrand';
-import { AuthScreenShell, useKeyboardOpen } from '../components/AuthScreenShell';
-import { AuthFormCard } from '../components/AuthFormCard';
-import { KidLoginScanner } from '../components/KidLoginScanner';
-import { playSfx } from '../lib/sfx';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Platform, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { spacing } from '../constants/theme';
-import { kidAuthTheme } from '../constants/theme';
-import { t } from '../lib/i18n';
+import { c } from '../lib/i18n';
+import { haptic } from '../lib/haptics';
+import { playSfx } from '../lib/sfx';
 import { resetKidGiftDismissals } from '../lib/kid-gift-dismiss';
 import { markAvatarGiftUnlocked } from '../lib/avatar-gift';
 import { getSavedFamilyCode, saveFamilyCode } from '../lib/kid-login-storage';
+import { AuthLayout } from '../components/AuthLayout';
+import { KidLoginScanner } from '../components/KidLoginScanner';
+import { Field, PinPad, Sticker, ToyButton, Txt } from '../components/ui';
+import { CORAL } from '../constants/themes';
 
 export default function KidLoginScreen() {
-  const params = useLocalSearchParams<{
-    code?: string;
-    user?: string;
-    name?: string;
-    familyCode?: string;
-    username?: string;
-  }>();
+  const params = useLocalSearchParams<{ code?: string; user?: string; name?: string; familyCode?: string; username?: string }>();
+  const router = useRouter();
+  const { login } = useAuth();
   const [familyCode, setFamilyCode] = useState('');
   const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [step, setStep] = useState<'who' | 'pin'>('who');
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [celebrate, setCelebrate] = useState(false);
-  const [bonusMsg, setBonusMsg] = useState('');
-  const [scannerOpen, setScannerOpen] = useState(false);
-  const { login } = useAuth();
-  const router = useRouter();
-  const keyboardOpen = useKeyboardOpen();
+  const [pinError, setPinError] = useState(0);
+  const [scanner, setScanner] = useState(false);
 
   useEffect(() => {
     void getSavedFamilyCode().then((code) => {
@@ -52,166 +42,111 @@ export default function KidLoginScreen() {
       void saveFamilyCode(code);
     }
     if (user) setUsername(user);
-  }, [params.code, params.familyCode, params.user, params.username]);
+    if (params.name) setDisplayName(params.name);
+    if (code && user) setStep('pin');
+  }, [params.code, params.familyCode, params.user, params.username, params.name]);
 
-  const applyScan = useCallback((payload: { familyCode: string; username: string }) => {
-    setFamilyCode(payload.familyCode);
-    setUsername(payload.username);
-    void saveFamilyCode(payload.familyCode);
-    playSfx('coin');
-  }, []);
-
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        scanRow: {
-          width: '100%',
-          alignItems: 'flex-end',
-          marginBottom: spacing.xs,
-        },
-        scanBtn: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: spacing.sm,
-          paddingVertical: spacing.xs,
-          borderRadius: 999,
-          backgroundColor: 'rgba(255,255,255,0.08)',
-          borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.15)',
-        },
-        scanText: {
-          color: kidAuthTheme.colors.textMuted,
-          fontSize: 12,
-          fontWeight: '600',
-        },
-        error: {
-          color: kidAuthTheme.colors.danger,
-          textAlign: 'center',
-          marginTop: spacing.sm,
-          fontSize: 14,
-          fontWeight: '600',
-        },
-        hint: {
-          color: kidAuthTheme.colors.textMuted,
-          fontSize: 12,
-          textAlign: 'right',
-          marginTop: -spacing.xs,
-          marginBottom: spacing.sm,
-        },
-      }),
-    []
-  );
-
-  const handleLogin = async () => {
-    const code = familyCode.trim();
-    if (!code || !username || pin.length < 4) {
-      Alert.alert('שגיאה', 'הזן קוד משפחה, שם משתמש ו-PIN של 4 ספרות');
+  const goPin = () => {
+    if (familyCode.trim().length < 4 || !username.trim()) {
+      setError(c.kidLogin.missing);
+      haptic.warn();
       return;
     }
-    setLoading(true);
     setError('');
-    try {
-      const res = await api.kidLogin(username.trim(), pin, code);
-      await saveFamilyCode(code);
-      resetKidGiftDismissals();
-      if (res.avatarGiftJustUnlocked) markAvatarGiftUnlocked();
-      await login(res.token, res.user);
-
-      if (res.dailyGiftAvailable ?? res.dailyStarAvailable) {
-        setBonusMsg(t('dailyGiftWaiting'));
-        setCelebrate(true);
-      } else {
-        router.replace('/(kid)');
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'שגיאה בהתחברות';
-      setError(message);
-      playSfx('error');
-      Alert.alert('שגיאה', message);
-    } finally {
-      setLoading(false);
-    }
+    setPin('');
+    setStep('pin');
   };
 
-  return (
-    <>
-      <AuthScreenShell
-        themeId="ember"
-        emojis={['🔥', '🌋', '⚡']}
-        emojiCount={0}
-        onBack={() => router.back()}
-        scroll
-      >
-        <AuthBrand variant="kid" compact />
+  const submit = useCallback(
+    async (fullPin: string) => {
+      setLoading(true);
+      try {
+        const res = await api.kidLogin(username.trim(), fullPin, familyCode.trim());
+        await saveFamilyCode(familyCode.trim());
+        resetKidGiftDismissals();
+        if (res.avatarGiftJustUnlocked) markAvatarGiftUnlocked();
+        haptic.success();
+        playSfx('cheer', { volume: 0.7 });
+        await login(res.token, res.user);
+        router.replace('/(kid)');
+      } catch (e) {
+        setPin('');
+        setPinError((n) => n + 1);
+        playSfx('error');
+        const msg = e instanceof Error ? e.message : c.kidLogin.wrong;
+        // Wrong family code / username lands back on the first step.
+        if (/קוד משפחה|שם משתמש/.test(msg)) setError(msg);
+        else setError(c.kidLogin.wrong);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [username, familyCode, login, router]
+  );
 
-        <AuthFormCard themeId="ember" compact>
-          {Platform.OS !== 'web' && !keyboardOpen ? (
-            <View style={styles.scanRow}>
-              <Pressable
-                onPress={() => setScannerOpen(true)}
-                style={styles.scanBtn}
-                accessibilityRole="button"
-                accessibilityLabel={t('scanKidLogin')}
-              >
-                <Text style={styles.scanText}>📷 {t('scanKidLogin')}</Text>
-              </Pressable>
-            </View>
+  useEffect(() => {
+    if (step === 'pin' && pin.length === 4 && !loading) void submit(pin);
+  }, [pin, step, loading, submit]);
+
+  if (step === 'pin') {
+    const name = displayName || username;
+    return (
+      <AuthLayout title={c.kidLogin.hello.replace('{name}', name)} sub={c.kidLogin.pinTitle} mood={pinError ? 'think' : 'cheer'} onBack={() => setStep('who')}>
+        <View style={{ alignItems: 'center', gap: 12, paddingTop: 6 }}>
+          <PinPad value={pin} onChange={setPin} error={pinError > 0 && pin.length === 0} key={pinError} />
+          {error ? (
+            <Txt v="title" color={CORAL} align="center">
+              {error}
+            </Txt>
           ) : null}
+          <ToyButton title={c.kidLogin.switchKid} variant="ghost" size="md" onPress={() => setStep('who')} sound={false} />
+        </View>
+      </AuthLayout>
+    );
+  }
 
-          <Input
-            compact
-            label={t('familyCode')}
+  return (
+    <AuthLayout title={c.kidLogin.title} mood="happy">
+      <Sticker pad={18}>
+        <View style={{ gap: 14 }}>
+          <Field
+            label={c.kidLogin.familyCode}
+            kind="code"
+            hint={c.kidLogin.familyCodeHint}
             value={familyCode}
             onChangeText={(v) => setFamilyCode(v.replace(/\D/g, '').slice(0, 6))}
-            keyboardType="number-pad"
-            maxLength={6}
             placeholder="123456"
-            ltr
           />
-          {!keyboardOpen ? <Text style={styles.hint}>{t('familyCodeHint')}</Text> : null}
-
-          <Input
-            compact
-            label={t('username')}
+          <Field
+            label={c.kidLogin.username}
+            kind="username"
+            icon="user"
             value={username}
             onChangeText={setUsername}
-            autoCapitalize="none"
-            autoCorrect={false}
-            textContentType="username"
-            autoComplete="username"
-            ltr
+            returnKeyType="next"
+            onSubmitEditing={goPin}
           />
-          <Input
-            compact
-            label={t('pin')}
-            value={pin}
-            onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
-            keyboardType="number-pad"
-            secureTextEntry
-            maxLength={4}
-            placeholder="••••"
-            ltr
-          />
-          <Button title={t('login')} onPress={handleLogin} loading={loading} />
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-        </AuthFormCard>
-      </AuthScreenShell>
-
+          {error ? <Txt v="strong" color={CORAL}>{error}</Txt> : null}
+          <ToyButton title={c.kidLogin.next} onPress={goPin} full variant="gold" icon="forward" />
+        </View>
+      </Sticker>
+      {Platform.OS !== 'web' ? (
+        <ToyButton title={c.kidLogin.scan} icon="qr" variant="secondary" full onPress={() => setScanner(true)} />
+      ) : null}
       <KidLoginScanner
-        visible={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        onScan={applyScan}
-      />
-
-      <Celebration
-        visible={celebrate}
-        sfx="coin"
-        message={bonusMsg || t('welcome')}
-        onDone={() => {
-          setCelebrate(false);
-          router.replace('/(kid)');
+        visible={scanner}
+        onClose={() => setScanner(false)}
+        onScan={(p) => {
+          setScanner(false);
+          setFamilyCode(p.familyCode);
+          setUsername(p.username);
+          if (p.displayName) setDisplayName(p.displayName);
+          void saveFamilyCode(p.familyCode);
+          playSfx('coin');
+          setPin('');
+          setStep('pin');
         }}
       />
-    </>
+    </AuthLayout>
   );
 }

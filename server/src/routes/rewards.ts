@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { getFamilyLimits, sendPremiumRequired } from '../services/entitlements';
 import { authenticate, requireParent } from '../middleware/auth';
 import { Reward } from '../models/Reward';
 import { Redemption } from '../models/Redemption';
@@ -71,14 +72,31 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
   try {
     const { title, description, cost, category, icon, imageUrl } = req.body;
 
+    const cleanTitle = String(title ?? '').trim();
+    const costNum = Math.round(Number(cost));
+    if (!cleanTitle) return res.status(400).json({ error: 'נא לתת שם לפרס' });
+    if (!Number.isFinite(costNum) || costNum < 1 || costNum > 100000) {
+      return res.status(400).json({ error: 'מחיר הפרס צריך להיות בין 1 ל-100,000 נקודות' });
+    }
+
+    const { limits } = await getFamilyLimits(req.user!.familyId);
+    const activeRewards = await Reward.countDocuments({ familyId: req.user!.familyId, isActive: true });
+    if (activeRewards >= limits.maxActiveRewards) {
+      return sendPremiumRequired(
+        res,
+        'rewards',
+        `בתוכנית החינמית אפשר עד ${limits.maxActiveRewards} פרסים פעילים.`
+      );
+    }
+
     const cat = category || 'other';
     const reward = await Reward.create({
       familyId: req.user!.familyId,
-      title,
-      description: description || '',
-      cost,
+      title: cleanTitle.slice(0, 80),
+      description: String(description || '').slice(0, 300),
+      cost: costNum,
       category: cat,
-      icon: resolvedRewardIcon(title || '', icon, cat),
+      icon: resolvedRewardIcon(cleanTitle, icon, cat),
       imageUrl,
     });
 

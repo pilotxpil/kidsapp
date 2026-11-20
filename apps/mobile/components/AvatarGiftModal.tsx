@@ -75,19 +75,19 @@ const styles = StyleSheet.create({
   },
   kicker: {
     fontSize: 13,
-    fontWeight: '800',
+    fontFamily: 'Fredoka_700Bold',
     textAlign: 'center',
     marginBottom: spacing.xs,
   },
   title: {
     fontSize: 22,
-    fontWeight: '800',
+    fontFamily: 'Fredoka_700Bold',
     textAlign: 'center',
     marginBottom: spacing.md,
   },
   name: {
     fontSize: 18,
-    fontWeight: '800',
+    fontFamily: 'Fredoka_700Bold',
     textAlign: 'center',
     marginTop: spacing.md,
   },

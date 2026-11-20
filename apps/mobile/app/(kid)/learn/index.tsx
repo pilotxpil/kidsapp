@@ -1,199 +1,116 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
+import type { LearningCategory, LearningPackSummary } from '@kidsapp/shared';
+import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, packDisplaySubtitle, packDisplayTitle } from '@kidsapp/shared';
 import { useAuth } from '../../../lib/auth';
 import { api } from '../../../lib/api';
 import { useFocusLoad } from '../../../hooks/useFocusLoad';
-import { Card } from '../../../components/Card';
-import { PointsBadge } from '../../../components/Card';
-import { ThemedScreen } from '../../../components/ThemedScreen';
-import { ScreenReveal, ScreenSkeleton } from '../../../components/ScreenSkeleton';
-import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../../lib/screen-cache';
-import { SectionHeader } from '../../../components/ThemedHero';
-import { LEARNING_CATEGORIES, LEARNING_CATEGORY_ORDER, LEARNING_PACK_KIND_LABELS, packDisplayTitle, packDisplaySubtitle, formatGradeLabel } from '@kidsapp/shared';
-import type { LearningPackSummary, LearningCategory } from '@kidsapp/shared';
-import { spacing } from '../../../constants/theme';
 import { useTheme } from '../../../lib/theme-context';
-import { playSfx } from '../../../lib/sfx';
-import { useType } from '../../../lib/typography';
-import { rtl } from '../../../lib/rtl';
-import { t } from '../../../lib/i18n';
-import { PointsMark } from '../../../components/icons/ThemeGlyph';
+import { c } from '../../../lib/i18n';
+import { ScreenCacheKey, readScreenCache, writeScreenCache } from '../../../lib/screen-cache';
+import { INK } from '../../../constants/themes';
+import { CheckBadge, Coin, EmptyState, KidScreen, ProgressBar, Row, SectionTitle, Sticker, Txt } from '../../../components/ui';
+import { KidSkyTitle } from '../../../components/kid/KidSky';
+import { ScreenSkeleton } from '../../../components/ScreenSkeleton';
 
-function groupByCategory(packs: LearningPackSummary[]): Map<LearningCategory, LearningPackSummary[]> {
-  const map = new Map<LearningCategory, LearningPackSummary[]>();
-  for (const pack of packs) {
-    const list = map.get(pack.category) ?? [];
-    list.push(pack);
-    map.set(pack.category, list);
-  }
-  return map;
+type LearnCache = { packs: LearningPackSummary[]; assignedOnly: boolean };
+
+function PackCard({ pack, onPress }: { pack: LearningPackSummary; onPress: () => void }) {
+  const { world } = useTheme();
+  const cat = LEARNING_CATEGORIES[pack.category];
+  const progress = pack.activityCount ? pack.completedCount / pack.activityCount : 0;
+  const sub = packDisplaySubtitle(pack.title);
+  return (
+    <Sticker onPress={onPress} pad={14} accessibilityLabel={packDisplayTitle(pack.title)} color={pack.completed ? '#EFFAF4' : undefined}>
+      <Row gap={12}>
+        <View style={{ width: 56, height: 56, borderRadius: 18, borderWidth: 2, borderColor: INK, backgroundColor: world.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+          <Txt size={30} align="center" style={{ lineHeight: 36 }}>
+            {cat?.icon ?? '📘'}
+          </Txt>
+        </View>
+        <View style={{ flex: 1, gap: 4 }}>
+          <Txt v="title" numberOfLines={2}>
+            {packDisplayTitle(pack.title)}
+          </Txt>
+          {sub ? (
+            <Txt v="caption" muted numberOfLines={1}>
+              {sub}
+            </Txt>
+          ) : null}
+          <ProgressBar value={progress} height={12} color="#1DBF7F" />
+          <Row justify="between">
+            <Txt v="tiny" muted num>
+              {pack.completedCount}/{pack.activityCount}
+            </Txt>
+            <Row gap={3}>
+              <Coin size={14} />
+              <Txt v="tiny" num>
+                +{pack.pointsPerActivity}
+              </Txt>
+            </Row>
+          </Row>
+        </View>
+        {pack.completed ? <CheckBadge size={32} /> : null}
+      </Row>
+    </Sticker>
+  );
 }
 
-export default function LearnIndexScreen() {
+export default function KidLearnScreen() {
   const { user, refreshUser } = useAuth();
   const router = useRouter();
-  const { colors, borderRadius, id: themeId } = useTheme();
-  const type = useType();
-  type LearnCache = { packs: LearningPackSummary[]; assignedOnly: boolean };
-  const hadCache = useRef(hasScreenCache(ScreenCacheKey.kidLearn)).current;
-  const cachedLearn = useRef(readScreenCache<LearnCache>(ScreenCacheKey.kidLearn)).current;
-  const [packs, setPacks] = useState<LearningPackSummary[]>(cachedLearn?.packs ?? []);
-  const [assignedOnly, setAssignedOnly] = useState(cachedLearn?.assignedOnly ?? false);
+  const cached = useRef(readScreenCache<LearnCache>(ScreenCacheKey.kidLearn)).current;
+  const [packs, setPacks] = useState<LearningPackSummary[]>(cached?.packs ?? []);
   const [refreshing, setRefreshing] = useState(false);
-
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        scroll: { padding: spacing.md },
-        header: { marginBottom: spacing.sm, alignItems: 'flex-start' },
-        empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.lg },
-        categoryBlock: { marginBottom: spacing.md },
-        packCard: {
-          marginBottom: 6,
-          maxWidth: '100%',
-          paddingVertical: 10,
-          paddingHorizontal: spacing.sm + 4,
-        },
-        packRow: { gap: spacing.sm, alignItems: 'center', width: '100%', maxWidth: '100%' },
-        packInfo: { flex: 1, minWidth: 0, maxWidth: '100%' },
-        packTitle: { color: colors.text, fontSize: 15, fontWeight: '800', flexShrink: 1, ...type.title },
-        packMeta: { color: colors.textMuted, fontSize: 11, marginTop: 2, ...type.body },
-        progressBar: {
-          height: 4,
-          backgroundColor: colors.bgDeep,
-          borderRadius: borderRadius.full,
-          marginTop: 4,
-          overflow: 'hidden',
-        },
-        progressFill: {
-          height: '100%',
-          backgroundColor: colors.success,
-          borderRadius: borderRadius.full,
-        },
-        doneBadge: {
-          backgroundColor: colors.success,
-          paddingHorizontal: spacing.sm,
-          paddingVertical: 2,
-          borderRadius: borderRadius.sm,
-        },
-        doneText: { color: colors.textDark, fontSize: 11, fontWeight: '700', ...type.ui },
-        chevron: { color: colors.textMuted, fontSize: 18, fontWeight: '700' },
-        pointsMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, flexWrap: 'wrap' },
-      }),
-    [themeId, colors, borderRadius, type.title, type.body, type.ui]
-  );
 
   const load = useCallback(async () => {
     const [, res] = await Promise.all([refreshUser(), api.getLearningPacks()]);
     setPacks(res.packs);
-    setAssignedOnly(!!res.assignedOnly);
     writeScreenCache(ScreenCacheKey.kidLearn, { packs: res.packs, assignedOnly: !!res.assignedOnly });
   }, [refreshUser]);
-
   const ready = useFocusLoad(load, !!user);
-  const showSkeleton = !ready && !hadCache;
 
-  const grouped = useMemo(() => groupByCategory(packs), [packs]);
+  const groups = useMemo(() => {
+    const map = new Map<LearningCategory, LearningPackSummary[]>();
+    for (const p of packs) {
+      if (!map.has(p.category)) map.set(p.category, []);
+      map.get(p.category)!.push(p);
+    }
+    return LEARNING_CATEGORY_ORDER.filter((k) => map.has(k)).map((k) => ({
+      key: k,
+      label: LEARNING_CATEGORIES[k].label,
+      packs: map.get(k)!.sort((a, b) => Number(a.completed) - Number(b.completed)),
+    }));
+  }, [packs]);
 
   return (
-    <ThemedScreen tabs>
-      <ScrollView
-        contentContainerStyle={[styles.scroll, rtl.scrollContent]}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={async () => {
-              setRefreshing(true);
-              await load();
-              setRefreshing(false);
-            }}
-            tintColor={colors.primary}
-          />
-        }
-      >
-        <View style={[styles.header, rtl.headerSplit]}>
-          <PointsBadge points={user?.points || 0} />
-          <View style={{ flex: 1 }}>
-            <SectionHeader title={t('learn')} icon="📚" />
+    <KidScreen
+      compactSky
+      sky={<KidSkyTitle title={c.kid.learnTitle} sub={c.kid.learnSub} points={user?.points ?? 0} />}
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        await load().catch(() => {});
+        setRefreshing(false);
+      }}
+    >
+      {!ready && !packs.length ? (
+        <ScreenSkeleton cards={3} />
+      ) : packs.length === 0 ? (
+        <Sticker>
+          <EmptyState title="עוד אין חבילות לימוד" body="ההורים יכולים לבחור לך חבילות במסך הלימוד שלהם." mood="think" />
+        </Sticker>
+      ) : (
+        groups.map((g) => (
+          <View key={g.key} style={{ gap: 12 }}>
+            <SectionTitle title={g.label} />
+            {g.packs.map((p) => (
+              <PackCard key={p.id} pack={p} onPress={() => router.push(`/(kid)/learn/${p.id}`)} />
+            ))}
           </View>
-        </View>
-
-        {showSkeleton ? (
-          <ScreenSkeleton cards={4} />
-        ) : (
-          <ScreenReveal animate={!hadCache}>
-        {packs.length === 0 ? (
-          <Text style={styles.empty}>
-            {assignedOnly ? t('noLearningAssignedKid') : t('noLearningPacks')}
-          </Text>
-        ) : (
-          LEARNING_CATEGORY_ORDER.filter((cat) => grouped.has(cat)).map((categoryId) => {
-            const category = LEARNING_CATEGORIES[categoryId];
-            const items = grouped.get(categoryId)!;
-
-            return (
-              <View key={categoryId} style={styles.categoryBlock}>
-                <SectionHeader title={category.label} icon={category.icon} />
-                {items.map((pack) => {
-                  const progressPct =
-                    pack.activityCount > 0 ? (pack.completedCount / pack.activityCount) * 100 : 0;
-                  const displayName = packDisplayTitle(pack.title);
-                  const subtitle = packDisplaySubtitle(pack.title);
-
-                  return (
-                    <TouchableOpacity
-                      key={pack.id}
-                      onPress={() => {
-                        playSfx('tap');
-                        router.push(`/(kid)/learn/${pack.id}`);
-                      }}
-                      activeOpacity={0.85}
-                    >
-                      <Card style={styles.packCard} glow={pack.completed}>
-                        <View style={[styles.packRow, rtl.row]}>
-                          <View style={styles.packInfo}>
-                            <Text style={[styles.packTitle, rtl.text]} numberOfLines={1}>
-                              {displayName}
-                            </Text>
-                            {subtitle ? (
-                              <Text style={[styles.packMeta, rtl.text]} numberOfLines={1}>
-                                {subtitle}
-                              </Text>
-                            ) : null}
-                            <View style={[styles.pointsMeta, rtl.rowInline]}>
-                              <Text style={[styles.packMeta, rtl.text, { marginTop: 0 }]} numberOfLines={1}>
-                                {LEARNING_PACK_KIND_LABELS[pack.kind]}
-                                {' · '}
-                                {pack.completedCount}/{pack.activityCount}
-                                {pack.grade ? ` · ${formatGradeLabel(pack.grade, t('grade'))}` : ''}
-                                {` · ${pack.pointsPerActivity}`}
-                              </Text>
-                              <PointsMark size={12} />
-                            </View>
-                            <View style={styles.progressBar}>
-                              <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
-                            </View>
-                          </View>
-                          {pack.completed ? (
-                            <View style={styles.doneBadge}>
-                              <Text style={styles.doneText}>{t('packDone')}</Text>
-                            </View>
-                          ) : (
-                            <Text style={styles.chevron}>‹</Text>
-                          )}
-                        </View>
-                      </Card>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            );
-          })
-        )}
-          </ScreenReveal>
-        )}
-      </ScrollView>
-    </ThemedScreen>
+        ))
+      )}
+    </KidScreen>
   );
 }

@@ -1,373 +1,279 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Modal,
-  TouchableOpacity,
-  Platform,
-  Dimensions,
-  Pressable,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusLoad } from '../../hooks/useFocusLoad';
-import { api } from '../../lib/api';
-import { Card } from '../../components/Card';
-import { Button } from '../../components/Button';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { Input } from '../../components/Input';
-import { ThemedScreen } from '../../components/ThemedScreen';
-import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
-import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
-import { KeyboardSheet, KeyboardScroll, useKeyboardHeight } from '../../components/KeyboardSheet';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import type { Reward, RewardCategory } from '@kidsapp/shared';
 import { REWARD_CATEGORIES, REWARD_TEMPLATES, resolvedRewardIcon, suggestedRewardIcon } from '@kidsapp/shared';
-import type { Reward, RewardCategory, RewardTemplate } from '@kidsapp/shared';
-import { spacing } from '../../constants/theme';
+import { api } from '../../lib/api';
+import { useFocusLoad } from '../../hooks/useFocusLoad';
+import { usePremium, useErrorHandler } from '../../lib/premium';
+import { ScreenCacheKey, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
 import { useTheme } from '../../lib/theme-context';
-import { rtl } from '../../lib/rtl';
-import { t } from '../../lib/i18n';
+import { haptic } from '../../lib/haptics';
+import { INK, LINE, WHITE } from '../../constants/themes';
+import { ROW } from '../../lib/dir';
+import {
+  CalmScreen,
+  ChoiceChip,
+  Coin,
+  Dialog,
+  EmptyState,
+  Field,
+  Row,
+  Sheet,
+  Sticker,
+  ToyButton,
+  Txt,
+  formatNum,
+  toast,
+} from '../../components/ui';
+import { ScreenSkeleton } from '../../components/ScreenSkeleton';
 
-const DEFAULT_REWARDS = REWARD_TEMPLATES;
+type Draft = { title: string; description: string; cost: string; category: RewardCategory; icon: string };
+
+const ICONS = ['🎁', '🍕', '🍦', '🍫', '🥤', '🎮', '📱', '📺', '🎬', '🧸', '⚽', '🎨', '🛝', '🏊', '🎡', '🛍️', '💸', '🌙', '🍿', '🎟️', '📚', '🚲', '🐶', '👑'];
+const COSTS = [50, 100, 200, 300, 500, 1000];
+
+const empty: Draft = { title: '', description: '', cost: '100', category: 'other', icon: '🎁' };
 
 export default function ParentRewardsScreen() {
-  const insets = useSafeAreaInsets();
-  const keyboardHeight = useKeyboardHeight();
-  const modalMaxHeight =
-    Dimensions.get('window').height -
-    insets.top -
-    insets.bottom -
-    spacing.lg * 2 -
-    (Platform.OS === 'android' ? keyboardHeight : 0);
-  const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
-  const hadCache = useRef(hasScreenCache(ScreenCacheKey.parentRewards)).current;
-  const [rewards, setRewards] = useState<Reward[]>(
-    () => readScreenCache<Reward[]>(ScreenCacheKey.parentRewards) ?? []
-  );
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingReward, setEditingReward] = useState<Reward | null>(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [cost, setCost] = useState('100');
-  const [category, setCategory] = useState<RewardCategory>('gaming');
-  const [icon, setIcon] = useState('🎁');
-  const [loading, setLoading] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<null | { name: string; id: string }>(null);
-  const savingRef = useRef(false);
-
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        scroll: { padding: spacing.lg, maxWidth: 800, alignSelf: 'center', width: '100%' },
-        header: { marginBottom: spacing.md },
-        title: { color: colors.text, fontSize: 24, fontWeight: '800', flex: 1, minWidth: 0 },
-        addBtn: { flexShrink: 0 },
-        subtitle: { color: colors.textMuted, marginBottom: spacing.sm, width: '100%' },
-        templates: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-        template: {
-          backgroundColor: colors.bgCard,
-          padding: spacing.sm,
-          borderRadius: borderRadius.md,
-          alignItems: 'center',
-          width: '30%',
-          borderWidth: 1,
-          borderColor: colors.border,
-        },
-        templateIcon: { fontSize: 24, textAlign: 'center' },
-        templateText: {
-          color: colors.text,
-          fontSize: 11,
-          textAlign: 'center',
-          marginTop: 4,
-          writingDirection: 'rtl',
-          width: '100%',
-        },
-        templateDesc: {
-          color: colors.textMuted,
-          fontSize: 9,
-          textAlign: 'center',
-          marginTop: 2,
-          writingDirection: 'rtl',
-          width: '100%',
-        },
-        rewardCard: { marginBottom: spacing.sm },
-        rewardRow: { alignItems: 'flex-start', width: '100%', gap: spacing.sm },
-        actions: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', flexShrink: 0 },
-        actionIcon: { fontSize: 20 },
-        rewardInfo: { flex: 1, minWidth: 0 },
-        rewardTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
-        rewardMeta: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
-        modalOverlay: {
-          flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          justifyContent: 'center',
-          paddingHorizontal: spacing.lg,
-          paddingVertical: spacing.md,
-        },
-        modalBackdrop: { ...StyleSheet.absoluteFill },
-        modal: {
-          backgroundColor: colors.bgCard,
-          borderRadius: borderRadius.xl,
-          maxWidth: 500,
-          alignSelf: 'center',
-          width: '100%',
-          overflow: 'hidden',
-          ...cardBorder(2),
-        },
-        modalScroll: { padding: spacing.lg, paddingBottom: spacing.sm },
-        modalTitle: {
-          color: colors.text,
-          fontSize: 22,
-          fontWeight: '800',
-          textAlign: 'center',
-          marginBottom: spacing.lg,
-          writingDirection: 'rtl',
-        },
-        label: {
-          color: colors.text,
-          fontSize: 14,
-          fontWeight: '600',
-          marginBottom: spacing.sm,
-          width: '100%',
-          textAlign: 'right',
-          writingDirection: 'rtl',
-        },
-        chipRow: {
-          flexDirection: 'row-reverse',
-          flexWrap: 'wrap',
-          gap: spacing.sm,
-          marginBottom: spacing.md,
-          justifyContent: 'flex-start',
-          width: '100%',
-        },
-        chip: {
-          paddingHorizontal: spacing.md,
-          paddingVertical: spacing.sm,
-          borderRadius: borderRadius.full,
-          backgroundColor: colors.bgCardLight,
-          borderWidth: 1,
-          borderColor: colors.border,
-        },
-        chipContent: {
-          flexDirection: 'row-reverse',
-          alignItems: 'center',
-          gap: 4,
-        },
-        chipIcon: { fontSize: 13 },
-        chipActive: { backgroundColor: colors.primaryDark, borderColor: colors.primaryDark },
-        chipText: { color: colors.text, fontSize: 13, textAlign: 'right', writingDirection: 'rtl' },
-        chipTextActive: { color: colors.text, fontWeight: '700' },
-        modalActions: {
-          gap: spacing.sm,
-          padding: spacing.lg,
-          paddingTop: spacing.sm,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-        },
-      }),
-    [themeId, colors, borderRadius, cardBorder]
-  );
+  const params = useLocalSearchParams<{ new?: string }>();
+  const router = useRouter();
+  const { world } = useTheme();
+  const { limits, isPremium } = usePremium();
+  const onError = useErrorHandler();
+  const [rewards, setRewards] = useState<Reward[]>(() => readScreenCache<Reward[]>(ScreenCacheKey.parentRewards) ?? []);
+  const [editing, setEditing] = useState<Reward | null>(null);
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<Draft>(empty);
+  const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Reward | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
 
   const load = useCallback(async () => {
     const res = await api.getRewards();
-    writeScreenCache(ScreenCacheKey.parentRewards, res.rewards);
     setRewards(res.rewards);
+    writeScreenCache(ScreenCacheKey.parentRewards, res.rewards);
+  }, []);
+  const ready = useFocusLoad(load);
+
+  const openNew = useCallback(() => {
+    setEditing(null);
+    setDraft(empty);
+    setError('');
+    setOpen(true);
   }, []);
 
-  const ready = useFocusLoad(load);
-  const showSkeleton = !ready && !hadCache;
+  useEffect(() => {
+    if (params.new && ready) {
+      openNew();
+      router.setParams({ new: undefined });
+    }
+  }, [params.new, ready, openNew, router]);
 
-  const resetForm = () => {
-    setEditingReward(null);
-    setTitle('');
-    setDescription('');
-    setCost('100');
-    setCategory('gaming');
-    setIcon('🎁');
+  const openEdit = (r: Reward) => {
+    setEditing(r);
+    setDraft({
+      title: r.title,
+      description: r.description,
+      cost: String(r.cost),
+      category: r.category,
+      icon: resolvedRewardIcon(r.title, r.icon, r.category),
+    });
+    setError('');
+    setOpen(true);
   };
 
-  const openCreate = () => {
-    resetForm();
-    setModalVisible(true);
-  };
+  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((p) => ({ ...p, [k]: v }));
 
-  const openEdit = (reward: Reward) => {
-    setEditingReward(reward);
-    setTitle(reward.title);
-    setDescription(reward.description);
-    setCost(String(reward.cost));
-    setCategory(reward.category);
-    setIcon(reward.icon);
-    setModalVisible(true);
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
-    resetForm();
-  };
-
-  const handleSave = async () => {
-    if (savingRef.current || loading) return;
-    if (!title.trim()) return;
-
-    savingRef.current = true;
-    setLoading(true);
+  const save = async () => {
+    const cost = Number(draft.cost);
+    if (!draft.title.trim()) return setError('נא לתת שם לפרס');
+    if (!Number.isFinite(cost) || cost < 1) return setError('נא לבחור מחיר במטבעות');
+    setSaving(true);
     try {
-      const payload = {
-        title: title.trim(),
-        description,
-        cost: parseInt(cost) || 100,
-        category,
-        icon: resolvedRewardIcon(title.trim(), icon, category),
-      };
-      if (editingReward) {
-        await api.updateReward(editingReward._id, payload);
+      const payload = { title: draft.title.trim(), description: draft.description, cost, category: draft.category, icon: draft.icon };
+      if (editing) {
+        await api.updateReward(editing._id, payload);
+        toast('הפרס עודכן');
       } else {
         await api.createReward(payload);
+        haptic.success();
+        toast('הפרס נוסף לחנות');
       }
-      closeModal();
+      setOpen(false);
       await load();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (e) {
+      onError(e);
     } finally {
-      savingRef.current = false;
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    await api.deleteReward(id);
-    await load();
+  const remove = async (r: Reward) => {
+    try {
+      await api.deleteReward(r._id);
+      setConfirmDelete(null);
+      setOpen(false);
+      toast('הפרס הוסר', 'info');
+      await load();
+    } catch (e) {
+      onError(e);
+    }
   };
 
-  const applyTemplate = (tpl: RewardTemplate) => {
-    setEditingReward(null);
-    setTitle(tpl.title);
-    setDescription(tpl.description);
-    setIcon(tpl.icon);
-    setCost(String(tpl.cost));
-    setCategory(tpl.category);
-    setModalVisible(true);
-  };
-
-  const categories = Object.entries(REWARD_CATEGORIES) as [RewardCategory, { label: string; icon: string }][];
+  const active = rewards.filter((r) => r.isActive !== false).sort((a, b) => a.cost - b.cost);
 
   return (
-    <ThemedScreen tabs>
-      <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
-        <View style={[styles.header, rtl.headerSplit]}>
-          <Button title={`+ ${t('addReward')}`} onPress={openCreate} style={styles.addBtn} />
-          <Text style={[styles.title, rtl.textFull]}>{t('manageRewards')}</Text>
-        </View>
-
-        <Text style={[styles.subtitle, rtl.textFull]}>תבניות מהירות:</Text>
-        <View style={[styles.templates, rtl.row]}>
-          {DEFAULT_REWARDS.map((tpl) => (
-            <TouchableOpacity key={tpl.title} style={styles.template} onPress={() => applyTemplate(tpl)}>
-              <Text style={styles.templateIcon}>{tpl.icon}</Text>
-              <Text style={styles.templateText}>{tpl.title}</Text>
-              <Text style={styles.templateDesc}>{tpl.description}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {showSkeleton ? (
-          <ScreenSkeleton cards={4} />
-        ) : (
-          <ScreenReveal animate={!hadCache}>
-        {rewards.map((reward) => {
-          const cat = REWARD_CATEGORIES[reward.category];
-          return (
-            <Card key={reward._id} style={styles.rewardCard}>
-              <View style={[styles.rewardRow, rtl.row]}>
-                <View style={styles.rewardInfo}>
-                  <Text style={[styles.rewardTitle, rtl.textFull]}>
-                    {reward.icon} {reward.title}
-                  </Text>
-                  <Text style={[styles.rewardMeta, rtl.textFull]}>
-                    {cat.label} · {reward.cost} {pointsEmoji}
-                  </Text>
-                </View>
-                <View style={styles.actions}>
-                  <TouchableOpacity onPress={() => openEdit(reward)}>
-                    <Text style={styles.actionIcon}>✏️</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setPendingDelete({ name: reward.title, id: reward._id })}
-                  >
-                    <Text style={styles.actionIcon}>🗑️</Text>
-                  </TouchableOpacity>
-                </View>
+    <CalmScreen
+      title="פרסים"
+      subtitle={isPremium ? 'על מה הילדים חוסכים' : `על מה הילדים חוסכים. ${active.length} מתוך ${limits.maxActiveRewards} בתוכנית החינמית`}
+      action={<ToyButton icon="plus" size="sm" accessibilityLabel="פרס חדש" onPress={openNew} />}
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        await load().catch(() => {});
+        setRefreshing(false);
+      }}
+      overlay={
+        <>
+          <Sheet
+            visible={open}
+            onClose={() => setOpen(false)}
+            title={editing ? 'עריכת פרס' : 'פרס חדש'}
+            footer={
+              <>
+                {error ? <Txt v="strong" color="#CC2C3D">{error}</Txt> : null}
+                <ToyButton title={editing ? 'שמירה' : 'הוספה לחנות'} icon={editing ? 'check' : 'plus'} full loading={saving} onPress={save} />
+                {editing ? <ToyButton title="הסרת הפרס" variant="ghost" size="md" full onPress={() => setConfirmDelete(editing)} sound={false} /> : null}
+              </>
+            }
+          >
+            {!editing ? (
+              <View style={{ gap: 8 }}>
+                <Txt v="caption">רעיונות מוכנים</Txt>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, flexDirection: ROW }}>
+                  {REWARD_TEMPLATES.map((t) => (
+                    <Pressable
+                      key={t.title}
+                      onPress={() => {
+                        haptic.select();
+                        setDraft({ title: t.title, description: t.description, cost: String(t.cost), category: t.category, icon: t.icon });
+                      }}
+                      style={[styles.tpl, draft.title === t.title && { borderColor: INK, backgroundColor: world.accentSoft }]}
+                    >
+                      <Txt v="caption" numberOfLines={1}>
+                        {t.icon} {t.title}
+                      </Txt>
+                    </Pressable>
+                  ))}
+                </ScrollView>
               </View>
-            </Card>
-          );
-        })}
-          </ScreenReveal>
-        )}
-      </ScrollView>
-
-      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={closeModal}>
-        <KeyboardSheet style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={closeModal} />
-          <View style={[styles.modal, { maxHeight: modalMaxHeight }]}>
-            <KeyboardScroll
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.modalScroll}
-              showsVerticalScrollIndicator
-            >
-              <Text style={styles.modalTitle}>{editingReward ? t('editReward') : t('addReward')}</Text>
-              <Input
-                label={t('title')}
-                value={title}
-                onChangeText={(v) => {
-                  setTitle(v);
-                  const next = suggestedRewardIcon(v);
-                  if (next) setIcon(next);
-                }}
-              />
-              <Input label={t('description')} value={description} onChangeText={setDescription} />
-              <Input label={t('cost')} value={cost} onChangeText={setCost} keyboardType="number-pad" />
-
-              <Text style={styles.label}>{t('category')}</Text>
-              <View style={styles.chipRow}>
-                {categories.map(([key, val]) => (
-                  <TouchableOpacity
-                    key={key}
-                    style={[styles.chip, category === key && styles.chipActive]}
+            ) : null}
+            <Field
+              label="מה הפרס?"
+              value={draft.title}
+              placeholder="למשל: ערב סרט עם פופקורן"
+              maxLength={80}
+              onChangeText={(v) => {
+                set('title', v);
+                const s = suggestedRewardIcon(v);
+                if (s) set('icon', s);
+              }}
+            />
+            <View style={{ gap: 8 }}>
+              <Txt v="caption">אייקון</Txt>
+              <View style={[styles.icons, { flexDirection: ROW }]}>
+                {ICONS.map((ic) => (
+                  <Pressable
+                    key={ic}
                     onPress={() => {
-                      setCategory(key);
-                      setIcon(suggestedRewardIcon(title) || val.icon);
+                      haptic.select();
+                      set('icon', ic);
                     }}
+                    style={[styles.iconCell, draft.icon === ic && { backgroundColor: world.accentSoft, borderColor: INK }]}
                   >
-                    <View style={styles.chipContent}>
-                      <Text style={styles.chipIcon}>{val.icon}</Text>
-                      <Text style={[styles.chipText, category === key && styles.chipTextActive]}>
-                        {val.label}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
+                    <Txt size={24} align="center" style={{ lineHeight: 30 }}>
+                      {ic}
+                    </Txt>
+                  </Pressable>
                 ))}
               </View>
-            </KeyboardScroll>
-
-            <View style={styles.modalActions}>
-              <Button title={t('save')} onPress={handleSave} loading={loading} />
-              <Button title={t('cancel')} onPress={closeModal} variant="outline" />
             </View>
-          </View>
-        </KeyboardSheet>
-      </Modal>
-      <ConfirmDialog
-        visible={!!pendingDelete}
-        title={t('deleteConfirmTitle')}
-        message={t('deleteConfirmBody').replace('{name}', pendingDelete?.name ?? '')}
-        onCancel={() => setPendingDelete(null)}
-        onConfirm={() => {
-          const id = pendingDelete?.id;
-          setPendingDelete(null);
-          if (id) void handleDelete(id);
-        }}
-      />
-    </ThemedScreen>
+            <View style={{ gap: 8 }}>
+              <Row gap={6}>
+                <Coin size={18} />
+                <Txt v="caption">כמה מטבעות זה עולה?</Txt>
+              </Row>
+              <Row gap={8} wrap>
+                {COSTS.map((n) => (
+                  <ChoiceChip key={n} label={formatNum(n)} selected={draft.cost === String(n)} onPress={() => set('cost', String(n))} />
+                ))}
+              </Row>
+              <Field kind="number" value={draft.cost} onChangeText={(v) => set('cost', v.replace(/\D/g, ''))} hint="או כתבו מחיר משלכם" />
+            </View>
+            <View style={{ gap: 8 }}>
+              <Txt v="caption">סוג</Txt>
+              <Row gap={8} wrap>
+                {(Object.keys(REWARD_CATEGORIES) as RewardCategory[]).map((k) => (
+                  <ChoiceChip key={k} label={`${REWARD_CATEGORIES[k].icon} ${REWARD_CATEGORIES[k].label}`} selected={draft.category === k} onPress={() => set('category', k)} />
+                ))}
+              </Row>
+            </View>
+          </Sheet>
+          <Dialog
+            visible={!!confirmDelete}
+            title="להסיר את הפרס?"
+            message="הוא ייעלם מהחנות של הילדים. בקשות שכבר אושרו נשמרות."
+            confirmLabel="הסרה"
+            destructive
+            onConfirm={() => confirmDelete && remove(confirmDelete)}
+            onCancel={() => setConfirmDelete(null)}
+          />
+        </>
+      }
+    >
+      {!ready && !rewards.length ? (
+        <ScreenSkeleton cards={3} />
+      ) : active.length === 0 ? (
+        <Sticker tone="calm">
+          <EmptyState title="החנות ריקה" body="פרס טוב הוא כזה שהילדים באמת רוצים. אפשר להתחיל מרעיון מוכן." action="פרס ראשון" onAction={openNew} />
+        </Sticker>
+      ) : (
+        <View style={[styles.grid, { flexDirection: ROW }]}>
+          {active.map((r) => (
+            <View key={r._id} style={styles.cell}>
+              <Sticker tone="calm" pad={12} onPress={() => openEdit(r)} accessibilityLabel={r.title}>
+                <View style={{ alignItems: 'center', gap: 6 }}>
+                  <View style={[styles.bubble, { backgroundColor: world.accentSoft }]}>
+                    <Txt size={34} align="center" style={{ lineHeight: 42 }}>
+                      {resolvedRewardIcon(r.title, r.icon, r.category)}
+                    </Txt>
+                  </View>
+                  <Txt v="title" align="center" numberOfLines={2} style={{ minHeight: 44 }}>
+                    {r.title}
+                  </Txt>
+                  <Row gap={4}>
+                    <Coin size={16} />
+                    <Txt v="strong" num>
+                      {formatNum(r.cost)}
+                    </Txt>
+                  </Row>
+                </View>
+              </Sticker>
+            </View>
+          ))}
+        </View>
+      )}
+    </CalmScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  grid: { flexWrap: 'wrap', marginHorizontal: -6 },
+  cell: { width: '50%', padding: 6 },
+  bubble: { width: 64, height: 64, borderRadius: 32, borderWidth: 2, borderColor: INK, alignItems: 'center', justifyContent: 'center' },
+  tpl: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, borderWidth: 2, borderColor: LINE, backgroundColor: WHITE },
+  icons: { flexWrap: 'wrap', gap: 6 },
+  iconCell: { width: 44, height: 44, borderRadius: 12, borderWidth: 2, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center', backgroundColor: WHITE },
+});

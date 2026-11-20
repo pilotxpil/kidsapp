@@ -33,7 +33,7 @@ export function SelectAll({
         prompt: {
           color: colors.text,
           fontSize: 16,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           textAlign: 'center',
           marginBottom: spacing.sm,
           width: '100%',
@@ -49,7 +49,7 @@ export function SelectAll({
         badgeText: {
           color: colors.primary,
           fontSize: 11,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
         },
         option: {
           backgroundColor: colors.bgCard,
@@ -78,7 +78,7 @@ export function SelectAll({
         optionText: {
           color: colors.text,
           fontSize: 14,
-          fontWeight: '600',
+          fontFamily: 'Fredoka_600SemiBold',
           flex: 1,
         },
         box: {
@@ -98,7 +98,7 @@ export function SelectAll({
         boxMark: {
           color: colors.textDark ?? '#fff',
           fontSize: 12,
-          fontWeight: '900',
+          fontFamily: 'Fredoka_700Bold',
         },
       }),
     [themeId, colors, borderRadius, cardBorder]

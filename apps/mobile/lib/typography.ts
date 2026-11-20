@@ -1,29 +1,31 @@
 import type { TextStyle } from 'react-native';
-import { useTheme } from './theme-context';
+import { F } from './fonts';
 
-/** Loaded in app/_layout via @expo-google-fonts/heebo */
+/**
+ * Legacy font map. The redesign uses Fredoka everywhere, so the old Heebo names now point at
+ * Fredoka faces (Fredoka tops out at 700, so the heavier weights share the bold face).
+ */
 export const Heebo = {
-  regular: 'Heebo_400Regular',
-  medium: 'Heebo_500Medium',
-  semibold: 'Heebo_600SemiBold',
-  bold: 'Heebo_700Bold',
-  extrabold: 'Heebo_800ExtraBold',
-  black: 'Heebo_900Black',
+  regular: F.regular,
+  medium: F.medium,
+  semibold: F.semibold,
+  bold: F.bold,
+  extrabold: F.bold,
+  black: F.bold,
 } as const;
 
 function face(family: string): TextStyle {
   return { fontFamily: family, fontWeight: 'normal' };
 }
 
+/** Legacy helper: every theme now uses the same Fredoka faces. */
 export function useType() {
-  const { id } = useTheme();
-  const ember = id === 'ember';
   return {
-    ember,
-    display: ember ? face(Heebo.black) : {},
-    title: ember ? face(Heebo.extrabold) : {},
-    heading: ember ? face(Heebo.bold) : {},
-    body: ember ? face(Heebo.medium) : {},
-    ui: ember ? face(Heebo.semibold) : {},
+    ember: false,
+    display: face(F.bold),
+    title: face(F.bold),
+    heading: face(F.semibold),
+    body: face(F.medium),
+    ui: face(F.semibold),
   };
 }

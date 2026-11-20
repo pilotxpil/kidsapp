@@ -83,7 +83,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
         title: {
           color: '#fff',
           fontSize: 22,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           textAlign: 'center',
           ...toTextShadow('rgba(0,0,0,0.4)', { width: 1, height: 1 }, 3),
         },
@@ -124,7 +124,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
         reward: {
           color: '#FFD700',
           fontSize: 16,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginTop: spacing.md,
           textAlign: 'center',
         },
@@ -142,14 +142,14 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
         closeBtnText: {
           color: '#fff',
           fontSize: 18,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           lineHeight: 20,
         },
         closeLink: {
           marginTop: spacing.md,
           color: 'rgba(255,255,255,0.7)',
           fontSize: 13,
-          fontWeight: '600',
+          fontFamily: 'Fredoka_600SemiBold',
           textAlign: 'center',
         },
       }),

@@ -38,13 +38,13 @@ export function KidAvatar({ avatar, size, style }: KidAvatarProps) {
         <Image
           source={src}
           resizeMode="cover"
-          style={[
-            { pointerEvents: 'none' },
-            { width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' },
-            Platform.OS === 'web'
-              ? ({ userSelect: 'none', WebkitUserDrag: 'none' } as ImageStyle)
-              : null,
-          ]}
+          style={
+            [
+              { pointerEvents: 'none' },
+              { width: '100%', height: '100%' },
+              Platform.OS === 'web' ? { userSelect: 'none', WebkitUserDrag: 'none' } : null,
+            ] as StyleProp<ImageStyle>
+          }
           {...(Platform.OS === 'web' ? { draggable: false } : {})}
         />
       </View>

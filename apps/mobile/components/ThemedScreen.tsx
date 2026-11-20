@@ -1,10 +1,8 @@
 import React from 'react';
-import { StyleSheet, View, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../lib/theme-context';
-import { getThemeArt } from '../constants/theme-art';
 import { SafeScreen } from './SafeScreen';
-import { ThemeBackground } from './ThemeBackground';
+import { TAB_BAR_SPACE } from './ui/Screen';
 
 interface ThemedScreenProps {
   children: React.ReactNode;
@@ -12,26 +10,12 @@ interface ThemedScreenProps {
   style?: object;
 }
 
+/** Legacy screen wrapper — now the redesign's world paper. New screens use KidScreen / CalmScreen. */
 export function ThemedScreen({ children, tabs, style }: ThemedScreenProps) {
-  const { colors, id: themeId } = useTheme();
-  const art = getThemeArt(themeId);
-  const emberWorld = themeId === 'ember' && art?.bg;
-
+  const { world } = useTheme();
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }, style]}>
-      {emberWorld ? (
-        <>
-          <Image source={art!.bg} style={[styles.world, { pointerEvents: 'none' }]} resizeMode="cover" />
-          <LinearGradient
-            colors={['rgba(10,10,12,0.15)', 'rgba(10,10,12,0.55)', 'rgba(10,10,12,0.88)']}
-            locations={[0, 0.38, 1]}
-            style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}
-          />
-        </>
-      ) : (
-        <ThemeBackground key={themeId} />
-      )}
-      <SafeScreen tabs={tabs} style={styles.content}>
+    <View style={[styles.container, { backgroundColor: world.paper }, style]}>
+      <SafeScreen tabs={tabs} style={[styles.content, tabs ? { paddingBottom: TAB_BAR_SPACE - 20 } : null]}>
         {children}
       </SafeScreen>
     </View>
@@ -40,10 +24,5 @@ export function ThemedScreen({ children, tabs, style }: ThemedScreenProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  world: {
-    ...StyleSheet.absoluteFill,
-    width: '100%',
-    height: '100%',
-  },
   content: { flex: 1, zIndex: 1 },
 });

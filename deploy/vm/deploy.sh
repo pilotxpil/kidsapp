@@ -36,8 +36,14 @@ if grep -q 'kidsapp-dev-secret' "$REPO_ROOT/server/.env"; then
   echo "WARNING: JWT_SECRET in server/.env looks like dev default — change before production."
 fi
 
-echo "==> Syncing STORE_VERSION_* from apps/mobile/app.json..."
-bash "$SCRIPT_DIR/sync-store-version.sh"
+if [[ "${SKIP_STORE_SYNC:-}" == "1" ]]; then
+  # Deploying the API ahead of a store build: keep advertising the current store version so
+  # installed apps are not told to update to a version the store does not have yet.
+  echo "==> SKIP_STORE_SYNC=1: leaving STORE_VERSION_* in server/.env unchanged"
+else
+  echo "==> Syncing STORE_VERSION_* from apps/mobile/app.json..."
+  bash "$SCRIPT_DIR/sync-store-version.sh"
+fi
 
 echo "==> Building shared + server locally (sanity check)..."
 cd "$REPO_ROOT"

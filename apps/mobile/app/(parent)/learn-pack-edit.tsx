@@ -169,9 +169,9 @@ export default function LearnPackEditScreen() {
           ...cardBorder(1),
         },
         chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-        chipText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+        chipText: { color: colors.textMuted, fontSize: 13, fontFamily: 'Fredoka_600SemiBold' },
         chipTextActive: { color: colors.textDark },
-        label: { color: colors.textMuted, fontSize: 13, fontWeight: '600', marginBottom: spacing.sm },
+        label: { color: colors.textMuted, fontSize: 13, fontFamily: 'Fredoka_600SemiBold', marginBottom: spacing.sm },
         questionCard: {
           backgroundColor: colors.bgCard,
           borderRadius: borderRadius.lg,
@@ -181,7 +181,7 @@ export default function LearnPackEditScreen() {
         },
         questionHeader: {
           color: colors.text,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           fontSize: 15,
           marginBottom: spacing.sm,
         },

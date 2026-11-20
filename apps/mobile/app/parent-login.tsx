@@ -1,118 +1,90 @@
-import React, { useCallback, useState, useMemo } from 'react';
-import { Alert, Platform, StyleSheet, View } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { Input } from '../components/Input';
-import { Button } from '../components/Button';
-import { AuthBrand } from '../components/AuthBrand';
-import { AuthScreenShell } from '../components/AuthScreenShell';
-import { AuthFormCard } from '../components/AuthFormCard';
-import { BouncyPressable } from '../components/animations/BouncyPressable';
-import { RtlText } from '../components/RtlText';
+import React, { useRef, useState } from 'react';
+import { Pressable, TextInput, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { colors, spacing } from '../constants/theme';
-import { t } from '../lib/i18n';
-
-/** Native stack screens omit the fields from Android's autofill tree until they remount. */
-function useAndroidAutofillRemountKey() {
-  const [key, setKey] = useState(0);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (Platform.OS !== 'android') return;
-      let timeout: ReturnType<typeof setTimeout> | undefined;
-      const idleId = requestIdleCallback(() => {
-        timeout = setTimeout(() => setKey((current) => current + 1), 50);
-      });
-      return () => {
-        cancelIdleCallback(idleId);
-        if (timeout) clearTimeout(timeout);
-      };
-    }, [])
-  );
-
-  return key;
-}
+import { useTheme } from '../lib/theme-context';
+import { c } from '../lib/i18n';
+import { haptic } from '../lib/haptics';
+import { AuthLayout } from '../components/AuthLayout';
+import { Field, Sticker, ToyButton, Txt, Row } from '../components/ui';
+import { CORAL } from '../constants/themes';
 
 export default function ParentLoginScreen() {
+  const router = useRouter();
+  const { login } = useAuth();
+  const { world } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const router = useRouter();
-  const autofillKey = useAndroidAutofillRemountKey();
+  const [error, setError] = useState('');
+  const passRef = useRef<TextInput>(null);
 
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        link: { marginTop: spacing.md, alignItems: 'center' },
-        linkText: { color: colors.primaryLight, fontSize: 14, fontWeight: '700' },
-      }),
-    []
-  );
-
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('שגיאה', 'הזן אימייל וסיסמה');
+  const submit = async () => {
+    if (!email.trim() || !password) {
+      setError(c.parentLogin.missing);
+      haptic.warn();
       return;
     }
     setLoading(true);
+    setError('');
     try {
-      const res = await api.parentLogin(email, password);
+      const res = await api.parentLogin(email.trim(), password);
+      haptic.success();
       await login(res.token, res.user);
       router.replace('/(parent)');
-    } catch (err: any) {
-      Alert.alert('שגיאה', err.message);
+    } catch (e) {
+      haptic.error();
+      setError(e instanceof Error ? e.message : 'הכניסה נכשלה');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AuthScreenShell
-      themeId="roblox"
-      emojis={['🪙', '🧱', '🌐', '🎮', '⭐', '🔴']}
-      emojiCount={18}
-      onBack={() => router.back()}
-      scroll
-    >
-      <AuthBrand variant="parent" compact />
-
-      <AuthFormCard themeId="roblox">
-        <View key={autofillKey} collapsable={false}>
-          <Input
-            label={t('email')}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            inputMode="email"
-            autoCapitalize="none"
-            spellCheck={false}
-            textContentType="username"
-            autoComplete={Platform.OS === 'android' ? 'username' : 'email'}
-            nativeID="parent-login-username"
-            ltr
-          />
-          <Input
-            label={t('password')}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-            spellCheck={false}
-            textContentType="password"
-            autoComplete="current-password"
-            nativeID="parent-login-password"
-            ltr
-          />
+    <AuthLayout title={c.parentLogin.title} sub={c.parentLogin.sub} mood="wink">
+      <Sticker tone="calm" pad={18}>
+        <View style={{ gap: 14 }}>
+        <Field
+          label={c.parentLogin.email}
+          kind="email"
+          icon="mail"
+          value={email}
+          onChangeText={setEmail}
+          returnKeyType="next"
+          onSubmitEditing={() => passRef.current?.focus()}
+          placeholder="name@example.com"
+        />
+        <Field
+          ref={passRef}
+          label={c.parentLogin.password}
+          kind="password"
+          icon="key"
+          value={password}
+          onChangeText={setPassword}
+          returnKeyType="go"
+          onSubmitEditing={submit}
+        />
+        {error ? (
+          <Txt v="strong" color={CORAL}>
+            {error}
+          </Txt>
+        ) : null}
+        <ToyButton title={c.parentLogin.submit} onPress={submit} loading={loading} full />
+        <Pressable onPress={() => router.push({ pathname: '/forgot-password', params: { email } })} accessibilityRole="link">
+          <Txt v="strong" align="center" color={world.accentDark}>
+            {c.parentLogin.forgot}
+          </Txt>
+        </Pressable>
         </View>
-        <Button title={t('login')} onPress={handleLogin} loading={loading} />
-        <BouncyPressable onPress={() => router.push('/parent-register')} style={styles.link}>
-          <RtlText style={styles.linkText} wrap={false}>
-            {t('noAccount')}
-          </RtlText>
-        </BouncyPressable>
-      </AuthFormCard>
-    </AuthScreenShell>
+      </Sticker>
+      <Row justify="center">
+        <Pressable onPress={() => router.replace('/parent-register')} accessibilityRole="link" hitSlop={8}>
+          <Txt v="title" color={world.accentDark}>
+            {c.parentLogin.noAccount}
+          </Txt>
+        </Pressable>
+      </Row>
+    </AuthLayout>
   );
 }

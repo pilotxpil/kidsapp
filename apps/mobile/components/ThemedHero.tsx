@@ -201,14 +201,14 @@ export function ThemedHero({
         tagline: {
           color: 'rgba(255,255,255,0.88)',
           fontSize: 12,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           marginBottom: 2,
           ...type.ui,
         },
         name: {
           color: '#fff',
           fontSize: 28,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           ...toTextShadow('rgba(0,0,0,0.65)', { width: 1, height: 2 }, 6),
           ...type.display,
         },
@@ -229,7 +229,7 @@ export function ThemedHero({
           borderWidth: 1,
           borderColor: colors.borderLight,
         },
-        pillText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+        pillText: { color: '#fff', fontSize: 13, fontFamily: 'Fredoka_700Bold' },
         streakPill: {
           backgroundColor: `${colors.bgDeep}99`,
           paddingHorizontal: spacing.sm,
@@ -241,7 +241,7 @@ export function ThemedHero({
           borderWidth: 1,
           borderColor: colors.streak,
         },
-        streakPillText: { color: colors.streak, fontSize: 13, fontWeight: '800' },
+        streakPillText: { color: colors.streak, fontSize: 13, fontFamily: 'Fredoka_700Bold' },
       }),
     [themeId, borderRadius, cardBorder, vector, type.ui, type.display, colors]
   );
@@ -319,7 +319,7 @@ export function SectionHeader({ title, icon }: SectionHeaderProps) {
         title: {
           color: colors.text,
           fontSize: 20,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           flex: 1,
           letterSpacing: themeId === 'ember' ? 0.2 : 0,
           ...type.display,

@@ -10,6 +10,14 @@ export interface IFamily extends Document {
     language: string;
     theme: string;
   };
+  /** free | premium | founder. Legacy docs without it are migrated at boot (see migratePlans). */
+  plan?: 'free' | 'premium' | 'founder';
+  /** Paid premium end (subscription expiry). Unset = no expiry (founder / lifetime). */
+  premiumUntil?: Date;
+  premiumWillRenew?: boolean;
+  billingSource?: 'revenuecat' | 'manual' | 'founder';
+  billingProductId?: string;
+  billingUpdatedAt?: Date;
   createdAt: Date;
 }
 
@@ -23,6 +31,13 @@ const familySchema = new Schema<IFamily>(
       language: { type: String, default: 'he' },
       theme: { type: String, default: 'gaming' },
     },
+    // No schema default on purpose: a missing value marks a pre-launch family for migratePlans.
+    plan: { type: String, enum: ['free', 'premium', 'founder'] },
+    premiumUntil: { type: Date },
+    premiumWillRenew: { type: Boolean },
+    billingSource: { type: String, enum: ['revenuecat', 'manual', 'founder'] },
+    billingProductId: { type: String },
+    billingUpdatedAt: { type: Date },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

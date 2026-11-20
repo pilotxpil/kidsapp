@@ -2,11 +2,11 @@
   "expo": {
     "name": "KidsQuest",
     "slug": "kidsquest",
-    "version": "1.1.9",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "kidsquest",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kidsapp.quest",
@@ -14,7 +14,11 @@
         "CFBundleDevelopmentRegion": "he",
         "CFBundleLocalizations": [
           "he"
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
@@ -23,12 +27,17 @@
       "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#1a1a1a",
+        "backgroundColor": "#2C8BFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "com.google.android.gms.permission.AD_ID",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -42,7 +51,8 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#1a1a1a"
+          "imageWidth": 180,
+          "backgroundColor": "#EEF5FF"
         }
       ],
       "expo-font",
@@ -57,13 +67,14 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "נדרשת גישה לתמונות לצירוף הוכחה למשימה"
+          "photosPermission": "נדרשת גישה לתמונות כדי לצרף הוכחה למשימה",
+          "cameraPermission": "נדרשת מצלמה כדי לצלם הוכחה למשימה"
         }
       ],
       [
         "expo-notifications",
         {
-          "color": "#FF6B35",
+          "color": "#1F7AFF",
           "defaultChannel": "default",
           "enableBackgroundRemoteNotifications": false
         }
@@ -72,7 +83,7 @@
         "expo-navigation-bar",
         {
           "enforceContrast": false,
-          "style": "light"
+          "style": "dark"
         }
       ]
     ],

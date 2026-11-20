@@ -104,7 +104,7 @@ export function KidLoginQrModal({ kid, visible, onClose }: KidLoginQrModalProps)
         title: {
           color: colors.text,
           fontSize: 20,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           textAlign: 'center',
           marginBottom: spacing.sm,
         },
@@ -124,7 +124,7 @@ export function KidLoginQrModal({ kid, visible, onClose }: KidLoginQrModalProps)
         kidLineText: {
           color: colors.primaryLight,
           fontSize: 16,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
         },
         qrWrap: {
           backgroundColor: '#fff',
@@ -140,7 +140,7 @@ export function KidLoginQrModal({ kid, visible, onClose }: KidLoginQrModalProps)
         code: {
           color: colors.primaryLight,
           fontSize: 24,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           letterSpacing: 6,
           marginBottom: spacing.md,
         },

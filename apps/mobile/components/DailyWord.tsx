@@ -62,21 +62,21 @@ function useDailyWordStyles() {
         kicker: {
           color: GOLD_INGOT.title,
           fontSize: 18,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           letterSpacing: 0.3,
           ...type.display,
         },
         tapHint: {
           color: GOLD_INGOT.body,
           fontSize: 13,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           marginTop: 2,
           ...type.ui,
         },
         word: {
           color: GOLD_INGOT.title,
           fontSize: 32,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginTop: spacing.sm,
           marginBottom: spacing.sm,
           ...type.display,
@@ -84,7 +84,7 @@ function useDailyWordStyles() {
         label: {
           color: GOLD_INGOT.muted,
           fontSize: 12,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginBottom: 4,
           ...type.ui,
         },
@@ -105,7 +105,7 @@ function useDailyWordStyles() {
         study: {
           color: GOLD_INGOT.body,
           fontSize: 13,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           ...type.ui,
         },
         kidBlock: {
@@ -119,7 +119,7 @@ function useDailyWordStyles() {
         kidName: {
           color: GOLD_INGOT.title,
           fontSize: 16,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           ...type.ui,
         },
         kidMeta: {
@@ -131,7 +131,7 @@ function useDailyWordStyles() {
         parentWord: {
           color: GOLD_INGOT.title,
           fontSize: 26,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginBottom: spacing.xs,
           ...type.display,
         },
@@ -176,7 +176,8 @@ export function DailyWord({ kidId }: DailyWordProps) {
   };
 
   const icon = <Image source={INGOT} style={styles.ingot} resizeMode="contain" />;
-  const revealed = open || word.status === 'won';
+  // 'won' already returned above, so the word is revealed only when opened.
+  const revealed = open;
 
   return (
     <ShineShell>
@@ -190,7 +191,7 @@ export function DailyWord({ kidId }: DailyWordProps) {
                 {t('dailyWordTapToOpen').replace('{n}', String(word.points))}
               </Text>
             ) : null}
-            {word.status === 'won' ? (
+            {(word.status as string) === 'won' ? (
               <Text style={[styles.tapHint, rtl.text]}>
                 {t('dailyWordWon').replace('{n}', String(word.points))}
               </Text>

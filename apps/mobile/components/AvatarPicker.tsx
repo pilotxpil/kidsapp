@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: '800',
+    fontFamily: 'Fredoka_700Bold',
     textAlign: 'center',
     marginBottom: spacing.xs,
     width: '100%',
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   },
   section: {
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: 'Fredoka_700Bold',
     textAlign: 'center',
     width: '100%',
     marginBottom: spacing.xs,
@@ -191,5 +191,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
   },
-  closeText: { fontWeight: '700', fontSize: 16 },
+  closeText: { fontFamily: 'Fredoka_700Bold', fontSize: 16 },
 });

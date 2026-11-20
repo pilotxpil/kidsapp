@@ -48,7 +48,7 @@ export function KidLoginScanner({ visible, onClose, onScan }: KidLoginScannerPro
         title: {
           color: colors.text,
           fontSize: 20,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           textAlign: 'center',
         },
         hint: {

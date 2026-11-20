@@ -23,6 +23,10 @@ async function removeInvalidTokens(tokens: string[]): Promise<void> {
 async function sendToTokens(tokens: string[], payload: PushPayload): Promise<void> {
   const valid = tokens.filter((t) => Expo.isExpoPushToken(t));
   if (valid.length === 0) return;
+  if (process.env.PUSH_DISABLED === 'true') {
+    console.log(`[push:disabled] ${valid.length} device(s): ${payload.title}`);
+    return;
+  }
 
   const messages: ExpoPushMessage[] = valid.map((to) => ({
     to,

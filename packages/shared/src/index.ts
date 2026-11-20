@@ -1,6 +1,7 @@
 export * from './learning';
 export * from './dailyWords';
 export * from './dailyRiddles';
+export * from './plans';
 import type { ParentDailyWordKid } from './dailyWords';
 import type { ParentDailyRiddleKid } from './dailyRiddles';
 
@@ -385,12 +386,21 @@ export interface ParentDashboard {
 }
 
 export const TASK_CATEGORIES: Record<TaskCategory, { label: string; icon: string }> = {
-  home: { label: 'בית', icon: '🟩' },
-  school: { label: 'לימודים', icon: '📖' },
-  social: { label: 'חברתי', icon: '👨‍🌾' },
-  hobby: { label: 'חוג', icon: '🎣' },
-  sport: { label: 'ספורט', icon: '🏹' },
+  home: { label: 'בית', icon: '🏠' },
+  school: { label: 'לימודים', icon: '📚' },
+  social: { label: 'חברתי', icon: '🤝' },
+  hobby: { label: 'חוג', icon: '🎨' },
+  sport: { label: 'ספורט', icon: '⚽' },
 };
+
+/** Category icons stored on tasks by app versions before 2.0 (blocky / game themed). */
+const LEGACY_TASK_ICONS = new Set(['🟩', '📖', '👨‍🌾', '🎣', '🏹', '🧱']);
+
+/** Icon to show for a task: legacy auto-icons are swapped for the current category icon. */
+export function displayTaskIcon(icon: string | undefined | null, category: TaskCategory): string {
+  if (!icon || LEGACY_TASK_ICONS.has(icon)) return TASK_CATEGORIES[category]?.icon ?? '⭐';
+  return icon;
+}
 
 export const TASK_RECURRENCE: Record<TaskRecurrence, { label: string; icon: string }> = {
   daily: { label: 'יומי', icon: '🔁' },
@@ -399,7 +409,7 @@ export const TASK_RECURRENCE: Record<TaskRecurrence, { label: string; icon: stri
 };
 
 export function taskCategoryIcon(category: TaskCategory): string {
-  return TASK_CATEGORIES[category]?.icon ?? '🧱';
+  return TASK_CATEGORIES[category]?.icon ?? '⭐';
 }
 
 export interface TaskTemplate {
@@ -433,7 +443,7 @@ export const TASK_TEMPLATES: TaskTemplate[] = [
 ];
 
 export const REWARD_CATEGORIES: Record<RewardCategory, { label: string; icon: string }> = {
-  gaming: { label: 'גיימינג', icon: '⛏️' },
+  gaming: { label: 'גיימינג', icon: '🎮' },
   food: { label: 'אוכל', icon: '🍽️' },
   screen: { label: 'מסך', icon: '🖥️' },
   privilege: { label: 'הרשאות', icon: '✨' },
@@ -444,6 +454,7 @@ export const REWARD_CATEGORIES: Record<RewardCategory, { label: string; icon: st
 const GENERIC_REWARD_ICONS = new Set<string>([
   '🎁',
   '🍖',
+  '⛏️',
   ...Object.values(REWARD_CATEGORIES).map((c) => c.icon),
 ]);
 
@@ -480,7 +491,7 @@ export interface RewardTemplate {
 export const REWARD_TEMPLATES: RewardTemplate[] = [
   { title: '80 Robux', description: 'רובוקס לרובלוקס', icon: '🎮', cost: 500, category: 'gaming' },
   { title: 'Brawl Stars Gems', description: '100 ג׳מס לבראול סטארס', icon: '💎', cost: 400, category: 'gaming' },
-  { title: 'Minecraft Coins', description: 'מטבעות למיינקראפט', icon: '⛏️', cost: 350, category: 'gaming' },
+  { title: 'Minecraft Coins', description: 'מטבעות למיינקראפט', icon: '🪙', cost: 350, category: 'gaming' },
   { title: 'הזמנת פיצה', description: 'פיצה מהמסעדה האהובה', icon: '🍕', cost: 800, category: 'food' },
   { title: 'קולה', description: 'בקבוק קולה', icon: '🥤', cost: 80, category: 'food' },
   { title: '30 דק מסך', description: 'זמן מסך בונוס', icon: '📱', cost: 150, category: 'screen' },
@@ -495,11 +506,11 @@ export const BADGES: Record<string, { label: string; icon: string; description: 
   streak_3: { label: 'רצף 3 ימים', icon: '🔥', description: '3 ימים ברצף!' },
   streak_7: { label: 'שבוע מושלם', icon: '💎', description: '7 ימים ברצף!' },
   streak_30: { label: 'חודש אגדי', icon: '👑', description: '30 ימים ברצף!' },
-  level_5: { label: 'רמה 5', icon: '⚔️', description: 'הגעת לרמה 5!' },
-  level_10: { label: 'אגדה', icon: '🗡️', description: 'הגעת לרמה 10!' },
-  task_master: { label: 'מלך המטלות', icon: '⛏️', description: '50 משימות הושלמו!' },
-  sport_star: { label: 'אלוף הספורט', icon: '🏹', description: '10 משימות ספורט!' },
-  scholar: { label: 'תלמיד מצטיין', icon: '📖', description: '10 משימות לימודים!' },
+  level_5: { label: 'שלב 5', icon: '🚀', description: 'הגעת לשלב 5!' },
+  level_10: { label: 'אגדה', icon: '🏆', description: 'הגעת לשלב 10!' },
+  task_master: { label: 'מלך המשימות', icon: '🦸', description: '50 משימות הושלמו!' },
+  sport_star: { label: 'אלוף הספורט', icon: '⚽', description: '10 משימות ספורט!' },
+  scholar: { label: 'תלמיד מצטיין', icon: '🎓', description: '10 משימות לימודים!' },
 };
 
 /** One-time XP bonus when a badge is first earned. */

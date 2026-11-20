@@ -1,129 +1,186 @@
-import React, { useState, useMemo } from 'react';
-import { StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Input } from '../components/Input';
-import { Button } from '../components/Button';
-import { AuthBrand } from '../components/AuthBrand';
-import { AuthScreenShell } from '../components/AuthScreenShell';
-import { AuthFormCard } from '../components/AuthFormCard';
-import { BouncyPressable } from '../components/animations/BouncyPressable';
-import { RtlText } from '../components/RtlText';
+import React, { useRef, useState } from 'react';
+import { Pressable, TextInput, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { MIN_PASSWORD_LENGTH } from '@kidsapp/shared';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { colors, spacing } from '../constants/theme';
-import { t } from '../lib/i18n';
+import { useTheme } from '../lib/theme-context';
+import { c } from '../lib/i18n';
+import { haptic } from '../lib/haptics';
+import { setNextRoute } from '../lib/next-route';
+import { AuthLayout } from '../components/AuthLayout';
+import { Field, Sticker, ToyButton, Txt, Row, Segmented } from '../components/ui';
+import { CORAL } from '../constants/themes';
 
-type RegisterMode = 'create' | 'join';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ParentRegisterScreen() {
-  const [mode, setMode] = useState<RegisterMode>('create');
+  const router = useRouter();
+  const params = useLocalSearchParams<{ invite?: string }>();
+  const { login } = useAuth();
+  const { world } = useTheme();
+  const [mode, setMode] = useState<'new' | 'join'>(params.invite ? 'join' : 'new');
+  const [step, setStep] = useState<1 | 2>(1);
+  const [name, setName] = useState('');
+  const [familyName, setFamilyName] = useState('');
+  const [invite, setInvite] = useState(params.invite ?? '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [familyName, setFamilyName] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const router = useRouter();
+  const [error, setError] = useState('');
+  const familyRef = useRef<TextInput>(null);
+  const passRef = useRef<TextInput>(null);
 
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        link: { marginTop: spacing.md, alignItems: 'center' },
-        linkText: { color: colors.primaryLight, fontSize: 14, fontWeight: '700' },
-      }),
-    []
-  );
+  const fail = (msg: string) => {
+    setError(msg);
+    haptic.warn();
+  };
 
-  const handleRegister = async () => {
-    if (!email || !password || !displayName) {
-      Alert.alert('שגיאה', 'מלא את כל השדות');
-      return;
-    }
-    if (mode === 'create' && !familyName) {
-      Alert.alert('שגיאה', 'מלא את כל השדות');
-      return;
-    }
-    if (mode === 'join' && !inviteCode.trim()) {
-      Alert.alert('שגיאה', 'הזן קוד הזמנה');
-      return;
-    }
+  const next = () => {
+    if (mode === 'new' && (!name.trim() || !familyName.trim())) return fail(c.register.nameMissing);
+    if (mode === 'join' && !name.trim()) return fail(c.register.nameMissingJoin);
+    if (mode === 'join' && !invite.trim()) return fail(c.register.codeMissing);
+    setError('');
+    setStep(2);
+  };
+
+  const submit = async () => {
+    if (!EMAIL_RE.test(email.trim())) return fail(c.register.emailBad);
+    if (password.length < MIN_PASSWORD_LENGTH) return fail(c.register.passwordShort);
     setLoading(true);
+    setError('');
     try {
       const res = await api.parentRegister(
-        email,
+        email.trim(),
         password,
-        displayName,
-        mode === 'create' ? familyName : undefined,
-        mode === 'join' ? inviteCode.trim() : undefined
+        name.trim(),
+        mode === 'new' ? familyName.trim() : undefined,
+        mode === 'join' ? invite.trim() : undefined
       );
+      haptic.success();
+      setNextRoute(mode === 'new' ? '/(parent)/onboarding' : '/(parent)');
       await login(res.token, res.user);
-      router.replace('/(parent)');
-    } catch (err: any) {
-      Alert.alert('שגיאה', err.message);
+    } catch (e) {
+      haptic.error();
+      setError(e instanceof Error ? e.message : 'ההרשמה נכשלה');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AuthScreenShell
-      themeId="roblox"
-      emojis={['🪙', '🛡️', '👨‍👩‍👧‍👦', '⭐', '🌐']}
-      emojiCount={16}
-      onBack={() => router.back()}
-      scroll
+    <AuthLayout
+      title={c.register.title}
+      sub={step === 1 ? c.register.step1Sub : c.register.step2Sub}
+      mood={step === 1 ? 'happy' : 'cheer'}
+      onBack={step === 2 ? () => setStep(1) : undefined}
     >
-      <AuthBrand variant="register" compact />
-
-      <AuthFormCard themeId="roblox">
-        {mode === 'create' ? (
-          <Input label={t('familyName')} value={familyName} onChangeText={setFamilyName} placeholder="משפחת כהן" />
-        ) : (
-          <Input
-            label={t('inviteCode')}
-            value={inviteCode}
-            onChangeText={setInviteCode}
-            placeholder="123456"
-            keyboardType="number-pad"
-            maxLength={6}
-          />
-        )}
-        <Input label={t('displayName')} value={displayName} onChangeText={setDisplayName} placeholder="אבא" />
-        <Input
-          label={t('email')}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          textContentType="emailAddress"
-          autoComplete="email"
-          ltr
-        />
-        <Input
-          label={t('password')}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
-          textContentType="newPassword"
-          autoComplete="new-password"
-          ltr
-        />
-        <Button title={t('createAccount')} onPress={handleRegister} loading={loading} />
-        <BouncyPressable onPress={() => setMode(mode === 'create' ? 'join' : 'create')} style={styles.link}>
-          <RtlText style={styles.linkText} wrap={false}>
-            {mode === 'create' ? t('haveInviteCode') : t('createNewFamily')}
-          </RtlText>
-        </BouncyPressable>
-        <BouncyPressable onPress={() => router.push('/parent-login')} style={styles.link}>
-          <RtlText style={styles.linkText} wrap={false}>
-            {t('alreadyHaveAccount')}
-          </RtlText>
-        </BouncyPressable>
-      </AuthFormCard>
-    </AuthScreenShell>
+      <Sticker tone="calm" pad={18}>
+        <View style={{ gap: 14 }}>
+          {step === 1 ? (
+            <>
+              <Txt v="h2">{c.register.step1}</Txt>
+              <Segmented
+                value={mode}
+                onChange={(v) => {
+                  setMode(v);
+                  setError('');
+                }}
+                options={[
+                  { value: 'new', label: c.register.joinNo },
+                  { value: 'join', label: c.register.join },
+                ]}
+              />
+              <Field
+                label={c.register.yourName}
+                kind="name"
+                value={name}
+                onChangeText={setName}
+                returnKeyType="next"
+                onSubmitEditing={() => familyRef.current?.focus()}
+              />
+              {mode === 'new' ? (
+                <Field
+                  ref={familyRef}
+                  label={c.register.familyName}
+                  placeholder={c.register.familyNamePh}
+                  value={familyName}
+                  onChangeText={setFamilyName}
+                  returnKeyType="next"
+                  onSubmitEditing={next}
+                />
+              ) : (
+                <Field
+                  ref={familyRef}
+                  label={c.register.joinCode}
+                  kind="code"
+                  hint={c.register.joinHint}
+                  value={invite}
+                  onChangeText={(v) => setInvite(v.replace(/\D/g, ''))}
+                  returnKeyType="next"
+                  onSubmitEditing={next}
+                />
+              )}
+              {error ? <Txt v="strong" color={CORAL}>{error}</Txt> : null}
+              <ToyButton title={c.register.next} onPress={next} full icon="forward" />
+            </>
+          ) : (
+            <>
+              <Txt v="h2">{c.register.step2}</Txt>
+              <Field
+                label={c.parentLogin.email}
+                kind="email"
+                icon="mail"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="name@example.com"
+                returnKeyType="next"
+                onSubmitEditing={() => passRef.current?.focus()}
+              />
+              <Field
+                ref={passRef}
+                label={c.parentLogin.password}
+                kind="newPassword"
+                icon="key"
+                hint={c.register.passwordHint}
+                value={password}
+                onChangeText={setPassword}
+                returnKeyType="go"
+                onSubmitEditing={submit}
+              />
+              {error ? <Txt v="strong" color={CORAL}>{error}</Txt> : null}
+              <ToyButton
+                title={mode === 'new' ? c.register.create : c.register.joinSubmit}
+                onPress={submit}
+                loading={loading}
+                full
+                variant="success"
+                sound="cheer"
+              />
+              <Row justify="center" wrap gap={4}>
+                <Txt v="caption" muted align="center">
+                  {c.register.accept}
+                </Txt>
+              </Row>
+              <Row justify="center" gap={20}>
+                <Pressable onPress={() => router.push('/terms')} hitSlop={8}>
+                  <Txt v="caption" color={world.accentDark}>{c.welcome.terms}</Txt>
+                </Pressable>
+                <Pressable onPress={() => router.push('/privacy')} hitSlop={8}>
+                  <Txt v="caption" color={world.accentDark}>{c.welcome.privacy}</Txt>
+                </Pressable>
+              </Row>
+            </>
+          )}
+        </View>
+      </Sticker>
+      <Row justify="center">
+        <Pressable onPress={() => router.replace('/parent-login')} accessibilityRole="link" hitSlop={8}>
+          <Txt v="title" color={world.accentDark}>
+            {c.register.haveAccount}
+          </Txt>
+        </Pressable>
+      </Row>
+    </AuthLayout>
   );
 }

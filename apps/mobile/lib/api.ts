@@ -29,7 +29,28 @@ import type {
   KidDailyRiddle,
   ShopFreebies,
   BadgeUnlock,
+  FamilyEntitlements,
+  AppRuntimeConfig,
+  PremiumFeature,
 } from '@kidsapp/shared';
+
+/** Error thrown by the API client. `code === 'PREMIUM_REQUIRED'` means "show the paywall". */
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  feature?: PremiumFeature;
+  constructor(message: string, status: number, code?: string, feature?: PremiumFeature) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.feature = feature;
+  }
+}
+
+export function isPremiumRequired(err: unknown): err is ApiError {
+  return err instanceof ApiError && err.code === 'PREMIUM_REQUIRED';
+}
 
 const TOKEN_KEY = 'kidsapp_token';
 
@@ -66,7 +87,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     }
 
     if (!res.ok) {
-      throw new Error((data.error as string) || 'שגיאה בשרת');
+      throw new ApiError(
+        (data.error as string) || 'שגיאה בשרת',
+        res.status,
+        data.code as string | undefined,
+        data.feature as PremiumFeature | undefined
+      );
     }
 
     return data as T;
@@ -128,6 +154,52 @@ export const api = {
     >('/auth/kid/login', {
       method: 'POST',
       body: JSON.stringify({ username, pin, familyCode }),
+    });
+  },
+
+  forgotPassword(email: string) {
+    return request<{ ok: true }>('/auth/password/forgot', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  resetPassword(email: string, code: string, password: string) {
+    return request<AuthResponse>('/auth/password/reset', {
+      method: 'POST',
+      body: JSON.stringify({ email, code, password }),
+    });
+  },
+
+  changePassword(currentPassword: string, newPassword: string) {
+    return request<{ ok: true }>('/auth/password/change', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
+
+  deleteAccount(password: string) {
+    return request<{ ok: true; deleted: 'left' | 'family' }>('/auth/me', {
+      method: 'DELETE',
+      body: JSON.stringify({ password }),
+    });
+  },
+
+  deleteKid(id: string) {
+    return request<{ success: true }>(`/kids/${id}`, { method: 'DELETE' });
+  },
+
+  getAppConfig() {
+    return request<AppRuntimeConfig>('/app/config');
+  },
+
+  getBillingStatus() {
+    return request<{ entitlements: FamilyEntitlements; billingEnabled: boolean }>('/billing/status');
+  },
+
+  syncBilling() {
+    return request<{ entitlements: FamilyEntitlements; billingEnabled: boolean }>('/billing/sync', {
+      method: 'POST',
     });
   },
 

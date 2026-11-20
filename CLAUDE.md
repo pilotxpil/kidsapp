@@ -19,11 +19,12 @@ cd apps/mobile && npm run web     # Expo web at http://localhost:8081 (kid + par
 - There is **no test runner and no lint script**, so there is no single-test command. Typecheck from inside each workspace (server/shared resolve TS 5.9, mobile the hoisted TS 6.0):
 
   ```bash
-  cd server && npx tsc --noEmit        # clean at v1.1.9
-  cd apps/mobile && npx tsc --noEmit   # exits non-zero at v1.1.9 on a few existing errors (DailyWord, Input, KidAvatar, ThemedScreen) — compare against that baseline
+  cd server && npx tsc --noEmit        # clean
+  cd apps/mobile && npx tsc --noEmit   # clean since v2.0.0 (typed routes regenerate on `expo start`)
   ```
 - Local logins after `npm run seed -w server`: parent `parent@test.com` / `parent123`; kids `yonatan` / `1234` and `itay` / `5678`, each plus the 6-digit family code the seed prints.
 - `eas` is not on PATH: use `npx eas-cli …` from `apps/mobile`, and don't rely on the root `npm run build:android` for a non-interactive build.
+- `server/.env` points at **production Atlas**. To run the API on real data safely, restore a backup into a local DB and start it with `MONGODB_URI=mongodb://localhost:27017/<copy> PUSH_DISABLED=true CRON_DISABLED=true` so no real device is notified.
 
 ## Releases and versioning
 
@@ -31,11 +32,19 @@ cd apps/mobile && npm run web     # Expo web at http://localhost:8081 (kid + par
 - `./deploy/vm/deploy.sh` rewrites `STORE_VERSION_ANDROID/IOS` in your local `server/.env` from `expo.version` before uploading it — never set them by hand. The app's update prompt (`lib/appUpdate.ts`) compares its version with the Play listing (iOS: iTunes lookup) and falls back to `GET /app/version`, which serves those env vars. It is skipped on web and in `__DEV__`.
 - Play internal-testing upload (EAS build → submit with a service-account key → `.cursor/skills/kidsquest-deploy/scripts/publish-internal.py` to roll the draft out) is documented step by step in `.cursor/skills/kidsquest-deploy/SKILL.md`. Never commit the service-account JSON or leave `serviceAccountKeyPath` in `eas.json`.
 
+## Design system (v2)
+
+- `components/ui/` is the kit every screen uses: `Txt` (Fredoka type scale), `Row`/`Stack` (RTL-safe), `ToyButton` (3D press), `Sticker` (card; `tone="kid"` ink outline + hard shadow, `tone="calm"` for parents), `KidScreen` (painted world sky + paper) and `CalmScreen` (parent), `Sheet`/`Dialog`, `Field`, `PinPad`, `ToyTabBar`, `toast()`, SVG `Icon`s, toy icons (`Coin`, `Gem`, `Flame`…) and the mascot `Piko`.
+- RTL: use `lib/dir.ts` (`ROW`, `START`, `TEXT_START`, `fromRight`) — first child sits on the physical right on web, Hebrew-locale phones and LTR-locale phones alike. Never `forceRTL`.
+- Themes keep their stored ids but are now original worlds: `roblox`→Ocean, `ember`→Volcano, `minecraft`→Jungle, `brawl`→Space, `sparkle`→Candy (`constants/themes.ts`, `world` tokens). Space and Candy are premium. No raster theme art ships; `constants/theme-art.ts` is intentionally empty.
+- Legacy `Button`, `Card`, `Input`, `ThemedScreen` are thin wrappers over the kit so older screens (parent learn editor, history, gifts, learning player, daily word/riddle) match. Copy for new screens lives in the `c` object at the end of `lib/i18n.ts`.
+- `lib/premium.tsx` (`usePremium`, `useErrorHandler`) owns plan state and opens the paywall on HTTP 402 `PREMIUM_REQUIRED`. `lib/purchases.ts` (RevenueCat) and `lib/ads.ts` (AdMob) are native-only with `.web.ts` stubs. Setup: `docs/PRODUCTION.md`.
+
 ## Architecture notes that span files
 
 **Shared package.** `@kidsapp/shared` is CommonJS compiled to `dist/` and reached through the workspace symlink, so edits in `src/` are invisible to server and mobile until rebuilt (EAS cloud builds rebuild it via `eas-build-post-install`). It holds more than types: content banks (`DAILY_WORDS`, `DAILY_RIDDLES`, `COSMETIC_ITEMS`, task/reward templates) and logic both sides must agree on (`calculateLevel`, answer matchers like `selectAllMatches` / `openWordsMatch` / `riddleGuessMatches`). Mongoose interfaces re-declare some shared unions by hand (`IUser.uiTheme`, `IPointTransaction.type`), so extending a shared union also means updating the model.
 
-**Server boot** (`server/src/index.ts`): connect → `migrateFamilies()` → `migrateUserIndexes()` → `loadLearningPacks()` → `startScheduledJobs()`. The migrations are idempotent in-place fixups that run on every boot (there is no migration framework; add new ones the same way). The only cron job (19:00 Asia/Jerusalem evening reminder, guarded by an in-memory once-per-day flag) runs inside the API process, so pm2 must stay at `instances: 1`.
+**Server boot** (`server/src/index.ts`): connect → `migrateFamilies()` → `migrateUserIndexes()` → `migratePlans()` (pre-launch families → `founder`) → `loadLearningPacks()` → `startScheduledJobs()`. Production refuses to boot with a weak `JWT_SECRET`; auth routes are rate limited (`trust proxy` is set for nginx). The migrations are idempotent in-place fixups that run on every boot (there is no migration framework; add new ones the same way). The only cron job (19:00 Asia/Jerusalem evening reminder, guarded by an in-memory once-per-day flag) runs inside the API process, so pm2 must stay at `instances: 1`.
 
 **Points, XP, streaks.** Every balance change goes through `awardPoints` / `deductPoints` in `services/gamification.ts` (callers: tasks, learning, rewards, cosmetics, manual bonus, daily word/riddle/shop gifts, homework, family challenge). `awardPoints` also runs level-up and badge checks; badge conditions are hardcoded in `updateLevelAndBadges` — shared `BADGES` / `BADGE_REWARDS` supply only labels and payouts, so a new badge needs both.
 - Daily gift type (star vs wheel), the treasure-chest day, and the daily word/riddle/shop picks come from an FNV-1a hash of `kidId:date:salt` — nothing is stored. The snippet is copy-pasted in `gamification.ts`, `dailyWord.ts`, `dailyRiddle.ts` and `shopFreebies.ts`; changing a salt or the hash re-rolls everyone's "today".
@@ -62,8 +71,9 @@ cd apps/mobile && npm run web     # Expo web at http://localhost:8081 (kid + par
 
 ## Deployment gotchas
 
-- nginx proxies by a path regex that must list every top-level mount in `server/src/index.ts` (currently `auth|tasks|rewards|kids|family|learning|push|app|health`). `deploy.sh` does **not** touch nginx; the conf is copied, tested and reloaded by `deploy-web.sh` (`npm run deploy:web`), so a new API mount needs both deploys. `deploy/vm/DEPLOY.md` lists fewer paths than the conf — trust the conf.
+- nginx proxies by a path regex that must list every top-level mount in `server/src/index.ts` (currently `auth|tasks|rewards|kids|family|learning|push|app|billing|health`). `deploy.sh` does **not** touch nginx; the conf is copied, tested and reloaded by `deploy-web.sh` (`npm run deploy:web`), so a new API mount needs both deploys. `deploy/vm/DEPLOY.md` lists fewer paths than the conf — trust the conf.
 - `deploy.sh` ships only `package.json`, `package-lock.json`, `packages/shared`, `content`, `server` and `deploy/vm` (plus your local `server/.env`), then runs `npm ci` and the builds on the VM. Anything else the API reads at runtime is not uploaded — e.g. `GET /learning/studio` serves `docs/learning-pack-studio.html`, so it 404s on the VM unless that file was placed there by hand.
+- `SKIP_STORE_SYNC=1 ./deploy/vm/deploy.sh` deploys the API without advertising the new `expo.version` (use it when the API ships before the store build is live).
 - `deploy-web.sh` builds the Expo web export locally (`EXPO_PUBLIC_API_URL` defaults to the production URL) and replaces the VM's web directory wholesale.
 
 ## Docs

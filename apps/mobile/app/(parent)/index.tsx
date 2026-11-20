@@ -1,486 +1,427 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  Image,
-  Alert,
-} from 'react-native';
-import { useFocusLoad } from '../../hooks/useFocusLoad';
+import React, { useCallback, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import type { FamilyAchievementEntry, FamilyChallenge, ParentDashboard } from '@kidsapp/shared';
+import { displayTaskIcon } from '@kidsapp/shared';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
-import { Card } from '../../components/Card';
+import { useFocusLoad } from '../../hooks/useFocusLoad';
+import { useTheme } from '../../lib/theme-context';
+import { usePremium, useErrorHandler } from '../../lib/premium';
+import { c } from '../../lib/i18n';
+import { haptic } from '../../lib/haptics';
+import { ScreenCacheKey, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
+import { setPendingApprovals } from '../../lib/parent-badges';
+import { GOLD, INK } from '../../constants/themes';
+import { ROW } from '../../lib/dir';
+import {
+  AvatarSticker,
+  CalmScreen,
+  Coin,
+  CrownToy,
+  Dialog,
+  EmptyState,
+  Field,
+  Flame,
+  Piko,
+  ProgressBar,
+  Row,
+  SectionTitle,
+  Sheet,
+  Sticker,
+  ToyButton,
+  Txt,
+  formatNum,
+  toast,
+} from '../../components/ui';
+import { ApprovalCard } from '../../components/parent/ApprovalCard';
 import { ParentDailyWordList } from '../../components/DailyWord';
 import { ParentDailyRiddleList } from '../../components/DailyRiddle';
-import { KidAvatar } from '../../components/KidAvatar';
-import { Button } from '../../components/Button';
-import { ThemedScreen } from '../../components/ThemedScreen';
-import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
-import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
-import { KeyboardSheet } from '../../components/KeyboardSheet';
-import { ProgressBar } from '../../components/ProgressBar';
-import type {
-  ParentDashboard,
-  TaskCategory,
-  FamilyChallenge,
-  FamilyAchievementEntry,
-} from '@kidsapp/shared';
-import { spacing } from '../../constants/theme';
-import { useTheme } from '../../lib/theme-context';
-import { rtl } from '../../lib/rtl';
-import { t } from '../../lib/i18n';
+import { AdBanner } from '../../components/AdBanner';
+import { ScreenSkeleton } from '../../components/ScreenSkeleton';
 
-export default function ParentDashboardScreen() {
-  const { user, logout } = useAuth();
-  const { colors, borderRadius, cardBorder, pointsEmoji, categoryIcon, id: themeId } = useTheme();
-  type DashCache = {
-    dashboard: ParentDashboard;
-    challenge: FamilyChallenge | null;
-    achievements: FamilyAchievementEntry[];
-  };
-  const hadCache = useRef(hasScreenCache(ScreenCacheKey.parentDashboard)).current;
-  const [dashboard, setDashboard] = useState<ParentDashboard | null>(
-    () => readScreenCache<DashCache>(ScreenCacheKey.parentDashboard)?.dashboard ?? null
+type DashCache = { dashboard: ParentDashboard; challenge: FamilyChallenge | null; achievements: FamilyAchievementEntry[] };
+
+function QuickAction({ label, emoji, onPress }: { label: string; emoji: string; onPress: () => void }) {
+  return (
+    <View style={{ flex: 1 }}>
+      <Sticker tone="calm" pad={10} onPress={onPress} accessibilityLabel={label}>
+        <View style={{ alignItems: 'center', gap: 2 }}>
+          <Txt size={26} align="center" style={{ lineHeight: 32 }}>
+            {emoji}
+          </Txt>
+          <Txt v="caption" align="center">
+            + {label}
+          </Txt>
+        </View>
+      </Sticker>
+    </View>
   );
-  const [challenge, setChallenge] = useState<FamilyChallenge | null>(
-    () => readScreenCache<DashCache>(ScreenCacheKey.parentDashboard)?.challenge ?? null
-  );
-  const [achievements, setAchievements] = useState<FamilyAchievementEntry[]>(
-    () => readScreenCache<DashCache>(ScreenCacheKey.parentDashboard)?.achievements ?? []
-  );
+}
+
+export default function ParentHome() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const { world } = useTheme();
+  const { isPremium, plan, limits, openPaywall } = usePremium();
+  const onError = useErrorHandler();
+  const cached = readScreenCache<DashCache>(ScreenCacheKey.parentDashboard);
+  const [dash, setDash] = useState<ParentDashboard | null>(cached?.dashboard ?? null);
+  const [challenge, setChallenge] = useState<FamilyChallenge | null>(cached?.challenge ?? null);
+  const [achievements, setAchievements] = useState<FamilyAchievementEntry[]>(cached?.achievements ?? []);
   const [refreshing, setRefreshing] = useState(false);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectNote, setRejectNote] = useState('');
   const [rejecting, setRejecting] = useState(false);
-
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        scroll: { padding: spacing.lg, maxWidth: 800, alignSelf: 'center', width: '100%' },
-        header: { marginBottom: spacing.lg },
-        headerText: { flex: 1, minWidth: 0 },
-        greeting: { color: colors.textMuted, fontSize: 14 },
-        name: { color: colors.text, fontSize: 24, fontWeight: '800' },
-        logout: { color: colors.danger, fontSize: 14, fontWeight: '600' },
-        statsRow: { gap: spacing.sm, marginBottom: spacing.lg, flexWrap: 'wrap' },
-        statCard: { flex: 1, minWidth: 90 },
-        statInner: { alignItems: 'center', width: '100%' },
-        statNum: { color: colors.primaryLight, fontSize: 28, fontWeight: '800', textAlign: 'center' },
-        statLabel: {
-          color: colors.textMuted,
-          fontSize: 11,
-          textAlign: 'center',
-          marginTop: 4,
-          writingDirection: 'rtl',
-          width: '100%',
-        },
-        sectionTitle: {
-          color: colors.text,
-          fontSize: 18,
-          fontWeight: '700',
-          marginBottom: spacing.md,
-          marginTop: spacing.md,
-          width: '100%',
-        },
-        empty: { color: colors.textMuted, textAlign: 'center', padding: spacing.md, width: '100%' },
-        approvalCard: { marginBottom: spacing.md },
-        approvalHeader: { marginBottom: spacing.md, width: '100%', alignItems: 'flex-start' },
-        approvalIcon: { fontSize: 32 },
-        approvalInfo: { flex: 1, minWidth: 0 },
-        approvalTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
-        approvalKid: { color: colors.textMuted, fontSize: 14, marginTop: 4 },
-        proofImage: {
-          width: '100%',
-          height: 160,
-          borderRadius: borderRadius.md,
-          marginBottom: spacing.sm,
-          backgroundColor: colors.bg,
-        },
-        approvalActions: { gap: spacing.sm, width: '100%' },
-        approveBtn: { flex: 1 },
-        kidsRow: { flexWrap: 'wrap', gap: spacing.sm, width: '100%' },
-        kidCard: { width: '47%' },
-        kidInner: { alignItems: 'center', width: '100%' },
-        kidAvatar: { fontSize: 40, textAlign: 'center' },
-        kidName: {
-          color: colors.text,
-          fontWeight: '700',
-          marginTop: spacing.sm,
-          textAlign: 'center',
-          writingDirection: 'rtl',
-          width: '100%',
-        },
-        kidPoints: { color: colors.gold, fontWeight: '700', marginTop: 4, textAlign: 'center', width: '100%' },
-        kidLevel: { color: colors.textMuted, fontSize: 12, textAlign: 'center', width: '100%' },
-        challengeCard: { marginBottom: spacing.md },
-        challengeTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: spacing.sm },
-        challengeMeta: { color: colors.textMuted, fontSize: 13, marginTop: spacing.sm },
-        achievementRow: {
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: spacing.sm,
-          width: '100%',
-          marginBottom: spacing.md,
-        },
-        achievementChip: {
-          backgroundColor: colors.bgCard,
-          borderRadius: borderRadius.md,
-          padding: spacing.sm,
-          flexGrow: 1,
-          flexShrink: 1,
-          flexBasis: '46%',
-          maxWidth: '48%',
-          ...cardBorder(1),
-        },
-        achievementIcon: { fontSize: 22, textAlign: 'center' },
-        achievementLabel: {
-          color: colors.text,
-          fontWeight: '700',
-          textAlign: 'center',
-          marginTop: 4,
-          writingDirection: 'rtl',
-        },
-        achievementDesc: {
-          color: colors.textMuted,
-          fontSize: 11,
-          textAlign: 'center',
-          marginTop: 2,
-          writingDirection: 'rtl',
-        },
-        achievementKid: {
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 4,
-          marginTop: 4,
-        },
-        modalBackdrop: {
-          flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          justifyContent: 'center',
-          padding: spacing.lg,
-        },
-        modalCard: {
-          backgroundColor: colors.bgCard,
-          borderRadius: borderRadius.lg,
-          padding: spacing.lg,
-          ...cardBorder(2),
-        },
-        modalTitle: {
-          color: colors.text,
-          fontSize: 18,
-          fontWeight: '700',
-          marginBottom: spacing.md,
-          writingDirection: 'rtl',
-        },
-        modalInput: {
-          backgroundColor: colors.bg,
-          borderRadius: borderRadius.md,
-          padding: spacing.md,
-          color: colors.text,
-          minHeight: 80,
-          textAlignVertical: 'top',
-          writingDirection: 'rtl',
-          textAlign: 'right',
-          marginBottom: spacing.md,
-        },
-        modalActions: { gap: spacing.sm },
-      }),
-    [themeId, colors, borderRadius, cardBorder]
-  );
+  const [editChallenge, setEditChallenge] = useState(false);
+  const [draft, setDraft] = useState({ title: '', targetCount: '', rewardTitle: '', rewardPoints: '' });
 
   const load = useCallback(async () => {
-    const [dash, ch, ach] = await Promise.all([
+    const [d, ch, ach] = await Promise.all([
       api.getDashboard(),
       api.getFamilyChallenge().catch(() => null),
       api.getFamilyAchievements().catch(() => null),
     ]);
-    const next: DashCache = {
-      dashboard: dash.dashboard,
+    setDash(d.dashboard);
+    setChallenge(ch?.challenge ?? null);
+    setAchievements(ach?.achievements ?? []);
+    setPendingApprovals(d.dashboard.pendingCompletions.length + d.dashboard.pendingRedemptions.length);
+    writeScreenCache(ScreenCacheKey.parentDashboard, {
+      dashboard: d.dashboard,
       challenge: ch?.challenge ?? null,
-      achievements: ach?.achievements.slice(0, 8) ?? [],
-    };
-    writeScreenCache(ScreenCacheKey.parentDashboard, next);
-    setDashboard(next.dashboard);
-    setChallenge(next.challenge);
-    setAchievements(next.achievements);
+      achievements: ach?.achievements ?? [],
+    });
   }, []);
-
   const ready = useFocusLoad(load);
-  const showSkeleton = !ready && !hadCache;
 
-  const handleApproveCompletion = async (id: string) => {
-    await api.approveCompletion(id, 'approve');
-    await load();
-  };
+  const dropCompletion = (id: string) =>
+    setDash((d) => {
+      if (!d) return d;
+      const next = { ...d, pendingCompletions: d.pendingCompletions.filter((x) => x._id !== id) };
+      setPendingApprovals(next.pendingCompletions.length + next.pendingRedemptions.length);
+      return next;
+    });
+  const dropRedemption = (id: string) =>
+    setDash((d) => {
+      if (!d) return d;
+      const next = { ...d, pendingRedemptions: d.pendingRedemptions.filter((x) => x._id !== id) };
+      setPendingApprovals(next.pendingCompletions.length + next.pendingRedemptions.length);
+      return next;
+    });
 
-  const openReject = (id: string) => {
-    setRejectId(id);
-    setRejectNote('');
+  const approveTask = async (id: string, name: string, pts: number) => {
+    try {
+      await api.approveCompletion(id, 'approve');
+      haptic.success();
+      dropCompletion(id);
+      toast(c.parent.approved.replace('{n}', String(pts)).replace('{name}', name));
+      void load().catch(() => {});
+    } catch (e) {
+      onError(e);
+    }
   };
 
   const submitReject = async () => {
     if (!rejectId) return;
-    const note = rejectNote.trim();
-    if (!note) {
-      Alert.alert(t('rejectReasonRequired'));
-      return;
-    }
     setRejecting(true);
     try {
-      await api.approveCompletion(rejectId, 'reject', note);
+      await api.approveCompletion(rejectId, 'reject', rejectNote.trim() || undefined);
+      dropCompletion(rejectId);
       setRejectId(null);
       setRejectNote('');
-      await load();
-    } catch (err: any) {
-      Alert.alert('שגיאה', err.message);
+      toast(c.parent.rejected, 'info');
+    } catch (e) {
+      onError(e);
     } finally {
       setRejecting(false);
     }
   };
 
-  const handleApproveRedemption = async (id: string, action: 'approve' | 'reject') => {
-    await api.approveRedemption(id, action);
-    await load();
-  };
-
-  const handleReviewDailyWord = async (kidId: string) => {
+  const reviewRedemption = async (id: string, action: 'approve' | 'reject') => {
     try {
-      await api.reviewDailyWord(kidId, 'approve');
-      await load();
-    } catch (err: any) {
-      Alert.alert('שגיאה', err.message);
+      await api.approveRedemption(id, action);
+      if (action === 'approve') haptic.success();
+      dropRedemption(id);
+      toast(action === 'approve' ? 'הפרס אושר' : c.parent.rejected, action === 'approve' ? 'success' : 'info');
+    } catch (e) {
+      onError(e);
     }
   };
 
-  const handleReviewRiddleAppeal = async (kidId: string, action: 'approve' | 'reject') => {
+  const saveChallenge = async () => {
     try {
-      await api.reviewDailyRiddleAppeal(kidId, action);
-      await load();
-    } catch (err: any) {
-      Alert.alert('שגיאה', err.message);
+      const res = await api.updateFamilyChallenge({
+        title: draft.title.trim() || undefined,
+        targetCount: Number(draft.targetCount) || undefined,
+        rewardTitle: draft.rewardTitle.trim() || undefined,
+        rewardPoints: Number(draft.rewardPoints) || undefined,
+      });
+      setChallenge(res.challenge);
+      setEditChallenge(false);
+      toast(c.parent.saved);
+    } catch (e) {
+      onError(e);
     }
   };
+
+  const kids = dash?.kids ?? [];
+  const pendingCount = (dash?.pendingCompletions.length ?? 0) + (dash?.pendingRedemptions.length ?? 0);
+  const kidById = new Map(kids.map((k) => [k._id, k]));
 
   return (
-    <ThemedScreen tabs>
-      <ScrollView
-        contentContainerStyle={[styles.scroll, rtl.scrollContent]}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={async () => {
-              setRefreshing(true);
-              await load();
-              setRefreshing(false);
-            }}
-            tintColor={colors.primary}
-          />
-        }
-      >
-        <View style={[styles.header, rtl.headerSplit]}>
-          <TouchableOpacity onPress={() => logout()}>
-            <Text style={styles.logout}>{t('logout')}</Text>
-          </TouchableOpacity>
-          <View style={styles.headerText}>
-            <Text style={[styles.greeting, rtl.textFull]}>{t('dashboard')}</Text>
-            <Text style={[styles.name, rtl.textFull]}>{user?.displayName}</Text>
+    <CalmScreen
+      title={c.parent.hello.replace('{name}', user?.displayName ?? '')}
+      subtitle={c.parent.helloSub}
+      action={
+        <ToyButton icon="settings" variant="secondary" size="sm" accessibilityLabel={c.parent.settings} onPress={() => router.push('/(parent)/profile')} />
+      }
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        await load().catch(() => {});
+        setRefreshing(false);
+      }}
+      overlay={
+        <>
+          <Dialog
+            visible={!!rejectId}
+            title={c.parent.rejectTitle}
+            confirmLabel={c.parent.reject}
+            destructive
+            loading={rejecting}
+            onConfirm={submitReject}
+            onCancel={() => setRejectId(null)}
+          >
+            <Field label={c.parent.rejectNote} placeholder={c.parent.rejectNotePh} value={rejectNote} onChangeText={setRejectNote} maxLength={140} />
+          </Dialog>
+          <Sheet
+            visible={editChallenge}
+            onClose={() => setEditChallenge(false)}
+            title={c.parent.challengeEdit}
+            footer={<ToyButton title={c.parent.save} full onPress={saveChallenge} />}
+          >
+            <Field label={c.parent.challengeTitle} value={draft.title} onChangeText={(v) => setDraft((d) => ({ ...d, title: v }))} />
+            <Field label={c.parent.challengeTarget} kind="number" value={draft.targetCount} onChangeText={(v) => setDraft((d) => ({ ...d, targetCount: v.replace(/\D/g, '') }))} />
+            <Field label={c.parent.challengePrize} value={draft.rewardTitle} onChangeText={(v) => setDraft((d) => ({ ...d, rewardTitle: v }))} />
+            <Field label={c.parent.challengePoints} kind="number" value={draft.rewardPoints} onChangeText={(v) => setDraft((d) => ({ ...d, rewardPoints: v.replace(/\D/g, '') }))} />
+          </Sheet>
+        </>
+      }
+    >
+      {ready && kids.length === 0 ? (
+        <Sticker color={world.accentSoft} pad={18}>
+          <View style={{ alignItems: 'center', gap: 10 }}>
+            <Piko size={96} mood="cheer" />
+            <Txt v="h2" align="center">
+              {c.parent.firstKidTitle}
+            </Txt>
+            <Txt v="body" muted align="center">
+              {c.parent.firstKidBody}
+            </Txt>
+            <ToyButton title={c.parent.firstKidCta} icon="plus" onPress={() => router.push('/(parent)/onboarding')} style={{ alignSelf: 'center' }} />
           </View>
-        </View>
+        </Sticker>
+      ) : null}
 
-        {showSkeleton ? (
-          <ScreenSkeleton />
-        ) : (
-        <ScreenReveal animate={!hadCache}>
-        {dashboard && (
-          <View style={[styles.statsRow, rtl.row]}>
-            <Card style={styles.statCard}>
-              <View style={styles.statInner}>
-                <Text style={styles.statNum}>{dashboard.stats.pendingApprovals}</Text>
-                <Text style={styles.statLabel}>{t('pendingApprovals')}</Text>
-              </View>
-            </Card>
-            <Card style={styles.statCard}>
-              <View style={styles.statInner}>
-                <Text style={styles.statNum}>{dashboard.stats.totalTasks}</Text>
-                <Text style={styles.statLabel}>{t('totalTasks')}</Text>
-              </View>
-            </Card>
-            <Card style={styles.statCard}>
-              <View style={styles.statInner}>
-                <Text style={styles.statNum}>{dashboard.stats.totalRewards}</Text>
-                <Text style={styles.statLabel}>{t('totalRewards')}</Text>
-              </View>
-            </Card>
-          </View>
-        )}
-
-        {challenge && (
-          <>
-            <Text style={[styles.sectionTitle, rtl.textFull]}>{t('familyChallenge')}</Text>
-            <Card style={styles.challengeCard}>
-              <Text style={[styles.challengeTitle, rtl.textFull]}>{challenge.title}</Text>
-              <ProgressBar progress={challenge.targetCount > 0 ? challenge.progress / challenge.targetCount : 0} />
-              <Text style={[styles.challengeMeta, rtl.textFull]}>
-                {challenge.completed
-                  ? t('familyChallengeDone')
-                  : t('familyChallengeProgress')
-                      .replace('{current}', String(challenge.progress))
-                      .replace('{target}', String(challenge.targetCount))}
-              </Text>
-              <Text style={[styles.challengeMeta, rtl.textFull]}>
-                {t('familyChallengeReward')
-                  .replace('{title}', challenge.rewardTitle)
-                  .replace('{points}', String(challenge.rewardPoints))}
-              </Text>
-            </Card>
-          </>
-        )}
-
-        <ParentDailyWordList
-          items={dashboard?.dailyWords ?? []}
-          onApprove={(kidId) => void handleReviewDailyWord(kidId)}
-        />
-        <ParentDailyRiddleList
-          items={dashboard?.dailyRiddles ?? []}
-          onReviewAppeal={(kidId, action) => handleReviewRiddleAppeal(kidId, action)}
-        />
-
-        <Text style={[styles.sectionTitle, rtl.textFull]}>{t('taskApprovals')}</Text>
-        {dashboard?.pendingCompletions.length === 0 ? (
-          <Text style={styles.empty}>אין בקשות ממתינות</Text>
-        ) : (
-          dashboard?.pendingCompletions.map((c) => (
-            <Card key={c._id} style={styles.approvalCard}>
-              <View style={[styles.approvalHeader, rtl.row]}>
-                <Text style={styles.approvalIcon}>
-                  {c.task?.category ? categoryIcon(c.task.category as TaskCategory) : '🧱'}
-                </Text>
-                <View style={styles.approvalInfo}>
-                  <Text style={[styles.approvalTitle, rtl.textFull]}>{c.task?.title}</Text>
-                  <Text style={[styles.approvalKid, rtl.textFull]}>
-                    {c.kid?.displayName} · +{c.task?.points} {pointsEmoji}
-                  </Text>
+      {kids.length > 0 ? (
+        <>
+          <SectionTitle title={c.parent.kids} action={c.parent.tabFamily} onAction={() => router.push('/(parent)/kids')} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingVertical: 2, flexDirection: ROW }}>
+            {kids.map((k) => (
+              <Sticker key={k._id} tone="calm" pad={12} onPress={() => router.push({ pathname: '/(parent)/kids', params: { kid: k._id } })} accessibilityLabel={k.displayName}>
+                <View style={{ width: 120, alignItems: 'center', gap: 6 }}>
+                  <AvatarSticker avatar={k.rentalAvatar || k.avatar} size={60} />
+                  <Txt v="title" align="center" numberOfLines={1}>
+                    {k.displayName}
+                  </Txt>
+                  <Row gap={10} justify="center">
+                    <Row gap={3}>
+                      <Coin size={16} />
+                      <Txt v="caption" num>
+                        {formatNum(k.points)}
+                      </Txt>
+                    </Row>
+                    <Row gap={3}>
+                      <Flame size={16} dim={!k.streak} />
+                      <Txt v="caption" num>
+                        {k.streak}
+                      </Txt>
+                    </Row>
+                  </Row>
                 </View>
-              </View>
-              {c.proofPhoto ? (
-                <Image source={{ uri: c.proofPhoto }} style={styles.proofImage} resizeMode="cover" />
-              ) : null}
-              <View style={[styles.approvalActions, rtl.row]}>
-                <Button
-                  title={t('approve')}
-                  onPress={() => handleApproveCompletion(c._id)}
-                  variant="success"
-                  style={styles.approveBtn}
-                />
-                <Button
-                  title={t('reject')}
-                  onPress={() => openReject(c._id)}
-                  variant="danger"
-                  style={styles.approveBtn}
-                />
-              </View>
-            </Card>
-          ))
-        )}
+              </Sticker>
+            ))}
+          </ScrollView>
+          <Row gap={10}>
+            <QuickAction label={c.parent.quickTask} emoji="✅" onPress={() => router.push({ pathname: '/(parent)/tasks', params: { new: '1' } })} />
+            <QuickAction label={c.parent.quickReward} emoji="🎁" onPress={() => router.push({ pathname: '/(parent)/rewards', params: { new: '1' } })} />
+            <QuickAction label={c.parent.quickBonus} emoji="⭐" onPress={() => router.push({ pathname: '/(parent)/kids', params: { bonus: '1' } })} />
+          </Row>
+        </>
+      ) : null}
 
-        <Text style={[styles.sectionTitle, rtl.textFull]}>{t('rewardApprovals')}</Text>
-        {dashboard?.pendingRedemptions.length === 0 ? (
-          <Text style={styles.empty}>אין בקשות ממתינות</Text>
-        ) : (
-          dashboard?.pendingRedemptions.map((r) => (
-            <Card key={r._id} style={styles.approvalCard}>
-              <View style={[styles.approvalHeader, rtl.row]}>
-                <Text style={styles.approvalIcon}>{r.reward?.icon || '📦'}</Text>
-                <View style={styles.approvalInfo}>
-                  <Text style={[styles.approvalTitle, rtl.textFull]}>{r.reward?.title}</Text>
-                  <Text style={[styles.approvalKid, rtl.textFull]}>
-                    {r.kid?.displayName} · {r.cost} {pointsEmoji}
-                  </Text>
-                </View>
-              </View>
-              <View style={[styles.approvalActions, rtl.row]}>
-                <Button
-                  title={t('approve')}
-                  onPress={() => handleApproveRedemption(r._id, 'approve')}
-                  variant="success"
-                  style={styles.approveBtn}
-                />
-                <Button
-                  title={t('reject')}
-                  onPress={() => handleApproveRedemption(r._id, 'reject')}
-                  variant="danger"
-                  style={styles.approveBtn}
-                />
-              </View>
-            </Card>
-          ))
-        )}
-
-        <Text style={[styles.sectionTitle, rtl.textFull]}>{t('manageKids')}</Text>
-        <View style={[styles.kidsRow, rtl.row]}>
-          {dashboard?.kids.map((kid) => (
-            <Card key={kid._id} style={styles.kidCard}>
-              <View style={styles.kidInner}>
-                <KidAvatar avatar={kid.avatar} size={40} />
-                <Text style={styles.kidName}>{kid.displayName}</Text>
-                <Text style={styles.kidPoints}>{kid.points} XP</Text>
-                <Text style={styles.kidLevel}>
-                  רמה {kid.level}
-                  {(kid.learningStreak ?? 0) > 0 ? ` · 📚 ${kid.learningStreak}` : ''}
-                </Text>
-              </View>
-            </Card>
+      {kids.length > 0 || pendingCount > 0 ? <SectionTitle title={c.parent.inbox} count={pendingCount} /> : null}
+      {!ready && !dash ? (
+        <ScreenSkeleton cards={2} />
+      ) : (
+        <>
+          {dash?.pendingCompletions.map((p) => (
+            <ApprovalCard
+              key={p._id}
+              kidName={p.kid?.displayName ?? kidById.get(p.kidId)?.displayName ?? ''}
+              kidAvatar={p.kid?.avatar ?? kidById.get(p.kidId)?.avatar ?? '🙂'}
+              verb={c.parent.finishedTask}
+              title={p.task?.title ?? ''}
+              icon={p.task ? displayTaskIcon(p.task.icon, p.task.category) : undefined}
+              points={p.task?.points ?? 0}
+              when={p.submittedAt}
+              photo={p.proofPhoto}
+              onApprove={() => approveTask(p._id, p.kid?.displayName ?? '', p.task?.points ?? 0)}
+              onReject={() => {
+                setRejectNote('');
+                setRejectId(p._id);
+              }}
+            />
           ))}
-        </View>
+          {dash?.pendingRedemptions.map((r) => (
+            <ApprovalCard
+              key={r._id}
+              kidName={r.kid?.displayName ?? ''}
+              kidAvatar={r.kid?.avatar ?? '🙂'}
+              verb={c.parent.redeemed}
+              title={r.reward?.title ?? ''}
+              icon={r.reward?.icon}
+              points={r.cost}
+              when={r.requestedAt}
+              onApprove={() => reviewRedemption(r._id, 'approve')}
+              onReject={() => void reviewRedemption(r._id, 'reject')}
+            />
+          ))}
+          {dash && pendingCount === 0 && kids.length > 0 ? (
+            <Sticker tone="calm">
+              <EmptyState title={c.parent.inboxEmpty} body={c.parent.inboxEmptyBody} mood="sleepy" />
+            </Sticker>
+          ) : null}
+          {dash?.dailyWords?.length ? (
+            <ParentDailyWordList
+              items={dash.dailyWords}
+              onApprove={(kidId) =>
+                void api
+                  .reviewDailyWord(kidId, 'approve')
+                  .then(() => load())
+                  .catch(onError)
+              }
+            />
+          ) : null}
+          {dash?.dailyRiddles?.length ? (
+            <ParentDailyRiddleList
+              items={dash.dailyRiddles}
+              onReviewAppeal={(kidId, action) =>
+                api
+                  .reviewDailyRiddleAppeal(kidId, action)
+                  .then(() => load())
+                  .catch(onError)
+              }
+            />
+          ) : null}
+        </>
+      )}
 
-        {achievements.length > 0 && (
-          <>
-            <Text style={[styles.sectionTitle, rtl.textFull]}>{t('familyAchievements')}</Text>
-            <View style={[styles.achievementRow, rtl.row]}>
-              {achievements.map((a) => (
-                <View key={a.id} style={styles.achievementChip}>
-                  <Text style={styles.achievementIcon}>{a.icon}</Text>
-                  <Text style={styles.achievementLabel}>{a.label}</Text>
-                  {a.kidName ? (
-                    <View style={[styles.achievementKid, rtl.rowInline]}>
-                      <KidAvatar avatar={a.kidAvatar || '🎮'} size={16} />
-                      <Text style={styles.achievementDesc}>{a.kidName}</Text>
-                    </View>
-                  ) : null}
-                  <Text style={styles.achievementDesc}>{a.description}</Text>
-                </View>
+      {challenge && kids.length > 0 ? (
+        <>
+          <SectionTitle
+            title={c.parent.challenge}
+            action={challenge.completed ? undefined : c.parent.edit}
+            onAction={() => {
+              if (!limits.customFamilyChallenge) return openPaywall('challenge');
+              setDraft({
+                title: challenge.title,
+                targetCount: String(challenge.targetCount),
+                rewardTitle: challenge.rewardTitle,
+                rewardPoints: String(challenge.rewardPoints),
+              });
+              setEditChallenge(true);
+            }}
+          />
+          <Sticker tone="calm" pad={16}>
+            <View style={{ gap: 8 }}>
+              <Txt v="title">🏆 {challenge.title}</Txt>
+              <ProgressBar value={challenge.targetCount ? challenge.progress / challenge.targetCount : 0} color={GOLD} />
+              <Txt v="caption" muted>
+                {challenge.completed
+                  ? c.parent.challengeDone
+                  : c.parent.challengeBody
+                      .replace('{p}', String(challenge.progress))
+                      .replace('{t}', String(challenge.targetCount))
+                      .replace('{reward}', challenge.rewardTitle)}
+              </Txt>
+            </View>
+          </Sticker>
+        </>
+      ) : null}
+
+      {achievements.length ? (
+        <>
+          <SectionTitle title={c.parent.achievements} />
+          <Sticker tone="calm" pad={12}>
+            <View style={{ gap: 10 }}>
+              {achievements.slice(0, 4).map((a, i) => (
+                <Row key={`${a.id}-${i}`} gap={10}>
+                  <Txt size={24} style={{ lineHeight: 30 }}>
+                    {a.icon}
+                  </Txt>
+                  <View style={{ flex: 1 }}>
+                    <Txt v="strong">{a.label}</Txt>
+                    {a.kidName ? (
+                      <Txt v="caption" muted>
+                        {a.kidName}
+                      </Txt>
+                    ) : null}
+                  </View>
+                </Row>
               ))}
             </View>
-          </>
-        )}
-        </ScreenReveal>
-        )}
-      </ScrollView>
+          </Sticker>
+        </>
+      ) : null}
 
-      <Modal visible={!!rejectId} transparent animationType="fade" onRequestClose={() => setRejectId(null)}>
-        <KeyboardSheet style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{t('rejectReason')}</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={rejectNote}
-              onChangeText={setRejectNote}
-              placeholder={t('rejectReasonPlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              multiline
-            />
-            <View style={styles.modalActions}>
-              <Button title={t('reject')} onPress={submitReject} variant="danger" loading={rejecting} />
-              <Button title={t('cancel')} onPress={() => setRejectId(null)} variant="secondary" />
-            </View>
+      {isPremium ? (
+        <Row gap={8} justify="center" style={{ marginTop: 6 }}>
+          <CrownToy size={22} />
+          <Txt v="caption" muted>
+            {plan === 'founder' ? c.parent.founder : c.parent.premiumActive}
+          </Txt>
+        </Row>
+      ) : (
+        <Pressable onPress={() => openPaywall()} accessibilityRole="button">
+          <View style={styles.premium}>
+            <Row gap={12}>
+              <CrownToy size={44} />
+              <View style={{ flex: 1 }}>
+                <Txt v="title">{c.parent.premiumTitle}</Txt>
+                <Txt v="caption" muted>
+                  {c.parent.premiumPitch}
+                </Txt>
+              </View>
+              <Txt v="strong" color={world.accentDark}>
+                {c.parent.premiumCta}
+              </Txt>
+            </Row>
           </View>
-        </KeyboardSheet>
-      </Modal>
-    </ThemedScreen>
+        </Pressable>
+      )}
+      <AdBanner />
+    </CalmScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  premium: {
+    backgroundColor: '#FFF6D6',
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: INK,
+    padding: 14,
+    boxShadow: `0px 3px 0px ${INK}`,
+  },
+});

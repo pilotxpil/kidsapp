@@ -94,10 +94,10 @@ const styles = StyleSheet.create({
   },
   version: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Fredoka_600SemiBold',
   },
   status: {
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: 'Fredoka_500Medium',
   },
 });

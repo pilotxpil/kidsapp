@@ -5,6 +5,8 @@ import { useAuth } from '../../../lib/auth';
 import { api } from '../../../lib/api';
 import { useFocusLoad } from '../../../hooks/useFocusLoad';
 import { Button } from '../../../components/Button';
+import { Piko } from '../../../components/ui/Piko';
+import { Row, ToyButton, Txt, ProgressBar as UiProgress } from '../../../components/ui';
 import { Card } from '../../../components/Card';
 import { Celebration } from '../../../components/Celebration';
 import { ThemedScreen } from '../../../components/ThemedScreen';
@@ -59,7 +61,7 @@ export default function LearnPackScreen() {
       StyleSheet.create({
         scroll: { padding: spacing.md, flexGrow: 1, paddingBottom: spacing.lg },
         header: { marginBottom: spacing.sm },
-        title: { color: colors.text, fontSize: 18, fontWeight: '800', textAlign: 'center' },
+        title: { color: colors.text, fontSize: 18, fontFamily: 'Fredoka_700Bold', textAlign: 'center' },
         progress: {
           color: colors.textMuted,
           fontSize: 12,
@@ -69,14 +71,14 @@ export default function LearnPackScreen() {
         questionCard: { paddingVertical: 10, paddingHorizontal: spacing.sm + 4 },
         feedback: {
           marginTop: spacing.sm,
-          paddingVertical: 8,
+          paddingVertical: 10,
           paddingHorizontal: spacing.sm,
           borderRadius: 10,
           width: '100%',
         },
         feedbackCorrect: { backgroundColor: colors.success + '33' },
         feedbackWrong: { backgroundColor: colors.danger + '33' },
-        feedbackText: { color: colors.text, fontSize: 13, textAlign: 'center', fontWeight: '600' },
+        feedbackText: { color: colors.text, fontSize: 13, textAlign: 'center', fontFamily: 'Fredoka_600SemiBold' },
         errorBox: {
           marginTop: spacing.sm,
           paddingVertical: 8,
@@ -85,11 +87,11 @@ export default function LearnPackScreen() {
           width: '100%',
           backgroundColor: colors.danger + '33',
         },
-        errorText: { color: colors.text, fontSize: 13, textAlign: 'center', fontWeight: '600' },
-        actions: { marginTop: spacing.sm, gap: 6 },
+        errorText: { color: colors.text, fontSize: 13, textAlign: 'center', fontFamily: 'Fredoka_600SemiBold' },
+        actions: { marginTop: spacing.md, gap: 8 },
         actionBtn: { width: '100%', alignSelf: 'stretch' as const },
         center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-        doneTitle: { color: colors.text, fontSize: 24, fontWeight: '800', textAlign: 'center' },
+        doneTitle: { color: colors.text, fontSize: 24, fontFamily: 'Fredoka_700Bold', textAlign: 'center' },
         doneSub: { color: colors.textMuted, fontSize: 16, textAlign: 'center', marginTop: spacing.sm },
         introHint: {
           color: colors.textMuted,
@@ -308,7 +310,8 @@ export default function LearnPackScreen() {
     return (
       <ThemedScreen tabs>
         <ScrollView contentContainerStyle={[styles.scroll, styles.center, rtl.scrollContent]}>
-          <Text style={styles.doneTitle}>🎉 {t('packComplete')}</Text>
+          <Piko size={130} mood="cheer" />
+          <Text style={styles.doneTitle}>{t('packComplete')}</Text>
           <Text style={styles.doneSub}>{packDisplayTitle(detail.pack.title)}</Text>
           <Button
             title={t('backToLearn')}
@@ -374,13 +377,16 @@ export default function LearnPackScreen() {
     <ThemedScreen tabs>
       <KeyboardScroll contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
         <View style={styles.header}>
-          <Text style={[styles.title, rtl.text]}>{packDisplayTitle(detail.pack.title)}</Text>
-          {packDisplaySubtitle(detail.pack.title) ? (
-            <Text style={styles.progress}>{packDisplaySubtitle(detail.pack.title)}</Text>
-          ) : null}
-          <Text style={styles.progress}>
-            {activityIndex + 1} / {activities.length}
-          </Text>
+          <Row gap={12}>
+            <ToyButton icon="x" size="sm" variant="secondary" accessibilityLabel={t('back')} onPress={() => router.back()} sound={false} />
+            <View style={{ flex: 1 }}>
+              <UiProgress value={(activityIndex + (answeredCorrect !== null ? 1 : 0)) / Math.max(1, activities.length)} color="#1DBF7F" />
+            </View>
+            <Txt v="strong" num>
+              {activityIndex + 1}/{activities.length}
+            </Txt>
+          </Row>
+          <Text style={[styles.title, rtl.text, { marginTop: 10 }]}>{packDisplayTitle(detail.pack.title)}</Text>
         </View>
 
         {packKind === 'reading' && passageText ? (
@@ -451,9 +457,12 @@ export default function LearnPackScreen() {
                 answeredCorrect ? styles.feedbackCorrect : styles.feedbackWrong,
               ]}
             >
-              <Text style={[styles.feedbackText, rtl.text]}>
-                {answeredCorrect ? t('answerCorrect') : t('answerIncorrect')}
-              </Text>
+              <Row gap={10} justify="center">
+                <Piko size={44} mood={answeredCorrect ? 'cheer' : 'think'} />
+                <Text style={[styles.feedbackText, rtl.text, { fontSize: 17 }]}>
+                  {answeredCorrect ? t('answerCorrect') : t('answerIncorrect')}
+                </Text>
+              </Row>
             </View>
           ) : null}
 
@@ -483,13 +492,6 @@ export default function LearnPackScreen() {
                 style={styles.actionBtn}
               />
             ) : null}
-            <Button
-              title={t('back')}
-              onPress={() => router.back()}
-              variant="outline"
-              compact
-              style={styles.actionBtn}
-            />
           </View>
         </Card>
       </KeyboardScroll>

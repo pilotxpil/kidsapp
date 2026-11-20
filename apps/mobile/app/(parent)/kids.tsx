@@ -1,516 +1,356 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Modal,
-  TouchableOpacity,
-  Platform,
-  Dimensions,
-  Pressable,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useFocusLoad } from '../../hooks/useFocusLoad';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Platform, Share, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import type { FamilyInviteInfo, User } from '@kidsapp/shared';
+import { MAX_MANUAL_BONUS_POINTS, calculateLevel } from '@kidsapp/shared';
 import { api } from '../../lib/api';
-import { Card } from '../../components/Card';
-import { KidAvatar } from '../../components/KidAvatar';
-import { ShopAvatarGrid } from '../../components/ShopAvatarGrid';
-import { Button } from '../../components/Button';
-import { Input } from '../../components/Input';
-import { ThemedScreen } from '../../components/ThemedScreen';
-import { ScreenReveal, ScreenSkeleton } from '../../components/ScreenSkeleton';
-import { ScreenCacheKey, hasScreenCache, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
-import { DEFAULT_SHOP_AVATAR_ID, MAX_MANUAL_BONUS_POINTS, GRADE_OPTIONS, formatGradeLabel } from '@kidsapp/shared';
-import type { User } from '@kidsapp/shared';
-import { spacing } from '../../constants/theme';
+import { useFocusLoad } from '../../hooks/useFocusLoad';
+import { usePremium, useErrorHandler } from '../../lib/premium';
+import { ScreenCacheKey, readScreenCache, writeScreenCache } from '../../lib/screen-cache';
 import { useTheme } from '../../lib/theme-context';
-import { rtl } from '../../lib/rtl';
-import { t } from '../../lib/i18n';
+import { haptic } from '../../lib/haptics';
+import { INK } from '../../constants/themes';
+import {
+  AvatarSticker,
+  CalmScreen,
+  ChoiceChip,
+  Coin,
+  Dialog,
+  Field,
+  Flame,
+  Icon,
+  Pill,
+  Row,
+  SectionTitle,
+  Sheet,
+  Sticker,
+  ToyButton,
+  Txt,
+  formatNum,
+  toast,
+  type IconName,
+} from '../../components/ui';
+import { KidForm, kidDraftFrom, validateKid, type KidDraft } from '../../components/parent/KidForm';
 import { KidLoginQrModal } from '../../components/KidLoginQrModal';
-import { KeyboardSheet, KeyboardScroll, useKeyboardHeight } from '../../components/KeyboardSheet';
+import { ScreenSkeleton } from '../../components/ScreenSkeleton';
 
-const BONUS_PRESETS = [10, 20, 50, 100];
+const BONUS = [5, 10, 20, 50, 100];
 
-export default function ParentKidsScreen() {
-  const insets = useSafeAreaInsets();
+function Action({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  return (
+    <View style={{ flex: 1 }}>
+      <ToyButton title={label} icon={icon} variant="quiet" size="sm" full onPress={onPress} />
+    </View>
+  );
+}
+
+export default function FamilyScreen() {
+  const params = useLocalSearchParams<{ kid?: string; bonus?: string }>();
   const router = useRouter();
-  const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
-  const hadCache = useRef(hasScreenCache(ScreenCacheKey.parentKids)).current;
-  const [kids, setKids] = useState<User[]>(
-    () => readScreenCache<User[]>(ScreenCacheKey.parentKids) ?? []
-  );
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingKid, setEditingKid] = useState<User | null>(null);
-  const [displayName, setDisplayName] = useState('');
-  const [username, setUsername] = useState('');
-  const [pin, setPin] = useState('');
-  const [avatar, setAvatar] = useState(DEFAULT_SHOP_AVATAR_ID);
-  const [grade, setGrade] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [qrKid, setQrKid] = useState<User | null>(null);
+  const { world } = useTheme();
+  const { limits, openPaywall, refresh: refreshPlan } = usePremium();
+  const onError = useErrorHandler();
+  const [kids, setKids] = useState<User[]>(() => readScreenCache<User[]>(ScreenCacheKey.parentKids) ?? []);
+  const [invite, setInvite] = useState<FamilyInviteInfo | null>(null);
+  const [form, setForm] = useState<{ kid: User | null; draft: KidDraft } | null>(null);
+  const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [bonusKid, setBonusKid] = useState<User | null>(null);
-  const [bonusAmount, setBonusAmount] = useState('20');
+  const [bonusAmount, setBonusAmount] = useState('10');
   const [bonusReason, setBonusReason] = useState('');
-  const [bonusLoading, setBonusLoading] = useState(false);
-  const savingRef = useRef(false);
-  const keyboardHeight = useKeyboardHeight();
-  const modalMaxHeight =
-    Dimensions.get('window').height -
-    insets.top -
-    insets.bottom -
-    spacing.lg * 2 -
-    (Platform.OS === 'android' ? keyboardHeight : 0);
-
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        scroll: { padding: spacing.lg, maxWidth: 800, alignSelf: 'center', width: '100%' },
-        header: { marginBottom: spacing.lg },
-        title: { color: colors.text, fontSize: 24, fontWeight: '800', flex: 1, minWidth: 0 },
-        addBtn: { flexShrink: 0 },
-        emptyCard: { marginBottom: spacing.md },
-        emptyInner: { alignItems: 'center', padding: spacing.xl, width: '100%' },
-        emptyEmoji: { fontSize: 48, marginBottom: spacing.md, textAlign: 'center' },
-        emptyText: {
-          color: colors.textMuted,
-          fontSize: 16,
-          textAlign: 'center',
-          writingDirection: 'rtl',
-          width: '100%',
-        },
-        kidCard: { marginBottom: spacing.md },
-        kidRow: { alignItems: 'flex-start', width: '100%', gap: spacing.sm },
-        kidAvatar: { fontSize: 48 },
-        kidInfo: { flex: 1, minWidth: 0 },
-        kidName: { color: colors.text, fontSize: 20, fontWeight: '800' },
-        kidUsername: { color: colors.textMuted },
-        kidStats: { gap: spacing.md, marginTop: spacing.sm },
-        kidStat: { color: colors.gold, fontWeight: '700' },
-        editBtn: { padding: spacing.xs, flexShrink: 0 },
-        editIcon: { fontSize: 20 },
-        qrBtn: { padding: spacing.xs, flexShrink: 0 },
-        qrIcon: { fontSize: 20 },
-        historyBtn: { marginTop: spacing.sm, alignSelf: 'stretch' },
-        actionRow: { marginTop: spacing.sm, gap: spacing.sm, width: '100%' },
-        actionBtn: { alignSelf: 'stretch', width: '100%' },
-        presetRow: {
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: spacing.sm,
-          marginBottom: spacing.md,
-          width: '100%',
-        },
-        presetChip: {
-          flexGrow: 1,
-          flexBasis: '46%',
-          minWidth: 0,
-          alignItems: 'center',
-          paddingVertical: spacing.sm,
-          paddingHorizontal: spacing.sm,
-          borderRadius: borderRadius.full,
-          backgroundColor: colors.bgCardLight,
-          borderWidth: 2,
-          borderColor: colors.border,
-        },
-        presetChipActive: { borderColor: colors.primary },
-        presetText: { color: colors.text, fontWeight: '700' },
-        modalOverlay: {
-          flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          justifyContent: 'center',
-          paddingHorizontal: spacing.lg,
-          paddingVertical: spacing.md,
-        },
-        modalBackdrop: { ...StyleSheet.absoluteFill },
-        modal: {
-          backgroundColor: colors.bgCard,
-          borderRadius: borderRadius.xl,
-          maxWidth: 500,
-          alignSelf: 'center',
-          width: '100%',
-          overflow: 'hidden',
-          ...cardBorder(2),
-        },
-        modalScroll: { padding: spacing.lg, paddingBottom: spacing.sm },
-        modalTitle: {
-          color: colors.text,
-          fontSize: 22,
-          fontWeight: '800',
-          textAlign: 'center',
-          marginBottom: spacing.lg,
-          writingDirection: 'rtl',
-        },
-        label: {
-          color: colors.text,
-          fontSize: 14,
-          fontWeight: '600',
-          marginBottom: spacing.sm,
-          width: '100%',
-          textAlign: 'right',
-          writingDirection: 'rtl',
-        },
-        chipRow: {
-          flexDirection: 'row-reverse',
-          flexWrap: 'wrap',
-          gap: spacing.sm,
-          marginBottom: spacing.md,
-          justifyContent: 'flex-start',
-          width: '100%',
-        },
-        avatarGrid: { width: '100%', marginBottom: spacing.md },
-        gradeChip: {
-          paddingHorizontal: spacing.md,
-          paddingVertical: spacing.sm,
-          borderRadius: borderRadius.md,
-          backgroundColor: colors.bgCardLight,
-          borderWidth: 2,
-          borderColor: 'transparent',
-        },
-        gradeChipActive: { borderColor: colors.primary, backgroundColor: colors.primary + '33' },
-        gradeChipText: { color: colors.textMuted, fontWeight: '600', fontSize: 14 },
-        gradeChipTextActive: { color: colors.text },
-        hint: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.sm, writingDirection: 'rtl', textAlign: 'right', width: '100%' },
-        modalActions: {
-          gap: spacing.sm,
-          padding: spacing.lg,
-          paddingTop: spacing.sm,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          width: '100%',
-        },
-      }),
-    [themeId, colors, borderRadius, cardBorder]
-  );
+  const [qrKid, setQrKid] = useState<User | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<User | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await api.getKids();
-    writeScreenCache(ScreenCacheKey.parentKids, res.kids);
-    setKids(res.kids);
+    const [k, inv] = await Promise.all([api.getKids(), api.getFamilyInvite().catch(() => null)]);
+    setKids(k.kids);
+    setInvite(inv);
+    writeScreenCache(ScreenCacheKey.parentKids, k.kids);
   }, []);
-
   const ready = useFocusLoad(load);
-  const showSkeleton = !ready && !hadCache;
 
-  const resetForm = () => {
-    setEditingKid(null);
-    setDisplayName('');
-    setUsername('');
-    setPin('');
-    setAvatar(DEFAULT_SHOP_AVATAR_ID);
-    setGrade(null);
-  };
+  useEffect(() => {
+    if (!ready) return;
+    if (params.kid) {
+      const k = kids.find((x) => x._id === params.kid);
+      if (k) setForm({ kid: k, draft: kidDraftFrom(k) });
+      router.setParams({ kid: undefined });
+    } else if (params.bonus && kids.length) {
+      setBonusKid(kids[0]);
+      router.setParams({ bonus: undefined });
+    }
+  }, [ready, params.kid, params.bonus, kids, router]);
 
-  const openCreate = () => {
-    resetForm();
-    setModalVisible(true);
-  };
-
-  const openEdit = (kid: User) => {
-    setEditingKid(kid);
-    setDisplayName(kid.displayName);
-    setUsername(kid.username ?? '');
-    setPin('');
-    setAvatar(kid.avatar || DEFAULT_SHOP_AVATAR_ID);
-    setGrade(kid.grade ?? null);
-    setModalVisible(true);
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
-    resetForm();
-  };
-
-  const handleSave = async () => {
-    if (savingRef.current || loading) return;
-    if (!displayName.trim() || !username.trim()) {
-      alert('מלא שם תצוגה ושם משתמש');
+  const openAdd = () => {
+    if (kids.length >= limits.maxKids) {
+      openPaywall('kids');
       return;
     }
-    if (!editingKid && pin.length < 4) {
-      alert('PIN חייב 4 ספרות');
-      return;
-    }
-    if (editingKid && pin.length > 0 && pin.length < 4) {
-      alert('PIN חייב 4 ספרות');
-      return;
-    }
+    setFormError('');
+    setForm({ kid: null, draft: kidDraftFrom(null) });
+  };
 
-    savingRef.current = true;
-    setLoading(true);
+  const saveKid = async () => {
+    if (!form) return;
+    const err = validateKid(form.draft, !!form.kid);
+    if (err) {
+      setFormError(err);
+      haptic.warn();
+      return;
+    }
+    setSaving(true);
     try {
-      if (editingKid) {
-        await api.updateKid(editingKid._id, {
-          displayName: displayName.trim(),
-          username: username.trim(),
-          avatar,
-          grade,
-          ...(pin.length > 0 ? { pin } : {}),
+      const d = form.draft;
+      if (form.kid) {
+        await api.updateKid(form.kid._id, {
+          displayName: d.displayName.trim(),
+          username: d.username.trim(),
+          avatar: d.avatar,
+          grade: d.grade,
+          ...(d.pin ? { pin: d.pin } : {}),
         });
-        closeModal();
-        await load();
+        toast('הפרטים נשמרו');
       } else {
         const res = await api.createKid({
-          displayName: displayName.trim(),
-          username: username.trim(),
-          pin,
-          avatar,
-          ...(grade != null ? { grade } : {}),
+          displayName: d.displayName.trim(),
+          username: d.username.trim(),
+          pin: d.pin,
+          avatar: d.avatar,
+          ...(d.grade ? { grade: d.grade } : {}),
         });
-        closeModal();
-        await load();
+        haptic.success();
+        toast(`${res.kid.displayName} הצטרפ/ה למשפחה!`);
         setQrKid(res.kid);
+        void refreshPlan();
       }
-    } catch (err: any) {
-      alert(err.message);
+      setForm(null);
+      await load();
+    } catch (e) {
+      onError(e);
     } finally {
-      savingRef.current = false;
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const closeBonusModal = () => {
-    setBonusKid(null);
-    setBonusAmount('20');
-    setBonusReason('');
-  };
-
-  const openBonus = (kid: User) => {
-    setBonusKid(kid);
-    setBonusAmount('20');
-    setBonusReason('');
-  };
-
-  const handleAwardBonus = async () => {
-    if (!bonusKid || bonusLoading) return;
+  const giveBonus = async () => {
+    if (!bonusKid) return;
     const amount = Number(bonusAmount);
     if (!Number.isInteger(amount) || amount < 1 || amount > MAX_MANUAL_BONUS_POINTS) {
-      alert(t('awardBonusInvalid').replace('{max}', String(MAX_MANUAL_BONUS_POINTS)));
+      toast(`בונוס בין 1 ל-${MAX_MANUAL_BONUS_POINTS}`, 'error');
       return;
     }
-    setBonusLoading(true);
+    setSaving(true);
     try {
       await api.awardKidBonus(bonusKid._id, amount, bonusReason.trim() || undefined);
-      closeBonusModal();
+      haptic.success();
+      toast(`${amount} מטבעות נשלחו ל${bonusKid.displayName}!`);
+      setBonusKid(null);
+      setBonusReason('');
       await load();
-      alert(t('awardBonusSuccess'));
-    } catch (err: any) {
-      alert(err.message);
+    } catch (e) {
+      onError(e);
     } finally {
-      setBonusLoading(false);
+      setSaving(false);
+    }
+  };
+
+  const deleteKid = async (kid: User) => {
+    try {
+      await api.deleteKid(kid._id);
+      setConfirmDelete(null);
+      setForm(null);
+      toast('הפרופיל נמחק', 'info');
+      void refreshPlan();
+      await load();
+    } catch (e) {
+      onError(e);
+    }
+  };
+
+  const copyCode = async () => {
+    if (!invite?.inviteCode) return;
+    await Clipboard.setStringAsync(invite.inviteCode);
+    haptic.success();
+    toast('הקוד הועתק');
+  };
+
+  const shareInvite = async () => {
+    if (!invite?.inviteCode) return;
+    const message = `הצטרפו למשפחה שלנו ב-KidsQuest! קוד ההזמנה: ${invite.inviteCode}\nhttps://kids.synaboard.com/parent-register?invite=${invite.inviteCode}`;
+    if (Platform.OS === 'web') {
+      await Clipboard.setStringAsync(message);
+      toast('ההזמנה הועתקה');
+    } else {
+      await Share.share({ message });
     }
   };
 
   return (
-    <ThemedScreen tabs>
-      <ScrollView contentContainerStyle={[styles.scroll, rtl.scrollContent]}>
-        <View style={[styles.header, rtl.headerSplit]}>
-          <Button title={`+ ${t('addKid')}`} onPress={openCreate} style={styles.addBtn} />
-          <Text style={[styles.title, rtl.textFull]}>{t('manageKids')}</Text>
-        </View>
+    <CalmScreen
+      title="המשפחה"
+      subtitle="ילדים, קוד כניסה והורה נוסף"
+      action={<ToyButton icon="plus" size="sm" accessibilityLabel="הוספת ילד/ה" onPress={openAdd} />}
+      refreshing={refreshing}
+      onRefresh={async () => {
+        setRefreshing(true);
+        await load().catch(() => {});
+        setRefreshing(false);
+      }}
+      overlay={
+        <>
+          <Sheet
+            visible={!!form}
+            onClose={() => setForm(null)}
+            title={form?.kid ? `עריכת ${form.kid.displayName}` : 'ילד/ה חדש/ה'}
+            footer={
+              <>
+                {formError ? <Txt v="strong" color="#CC2C3D">{formError}</Txt> : null}
+                <ToyButton title={form?.kid ? 'שמירה' : 'הוספה למשפחה'} icon={form?.kid ? 'check' : 'plus'} full loading={saving} onPress={saveKid} />
+                {form?.kid ? (
+                  <ToyButton title="מחיקת הפרופיל" variant="ghost" size="md" full onPress={() => setConfirmDelete(form.kid)} sound={false} />
+                ) : null}
+              </>
+            }
+          >
+            {form ? <KidForm draft={form.draft} editing={!!form.kid} onChange={(d) => setForm((f) => (f ? { ...f, draft: d } : f))} /> : null}
+          </Sheet>
 
-        {showSkeleton ? (
-          <ScreenSkeleton cards={3} />
-        ) : (
-          <ScreenReveal animate={!hadCache}>
-        {kids.length === 0 ? (
-          <Card style={styles.emptyCard}>
-            <View style={styles.emptyInner}>
-              <Text style={styles.emptyEmoji}>👶</Text>
-              <Text style={styles.emptyText}>אין פרופילים עדיין</Text>
-            </View>
-          </Card>
-        ) : (
-          kids.map((kid) => (
-            <Card key={kid._id} style={styles.kidCard}>
-              <View style={[styles.kidRow, rtl.row]}>
-                <View style={styles.kidInfo}>
-                  <Text style={[styles.kidName, rtl.textFull]}>{kid.displayName}</Text>
-                  <Text style={[styles.kidUsername, rtl.textFull]}>@{kid.username}</Text>
-                  {kid.grade ? (
-                    <Text style={[styles.kidUsername, rtl.textFull]}>
-                      {formatGradeLabel(kid.grade, t('kidGrade'))}
-                    </Text>
-                  ) : null}
-                  <View style={[styles.kidStats, rtl.row]}>
-                    <Text style={styles.kidStat}>{kid.points} {pointsEmoji}</Text>
-                    <Text style={styles.kidStat}>רמה {kid.level}</Text>
-                    <Text style={styles.kidStat}>🔥 {kid.streak}</Text>
-                  </View>
-                </View>
-                <KidAvatar avatar={kid.avatar} size={48} />
-                <TouchableOpacity
-                  style={styles.qrBtn}
-                  onPress={() => setQrKid(kid)}
-                  accessibilityLabel={t('showKidLoginQr')}
-                >
-                  <Text style={styles.qrIcon}>📤</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.editBtn} onPress={() => openEdit(kid)}>
-                  <Text style={styles.editIcon}>✏️</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.actionRow}>
-                <Button
-                  title={t('awardBonus')}
-                  style={styles.actionBtn}
-                  onPress={() => openBonus(kid)}
-                />
-                <Button
-                  title={t('viewPointsHistory')}
-                  variant="outline"
-                  style={styles.actionBtn}
-                  onPress={() =>
-                    router.push({ pathname: '/(parent)/kid-history', params: { kidId: kid._id } })
-                  }
-                />
-                <Button
-                  title={t('viewKidGifts')}
-                  variant="outline"
-                  style={styles.actionBtn}
-                  onPress={() =>
-                    router.push({ pathname: '/(parent)/kid-gifts', params: { kidId: kid._id } })
-                  }
-                />
-              </View>
-            </Card>
-          ))
-        )}
-          </ScreenReveal>
-        )}
-      </ScrollView>
-
-      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={closeModal}>
-        <KeyboardSheet style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={closeModal} />
-          <View style={[styles.modal, { maxHeight: modalMaxHeight }]}>
-            <KeyboardScroll
-              contentContainerStyle={styles.modalScroll}
-              showsVerticalScrollIndicator
-            >
-              <Text style={styles.modalTitle}>{editingKid ? t('editKid') : t('addKid')}</Text>
-              <Input label={t('displayName')} value={displayName} onChangeText={setDisplayName} placeholder="יונתן" />
-              <Input
-                label={t('username')}
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-                autoCorrect={false}
-                placeholder="yonatan"
-              />
-              <Input
-                label={editingKid ? t('pinOptional') : t('pin')}
-                value={pin}
-                onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
-                keyboardType="number-pad"
-                maxLength={4}
-              />
-
-              <Text style={styles.label}>{t('kidGrade')}</Text>
-              <Text style={styles.hint}>{t('kidGradeHint')}</Text>
-              <View style={styles.chipRow}>
-                <TouchableOpacity
-                  style={[styles.gradeChip, grade === null && styles.gradeChipActive]}
-                  onPress={() => setGrade(null)}
-                >
-                  <Text style={[styles.gradeChipText, grade === null && styles.gradeChipTextActive]}>
-                    {t('noGrade')}
-                  </Text>
-                </TouchableOpacity>
-                {GRADE_OPTIONS.map((g) => (
-                  <TouchableOpacity
-                    key={g}
-                    style={[styles.gradeChip, grade === g && styles.gradeChipActive]}
-                    onPress={() => setGrade(g)}
-                  >
-                    <Text style={[styles.gradeChipText, grade === g && styles.gradeChipTextActive]}>
-                      {formatGradeLabel(g, t('kidGrade'))}
-                    </Text>
-                  </TouchableOpacity>
+          <Sheet
+            visible={!!bonusKid}
+            onClose={() => setBonusKid(null)}
+            title="בונוס מטבעות"
+            subtitle="על עזרה, התנהגות יפה או סתם כי מגיע"
+            footer={<ToyButton title={`שליחת ${bonusAmount || 0} מטבעות`} variant="gold" lead={<Coin size={22} />} full loading={saving} onPress={giveBonus} sound="coin" />}
+          >
+            {kids.length > 1 ? (
+              <Row gap={8} wrap>
+                {kids.map((k) => (
+                  <ChoiceChip key={k._id} label={k.displayName} selected={bonusKid?._id === k._id} onPress={() => setBonusKid(k)} />
                 ))}
-              </View>
+              </Row>
+            ) : null}
+            <Row gap={8} wrap>
+              {BONUS.map((n) => (
+                <ChoiceChip key={n} label={`+${n}`} selected={bonusAmount === String(n)} onPress={() => setBonusAmount(String(n))} />
+              ))}
+            </Row>
+            <Field kind="number" label="או סכום אחר" value={bonusAmount} onChangeText={(v) => setBonusAmount(v.replace(/\D/g, ''))} />
+            <Field label="על מה? (לא חובה)" value={bonusReason} onChangeText={setBonusReason} placeholder="למשל: עזרת לאח הקטן" maxLength={120} />
+          </Sheet>
 
-              <Text style={styles.label}>{t('selectAvatar')}</Text>
-              <View style={styles.avatarGrid}>
-                <ShopAvatarGrid selected={avatar} onSelect={setAvatar} />
-              </View>
-            </KeyboardScroll>
-
-            <View style={styles.modalActions}>
-              <Button title={t('save')} onPress={handleSave} loading={loading} />
-              <Button title={t('cancel')} onPress={closeModal} variant="outline" />
-            </View>
+          <Dialog
+            visible={!!confirmDelete}
+            title={`למחוק את ${confirmDelete?.displayName ?? ''}?`}
+            message="כל המשימות, המטבעות וההיסטוריה של הילד/ה יימחקו לתמיד. אי אפשר לבטל."
+            confirmLabel="מחיקה לתמיד"
+            destructive
+            onConfirm={() => confirmDelete && deleteKid(confirmDelete)}
+            onCancel={() => setConfirmDelete(null)}
+          />
+          <KidLoginQrModal kid={qrKid} visible={!!qrKid} onClose={() => setQrKid(null)} />
+        </>
+      }
+    >
+      {invite?.inviteCode ? (
+        <Sticker tone="calm" color={world.accentSoft} pad={16}>
+          <View style={{ gap: 10 }}>
+            <Txt v="caption">קוד המשפחה</Txt>
+            <Row justify="between">
+              <Txt v="hero" num style={{ letterSpacing: 6 }}>
+                {invite.inviteCode}
+              </Txt>
+              <ToyButton icon="copy" variant="secondary" size="sm" accessibilityLabel="העתקת הקוד" onPress={copyCode} />
+            </Row>
+            <Txt v="caption" muted>
+              הילדים נכנסים עם הקוד הזה + שם משתמש + קוד סודי. הורה נוסף נרשם איתו ל"יש לי קוד הזמנה".
+            </Txt>
+            {invite.canInvite ? (
+              <ToyButton title="הזמנת הורה נוסף" icon="share" variant="secondary" size="md" onPress={shareInvite} />
+            ) : (
+              <Txt v="caption" muted>
+                {invite.parents.map((p) => p.displayName).join(' ו')} מנהלים יחד את המשפחה.
+              </Txt>
+            )}
           </View>
-        </KeyboardSheet>
-      </Modal>
+        </Sticker>
+      ) : null}
 
-      <KidLoginQrModal kid={qrKid} visible={!!qrKid} onClose={() => setQrKid(null)} />
-
-      <Modal
-        visible={!!bonusKid}
-        animationType="slide"
-        transparent
-        onRequestClose={closeBonusModal}
-      >
-        <KeyboardSheet style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={closeBonusModal} />
-          <View style={[styles.modal, { maxHeight: modalMaxHeight }]}>
-            <KeyboardScroll
-              contentContainerStyle={styles.modalScroll}
-              showsVerticalScrollIndicator
-            >
-              <Text style={styles.modalTitle}>
-                {t('awardBonusTitle')}
-                {bonusKid ? ` · ${bonusKid.displayName}` : ''}
-              </Text>
-
-              <Text style={styles.label}>{t('awardBonusAmount')}</Text>
-              <View style={styles.presetRow}>
-                {BONUS_PRESETS.map((n) => {
-                  const active = bonusAmount === String(n);
-                  return (
-                    <TouchableOpacity
-                      key={n}
-                      style={[styles.presetChip, active && styles.presetChipActive]}
-                      onPress={() => setBonusAmount(String(n))}
-                    >
-                      <Text style={styles.presetText}>
-                        +{n} {pointsEmoji}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-              <Input
-                value={bonusAmount}
-                onChangeText={(v) => setBonusAmount(v.replace(/\D/g, '').slice(0, 3))}
-                keyboardType="number-pad"
-                placeholder="20"
-              />
-              <Input
-                label={t('awardBonusReason')}
-                value={bonusReason}
-                onChangeText={setBonusReason}
-                placeholder={t('awardBonusReasonPlaceholder')}
-              />
-            </KeyboardScroll>
-
-            <View style={styles.modalActions}>
-              <Button
-                title={t('awardBonusSubmit')}
-                onPress={handleAwardBonus}
-                loading={bonusLoading}
-              />
-              <Button
-                title={t('cancel')}
-                onPress={closeBonusModal}
-                variant="outline"
-              />
-            </View>
+      <SectionTitle title="הילדים" count={undefined} />
+      {!ready && !kids.length ? (
+        <ScreenSkeleton cards={2} />
+      ) : kids.length === 0 ? (
+        <Sticker tone="calm">
+          <View style={{ alignItems: 'center', gap: 10, paddingVertical: 12 }}>
+            <Txt v="h2" align="center">
+              עוד אין ילדים במשפחה
+            </Txt>
+            <ToyButton title="הוספת ילד/ה" icon="plus" onPress={openAdd} style={{ alignSelf: 'center' }} />
           </View>
-        </KeyboardSheet>
-      </Modal>
-    </ThemedScreen>
+        </Sticker>
+      ) : (
+        kids.map((k) => {
+          const lvl = calculateLevel(k.xp);
+          return (
+            <Sticker key={k._id} tone="calm" pad={14}>
+              <View style={{ gap: 12 }}>
+                <Row gap={12}>
+                  <AvatarSticker avatar={k.rentalAvatar || k.avatar} size={60} />
+                  <View style={{ flex: 1 }}>
+                    <Txt v="h2">{k.displayName}</Txt>
+                    <Row gap={6}>
+                      <Txt v="caption" muted>
+                        @{k.username}
+                      </Txt>
+                      <Pill label={`שלב ${lvl.level}`} />
+                    </Row>
+                  </View>
+                  <View style={{ alignItems: 'center', gap: 4 }}>
+                    <Row gap={4}>
+                      <Coin size={20} />
+                      <Txt v="title" num>
+                        {formatNum(k.points)}
+                      </Txt>
+                    </Row>
+                    <Row gap={4}>
+                      <Flame size={18} dim={!k.streak} />
+                      <Txt v="caption" num>
+                        {k.streak}
+                      </Txt>
+                    </Row>
+                  </View>
+                </Row>
+                <Row gap={8}>
+                  <Action icon="star" label="בונוס" onPress={() => setBonusKid(k)} />
+                  <Action icon="qr" label="כניסה" onPress={() => setQrKid(k)} />
+                  <Action icon="edit" label="עריכה" onPress={() => {
+                    setFormError('');
+                    setForm({ kid: k, draft: kidDraftFrom(k) });
+                  }} />
+                </Row>
+                <Row gap={8}>
+                  <Action icon="clock" label="היסטוריה" onPress={() => router.push({ pathname: '/(parent)/kid-history', params: { kidId: k._id } })} />
+                  <Action icon="gift" label="פרסים שקנו" onPress={() => router.push({ pathname: '/(parent)/kid-gifts', params: { kidId: k._id } })} />
+                </Row>
+              </View>
+            </Sticker>
+          );
+        })
+      )}
+      {kids.length > 0 && kids.length < limits.maxKids ? (
+        <ToyButton title="הוספת ילד/ה" icon="plus" variant="secondary" full onPress={openAdd} />
+      ) : kids.length >= limits.maxKids && kids.length > 0 ? (
+        <Sticker tone="calm" color="#FFF6D6" onPress={() => openPaywall('kids')} accessibilityLabel="פרימיום">
+          <Row gap={10}>
+            <Icon name="crown" size={24} color={INK} />
+            <Txt v="strong" style={{ flex: 1 }}>
+              רוצים להוסיף עוד ילדים? בפרימיום אפשר עד 8.
+            </Txt>
+          </Row>
+        </Sticker>
+      ) : null}
+    </CalmScreen>
   );
 }
+

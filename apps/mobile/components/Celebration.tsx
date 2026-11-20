@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   kicker: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '800',
+    fontFamily: 'Fredoka_700Bold',
     letterSpacing: 3,
     marginBottom: spacing.sm,
     ...toTextShadow('rgba(0,0,0,0.4)', { width: 1, height: 1 }, 2),
@@ -117,13 +117,13 @@ const styles = StyleSheet.create({
   message: {
     color: '#fff',
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'Fredoka_700Bold',
     textAlign: 'center',
     ...toTextShadow('rgba(0,0,0,0.3)', { width: 1, height: 1 }, 2),
   },
   huge: {
     fontSize: 44,
-    fontWeight: '900',
+    fontFamily: 'Fredoka_700Bold',
     letterSpacing: 1,
   },
 });

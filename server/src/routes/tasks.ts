@@ -16,6 +16,7 @@ import {
   completionBlockedMessage,
 } from '../utils/taskAvailability';
 import { bumpFamilyChallengeProgress } from '../services/familyChallenge';
+import { getFamilyLimits, sendPremiumRequired } from '../services/entitlements';
 
 const router = Router();
 
@@ -185,17 +186,34 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
       return res.status(400).json({ error: 'אחד או יותר מהילדים לא נמצאו במשפחה' });
     }
 
+    const { limits } = await getFamilyLimits(req.user!.familyId);
+    for (const kid of kids) {
+      const active = await Task.countDocuments({
+        familyId: req.user!.familyId,
+        assignedTo: kid._id,
+        isActive: true,
+      });
+      if (active >= limits.maxActiveTasksPerKid) {
+        return sendPremiumRequired(
+          res,
+          'tasks',
+          `ל${kid.displayName} כבר יש ${limits.maxActiveTasksPerKid} משימות פעילות (המקסימום בתוכנית החינמית).`
+        );
+      }
+    }
+
     const packId =
       typeof learningPackId === 'string' && learningPackId.trim()
         ? learningPackId.trim()
         : undefined;
 
+    const pointsNum = Math.round(Number(points));
     const payload = {
       familyId: req.user!.familyId,
-      title,
-      description: description || '',
+      title: String(title).trim().slice(0, 80),
+      description: String(description || '').slice(0, 300),
       category,
-      points: Number(points) || 20,
+      points: Number.isFinite(pointsNum) && pointsNum > 0 ? Math.min(pointsNum, 1000) : 20,
       recurrence: recurrence || 'daily',
       icon: icon || taskCategoryIcon(category as TaskCategory),
       ...(packId ? { learningPackId: packId } : {}),

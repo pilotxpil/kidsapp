@@ -1,3 +1,4 @@
+import { INK, WHITE } from '../constants/themes';
 import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,73 +22,52 @@ interface CardProps {
   glow?: boolean;
 }
 
+const OUTER_KEYS = new Set([
+  'margin', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginHorizontal', 'marginVertical',
+  'marginStart', 'marginEnd', 'width', 'maxWidth', 'minWidth', 'flex', 'flexGrow', 'flexShrink', 'flexBasis',
+  'alignSelf', 'position', 'top', 'bottom', 'left', 'right', 'zIndex',
+]);
+
 export function Card({ children, style, glow }: CardProps) {
-  const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
-  const ember = themeId === 'ember';
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        card: ember
-          ? {
-              backgroundColor: 'rgba(12, 8, 6, 0.78)',
-              borderRadius: 22,
-              padding: spacing.md,
-              borderWidth: 1,
-              borderColor: glow ? 'rgba(255, 179, 0, 0.55)' : 'rgba(255, 138, 61, 0.38)',
-              boxShadow: toBoxShadow({
-                color: colors.glow,
-                offset: { width: 0, height: 10 },
-                opacity: glow ? 0.55 : 0.28,
-                radius: glow ? 22 : 18,
-              }),
-              elevation: 8,
-              alignSelf: 'stretch',
-              width: '100%',
-              maxWidth: '100%',
-              overflow: 'hidden',
-            }
-          : {
-              backgroundColor: colors.bgCard,
-              borderRadius: borderRadius.md,
-              padding: spacing.md,
-              paddingTop: spacing.md + 4,
-              ...cardBorder(2),
-              alignSelf: 'stretch',
-              width: '100%',
-              maxWidth: '100%',
-              overflow: 'hidden',
-            },
-        shine: {
+  // Redesign: every legacy card is a white sticker with an ink outline and hard shadow.
+  // Layout props from the caller go on the outer wrapper; padding/colours go on the surface.
+  const flat = (StyleSheet.flatten(style) ?? {}) as Record<string, unknown>;
+  const outer: Record<string, unknown> = {};
+  const inner: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(flat)) (OUTER_KEYS.has(k) ? outer : inner)[k] = v;
+  delete inner.borderWidth;
+  delete inner.borderColor;
+  delete inner.boxShadow;
+  delete inner.elevation;
+  return (
+    <View style={[{ alignSelf: 'stretch', width: '100%', paddingBottom: 4 }, outer as ViewStyle]}>
+      <View
+        style={{
           position: 'absolute',
-          top: 0,
           left: 0,
           right: 0,
-          height: 4,
-          zIndex: 1,
-          pointerEvents: 'none',
-        },
-        body: { zIndex: 2, width: '100%', maxWidth: '100%', alignSelf: 'stretch' },
-        glow: {
-          borderTopColor: colors.accent,
-          borderLeftColor: colors.accent,
-          boxShadow: toBoxShadow({ color: colors.glow, opacity: 0.35, radius: 12 }),
-          elevation: 8,
-        },
-      }),
-    [themeId, colors, borderRadius, cardBorder, ember, glow]
-  );
-
-  return (
-    <View style={[styles.card, !ember && glow && styles.glow, style]}>
-      {ember ? null : (
-        <LinearGradient
-          colors={[colors.cardShine, colors.primaryLight, 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.shine}
-        />
-      )}
-      <View style={styles.body}>{children}</View>
+          bottom: 0,
+          top: 4,
+          borderRadius: 22,
+          backgroundColor: INK,
+        }}
+      />
+      <View
+        style={[
+          {
+            backgroundColor: glow ? '#FFF8DC' : WHITE,
+            borderRadius: 22,
+            borderWidth: 2.5,
+            borderColor: INK,
+            padding: spacing.md,
+            overflow: 'hidden',
+          },
+          inner as ViewStyle,
+          { backgroundColor: glow ? '#FFF8DC' : WHITE },
+        ]}
+      >
+        {children}
+      </View>
     </View>
   );
 }
@@ -130,7 +110,7 @@ export function PointsBadge({ points, size = 'sm' }: PointsBadgeProps) {
         pointsIconLg: { fontSize: 22 },
         pointsText: {
           color: '#fff',
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           fontSize: 16,
           ...toTextShadow('rgba(0,0,0,0.4)', { width: 1, height: 1 }, 2),
           ...type.title,
@@ -190,7 +170,7 @@ export function LevelBar({ level, progress, max }: LevelBarProps) {
       StyleSheet.create({
         levelContainer: { width: '100%' },
         levelHeader: { marginBottom: spacing.xs },
-        levelText: { color: colors.accent, fontWeight: '700', fontSize: 14, ...type.heading },
+        levelText: { color: colors.accent, fontFamily: 'Fredoka_700Bold', fontSize: 14, ...type.heading },
         xpText: { color: colors.textMuted, fontSize: 12, ...type.body },
         barBg: {
               height: 14,
@@ -260,11 +240,11 @@ export function StreakBadge({ streak }: StreakBadgeProps) {
         streakLabel: {
           color: colors.streak,
           fontSize: 10,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           letterSpacing: 1,
           ...type.ui,
         },
-        streakText: { color: colors.text, fontWeight: '800', fontSize: 16, ...type.title },
+        streakText: { color: colors.text, fontFamily: 'Fredoka_700Bold', fontSize: 16, ...type.title },
       }),
     [themeId, colors, borderRadius, cardBorder, type.ui, type.title]
   );

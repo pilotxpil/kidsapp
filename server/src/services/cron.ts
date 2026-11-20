@@ -61,6 +61,10 @@ async function sendEveningIncompleteReminders(): Promise<void> {
 
 /** 19:00 Asia/Jerusalem — once per calendar day. */
 export function startScheduledJobs(): void {
+  if (process.env.CRON_DISABLED === 'true') {
+    console.log('[cron] disabled by CRON_DISABLED');
+    return;
+  }
   cron.schedule(
     '0 19 * * *',
     () => {

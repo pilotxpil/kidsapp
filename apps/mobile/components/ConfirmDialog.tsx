@@ -45,7 +45,7 @@ export function ConfirmDialog({
         title: {
           color: colors.text,
           fontSize: 18,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginBottom: spacing.sm,
         },
         message: {

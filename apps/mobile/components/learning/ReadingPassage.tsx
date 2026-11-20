@@ -30,14 +30,14 @@ export function ReadingPassage({ title, text, compact }: ReadingPassageProps) {
         eyebrow: {
           color: colors.primary,
           fontSize: 12,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           marginBottom: spacing.xs,
           textAlign: 'center',
         },
         title: {
           color: colors.text,
           fontSize: 18,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginBottom: spacing.md,
           textAlign: 'center',
         },
@@ -45,7 +45,7 @@ export function ReadingPassage({ title, text, compact }: ReadingPassageProps) {
           color: colors.text,
           fontSize: compact ? 15 : 17,
           lineHeight: compact ? 24 : 28,
-          fontWeight: '500',
+          fontFamily: 'Fredoka_500Medium',
         },
       }),
     [themeId, colors, borderRadius, cardBorder, compact]

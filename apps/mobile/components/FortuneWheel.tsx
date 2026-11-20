@@ -98,7 +98,7 @@ export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
         title: {
           color: '#fff',
           fontSize: 22,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           textAlign: 'center',
           alignSelf: 'center',
         },
@@ -147,7 +147,7 @@ export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
         spinBtnText: {
           color: '#1a1a2e',
           fontSize: 18,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           textAlign: 'center',
         },
         closeBtn: {
@@ -165,14 +165,14 @@ export function FortuneWheel({ kidId, onWon }: FortuneWheelProps) {
         closeBtnText: {
           color: '#fff',
           fontSize: 18,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           lineHeight: 20,
         },
         closeLink: {
           marginTop: spacing.md,
           color: 'rgba(255,255,255,0.7)',
           fontSize: 13,
-          fontWeight: '600',
+          fontFamily: 'Fredoka_600SemiBold',
           textAlign: 'center',
           alignSelf: 'center',
         },

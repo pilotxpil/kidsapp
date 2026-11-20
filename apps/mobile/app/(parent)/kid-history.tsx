@@ -71,7 +71,7 @@ export default function ParentKidHistoryScreen() {
           backgroundColor: colors.bgCardLight,
         },
         chipAvatar: { fontSize: 18 },
-        chipName: { color: colors.text, fontWeight: '700', fontSize: 14 },
+        chipName: { color: colors.text, fontFamily: 'Fredoka_700Bold', fontSize: 14 },
         chipNameActive: { color: colors.primary },
         empty: {
           color: colors.textMuted,
@@ -83,9 +83,9 @@ export default function ParentKidHistoryScreen() {
         txCard: { marginBottom: spacing.md },
         txRow: { alignItems: 'center', width: '100%', gap: spacing.md },
         txInfo: { flex: 1, minWidth: 0 },
-        txDesc: { color: colors.text, fontWeight: '600', fontSize: 15 },
+        txDesc: { color: colors.text, fontFamily: 'Fredoka_600SemiBold', fontSize: 15 },
         txMeta: { color: colors.textMuted, fontSize: 12, marginTop: 4 },
-        txAmount: { fontWeight: '800', fontSize: 18, flexShrink: 0 },
+        txAmount: { fontFamily: 'Fredoka_700Bold', fontSize: 18, flexShrink: 0 },
         txPositive: { color: colors.success },
         txNegative: { color: colors.danger },
         summary: {
@@ -98,7 +98,7 @@ export default function ParentKidHistoryScreen() {
         },
         summaryText: {
           color: colors.text,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           fontSize: 15,
           textAlign: 'right',
           writingDirection: 'rtl',
@@ -217,7 +217,7 @@ export default function ParentKidHistoryScreen() {
                 <Text
                   style={[
                     styles.summaryText,
-                    { color: colors.textMuted, fontWeight: '600', marginTop: 6 },
+                    { color: colors.textMuted, fontFamily: 'Fredoka_600SemiBold', marginTop: 6 },
                   ]}
                 >
                   {t('pointsHistorySummary')

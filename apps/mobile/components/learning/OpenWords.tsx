@@ -32,7 +32,7 @@ export function OpenWords({
         prompt: {
           color: colors.text,
           fontSize: 16,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           textAlign: 'center',
           marginBottom: spacing.sm,
           width: '100%',
@@ -48,19 +48,19 @@ export function OpenWords({
         badgeText: {
           color: colors.primary,
           fontSize: 11,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
         },
         revealLabel: {
           color: colors.textMuted,
           fontSize: 12,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginTop: spacing.md,
           marginBottom: 4,
         },
         reveal: {
           color: colors.text,
           fontSize: 15,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           lineHeight: 22,
         },
       }),

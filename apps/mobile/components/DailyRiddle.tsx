@@ -250,21 +250,21 @@ function useRiddleStyles() {
         kicker: {
           color: look.title,
           fontSize: 18,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           letterSpacing: 0.3,
           ...type.display,
         },
         tapHint: {
           color: look.body,
           fontSize: 13,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           marginTop: 2,
           ...type.ui,
         },
         prompt: {
           color: look.title,
           fontSize: 18,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginTop: spacing.md,
           marginBottom: spacing.sm,
           ...type.heading,
@@ -272,14 +272,14 @@ function useRiddleStyles() {
         extra: {
           color: look.body,
           fontSize: 16,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           marginBottom: spacing.sm,
           ...type.ui,
         },
         label: {
           color: look.muted,
           fontSize: 12,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginTop: spacing.sm,
           marginBottom: 4,
           ...type.ui,
@@ -293,14 +293,14 @@ function useRiddleStyles() {
         why: {
           color: look.ok,
           fontSize: 15,
-          fontWeight: '700',
+          fontFamily: 'Fredoka_700Bold',
           lineHeight: 22,
           ...type.ui,
         },
         wrong: {
           color: look.wrong,
           fontSize: 14,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginTop: spacing.sm,
           marginBottom: spacing.xs,
           ...type.ui,
@@ -330,7 +330,7 @@ function useRiddleStyles() {
         choiceText: {
           color: look.title,
           fontSize: 15,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           ...type.ui,
         },
         grid: {
@@ -359,7 +359,7 @@ function useRiddleStyles() {
           width: '100%',
         },
         rebusStack: { alignItems: 'center', gap: 4, marginVertical: spacing.sm },
-        rebus: { color: look.title, fontWeight: '800', textAlign: 'center' },
+        rebus: { color: look.title, fontFamily: 'Fredoka_700Bold', textAlign: 'center' },
         bag: {
           alignSelf: 'center',
           borderWidth: 2,
@@ -374,7 +374,7 @@ function useRiddleStyles() {
         bagEmoji: { fontSize: 36 },
         forest: { alignItems: 'center', marginVertical: spacing.sm },
         forestLine: { fontSize: 20, lineHeight: 26, textAlign: 'center' },
-        forestHidden: { color: look.muted, fontSize: 13, fontWeight: '800' },
+        forestHidden: { color: look.muted, fontSize: 13, fontFamily: 'Fredoka_700Bold' },
         appealActions: {
           marginTop: spacing.md,
           gap: spacing.sm,
@@ -391,7 +391,7 @@ function useRiddleStyles() {
         kidName: {
           color: look.title,
           fontSize: 16,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           ...type.ui,
         },
         kidMeta: {
@@ -403,14 +403,14 @@ function useRiddleStyles() {
         kidMetaOk: {
           color: look.ok,
           fontSize: 13,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginTop: 2,
           ...type.ui,
         },
         kidMetaWrong: {
           color: look.wrong,
           fontSize: 13,
-          fontWeight: '800',
+          fontFamily: 'Fredoka_700Bold',
           marginTop: 2,
           ...type.ui,
         },

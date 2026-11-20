@@ -13,46 +13,11 @@ export type ThemeArt = {
   icons?: Partial<Record<ThemeTabArtKey, ImageSourcePropType>>;
 };
 
-/** Optional illustrated art per theme. Ember and Minecraft have painted tab icons. */
-export const THEME_ART: Partial<Record<UiThemeId, ThemeArt>> = {
-  ember: {
-    hero: require('../assets/themes/ember/hero.jpg'),
-    gem: require('../assets/themes/ember/gem.png'),
-    picker: require('../assets/themes/ember/picker.png'),
-    bg: require('../assets/themes/ember/bg.jpg'),
-    chest: require('../assets/themes/ember/chest.jpg'),
-    map: require('../assets/themes/ember/map.jpg'),
-    icons: {
-      home: require('../assets/themes/ember/icons/home.png'),
-      tasks: require('../assets/themes/ember/icons/tasks.png'),
-      learn: require('../assets/themes/ember/icons/learn.png'),
-      shop: require('../assets/themes/ember/icons/shop.png'),
-      profile: require('../assets/themes/ember/icons/profile.png'),
-    },
-  },
-  brawl: {
-    hero: require('../assets/themes/brawl/hero.jpg'),
-    gem: require('../assets/themes/brawl/gem.png'),
-    picker: require('../assets/themes/brawl/picker.png'),
-  },
-  minecraft: {
-    picker: require('../assets/themes/minecraft/icons/home.png'),
-    gem: require('../assets/themes/minecraft/gem.png'),
-    icons: {
-      home: require('../assets/themes/minecraft/icons/home.png'),
-      tasks: require('../assets/themes/minecraft/icons/tasks.png'),
-      learn: require('../assets/themes/minecraft/icons/learn.png'),
-      shop: require('../assets/themes/minecraft/icons/shop.png'),
-      profile: require('../assets/themes/minecraft/icons/profile.png'),
-    },
-  },
-  roblox: {
-    picker: require('../assets/themes/roblox/picker.png'),
-  },
-  sparkle: {
-    picker: require('../assets/themes/sparkle/picker.png'),
-  },
-};
+/**
+ * The redesign draws every world in SVG (components/ui/Screen.tsx), so no raster theme art ships
+ * any more. Kept as an empty map so older components fall back to their vector/emoji rendering.
+ */
+export const THEME_ART: Partial<Record<UiThemeId, ThemeArt>> = {};
 
 export function getThemeArt(id: UiThemeId): ThemeArt | undefined {
   return THEME_ART[id];

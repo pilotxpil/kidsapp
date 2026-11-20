@@ -1,3 +1,4 @@
+import { requirePlanFlag } from '../services/entitlements';
 import { Router, Request, Response } from 'express';
 import { BADGES } from '@kidsapp/shared';
 import { Family } from '../models/Family';
@@ -50,7 +51,12 @@ router.get('/challenge', authenticate, async (req: Request, res: Response) => {
   }
 });
 
-router.put('/challenge', authenticate, requireParent, async (req: Request, res: Response) => {
+router.put(
+  '/challenge',
+  authenticate,
+  requireParent,
+  requirePlanFlag('customFamilyChallenge', 'challenge', 'התאמה אישית של האתגר המשפחתי זמינה בפרימיום.'),
+  async (req: Request, res: Response) => {
   try {
     const challenge = await getOrCreateWeeklyChallenge(req.user!.familyId);
     if (challenge.completed) {

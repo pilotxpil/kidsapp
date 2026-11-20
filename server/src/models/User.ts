@@ -31,6 +31,12 @@ export interface IUser extends Document {
   heroLine?: string;
   /** Last one-time avatar shop gift campaign notified to this kid. */
   lastAvatarGiftCampaign?: string;
+  /** Parent password reset (bcrypt hash of a 6-digit code). */
+  passwordResetHash?: string;
+  passwordResetExpires?: Date;
+  passwordResetAttempts?: number;
+  lastLoginAt?: Date;
+  acceptedTermsAt?: Date;
   createdAt: Date;
 }
 
@@ -62,6 +68,11 @@ const userSchema = new Schema<IUser>(
     grade: { type: Number, min: 1, max: 6 },
     heroLine: { type: String, maxlength: 48 },
     lastAvatarGiftCampaign: { type: String },
+    passwordResetHash: { type: String },
+    passwordResetExpires: { type: Date },
+    passwordResetAttempts: { type: Number },
+    lastLoginAt: { type: Date },
+    acceptedTermsAt: { type: Date },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

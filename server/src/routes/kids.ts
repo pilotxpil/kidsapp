@@ -9,6 +9,9 @@ import { TaskCompletion } from '../models/TaskCompletion';
 import { Redemption } from '../models/Redemption';
 import { PointTransaction } from '../models/PointTransaction';
 import { formatUser } from '../utils/format';
+import { getFamilyLimits, sendPremiumRequired } from '../services/entitlements';
+import { deleteKidData } from '../services/accountDeletion';
+import { isPremiumTheme } from '@kidsapp/shared';
 import {
   getKidProfile,
   getDailyStarStatus,
@@ -64,6 +67,16 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
 
     if (!displayName || !username || !pin) {
       return res.status(400).json({ error: 'חסרים שדות חובה' });
+    }
+
+    if (String(pin).length < 4 || !/^\d+$/.test(String(pin))) {
+      return res.status(400).json({ error: 'PIN חייב להיות 4 ספרות' });
+    }
+
+    const { limits } = await getFamilyLimits(req.user!.familyId);
+    const kidCount = await User.countDocuments({ familyId: req.user!.familyId, role: 'kid' });
+    if (kidCount >= limits.maxKids) {
+      return sendPremiumRequired(res, 'kids', `בתוכנית החינמית אפשר עד ${limits.maxKids} ילדים.`);
     }
 
     const existing = await User.findOne({ username, familyId: req.user!.familyId });
@@ -165,6 +178,12 @@ router.patch('/:id', authenticate, async (req: Request, res: Response) => {
       if (!UI_THEME_IDS.includes(uiTheme)) {
         return res.status(400).json({ error: 'ערכת עיצוב לא תקינה' });
       }
+      if (uiTheme !== kid.uiTheme && isPremiumTheme(uiTheme)) {
+        const { limits } = await getFamilyLimits(req.user!.familyId);
+        if (!limits.premiumThemes) {
+          return sendPremiumRequired(res, 'themes', 'העולם הזה שמור למשפחות פרימיום.');
+        }
+      }
       kid.uiTheme = uiTheme;
     }
 
@@ -240,9 +259,26 @@ router.patch('/:id', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+router.delete('/:id', authenticate, requireParent, async (req: Request, res: Response) => {
+  try {
+    const kid = await User.findOne({ _id: req.params.id, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    await deleteKidData(req.user!.familyId, kid._id.toString());
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה במחיקת פרופיל הילד' });
+  }
+});
+
 router.get('/:id/profile', authenticate, async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
+    if (req.user!.role === 'kid' && req.user!.userId !== id) {
+      return res.status(403).json({ error: 'אין הרשאה' });
+    }
+    const owned = await User.exists({ _id: id, familyId: req.user!.familyId, role: 'kid' });
+    if (!owned) return res.status(404).json({ error: 'ילד לא נמצא' });
     const profile = await getKidProfile(id);
     if (!profile) return res.status(404).json({ error: 'ילד לא נמצא' });
     res.json({ profile });

@@ -87,14 +87,14 @@ const styles = StyleSheet.create({
   label: {
     marginTop: 4,
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: 'Fredoka_700Bold',
     textAlign: 'center',
     width: '100%',
   },
   caption: {
     marginTop: 2,
     fontSize: 10,
-    fontWeight: '800',
+    fontFamily: 'Fredoka_700Bold',
     textAlign: 'center',
     width: '100%',
   },

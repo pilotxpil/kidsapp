@@ -1,3 +1,4 @@
+import { requirePlanFlag } from '../services/entitlements';
 import path from 'path';
 import fs from 'fs';
 import { Router, Request, Response } from 'express';
@@ -34,6 +35,17 @@ import {
 } from '@kidsapp/shared';
 import { FamilyLearningPack } from '../models/FamilyLearningPack';
 import { todayString } from '../utils/format';
+
+const customPacksGate = requirePlanFlag(
+  'customLearningPacks',
+  'customPacks',
+  'יצירה וייבוא של חבילות לימוד משלכם זמינים בפרימיום.'
+);
+const insightsGate = requirePlanFlag(
+  'learningInsights',
+  'insights',
+  'תובנות למידה מפורטות זמינות בפרימיום.'
+);
 
 const router = Router();
 
@@ -286,7 +298,7 @@ router.get('/custom-packs', authenticate, requireParent, async (req: Request, re
   }
 });
 
-router.post('/custom-packs', authenticate, requireParent, async (req: Request, res: Response) => {
+router.post('/custom-packs', authenticate, requireParent, customPacksGate, async (req: Request, res: Response) => {
   try {
     const packId = makeCustomLearningPackId(
       typeof req.body?.id === 'string' ? req.body.id : undefined
@@ -428,7 +440,7 @@ router.delete(
   }
 );
 
-router.post('/custom-packs/import', authenticate, requireParent, async (req: Request, res: Response) => {
+router.post('/custom-packs/import', authenticate, requireParent, customPacksGate, async (req: Request, res: Response) => {
   try {
     const payload = req.body?.pack ?? req.body?.packs ?? req.body;
     const items = Array.isArray(payload) ? payload : [payload];
@@ -766,7 +778,7 @@ router.post('/packs/:packId/check', authenticate, requireKid, async (req: Reques
   }
 });
 
-router.get('/results', authenticate, requireParent, async (req: Request, res: Response) => {
+router.get('/results', authenticate, requireParent, insightsGate, async (req: Request, res: Response) => {
   try {
     const kidId = req.query.kidId as string;
     if (!kidId) return res.status(400).json({ error: 'חסר מזהה ילד' });
@@ -869,7 +881,7 @@ router.get('/results', authenticate, requireParent, async (req: Request, res: Re
   }
 });
 
-router.get('/mistakes', authenticate, requireParent, async (req: Request, res: Response) => {
+router.get('/mistakes', authenticate, requireParent, insightsGate, async (req: Request, res: Response) => {
   try {
     const kidId = req.query.kidId as string;
     if (!kidId) return res.status(400).json({ error: 'חסר מזהה ילד' });

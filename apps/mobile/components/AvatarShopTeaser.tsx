@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: 'Fredoka_700Bold',
     textAlign: 'right',
     writingDirection: 'rtl',
   },
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   chevron: {
     fontSize: 28,
-    fontWeight: '700',
+    fontFamily: 'Fredoka_700Bold',
     lineHeight: 32,
     flexShrink: 0,
   },
