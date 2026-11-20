@@ -1,4 +1,8 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useErrorHandler, usePremium } from '../../lib/premium';
+import { isPremiumRequired } from '../../lib/api';
+import { toast } from '../../components/ui/Toast';
+import { Sticker, Txt } from '../../components/ui';
 import {
   View,
   Text,
@@ -77,6 +81,7 @@ function activityAnswerLabel(activity: LearningActivity): string {
 
 export default function ParentLearnScreen() {
   const router = useRouter();
+  const onError = useErrorHandler();
   const { height: windowHeight } = useWindowDimensions();
   const { colors, borderRadius, cardBorder, pointsEmoji, id: themeId } = useTheme();
   type LearnCache = { kids: User[]; items: LearningCatalogItem[] };
@@ -94,6 +99,8 @@ export default function ParentLearnScreen() {
   const [resultsKidId, setResultsKidId] = useState<string | null>(null);
   const [results, setResults] = useState<LearningAnswerReview[]>([]);
   const [resultsLoading, setResultsLoading] = useState(false);
+  const [insightsLocked, setInsightsLocked] = useState(false);
+  const { openPaywall } = usePremium();
   const [resultsFilter, setResultsFilter] = useState<'all' | 'wrong' | 'correct'>('all');
   const [review, setReview] = useState<LearningAnswerReview | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -283,10 +290,16 @@ export default function ParentLearnScreen() {
     api
       .getLearningResults(resultsKidId)
       .then((res) => {
-        if (!cancelled) setResults(res.results);
+        if (!cancelled) {
+          setResults(res.results);
+          setInsightsLocked(false);
+        }
       })
-      .catch(() => {
-        if (!cancelled) setResults([]);
+      .catch((err) => {
+        if (!cancelled) {
+          setResults([]);
+          setInsightsLocked(isPremiumRequired(err));
+        }
       })
       .finally(() => {
         if (!cancelled) setResultsLoading(false);
@@ -320,7 +333,7 @@ export default function ParentLearnScreen() {
       setPreviewPack(res.pack);
     } catch (err: unknown) {
       setPreviewItem(null);
-      alert(err instanceof Error ? err.message : 'שגיאה');
+      onError(err);
     } finally {
       setPreviewLoading(false);
     }
@@ -355,7 +368,7 @@ export default function ParentLearnScreen() {
       await loadCatalog();
     } catch (err: unknown) {
       await loadCatalog();
-      alert(err instanceof Error ? err.message : 'שגיאה');
+      onError(err);
     } finally {
       setSavingPackId(null);
     }
@@ -371,12 +384,13 @@ export default function ParentLearnScreen() {
       setImportOpen(false);
       setImportText('');
       await loadCatalog();
-      alert(t('learningPackImported').replace('{n}', String(res.packs.length)));
+      toast(t('learningPackImported').replace('{n}', String(res.packs.length)));
       if (res.errors?.length) {
         Alert.alert(t('importLearningPack'), res.errors.join('\n'));
       }
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'JSON לא תקין');
+      if (err instanceof SyntaxError) toast('הקובץ לא תקין (JSON)', 'error');
+      else onError(err);
     } finally {
       setImporting(false);
     }
@@ -462,6 +476,11 @@ export default function ParentLearnScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+            {insightsLocked ? (
+              <Sticker tone="calm" color="#FFF6D6" onPress={() => openPaywall('insights')} accessibilityLabel="פרימיום">
+                <Txt v="strong">רואים כל תשובה של הילדים ואיפה הם מתקשים. זמין בפרימיום, לחצו לפרטים.</Txt>
+              </Sticker>
+            ) : null}
             {resultsLoading ? (
               <Text style={styles.empty}>...</Text>
             ) : filteredResults.length === 0 ? (

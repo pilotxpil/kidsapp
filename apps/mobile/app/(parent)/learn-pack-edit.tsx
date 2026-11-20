@@ -1,4 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import { useErrorHandler, usePremium } from '../../lib/premium';
+import { isPremiumRequired } from '../../lib/api';
+import { toast } from '../../components/ui/Toast';
 import {
   View,
   Text,
@@ -141,6 +144,7 @@ function packToDraft(pack: LearningPack): {
 export default function LearnPackEditScreen() {
   const { packId } = useLocalSearchParams<{ packId?: string }>();
   const router = useRouter();
+  const onError = useErrorHandler();
   const { colors, borderRadius, cardBorder, id: themeId } = useTheme();
   const editing = !!packId;
 
@@ -206,7 +210,7 @@ export default function LearnPackEditScreen() {
       setPassage(draft.passage);
       setQuestions(draft.questions);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'שגיאה');
+      onError(err);
       router.back();
     } finally {
       setLoading(false);
@@ -281,17 +285,17 @@ export default function LearnPackEditScreen() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      alert(t('packTitleHe'));
+      toast(t('packTitleHe'), 'error');
       return;
     }
     const pts = parseInt(points, 10);
     if (!Number.isFinite(pts) || pts < 1 || pts > 100) {
-      alert(t('learningPointsInvalid'));
+      toast(t('learningPointsInvalid'), 'error');
       return;
     }
     const activities = buildActivities();
     if (!activities) {
-      alert(t('learningPackNeedQuestion'));
+      toast(t('learningPackNeedQuestion'), 'error');
       return;
     }
     const badSelectAll = questions.some(
@@ -303,15 +307,15 @@ export default function LearnPackEditScreen() {
       return accept.length < q.count || q.count < 1;
     });
     if (badSelectAll) {
-      alert(t('selectAllNeedTwoCorrect'));
+      toast(t('selectAllNeedTwoCorrect'), 'error');
       return;
     }
     if (badOpen) {
-      alert(t('openWordsNeed'));
+      toast(t('openWordsNeed'), 'error');
       return;
     }
     if (kind === 'reading' && !passage.trim()) {
-      alert(t('passageBody'));
+      toast(t('passageBody'), 'error');
       return;
     }
 
@@ -338,10 +342,10 @@ export default function LearnPackEditScreen() {
       } else {
         await api.createCustomLearningPack(payload);
       }
-      alert(t('learningPackSaved'));
+      toast(t('learningPackSaved'));
       router.back();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'שגיאה');
+      onError(err);
     } finally {
       setSaving(false);
     }
@@ -614,7 +618,7 @@ export default function LearnPackEditScreen() {
               await api.deleteCustomLearningPack(packId!);
               router.back();
             } catch (err: unknown) {
-              alert(err instanceof Error ? err.message : 'שגיאה');
+              onError(err);
             }
           })();
         }}
