@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { INK, WHITE } from '../../constants/themes';
 import { haptic } from '../../lib/haptics';
 import { useTheme } from '../../lib/theme-context';
@@ -49,6 +49,14 @@ export function RewardBurst({
     opacity: withTiming(pop.value > 0.05 ? 1 : 0, { duration: 120 }),
   }));
   const coinStyle = useAnimatedStyle(() => ({ transform: [{ scale: coin.value }] }));
+  // The coin itself flips around its vertical axis like a real coin toss.
+  const flip = useSharedValue(0);
+  useEffect(() => {
+    if (!visible) return;
+    flip.value = 0;
+    flip.value = withDelay(260, withTiming(3, { duration: 1100, easing: Easing.out(Easing.cubic) }));
+  }, [visible, flip]);
+  const flipStyle = useAnimatedStyle(() => ({ transform: [{ perspective: 400 }, { rotateY: `${flip.value * 360}deg` }] }));
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
@@ -74,7 +82,9 @@ export function RewardBurst({
           {coins ? (
             <Animated.View style={[{ alignSelf: 'center' }, coinStyle]}>
               <Row gap={6} style={styles.coins}>
-                <Coin size={34} />
+                <Animated.View style={flipStyle}>
+                  <Coin size={34} />
+                </Animated.View>
                 <Txt v="display" num>
                   +{coins}
                 </Txt>
