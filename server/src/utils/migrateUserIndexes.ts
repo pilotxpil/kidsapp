@@ -4,7 +4,13 @@ const TARGET_INDEX = 'username_1_familyId_1';
 
 export async function migrateUserIndexes() {
   const collection = mongoose.connection.collection('users');
-  const indexes = await collection.indexes();
+  let indexes: Awaited<ReturnType<typeof collection.indexes>> = [];
+  try {
+    indexes = await collection.indexes();
+  } catch (err) {
+    // Fresh database: the collection does not exist yet (NamespaceNotFound) — nothing to migrate.
+    if ((err as { code?: number }).code !== 26) throw err;
+  }
   const existing = indexes.find((idx) => idx.name === TARGET_INDEX);
 
   const hasPartialFilter = Boolean(existing?.partialFilterExpression);
