@@ -21,6 +21,7 @@ import { migrateContent } from './utils/migrateContent';
 import { migrateRiddleSlots } from './utils/migrateRiddleSlots';
 import { startContentStore } from './services/contentStore';
 import { startScheduledJobs } from './services/cron';
+import { startPlayBillingSweep } from './services/playBilling';
 
 dotenv.config();
 
@@ -109,6 +110,7 @@ async function start() {
     await migrateRiddleSlots();
     await startContentStore();
     startScheduledJobs();
+    startPlayBillingSweep();
 
     app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`Server running on http://0.0.0.0:${PORT}`);

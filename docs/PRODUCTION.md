@@ -18,30 +18,24 @@ gracefully (no purchase button, no ads, reset shows a support address).
 
 - Limits live in `packages/shared/src/plans.ts` and are enforced by the API (`server/src/services/entitlements.ts`), which answers HTTP 402 with `code: PREMIUM_REQUIRED`. The app opens the paywall (`app/premium.tsx`) on that code; older app builds just show the Hebrew error text.
 - **Founders:** every family created before `FOUNDER_CUTOFF` (default 2026-12-01) is migrated to `founder` at boot (`server/src/utils/migratePlans.ts`). That covers all families that existed before 2.0, so nothing changes for current users. To end the grace period earlier, set `FOUNDER_CUTOFF` in `server/.env`; to downgrade a founder by hand: `db.families.updateOne({_id: …}, {$set: {plan: 'free'}})`.
-- One subscription covers the whole family. The RevenueCat app user id is the **family id**.
+- One subscription covers the whole family: the app passes the **family id** to Google Play as the obfuscated account id, and the server binds each purchase token to one family.
 
-## 1. Subscriptions (Google Play + RevenueCat)
+## 1. Subscriptions (Google Play Billing, verified by the API) — live since 2.3.0
 
-1. **Play Console → Monetize → Subscriptions:** create `kidsquest_premium_monthly` and `kidsquest_premium_yearly` (base plan auto-renewing, prices in ILS). Activate them.
-2. **RevenueCat** (free tier is enough): new project → Android app `com.kidsapp.quest`, upload the Play service-account JSON (the same `eas-play-submit@…` account works once it has *Financial data* + *Manage orders* permissions).
-   - Products: import both ids. Entitlement: `premium`, attach both products. Offering `default` with packages `$rc_monthly` and `$rc_annual`.
-   - Webhook: URL `https://kids.synaboard.com/billing/webhook`, Authorization header = a long random string.
-3. **Server env** (`server/.env`, then `./deploy/vm/deploy.sh`):
-   ```
-   REVENUECAT_SECRET_KEY=sk_…            # RevenueCat → API keys → secret (v1)
-   REVENUECAT_WEBHOOK_AUTH=<the same random string as the webhook header>
-   ```
-4. **EAS env** (production): `npx eas-cli env:create --name EXPO_PUBLIC_RC_ANDROID_KEY --value goog_… --environment production --visibility plaintext --scope project`, then build a new AAB.
+- **Products** (created and activated through the Play Developer API, Nov 2026): `kidsquest_premium_monthly` (base plan `monthly`, P1M, ₪14.90) and `kidsquest_premium_yearly` (base plan `yearly`, P1Y, ₪119.90), 7-day grace period, priced in 174 countries from the ILS base. Change prices in Play Console → Monetize → Subscriptions.
+- **App:** `lib/purchases.ts` (expo-iap): loads the base-plan offers, buys with `obfuscatedAccountId = familyId`, sends the purchase token to `POST /billing/play/verify`, then finishes the transaction. On sign-in it re-sends any unacknowledged purchase; "restore" re-sends every KidsQuest subscription the Play account owns.
+- **Server:** `services/playBilling.ts` reads `purchases.subscriptionsv2` with the service account in `GOOGLE_PLAY_SA_B64` (base64 of the JSON; the `eas-play-submit@synaboard-482321` account has the needed financial permission), acknowledges, and sets `plan/premiumUntil/premiumWillRenew` with `billingSource: 'play'`. It never trusts the client. Renewals, cancellations and refunds are picked up by re-reading the stored token: on `POST /billing/sync`, on `GET /billing/status` after `premiumUntil` passes, and in a sweep every 6 hours for subscriptions ending within a day.
+- **Testing a purchase:** add the tester's Google account under Play Console → Settings → License testing; their purchases are free test purchases. Anyone else on the internal track is charged for real.
+- Optional later: Real-time developer notifications (Pub/Sub) for instant cancellation/refund updates; today they apply within 6 hours.
 
-The purchase flow: paywall → Google Play sheet → `POST /billing/sync` (server re-reads RevenueCat, never trusts the client) → family becomes `premium` with `premiumUntil`. Renewals, cancellations and expiry arrive via the webhook. Restore purchases is on the paywall.
-
-## 2. Ads (AdMob, Families policy)
+## 2. Ads (AdMob, Families policy) — live since 2.3.0
 
 Ads appear **only** on parent screens, **only** for free families, as one banner on the parent home. Requests are child-directed, under-age-of-consent, max rating G, non-personalized; the `AD_ID` permission is blocked in `app.json`, and measurement is delayed until that config is set.
 
-1. AdMob → add app (Android, `com.kidsapp.quest`) → mark as *designed for families / child-directed* → create one **Adaptive banner** unit.
-2. EAS env (production): `ADMOB_ANDROID_APP_ID=ca-app-pub-…~…` and `EXPO_PUBLIC_ADMOB_BANNER_ANDROID=ca-app-pub-…/…`, then rebuild. Until the unit id is set, no ad is ever requested (the build uses Google's sample app id so the SDK can start).
-3. Remote kill switch without a release: `ADS_ENABLED=false` in `server/.env` (served by `GET /app/config`).
+- AdMob app **KidsQuest** (Android) `ca-app-pub-4868306599735004~8046906084`, banner unit **KidsQuest parent banner** `ca-app-pub-4868306599735004/8509940510`, in the same AdMob account as the Stackline games. Both are EAS production env vars (`ADMOB_ANDROID_APP_ID`, `EXPO_PUBLIC_ADMOB_BANNER_ANDROID`).
+- `https://kids.synaboard.com/app-ads.txt` is served from `apps/mobile/public/app-ads.txt`.
+- AdMob limits serving until the app is linked to its **public** Play listing: after the production release, AdMob → Apps → KidsQuest → App settings → add the Play store listing.
+- Remote kill switch without a release: `ADS_ENABLED=false` in `server/.env` (served by `GET /app/config`).
 
 ## 3. Password reset email
 
@@ -58,11 +52,11 @@ Without SMTP in production, "forgot password" tells the parent to write to `SUPP
 - **Account deletion URL:** `https://kids.synaboard.com/delete-account` (in-app: Settings → מחיקת החשבון). Kid profiles: Family → edit → delete.
 - **Privacy policy URL:** `https://kids.synaboard.com/privacy` · **Terms:** `https://kids.synaboard.com/terms`.
 - **Target audience:** parents + children → Families policy applies. Declare AdMob as the only ads SDK (Families self-certified), no AAID, no location.
-- **Data safety:** parent email (account), kid display name/username (app functionality), photos only when a kid attaches proof (optional, stored on our server, deleted with the account), purchase history (RevenueCat). No data sold or shared for advertising.
+- **Data safety:** parent email (account), kid display name/username (app functionality), photos only when a kid attaches proof (optional, stored on our server, deleted with the account), purchase history (Google Play). AdMob (parent screens of free families) collects what its Data safety guide lists for child-directed, non-personalized requests (app interactions, diagnostics, approximate location from IP; no advertising ID). No data sold.
 
 ## 5. iOS later
 
-`ios.bundleIdentifier` is `com.kidsapp.quest`, encryption exemption is declared, and every native module in the app supports iOS. To ship: Apple developer account → `npx eas-cli build -p ios --profile production` → App Store Connect subscriptions with the same two product ids → add the iOS app in RevenueCat → `EXPO_PUBLIC_RC_IOS_KEY=appl_…` (and optionally `ADMOB_IOS_APP_ID` / `EXPO_PUBLIC_ADMOB_BANNER_IOS`). The "manage subscription" link on the paywall is Android-only today; add the App Store link when iOS ships.
+`ios.bundleIdentifier` is `com.kidsapp.quest`, encryption exemption is declared, and every native module in the app supports iOS. To ship: Apple developer account → `npx eas-cli build -p ios --profile production` → App Store Connect subscriptions with the same two product ids → add App Store verification to `services/playBilling.ts`'s counterpart (App Store Server API) and enable `purchasesAvailable()` on iOS (and optionally `ADMOB_IOS_APP_ID` / `EXPO_PUBLIC_ADMOB_BANNER_IOS`). The "manage subscription" link on the paywall is Android-only today; add the App Store link when iOS ships.
 
 ## 6. Release checklist
 

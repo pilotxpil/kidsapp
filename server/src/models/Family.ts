@@ -15,7 +15,9 @@ export interface IFamily extends Document {
   /** Paid premium end (subscription expiry). Unset = no expiry (founder / lifetime). */
   premiumUntil?: Date;
   premiumWillRenew?: boolean;
-  billingSource?: 'revenuecat' | 'manual' | 'founder';
+  billingSource?: 'revenuecat' | 'play' | 'manual' | 'founder';
+  /** Latest Google Play subscription purchase token (verified server-side). */
+  playPurchaseToken?: string;
   billingProductId?: string;
   billingUpdatedAt?: Date;
   createdAt: Date;
@@ -35,7 +37,8 @@ const familySchema = new Schema<IFamily>(
     plan: { type: String, enum: ['free', 'premium', 'founder'] },
     premiumUntil: { type: Date },
     premiumWillRenew: { type: Boolean },
-    billingSource: { type: String, enum: ['revenuecat', 'manual', 'founder'] },
+    billingSource: { type: String, enum: ['revenuecat', 'play', 'manual', 'founder'] },
+    playPurchaseToken: { type: String, select: false, index: { sparse: true } },
     billingProductId: { type: String },
     billingUpdatedAt: { type: Date },
   },

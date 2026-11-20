@@ -89,7 +89,8 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
       );
     }
 
-    const cat = category || 'other';
+    const REWARD_CATEGORIES = ['gaming', 'food', 'screen', 'privilege', 'other'];
+    const cat = REWARD_CATEGORIES.includes(category) ? category : 'other';
     const reward = await Reward.create({
       familyId: req.user!.familyId,
       title: cleanTitle.slice(0, 80),
@@ -104,6 +105,7 @@ router.post('/', authenticate, requireParent, async (req: Request, res: Response
       reward: formatReward(reward),
     });
   } catch (err) {
+    console.error('create reward', err);
     res.status(500).json({ error: 'שגיאה ביצירת פרס' });
   }
 });

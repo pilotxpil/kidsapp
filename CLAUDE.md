@@ -38,7 +38,7 @@ cd apps/mobile && npm run web     # Expo web at http://localhost:8081 (kid + par
 - RTL: use `lib/dir.ts` (`ROW`, `START`, `TEXT_START`, `fromRight`) — first child sits on the physical right on web, Hebrew-locale phones and LTR-locale phones alike. Never `forceRTL`.
 - Themes keep their stored ids but are now original worlds: `roblox`→Ocean, `ember`→Volcano, `minecraft`→Jungle, `brawl`→Space, `sparkle`→Candy (`constants/themes.ts`, `world` tokens). Space and Candy are premium. No raster theme art ships; `constants/theme-art.ts` is intentionally empty.
 - Legacy `Button`, `Card`, `Input`, `ThemedScreen` are thin wrappers over the kit so older screens (parent learn editor, history, gifts, learning player, daily word/riddle) match. Copy for new screens lives in the `c` object at the end of `lib/i18n.ts`.
-- `lib/premium.tsx` (`usePremium`, `useErrorHandler`) owns plan state and opens the paywall on HTTP 402 `PREMIUM_REQUIRED`. `lib/purchases.ts` (RevenueCat) and `lib/ads.ts` (AdMob) are native-only with `.web.ts` stubs. Setup: `docs/PRODUCTION.md`.
+- `lib/premium.tsx` (`usePremium`, `useErrorHandler`) owns plan state and opens the paywall on HTTP 402 `PREMIUM_REQUIRED`. `lib/purchases.ts` (Google Play Billing via expo-iap, verified by `server/src/services/playBilling.ts`) and `lib/ads.ts` (AdMob) are native-only with `.web.ts` stubs. Setup: `docs/PRODUCTION.md`.
 
 ## Architecture notes that span files
 

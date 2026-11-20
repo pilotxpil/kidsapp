@@ -3,8 +3,7 @@
  *
  * EAS env (per profile) — all optional except EXPO_PUBLIC_API_URL in production:
  *   EXPO_PUBLIC_API_URL            https://kids.synaboard.com
- *   EXPO_PUBLIC_RC_ANDROID_KEY     RevenueCat public SDK key (goog_…)   → enables the paywall purchase
- *   EXPO_PUBLIC_RC_IOS_KEY         RevenueCat public SDK key (appl_…)
+ *   (Purchases need no key: Google Play Billing via expo-iap, verified by the API.)
  *   ADMOB_ANDROID_APP_ID           ca-app-pub-…~…   (AdMob app id; sample id is used when unset)
  *   ADMOB_IOS_APP_ID               ca-app-pub-…~…
  *   EXPO_PUBLIC_ADMOB_BANNER_ANDROID  ca-app-pub-…/…  (banner unit; unset → no ads at all)
@@ -35,6 +34,7 @@ module.exports = ({ config }) => {
     ...config,
     plugins: [
       ...(config.plugins ?? []),
+      'expo-iap',
       [
         'expo-build-properties',
         {

@@ -7,7 +7,7 @@ Monetization setup (RevenueCat, AdMob, SMTP): `../PRODUCTION.md`.
 ## 0. Before you start
 
 - [ ] Create the mailbox **support@kids.synaboard.com** (or change `SUPPORT_EMAIL` in `server/.env` and the texts to an address you read). The privacy policy, terms and deletion page point to it.
-- [ ] Decide whether ads are on at launch. Until the AdMob ids are set, the app shows **no ads**, so the "Ads" declaration below is **No**. Change it to Yes in the same release that turns ads on.
+- [x] Ads are on from 2.3.0 (AdMob banner on the parent home of free families only), so the "Ads" declaration below is **Yes**.
 
 ## 1. Store listing (Grow → Store presence → Main store listing)
 
@@ -23,7 +23,7 @@ Monetization setup (RevenueCat, AdMob, SMTP): `../PRODUCTION.md`.
 |---|---|
 | Privacy policy | `https://kids.synaboard.com/privacy` |
 | App access | **Restricted.** Provide a reviewer login (see §3). Instructions: "Sign in as parent → home inbox. For the kid view: Family tab → כניסה shows the family code; sign in on the welcome screen with that code, username and PIN." |
-| Ads | **No** while AdMob is not configured. When enabled: **Yes**; ads appear only on parent screens, child-directed, non-personalized, rating G. |
+| Ads | **Yes**: one banner on the parent home of free families only, child-directed, non-personalized, rating G. Kids never see ads. |
 | Content rating (IARC) | App type: **All other app types**. Violence, sexuality, language, controlled substances, gambling: **No**. Users interact or communicate: **No** (no chat; photos go only to the kid's own parents). Shares location: **No**. Digital purchases: **Yes** (subscription). Expected rating: **Everyone / 3+**. |
 | Target audience and content | Age groups: **6–8**, **9–12** and **18+** (parents). Appeals to children: Yes, so the **Families policy** applies (see notes below). |
 | News app | No |
@@ -54,19 +54,20 @@ request; it is real data in the production database, so it needs your go-ahead.
 | Name (parent display name, kid nickname) | Yes | App functionality | No |
 | User IDs (account ids) | Yes | App functionality | No |
 | Photos (task proof a kid attaches) | Yes | App functionality, seen only by the kid's parents | **Yes** |
-| Purchase history (subscription status) | Yes | App functionality (premium) | Yes |
+| Purchase history (subscription status, via Google Play) | Yes | App functionality (premium) | Yes |
+| App interactions, diagnostics, approximate location (AdMob, parent screens, free plan only) | Yes, by the AdMob SDK | Advertising (non-personalized) | No |
 | App interactions (tasks, points, learning answers) | Yes | App functionality | No |
 | Device or other IDs | **No** (AD_ID permission removed) | — | — |
 | Location, contacts, messages, audio | No | — | — |
 
 - Data is encrypted in transit: **Yes** (HTTPS)
 - Users can request deletion: **Yes** (in-app + web URL above)
-- Data shared with third parties: subscription status with Google Play/RevenueCat as **service providers** (not "sharing" under Play's definition); AdMob receives non-personalized ad requests from parent screens only when ads are enabled.
+- Data shared with third parties: AdMob (Google) receives non-personalized, child-directed ad requests from the parent home of free families. Check the current answers against Google's "AdMob data disclosure" page when filling the form. Subscription status comes from Google Play itself.
 
 ## 5. Monetization (Monetize → Products → Subscriptions)
 
-- [ ] `kidsquest_premium_monthly` and `kidsquest_premium_yearly`, auto-renewing, priced in ILS
-- [ ] Then follow `../PRODUCTION.md` §1 (RevenueCat) and send me the keys; I rebuild and release
+- [x] `kidsquest_premium_monthly` (₪14.90) and `kidsquest_premium_yearly` (₪119.90) are created and active (see `../PRODUCTION.md` §1)
+- [ ] Add your own Google account under Settings → License testing, then buy once on the internal track to confirm the flow (test purchases are free for license testers)
 
 ## 6. Release
 

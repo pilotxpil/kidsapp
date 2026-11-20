@@ -1,63 +1,113 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { PREMIUM_PRODUCT_IDS } from '@kidsapp/shared';
+import { api } from './api';
 
 /**
- * RevenueCat wrapper (Google Play Billing now, App Store later).
- * The RevenueCat app user id is the FAMILY id: one subscription unlocks premium for every
- * parent and kid in the family. The server re-verifies with RevenueCat (POST /billing/sync).
- *
- * Keys (public SDK keys, safe in the bundle) come from EAS env:
- *   EXPO_PUBLIC_RC_ANDROID_KEY=goog_…   EXPO_PUBLIC_RC_IOS_KEY=appl_…
+ * Google Play Billing through expo-iap (App Store later).
+ * One subscription per FAMILY: the family id goes to Google as the obfuscated account id, and the
+ * server verifies every purchase token with Google (POST /billing/play/verify) before unlocking
+ * premium. The app never decides on its own that a family is premium.
  */
 export interface PlanOption {
   id: 'monthly' | 'yearly';
   title: string;
   price: string;
-  /** Per-month price string for the yearly plan, when the store gives one. */
+  /** Per-month price string for the yearly plan. */
   perMonth?: string;
-  pkg: unknown;
+  pkg: { productId: string; offerToken: string };
 }
 
-type PurchasesModule = typeof import('react-native-purchases').default;
+export type PurchaseOutcome = 'purchased' | 'cancelled';
 
-let mod: PurchasesModule | null = null;
-let configuredFor: string | null = null;
+type Iap = typeof import('expo-iap');
+type Purchase = import('expo-iap').Purchase;
 
-function apiKey(): string | undefined {
-  if (Platform.OS === 'android') return process.env.EXPO_PUBLIC_RC_ANDROID_KEY;
-  if (Platform.OS === 'ios') return process.env.EXPO_PUBLIC_RC_IOS_KEY;
-  return undefined;
-}
+const PRODUCTS: Record<PlanOption['id'], { productId: string; basePlan: string; title: string }> = {
+  monthly: { productId: PREMIUM_PRODUCT_IDS.monthly, basePlan: 'monthly', title: 'חודשי' },
+  yearly: { productId: PREMIUM_PRODUCT_IDS.yearly, basePlan: 'yearly', title: 'שנתי' },
+};
+const OUR_IDS = new Set<string>(Object.values(PREMIUM_PRODUCT_IDS));
 
-/** False in Expo Go, on web, and until the RevenueCat key is configured. */
+let mod: Iap | null = null;
+let connected = false;
+let familyId: string | null = null;
+let listening = false;
+let waiter: { resolve: (o: PurchaseOutcome) => void; reject: (e: Error) => void } | null = null;
+
+/** Android store builds only (not web, not Expo Go). iOS comes later. */
 export function purchasesAvailable(): boolean {
-  if (Platform.OS === 'web') return false;
-  if (Constants.executionEnvironment === 'storeClient') return false;
-  return Boolean(apiKey());
+  if (Platform.OS !== 'android') return false;
+  return Constants.executionEnvironment !== 'storeClient';
 }
 
-async function load(): Promise<PurchasesModule | null> {
+async function load(): Promise<Iap | null> {
   if (!purchasesAvailable()) return null;
   if (mod) return mod;
   try {
-    mod = (await import('react-native-purchases')).default;
+    mod = await import('expo-iap');
     return mod;
   } catch {
     return null;
   }
 }
 
-export async function initPurchases(familyId: string): Promise<boolean> {
-  const P = await load();
-  if (!P) return false;
+async function verifyAndFinish(iap: Iap, purchase: Purchase): Promise<boolean> {
+  const token = purchase.purchaseToken;
+  if (!token || !OUR_IDS.has(purchase.productId)) return false;
+  if (purchase.purchaseState === 'pending') return false;
+  await api.verifyPlayPurchase(token);
   try {
-    if (!configuredFor) {
-      P.configure({ apiKey: apiKey()!, appUserID: familyId });
-      configuredFor = familyId;
-    } else if (configuredFor !== familyId) {
-      await P.logIn(familyId);
-      configuredFor = familyId;
+    await iap.finishTransaction({ purchase, isConsumable: false });
+  } catch {
+    /* the server already acknowledged it */
+  }
+  return true;
+}
+
+function listen(iap: Iap) {
+  if (listening) return;
+  listening = true;
+  iap.purchaseUpdatedListener((purchase) => {
+    void verifyAndFinish(iap, purchase)
+      .then((ok) => {
+        waiter?.resolve(ok ? 'purchased' : 'cancelled');
+        waiter = null;
+      })
+      .catch((e: unknown) => {
+        waiter?.reject(new Error(e instanceof Error ? e.message : 'לא הצלחנו לאמת את הרכישה. נסו שוב.'));
+        waiter = null;
+      });
+  });
+  iap.purchaseErrorListener((error) => {
+    if (!waiter) return;
+    if (iap.isUserCancelledError(error)) waiter.resolve('cancelled');
+    else waiter.reject(new Error('הרכישה לא הושלמה. לא חויבתם. נסו שוב.'));
+    waiter = null;
+  });
+}
+
+async function connect(): Promise<Iap | null> {
+  const iap = await load();
+  if (!iap) return null;
+  if (!connected) {
+    await iap.initConnection();
+    connected = true;
+    listen(iap);
+  }
+  return iap;
+}
+
+/** Called once a parent is signed in: connects and settles purchases that were never verified. */
+export async function initPurchases(fid: string): Promise<boolean> {
+  familyId = fid;
+  try {
+    const iap = await connect();
+    if (!iap) return false;
+    const owned = await iap.getAvailablePurchases();
+    for (const p of owned) {
+      const unfinished = !(p as { isAcknowledgedAndroid?: boolean | null }).isAcknowledgedAndroid;
+      if (unfinished) await verifyAndFinish(iap, p).catch(() => {});
     }
     return true;
   } catch {
@@ -65,46 +115,80 @@ export async function initPurchases(familyId: string): Promise<boolean> {
   }
 }
 
-export async function getPlanOptions(): Promise<PlanOption[]> {
-  const P = await load();
-  if (!P) return [];
-  const offerings = await P.getOfferings();
-  const current = offerings.current;
-  if (!current) return [];
-  const out: PlanOption[] = [];
-  for (const pkg of current.availablePackages) {
-    const productId = pkg.product.identifier.split(':')[0];
-    if (pkg.packageType === 'MONTHLY' || productId === PREMIUM_PRODUCT_IDS.monthly) {
-      out.push({ id: 'monthly', title: 'חודשי', price: pkg.product.priceString, pkg });
-    } else if (pkg.packageType === 'ANNUAL' || productId === PREMIUM_PRODUCT_IDS.yearly) {
-      out.push({
-        id: 'yearly',
-        title: 'שנתי',
-        price: pkg.product.priceString,
-        perMonth: pkg.product.pricePerMonthString ?? undefined,
-        pkg,
-      });
-    }
+function perMonthLabel(priceMicros: number | undefined, currency: string | undefined): string | undefined {
+  if (!priceMicros || !currency) return undefined;
+  try {
+    return new Intl.NumberFormat('he-IL', { style: 'currency', currency, maximumFractionDigits: 2 }).format(priceMicros / 12);
+  } catch {
+    return undefined;
   }
-  return out.sort((a) => (a.id === 'yearly' ? -1 : 1));
 }
 
-export type PurchaseOutcome = 'purchased' | 'cancelled';
+export async function getPlanOptions(): Promise<PlanOption[]> {
+  const iap = await connect();
+  if (!iap) return [];
+  const products = await iap.fetchProducts({ skus: Object.values(PREMIUM_PRODUCT_IDS), type: 'subs' });
+  const out: PlanOption[] = [];
+  for (const id of ['yearly', 'monthly'] as const) {
+    const def = PRODUCTS[id];
+    const product = (products ?? []).find((p) => p.id === def.productId) as
+      | (import('expo-iap').ProductSubscriptionAndroid & { price?: number | null })
+      | undefined;
+    if (!product) continue;
+    const offers = product.subscriptionOffers ?? [];
+    const offer = offers.find((o) => o.basePlanIdAndroid === def.basePlan && o.offerTokenAndroid) ?? offers.find((o) => o.offerTokenAndroid);
+    if (!offer?.offerTokenAndroid) continue;
+    const amount = (offer as { price?: number | null }).price ?? product.price ?? undefined;
+    out.push({
+      id,
+      title: def.title,
+      price: offer.displayPrice || product.displayPrice,
+      ...(id === 'yearly' ? { perMonth: perMonthLabel(amount ?? undefined, offer.currency ?? product.currency) } : {}),
+      pkg: { productId: def.productId, offerToken: offer.offerTokenAndroid },
+    });
+  }
+  return out;
+}
 
 export async function buyPlan(option: PlanOption): Promise<PurchaseOutcome> {
-  const P = await load();
-  if (!P) throw new Error('הרכישה לא זמינה במכשיר הזה');
+  const iap = await connect();
+  if (!iap) throw new Error('הרכישה לא זמינה במכשיר הזה');
+  if (waiter) throw new Error('רכישה כבר בתהליך');
+  const result = new Promise<PurchaseOutcome>((resolve, reject) => {
+    waiter = { resolve, reject };
+  });
   try {
-    await P.purchasePackage(option.pkg as Parameters<PurchasesModule['purchasePackage']>[0]);
-    return 'purchased';
+    await iap.requestPurchase({
+      type: 'subs',
+      request: {
+        google: {
+          skus: [option.pkg.productId],
+          subscriptionOffers: [{ sku: option.pkg.productId, offerToken: option.pkg.offerToken }],
+          ...(familyId ? { obfuscatedAccountId: familyId } : {}),
+        },
+      },
+    });
   } catch (e) {
-    if ((e as { userCancelled?: boolean }).userCancelled) return 'cancelled';
+    waiter = null;
+    if (mod?.isUserCancelledError(e as never)) return 'cancelled';
     throw new Error('הרכישה לא הושלמה. לא חויבתם. נסו שוב.');
   }
+  return result;
 }
 
+/** Re-sends every KidsQuest subscription Google knows for this Play account to the server. */
 export async function restorePurchases(): Promise<void> {
-  const P = await load();
-  if (!P) throw new Error('שחזור רכישות לא זמין במכשיר הזה');
-  await P.restorePurchases();
+  const iap = await connect();
+  if (!iap) throw new Error('שחזור רכישות לא זמין במכשיר הזה');
+  const owned = await iap.getAvailablePurchases();
+  let lastError: Error | null = null;
+  for (const p of owned) {
+    if (!OUR_IDS.has(p.productId)) continue;
+    try {
+      await verifyAndFinish(iap, p);
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error('השחזור נכשל');
+    }
+  }
+  if (lastError) throw lastError;
 }

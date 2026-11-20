@@ -198,6 +198,13 @@ export const api = {
     return request<{ entitlements: FamilyEntitlements; billingEnabled: boolean }>('/billing/status');
   },
 
+  verifyPlayPurchase(purchaseToken: string) {
+    return request<{ entitlements: FamilyEntitlements; billingEnabled: boolean }>('/billing/play/verify', {
+      method: 'POST',
+      body: JSON.stringify({ purchaseToken }),
+    });
+  },
+
   syncBilling() {
     return request<{ entitlements: FamilyEntitlements; billingEnabled: boolean }>('/billing/sync', {
       method: 'POST',
