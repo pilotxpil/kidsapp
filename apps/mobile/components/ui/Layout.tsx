@@ -9,9 +9,10 @@ interface RowProps extends ViewProps {
   wrap?: boolean;
 }
 
+// ROW already points the main axis right→left on every platform, so "start" is flex-start.
 const JUSTIFY: Record<NonNullable<RowProps['justify']>, ViewStyle['justifyContent']> = {
-  start: START,
-  end: END,
+  start: 'flex-start',
+  end: 'flex-end',
   center: 'center',
   between: 'space-between',
   around: 'space-around',
