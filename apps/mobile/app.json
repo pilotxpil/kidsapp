@@ -23,7 +23,7 @@
     },
     "android": {
       "package": "com.kidsapp.quest",
-      "versionCode": 26,
+      "versionCode": 29,
       "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
@@ -35,6 +35,13 @@
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
         "com.google.android.gms.permission.AD_ID",
+        "android.permission.ACCESS_ADSERVICES_AD_ID",
+        "android.permission.ACCESS_ADSERVICES_ATTRIBUTION",
+        "android.permission.ACCESS_ADSERVICES_TOPICS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ]
@@ -57,7 +64,14 @@
       ],
       "expo-font",
       "expo-web-browser",
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false
+        }
+      ],
       [
         "expo-camera",
         {

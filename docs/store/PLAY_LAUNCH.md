@@ -24,7 +24,7 @@ Monetization setup (RevenueCat, AdMob, SMTP): `../PRODUCTION.md`.
 | Privacy policy | `https://kids.synaboard.com/privacy` |
 | App access | **Restricted.** Provide a reviewer login (see §3). Instructions: "Sign in as parent → home inbox. For the kid view: Family tab → כניסה shows the family code; sign in on the welcome screen with that code, username and PIN." |
 | Ads | **Yes**: one banner on the parent home of free families only, child-directed, non-personalized, rating G. Kids never see ads. |
-| Content rating (IARC) | App type: **All other app types**. Violence, sexuality, language, controlled substances, gambling: **No**. Users interact or communicate: **No** (no chat; photos go only to the kid's own parents). Shares location: **No**. Digital purchases: **Yes** (subscription). Expected rating: **Everyone / 3+**. |
+| Content rating (IARC) | **Done.** All other app types; users interact (task photos to the kid's parents, limited to invited family); online content; digital purchases. Result: ESRB Everyone, PEGI 3, USK all ages, 3+ elsewhere (Brazil 14+). |
 | Target audience and content | Age groups: **6–8**, **9–12** and **18+** (parents). Appeals to children: Yes, so the **Families policy** applies (see notes below). |
 | News app | No |
 | COVID-19 | No |
@@ -44,25 +44,23 @@ Google's reviewers need a working login. Recommended: a fictional **demo family 
 (parent + 2 kids with sample tasks), e.g. `review@kids.synaboard.com`. I can create it for you on
 request; it is real data in the production database, so it needs your go-ahead.
 
-## 4. Data safety form
+## 4. Data safety form — submitted through the API (Nov 20, 2026)
 
-**Data collected** (none is sold; none is shared for advertising):
+The answers live in `data-safety.csv` (Play's CSV format) and were uploaded with `POST applications/com.kidsapp.quest/dataSafety`. To change them, edit the CSV and upload it again (or edit in Play Console). Summary:
 
-| Data type | Collected | Why | Optional |
+| Data type | Collected / shared | Why | Optional |
 |---|---|---|---|
-| Email address (parent) | Yes | Account management, password reset | No |
-| Name (parent display name, kid nickname) | Yes | App functionality | No |
-| User IDs (account ids) | Yes | App functionality | No |
-| Photos (task proof a kid attaches) | Yes | App functionality, seen only by the kid's parents | **Yes** |
-| Purchase history (subscription status, via Google Play) | Yes | App functionality (premium) | Yes |
-| App interactions, diagnostics, approximate location (AdMob, parent screens, free plan only) | Yes, by the AdMob SDK | Advertising (non-personalized) | No |
-| App interactions (tasks, points, learning answers) | Yes | App functionality | No |
-| Device or other IDs | **No** (AD_ID permission removed) | — | — |
-| Location, contacts, messages, audio | No | — | — |
+| Email address, name, user IDs | Collected | App functionality, account management | No |
+| Purchase history | Collected | App functionality (premium) | Yes |
+| Photos (task proof) | Collected | App functionality, seen only by the kid's parents | Yes |
+| App interactions | Collected; shared with AdMob | App functionality; advertising, analytics, fraud prevention | No |
+| Device or other IDs (push token; AdMob app-set ID) | Collected and shared | App functionality, advertising, fraud prevention | No |
+| Approximate location (AdMob, from IP) | Collected and shared | Advertising, fraud prevention | No |
+| Diagnostics (AdMob) | Collected and shared | Analytics, advertising | No |
 
-- Data is encrypted in transit: **Yes** (HTTPS)
-- Users can request deletion: **Yes** (in-app + web URL above)
-- Data shared with third parties: AdMob (Google) receives non-personalized, child-directed ad requests from the parent home of free families. Check the current answers against Google's "AdMob data disclosure" page when filling the form. Subscription status comes from Google Play itself.
+- Encrypted in transit: yes. Account creation: email + password. Deletion: yes, `https://kids.synaboard.com/delete-account` (also in-app).
+- After "Target audience" includes children, re-upload with `PSL_DATA_COLLECTION_COMPLIES_FAMILY_POLICY=true` (Play rejects that answer before the app is in the Families program).
+- 2.3.0 blocks AD_ID, the Privacy Sandbox ad-services permissions, the microphone, overlay and foreground-service permissions; the only sensitive permissions left are camera (task photos) and billing.
 
 ## 5. Monetization (Monetize → Products → Subscriptions)
 
@@ -71,8 +69,8 @@ request; it is real data in the production database, so it needs your go-ahead.
 
 ## 6. Release
 
-1. Testing → Internal testing already has **2.2.0 (26)**. Optionally add a closed track for a few more families first.
-2. Production → Create release → **Promote** 2.2.0 (26) from internal testing.
+1. Testing → Internal testing already has **2.3.0 (29)**. Optionally add a closed track for a few more families first.
+2. Production → Create release → **Promote** 2.3.0 (29) from internal testing.
 3. Countries: start with **Israel**.
 4. Use a **staged rollout** (e.g. 20%), watch Android vitals / crashes for a few days, then 100%.
 5. After it is live, the web app already serves the same version; nothing else to deploy.
