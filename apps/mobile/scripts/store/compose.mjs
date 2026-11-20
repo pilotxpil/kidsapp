@@ -27,12 +27,12 @@ const SKY = {
 
 const FRAMES = [
   { file: '01-home', world: 'ocean', title: 'משימות קטנות, הרפתקאות גדולות', sub: 'פיקו מחכה לילדים בעולם משלהם' },
-  { file: '02-celebrate', world: 'ocean', title: 'כל משימה נגמרת בחגיגה', sub: 'מטבעות, קונפטי וצלילים' },
-  { file: '03-wheel', world: 'space', title: 'מתנה יומית שמחכה לילדים', sub: 'גלגל מזל, כוכב יומי ותיבת אוצר' },
+  { file: '02-celebrate', world: 'candy', title: 'כל משימה נגמרת בחגיגה', sub: 'מטבעות, קונפטי וצלילים' },
+  { file: '03-wheel', world: 'jungle', title: 'מתנה יומית שמחכה לילדים', sub: 'גלגל מזל, כוכב יומי ותיבת אוצר' },
   { file: '04-space', world: 'space', title: '5 עולמות, לכל אחד מוזיקה משלו', sub: "אוקיינוס, הר געש, ג'ונגל, חלל וממתקים" },
-  { file: '05-levelup', world: 'candy', title: 'עולים שלבים ואוספים תגים', sub: 'כל התקדמות מקבלת חגיגה' },
-  { file: '06-learn', world: 'jungle', title: 'לומדים ומרוויחים מטבעות', sub: 'חבילות לימוד לפי כיתה' },
-  { file: '07-parent', world: 'volcano', title: 'להורים: אישור בלחיצה אחת', sub: 'משימות, פרסים ובונוסים לכל המשפחה' },
+  { file: '05-levelup', world: 'volcano', title: 'עולים שלבים ואוספים תגים', sub: 'כל התקדמות מקבלת חגיגה' },
+  { file: '06-learn', world: 'ocean', title: 'לומדים ומרוויחים מטבעות', sub: 'חבילות לימוד לפי כיתה' },
+  { file: '07-parent', world: 'candy', title: 'להורים: אישור בלחיצה אחת', sub: 'משימות, פרסים ובונוסים לכל המשפחה' },
 ];
 
 function star(cx, cy, o, i) {
