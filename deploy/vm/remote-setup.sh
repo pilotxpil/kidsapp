@@ -25,7 +25,10 @@ fi
 [[ -s "$HOME/.nvm/nvm.sh" ]] && source "$HOME/.nvm/nvm.sh"
 
 echo "==> npm install + build..."
-npm ci
+# The VM is an e2-micro (1 GB RAM, shared with other services). Install only what the API needs:
+# a full `npm ci` would also pull the mobile app's React Native tree and push the box into swap.
+npm ci --workspace=server --workspace=@kidsapp/shared --include-workspace-root=false --no-audit --no-fund
+export NODE_OPTIONS="--max-old-space-size=384"
 npm run build -w @kidsapp/shared
 npm run build -w server
 
