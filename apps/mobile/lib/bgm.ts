@@ -2,12 +2,13 @@ import { createAudioPlayer, setIsAudioActiveAsync, type AudioPlayer } from 'expo
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ensureAudioSession } from './sfx';
 
-const QUEST_BGM = require('../assets/bgm/quest-loop.mp3');
-/** Ember BGM: "Heroic Age" by Kevin MacLeod (incompetech.com), CC BY 3.0 */
-const EMBER_BGM = require('../assets/bgm/ember-loop.mp3');
+import { BGM_FILES } from './sfx-files';
+import { worldSound } from './sfx';
+
+// Every world has its own original loop, synthesized by scripts/audio/synth.mjs.
 const MUTE_KEY = 'quest_bgm_muted';
 const OLD_VOLUME_KEY = 'quest_bgm_volume';
-const BASE_VOLUME = 0.5;
+const BASE_VOLUME = 0.42;
 
 let player: AudioPlayer | null = null;
 let muted = false;
@@ -17,7 +18,7 @@ let playingThemeId: string | null = null;
 let seq = 0;
 
 function sourceFor(themeId: string) {
-  return themeId === 'ember' ? EMBER_BGM : QUEST_BGM;
+  return BGM_FILES[worldSound(themeId)];
 }
 
 function releasePlayer(target: AudioPlayer | null) {
@@ -65,6 +66,14 @@ export async function setBgmMuted(value: boolean) {
 
 export async function startBgm(themeId?: string) {
   if (themeId) activeThemeId = themeId;
+  if (player && playingThemeId === activeThemeId && !muted) {
+    try {
+      player.play();
+    } catch {
+      // ignore
+    }
+    return;
+  }
   const my = ++seq;
   try {
     await initBgm();

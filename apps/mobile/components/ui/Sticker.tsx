@@ -56,7 +56,9 @@ export function Sticker({
 }: StickerProps) {
   const depth = tone === 'kid' ? 4 : 0;
   const press = useSharedValue(0);
-  const anim = useAnimatedStyle(() => ({ transform: [{ translateY: press.value * depth }] }));
+  const anim = useAnimatedStyle(() => ({
+    transform: [{ perspective: 700 }, { translateY: press.value * depth }, { rotateX: `${press.value * (depth ? 7 : 3)}deg` }, { scale: 1 - press.value * 0.015 }],
+  }));
 
   if (!onPress && !onLongPress) {
     return (

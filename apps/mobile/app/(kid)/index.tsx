@@ -26,8 +26,10 @@ import {
   formatNum,
 } from '../../components/ui';
 import { KidSkyHeader } from '../../components/kid/KidSky';
+import { World3D } from '../../components/kid/World3D';
 import { QuestCard } from '../../components/kid/QuestCard';
 import { useCompleteTask } from '../../components/kid/CompleteTaskSheet';
+import { RewardBurst } from '../../components/kid/RewardBurst';
 import { DailyStar } from '../../components/DailyStar';
 import { FortuneWheel } from '../../components/FortuneWheel';
 import { DailyWord } from '../../components/DailyWord';
@@ -95,6 +97,15 @@ export default function KidHomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [giftKey, setGiftKey] = useState(0);
   const [avatarGift, setAvatarGift] = useState(false);
+  const [levelUp, setLevelUp] = useState<number | null>(null);
+  const knownLevel = useRef<number | null>(user?.level ?? null);
+  const level = user?.level ?? 1;
+
+  // Game moment: any level increase while the kid is in the app gets a celebration.
+  useEffect(() => {
+    if (knownLevel.current != null && level > knownLevel.current) setLevelUp(level);
+    knownLevel.current = level;
+  }, [level]);
 
   useEffect(() => {
     const show = () => {
@@ -169,13 +180,16 @@ export default function KidHomeScreen() {
         setRefreshing(false);
       }}
       sky={
-        <KidSkyHeader
-          points={points}
-          streak={streak}
-          xp={xp}
-          line={user?.heroLine}
-          onAvatar={() => router.push('/(kid)/avatar-shop')}
-        />
+        <View>
+          <KidSkyHeader
+            points={points}
+            streak={streak}
+            xp={xp}
+            line={user?.heroLine}
+            onAvatar={() => router.push('/(kid)/avatar-shop')}
+          />
+          <World3D height={200} />
+        </View>
       }
       overlay={
         userId ? (
@@ -183,6 +197,13 @@ export default function KidHomeScreen() {
             <DailyStar key={`star-${giftKey}`} kidId={userId} onClaimed={(r: DailyStarClaimResult) => applyPoints(r)} />
             <FortuneWheel key={`wheel-${giftKey}`} kidId={userId} onWon={(r: FortuneWheelSpinResult) => applyPoints(r)} />
             {complete.ui}
+            <RewardBurst
+              visible={levelUp != null}
+              title={`עלית לשלב ${levelUp ?? ''}!`}
+              body="כל הכבוד! המשיכו לאסוף XP כדי לפתוח עוד הפתעות."
+              mood="cheer"
+              onClose={() => setLevelUp(null)}
+            />
             <AvatarGiftModal
               visible={avatarGift}
               onSkip={() => setAvatarGift(false)}

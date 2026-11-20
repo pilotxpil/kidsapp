@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { RefreshControl, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,6 +8,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useTheme } from '../../lib/theme-context';
 import { INK, WHITE, type Scenery } from '../../constants/themes';
 import { Txt } from './Txt';
+import { Ambience } from './Ambience';
 import { Row } from './Layout';
 import { ToyButton } from './ToyButton';
 
@@ -119,16 +120,24 @@ export function useStatusBar(style: 'light' | 'dark') {
 }
 
 /** The painted sky band at the top of every kid screen. */
-export function WorldSky({ children, compact }: { children?: React.ReactNode; compact?: boolean }) {
+export function WorldSky({ children, compact, ambience = true }: { children?: React.ReactNode; compact?: boolean; ambience?: boolean }) {
   const { world } = useTheme();
   const insets = useSafeAreaInsets();
+  const [box, setBox] = useState({ w: 0, h: 0 });
   useStatusBar('light');
   return (
-    <View style={{ paddingTop: insets.top + (compact ? 8 : 12) }}>
+    <View
+      style={{ paddingTop: insets.top + (compact ? 8 : 12) }}
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        if (Math.abs(width - box.w) > 1 || Math.abs(height - box.h) > 1) setBox({ w: width, h: height });
+      }}
+    >
       <LinearGradient colors={[world.sky[0], world.sky[1]]} style={StyleSheet.absoluteFill} />
       <Svg style={StyleSheet.absoluteFill} viewBox="0 0 400 120" preserveAspectRatio="xMidYMid slice">
         <SceneryDecor scenery={world.scenery} />
       </Svg>
+      {ambience ? <Ambience kind={world.scenery} width={box.w} height={box.h} count={compact ? 7 : 11} /> : null}
       <View style={{ paddingHorizontal: GUTTER, paddingBottom: compact ? 30 : 40 }}>{children}</View>
       <Svg
         width="100%"

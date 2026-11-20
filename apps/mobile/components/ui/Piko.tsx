@@ -11,12 +11,62 @@ import Animated, {
   ReduceMotion,
 } from 'react-native-reanimated';
 import { GOLD, INK } from '../../constants/themes';
+import { useTheme } from '../../lib/theme-context';
 
 /**
  * Piko — the KidsQuest mascot. A soft, round-cornered star with a face.
  * Drawn in SVG so it is crisp at any size and recolourable per world.
  */
 export type PikoMood = 'happy' | 'wow' | 'wink' | 'sleepy' | 'cheer' | 'think';
+export type PikoOutfit = 'none' | 'waves' | 'lava' | 'leaves' | 'stars' | 'sprinkles';
+
+/** World costume drawn on top of the star (120×120 space, top spike tip ≈ (60, 14)). */
+function Outfit({ kind }: { kind: PikoOutfit }) {
+  switch (kind) {
+    case 'waves': // sailor cap
+      return (
+        <G>
+          <Path d="M44 30 Q60 6 76 30 Z" fill="#FFFFFF" stroke={INK} strokeWidth={3} strokeLinejoin="round" />
+          <Path d="M42 30 H78 V36 Q60 40 42 36 Z" fill="#1F7AFF" stroke={INK} strokeWidth={3} strokeLinejoin="round" />
+          <Circle cx={60} cy={12} r={4} fill="#1F7AFF" stroke={INK} strokeWidth={2.5} />
+        </G>
+      );
+    case 'lava': // little flame tuft
+      return (
+        <G>
+          <Path d="M60 4 C70 14 72 22 66 30 C64 24 61 22 60 18 C59 22 56 24 54 30 C48 22 50 14 60 4 Z" fill="#FF7A1A" stroke={INK} strokeWidth={3} strokeLinejoin="round" />
+          <Path d="M60 14 C64 19 64 24 61 28 C60 25 59 25 58 28 C56 24 56 19 60 14 Z" fill="#FFD54A" />
+        </G>
+      );
+    case 'leaves': // explorer helmet
+      return (
+        <G>
+          <Path d="M40 31 Q60 26 80 31 Q72 35 60 35 Q48 35 40 31 Z" fill="#B98C4E" stroke={INK} strokeWidth={3} strokeLinejoin="round" />
+          <Path d="M47 30 Q48 12 60 11 Q72 12 73 30 Z" fill="#D9AE6A" stroke={INK} strokeWidth={3} strokeLinejoin="round" />
+          <Path d="M48 25 H72" stroke="#12A85E" strokeWidth={4} />
+        </G>
+      );
+    case 'stars': // astronaut bubble + antenna
+      return (
+        <G>
+          <Circle cx={60} cy={64} r={52} fill="#B9E6FF" fillOpacity={0.18} stroke={INK} strokeWidth={3} />
+          <Path d="M28 40 Q36 26 52 20" stroke="#FFFFFF" strokeWidth={5} strokeLinecap="round" fill="none" opacity={0.8} />
+          <Path d="M60 12 V2" stroke={INK} strokeWidth={3} strokeLinecap="round" />
+          <Circle cx={60} cy={2} r={4} fill="#FF4FA3" stroke={INK} strokeWidth={2} />
+        </G>
+      );
+    case 'sprinkles': // candy crown
+      return (
+        <G>
+          <Path d="M44 32 L46 16 L53 24 L60 10 L67 24 L74 16 L76 32 Z" fill="#FF7AB8" stroke={INK} strokeWidth={3} strokeLinejoin="round" />
+          <Circle cx={60} cy={10} r={3.5} fill="#FFE066" stroke={INK} strokeWidth={2} />
+          <Path d="M50 27 l3 -2 M58 29 l3 1 M66 27 l3 -2" stroke="#FFFFFF" strokeWidth={2.2} strokeLinecap="round" />
+        </G>
+      );
+    default:
+      return null;
+  }
+}
 
 function starPoints(cx: number, cy: number, outer: number, inner: number): string {
   const pts: string[] = [];
@@ -93,13 +143,17 @@ function Face({ mood }: { mood: PikoMood }) {
 interface PikoProps {
   size?: number;
   mood?: PikoMood;
+  /** World costume. Defaults to the current world; pass 'none' for the plain star. */
+  outfit?: PikoOutfit;
   color?: string;
   /** Gentle idle bob. Off by default — use for one hero moment per screen. */
   bob?: boolean;
   style?: ViewStyle;
 }
 
-export function Piko({ size = 120, mood = 'happy', color = GOLD, bob, style }: PikoProps) {
+export function Piko({ size = 120, mood = 'happy', color = GOLD, bob, style, outfit }: PikoProps) {
+  const { world } = useTheme();
+  const wear: PikoOutfit = outfit ?? world.scenery;
   const y = useSharedValue(0);
   const rot = useSharedValue(0);
 
@@ -140,6 +194,7 @@ export function Piko({ size = 120, mood = 'happy', color = GOLD, bob, style }: P
         <Polygon points={BODY} fill={color} stroke={color} strokeWidth={12} strokeLinejoin="round" />
         <Path d="M41 44 q6 -10 15 -12" stroke="#FFF7DA" strokeWidth={5} strokeLinecap="round" fill="none" />
         <Face mood={mood} />
+        <Outfit kind={wear} />
       </Svg>
     </Animated.View>
   );

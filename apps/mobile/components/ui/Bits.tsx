@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '../../lib/theme-context';
 import { CORAL, GOLD, INK, INK_FAINT, INK_SOFT, LINE, MINT, WHITE } from '../../constants/themes';
@@ -17,17 +17,52 @@ export function formatNum(n: number): string {
   return Math.round(n).toLocaleString('he-IL');
 }
 
-/** Coin counter chip — the kid's wallet, always ink-outlined. */
+/** Rolls a number from its previous value to the new one (game-style counter). */
+export function useRollingNumber(value: number, ms = 700) {
+  const [shown, setShown] = React.useState(value);
+  const from = React.useRef(value);
+  React.useEffect(() => {
+    const start = from.current;
+    if (start === value) return;
+    const t0 = Date.now();
+    let raf = 0;
+    const step = () => {
+      const p = Math.min(1, (Date.now() - t0) / ms);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setShown(Math.round(start + (value - start) * eased));
+      if (p < 1) raf = requestAnimationFrame(step);
+      else from.current = value;
+    };
+    raf = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(raf);
+      from.current = value;
+    };
+  }, [value, ms]);
+  return shown;
+}
+
+/** Coin counter chip — the kid's wallet. Rolls and bounces when coins arrive. */
 export function CoinChip({ points, size = 'md', style }: { points: number; size?: 'sm' | 'md' | 'lg'; style?: StyleProp<ViewStyle> }) {
   const icon = size === 'lg' ? 30 : size === 'md' ? 24 : 18;
   const font = size === 'lg' ? 22 : size === 'md' ? 17 : 14;
+  const shown = useRollingNumber(points);
+  const bump = useSharedValue(1);
+  const prev = React.useRef(points);
+  useEffect(() => {
+    if (points > prev.current) {
+      bump.value = withSequence(withSpring(1.22, { damping: 6, stiffness: 320 }), withSpring(1, { damping: 10 }));
+    }
+    prev.current = points;
+  }, [points, bump]);
+  const bumpStyle = useAnimatedStyle(() => ({ transform: [{ scale: bump.value }] }));
   return (
-    <View style={[styles.chip, { flexDirection: ROW, paddingVertical: size === 'sm' ? 3 : 5 }, style]}>
+    <Animated.View style={[styles.chip, { flexDirection: ROW, paddingVertical: size === 'sm' ? 3 : 5 }, bumpStyle, style]}>
       <Coin size={icon} />
       <Txt v="title" size={font} num>
-        {formatNum(points)}
+        {formatNum(shown)}
       </Txt>
-    </View>
+    </Animated.View>
   );
 }
 

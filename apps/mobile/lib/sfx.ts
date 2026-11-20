@@ -1,7 +1,7 @@
-import { createAudioPlayer, setAudioModeAsync, setIsAudioActiveAsync } from 'expo-audio';
+import { createAudioPlayer, setAudioModeAsync, setIsAudioActiveAsync, type AudioPlayer } from 'expo-audio';
+import { SFX_FILES, type SfxWorld } from './sfx-files';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { UiThemeId } from '@kidsapp/shared';
-import { getTheme } from '../constants/themes';
 
 export type SfxName =
   | 'tap'
@@ -16,19 +16,30 @@ export type SfxName =
   | 'star3'
   | 'star4';
 
-const FILES: Record<SfxName, number> = {
-  tap: require('../assets/sfx/tap.wav'),
-  complete: require('../assets/sfx/complete.wav'),
-  gem: require('../assets/sfx/gem.wav'),
-  coin: require('../assets/sfx/coin.wav'),
-  error: require('../assets/sfx/error.wav'),
-  cheer: require('../assets/sfx/cheer.wav'),
-  whoosh: require('../assets/sfx/soft-click-3.wav'),
-  star1: require('../assets/sfx/star1.wav'),
-  star2: require('../assets/sfx/star2.wav'),
-  star3: require('../assets/sfx/star3.wav'),
-  star4: require('../assets/sfx/star4.wav'),
+/** Theme id (stored on users) → the world whose instrument family plays its sounds. */
+const WORLD_OF: Record<string, SfxWorld> = {
+  roblox: 'ocean',
+  ember: 'volcano',
+  minecraft: 'jungle',
+  brawl: 'space',
+  sparkle: 'candy',
 };
+
+export function worldSound(themeId: string): SfxWorld {
+  return WORLD_OF[themeId] ?? 'ocean';
+}
+
+// Cached players: taps must start instantly, so each sound is decoded once and rewound.
+const cache = new Map<string, AudioPlayer>();
+function playerFor(world: SfxWorld, name: SfxName): AudioPlayer {
+  const key = `${world}:${name}`;
+  let p = cache.get(key);
+  if (!p) {
+    p = createAudioPlayer(SFX_FILES[world][name], { keepAudioSessionActive: true });
+    cache.set(key, p);
+  }
+  return p;
+}
 
 const MUTE_KEY = 'quest_sfx_muted';
 const OLD_VOLUME_KEY = 'quest_sfx_volume';
@@ -39,6 +50,7 @@ let themeId: UiThemeId = 'ember';
 
 export function setSfxTheme(id: UiThemeId) {
   themeId = id;
+  preloadSfx();
 }
 
 export async function ensureAudioSession() {
@@ -84,20 +96,26 @@ export async function playSfx(name: SfxName, opts?: { volume?: number }) {
   if (muted) return;
   try {
     await ensureAudioSession();
-    const resolved = name === 'tap' ? getTheme(themeId).sfx : name;
-    const player = createAudioPlayer(FILES[resolved], { keepAudioSessionActive: true });
-    player.muted = false;
+    const player = playerFor(worldSound(themeId), name);
     player.volume = opts?.volume ?? 1;
-    const sub = player.addListener('playbackStatusUpdate', (status) => {
-      if (status.didJustFinish) {
-        sub.remove();
-        player.release();
-      }
-    });
+    player.muted = false;
+    await player.seekTo(0);
     player.play();
   } catch {
     // Expo Go / web may skip playback
   }
+}
+
+/** Warm the current world's sounds so the first tap is not late. */
+export function preloadSfx() {
+  const world = worldSound(themeId);
+  (['tap', 'whoosh', 'coin', 'complete'] as SfxName[]).forEach((n) => {
+    try {
+      playerFor(world, n);
+    } catch {
+      // ignore
+    }
+  });
 }
 
 /** Rising arcade blings for daily-star taps (1–4). */

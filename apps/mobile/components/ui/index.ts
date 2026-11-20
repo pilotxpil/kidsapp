@@ -12,3 +12,4 @@ export * from './Field';
 export * from './PinPad';
 export * from './Toast';
 export * from './TabBar';
+export * from './Ambience';

@@ -1,25 +1,30 @@
 import React from 'react';
 import Svg, { Path, Circle, Ellipse, G, Polygon, Rect } from 'react-native-svg';
 import { GOLD, GOLD_DARK, INK, FLAME } from '../../constants/themes';
+import { useTheme } from '../../lib/theme-context';
 
 /** Colourful "toy" icons with an ink outline — the collectible pieces of the KidsQuest world. */
 
 type ToyProps = { size?: number };
 
-/** Points coin — the app's currency. */
+const EMBLEM: Record<string, string> = {
+  stars: 'm20 11.8 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7Z',
+  waves: 'M13 22 Q20 9 27 22 Q24 25 20 25 Q16 25 13 22 Z M20 12 V24 M16.5 14 L18 24 M23.5 14 L22 24',
+  lava: 'M20 10 C26 15 27 20 24 25 C23 22 21 21 20 19 C19 21 17 22 16 25 C13 20 14 15 20 10 Z',
+  leaves: 'M14 25 C14 16 20 11 27 11 C27 19 22 25 14 25 Z M14 25 L23 15',
+  sprinkles: 'M20 26 C14 21 12 18 12 15.5 C12 13 14 11.5 16.2 11.5 C17.8 11.5 19.2 12.5 20 14 C20.8 12.5 22.2 11.5 23.8 11.5 C26 11.5 28 13 28 15.5 C28 18 26 21 20 26 Z',
+};
+
+/** Points coin — the app's currency. Its embossed emblem changes with the world. */
 export function Coin({ size = 24 }: ToyProps) {
+  const { world } = useTheme();
+  const d = EMBLEM[world.scenery] ?? EMBLEM.stars;
   return (
     <Svg width={size} height={size} viewBox="0 0 40 40">
       <Circle cx={20} cy={21.5} r={16.5} fill={GOLD_DARK} stroke={INK} strokeWidth={2.6} />
       <Circle cx={20} cy={19} r={16.5} fill={GOLD} stroke={INK} strokeWidth={2.6} />
       <Circle cx={20} cy={19} r={11} fill="none" stroke={GOLD_DARK} strokeWidth={2.4} />
-      <Path
-        d="m20 11.8 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7Z"
-        fill="#FFF3C4"
-        stroke={GOLD_DARK}
-        strokeWidth={1.4}
-        strokeLinejoin="round"
-      />
+      <Path d={d} fill="#FFF3C4" stroke={GOLD_DARK} strokeWidth={1.4} strokeLinejoin="round" strokeLinecap="round" />
       <Path d="M9.5 13.5a12 12 0 0 1 6-5" stroke="#FFF7DA" strokeWidth={2.4} strokeLinecap="round" fill="none" />
     </Svg>
   );

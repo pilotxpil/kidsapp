@@ -34,6 +34,11 @@ export function WorldPicker() {
     playSfx(theme.sfx, { volume: 0.6 });
     try {
       await setUiTheme(id);
+      // Welcome to the new world: its own cheer, once its sound set is active.
+      setTimeout(() => {
+        haptic.success();
+        void playSfx('cheer', { volume: 0.8 });
+      }, 180);
     } catch (e) {
       onError(e);
     } finally {

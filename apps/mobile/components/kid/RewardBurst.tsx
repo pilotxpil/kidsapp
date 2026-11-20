@@ -3,6 +3,7 @@ import { Modal, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { INK, WHITE } from '../../constants/themes';
 import { haptic } from '../../lib/haptics';
+import { useTheme } from '../../lib/theme-context';
 import { playSfx } from '../../lib/sfx';
 import { Confetti } from '../animations/Confetti';
 import { Coin, Piko, Row, ToyButton, Txt, type PikoMood } from '../ui';
@@ -29,6 +30,7 @@ export function RewardBurst({
   cta?: string;
   onClose: () => void;
 }) {
+  const { world, celebrationKicker } = useTheme();
   const pop = useSharedValue(0);
   const coin = useSharedValue(0);
 
@@ -55,6 +57,11 @@ export function RewardBurst({
         <Animated.View style={[styles.card, card]}>
           <View style={styles.piko}>
             <Piko size={120} mood={mood} />
+          </View>
+          <View style={[styles.kicker, { backgroundColor: world.accent }]}>
+            <Txt v="title" color={WHITE} align="center">
+              {celebrationKicker}
+            </Txt>
           </View>
           <Txt v="display" align="center">
             {title}
@@ -102,6 +109,16 @@ const styles = StyleSheet.create({
     boxShadow: `0px 7px 0px ${INK}`,
   },
   piko: { position: 'absolute', top: -64, alignSelf: 'center' },
+  kicker: {
+    alignSelf: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 2.5,
+    borderColor: INK,
+    transform: [{ rotate: '-4deg' }],
+    marginTop: -8,
+  },
   coins: {
     backgroundColor: '#FFF4CC',
     borderRadius: 999,

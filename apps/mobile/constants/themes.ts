@@ -167,6 +167,7 @@ function makeTheme(
     sfx: SfxName;
     pattern: AppTheme['pattern'];
     decor: string[];
+    kicker: string;
   },
   world: WorldTokens
 ): AppTheme {
@@ -190,7 +191,7 @@ function makeTheme(
     tabIcons: { home: '🏠', tasks: '✅', learn: '📚', shop: '🎁', profile: '😊' },
     taskCategoryIcons: CATEGORY_ICONS,
     pointsEmoji: '🪙',
-    celebrationKicker: 'יש!',
+    celebrationKicker: meta.kicker,
     allCategoryIcon: '⭐',
     pattern: meta.pattern,
     chrome: 'vector',
@@ -208,6 +209,7 @@ export const THEMES: Record<UiThemeId, AppTheme> = {
       sfx: 'coin',
       pattern: 'stars',
       decor: ['🐠', '🫧', '🐚'],
+      kicker: 'ספלאש!',
     },
     {
       paper: '#EEF5FF',
@@ -230,6 +232,7 @@ export const THEMES: Record<UiThemeId, AppTheme> = {
       sfx: 'gem',
       pattern: 'embers',
       decor: ['🔥', '💎', '⚡'],
+      kicker: 'בום!',
     },
     {
       paper: '#FFF3EC',
@@ -252,6 +255,7 @@ export const THEMES: Record<UiThemeId, AppTheme> = {
       sfx: 'tap',
       pattern: 'blocks',
       decor: ['🦜', '🍃', '🐒'],
+      kicker: 'יו-הו!',
     },
     {
       paper: '#EEFAF2',
@@ -274,6 +278,7 @@ export const THEMES: Record<UiThemeId, AppTheme> = {
       sfx: 'gem',
       pattern: 'stars',
       decor: ['🪐', '⭐', '🌙'],
+      kicker: 'בליפ-בלופ!',
     },
     {
       paper: '#F2EEFF',
@@ -296,6 +301,7 @@ export const THEMES: Record<UiThemeId, AppTheme> = {
       sfx: 'coin',
       pattern: 'hearts',
       decor: ['🍬', '🧁', '🌈'],
+      kicker: 'יאמי!',
     },
     {
       paper: '#FFF0F7',
