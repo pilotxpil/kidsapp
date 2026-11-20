@@ -23,7 +23,7 @@
     },
     "android": {
       "package": "com.kidsapp.quest",
-      "versionCode": 24,
+      "versionCode": 25,
       "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
