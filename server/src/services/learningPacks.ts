@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { activePacks, isActivePack, packById } from './contentStore';
 import path from 'path';
 import type {
   LearningPack,
@@ -36,8 +36,9 @@ function categorySortIndex(category: LearningCategory): number {
   return idx >= 0 ? idx : 99;
 }
 
-function packsDir(): string {
-  return path.resolve(__dirname, '../../../content/packs');
+/** Repo-root content directory (seed files imported into the DB at boot). */
+export function contentDir(sub: string): string {
+  return path.resolve(__dirname, '../../../content', sub);
 }
 
 /** Parse & validate a pack JSON object (built-in files or parent import). */
@@ -106,49 +107,21 @@ function validatePack(raw: unknown): LearningPack | null {
   return parseLearningPack(raw);
 }
 
-let cachedPacks: LearningPack[] | null = null;
-
-export function loadLearningPacks(): LearningPack[] {
-  if (cachedPacks) return cachedPacks;
-
-  const dir = packsDir();
-  if (!fs.existsSync(dir)) {
-    console.warn(`Learning packs directory not found: ${dir}`);
-    cachedPacks = [];
-    return cachedPacks;
-  }
-
-  const files = fs
-    .readdirSync(dir)
-    .filter((f) => f.endsWith('.json') && !f.startsWith('._'));
-  const packs: LearningPack[] = [];
-
-  for (const file of files) {
-    try {
-      const raw = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf-8'));
-      const pack = validatePack(raw);
-      if (pack) {
-        packs.push(pack);
-      } else {
-        console.warn(`Invalid learning pack skipped: ${file}`);
-      }
-    } catch (err) {
-      console.warn(`Failed to load learning pack ${file}:`, err);
-    }
-  }
-
-  packs.sort((a, b) => {
+export function sortPacks(packs: LearningPack[]): LearningPack[] {
+  return [...packs].sort((a, b) => {
     const cat = categorySortIndex(a.category) - categorySortIndex(b.category);
     if (cat !== 0) return cat;
     return a.title.he.localeCompare(b.title.he, 'he');
   });
-  cachedPacks = packs;
-  console.log(`Loaded ${packs.length} learning pack(s)`);
-  return packs;
+}
+
+/** Built-in packs now come from the database (ContentPack) via the content store. */
+export function loadLearningPacks(): LearningPack[] {
+  return activePacks();
 }
 
 export function getLearningPack(packId: string): LearningPack | undefined {
-  return loadLearningPacks().find((p) => p.id === packId);
+  return packById(packId) && isActivePack(packId) ? packById(packId) : undefined;
 }
 
 export function familyDocToPack(doc: {

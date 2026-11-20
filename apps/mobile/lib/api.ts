@@ -27,6 +27,7 @@ import type {
   PushPlatform,
   KidDailyWord,
   KidDailyRiddle,
+  RiddleTrack,
   ShopFreebies,
   BadgeUnlock,
   FamilyEntitlements,
@@ -391,24 +392,29 @@ export const api = {
     return request<{ dailyWord: KidDailyWord }>(`/kids/${id}/daily-word`);
   },
 
-  getDailyRiddle(id: string) {
-    return request<{ dailyRiddle: KidDailyRiddle }>(`/kids/${id}/daily-riddle`);
+  getDailyRiddle(id: string, slot: RiddleTrack = 'math') {
+    return request<{ dailyRiddle: KidDailyRiddle }>(`/kids/${id}/daily-riddle?slot=${slot}`);
   },
 
-  appealDailyRiddle(id: string) {
+  getDailyRiddles(id: string) {
+    return request<{ dailyRiddles: KidDailyRiddle[] }>(`/kids/${id}/daily-riddles`);
+  },
+
+  appealDailyRiddle(id: string, slot: RiddleTrack = 'math') {
     return request<{ dailyRiddle: KidDailyRiddle }>(`/kids/${id}/daily-riddle/appeal`, {
       method: 'POST',
+      body: JSON.stringify({ slot }),
     });
   },
 
-  reviewDailyRiddleAppeal(id: string, action: 'approve' | 'reject') {
+  reviewDailyRiddleAppeal(id: string, action: 'approve' | 'reject', slot?: RiddleTrack) {
     return request<{ ok: true; points?: number }>(`/kids/${id}/daily-riddle/appeal/review`, {
       method: 'POST',
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action, slot }),
     });
   },
 
-  guessDailyRiddle(id: string, guess: string) {
+  guessDailyRiddle(id: string, guess: string, slot: RiddleTrack = 'math') {
     return request<{
       dailyRiddle: KidDailyRiddle;
       correct: boolean;
@@ -419,7 +425,7 @@ export const api = {
       newBadges?: BadgeUnlock[];
     }>(`/kids/${id}/daily-riddle/guess`, {
       method: 'POST',
-      body: JSON.stringify({ guess }),
+      body: JSON.stringify({ guess, slot }),
     });
   },
 

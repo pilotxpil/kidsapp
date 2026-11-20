@@ -1,0 +1,230 @@
+{
+  "id": "language-first-letter-1",
+  "version": 1,
+  "title": {
+    "he": "באיזו אות מתחילה המילה?",
+    "en": "First letters"
+  },
+  "category": "language",
+  "grade": 1,
+  "tags": [
+    "letters",
+    "reading",
+    "grade-1"
+  ],
+  "defaultPoints": 6,
+  "activities": [
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "באיזו אות מתחילה המילה בננה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "ב"
+        },
+        {
+          "id": "b",
+          "text": "נ"
+        },
+        {
+          "id": "c",
+          "text": "ה"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "בננה מתחילה ב-ב."
+      },
+      "id": "q1"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "באיזו אות מתחילה המילה שמש?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "ס"
+        },
+        {
+          "id": "b",
+          "text": "ש"
+        },
+        {
+          "id": "c",
+          "text": "מ"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "שמש מתחילה ב-ש."
+      },
+      "id": "q2"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "באיזו אות מתחילה המילה אריה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "א"
+        },
+        {
+          "id": "b",
+          "text": "ע"
+        },
+        {
+          "id": "c",
+          "text": "ה"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "אריה מתחילה ב-א."
+      },
+      "id": "q3"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "באיזו אות מתחילה המילה כלב?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "ק"
+        },
+        {
+          "id": "b",
+          "text": "כ"
+        },
+        {
+          "id": "c",
+          "text": "ב"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "כלב מתחילה ב-כ."
+      },
+      "id": "q4"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "באיזו אות נגמרת המילה גן?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "נ"
+        },
+        {
+          "id": "b",
+          "text": "ן"
+        },
+        {
+          "id": "c",
+          "text": "ג"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "בסוף מילה כותבים נ׳ סופית: ן."
+      },
+      "id": "q5"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזו מילה מתחילה באות מ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "ים"
+        },
+        {
+          "id": "b",
+          "text": "מים"
+        },
+        {
+          "id": "c",
+          "text": "אמא"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "מים מתחילה ב-מ."
+      },
+      "id": "q6"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזו מילה מתחילה באות ת?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "תפוח"
+        },
+        {
+          "id": "b",
+          "text": "טלפון"
+        },
+        {
+          "id": "c",
+          "text": "פרח"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "תפוח מתחילה ב-ת. טלפון מתחילה ב-ט."
+      },
+      "id": "q7"
+    },
+    {
+      "type": "select_all",
+      "prompt": {
+        "text": "סמנו את כל המילים שמתחילות באות ד."
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "דג"
+        },
+        {
+          "id": "b",
+          "text": "דלת"
+        },
+        {
+          "id": "c",
+          "text": "גדר"
+        },
+        {
+          "id": "d",
+          "text": "דובי"
+        },
+        {
+          "id": "e",
+          "text": "ענן"
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "d"
+      ],
+      "explanation": {
+        "he": "דג, דלת ודובי מתחילות ב-ד."
+      },
+      "id": "q8"
+    }
+  ]
+}

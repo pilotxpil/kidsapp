@@ -1,0 +1,217 @@
+{
+  "id": "math-word-problems-4",
+  "version": 1,
+  "title": {
+    "he": "בעיות מילוליות",
+    "en": "Word problems"
+  },
+  "category": "math",
+  "grade": 4,
+  "tags": [
+    "word-problems",
+    "grade-4"
+  ],
+  "defaultPoints": 8,
+  "activities": [
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "בכיתה 32 תלמידים, והמורה מחלקת אותם ל-4 קבוצות שוות. כמה תלמידים בכל קבוצה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "6"
+        },
+        {
+          "id": "b",
+          "text": "8"
+        },
+        {
+          "id": "c",
+          "text": "9"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "32 לחלק ל-4 = 8."
+      },
+      "id": "q1"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "דנה חסכה 15 שקלים בכל שבוע במשך 6 שבועות. כמה כסף חסכה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "80"
+        },
+        {
+          "id": "b",
+          "text": "90"
+        },
+        {
+          "id": "c",
+          "text": "100"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "15 × 6 = 90 שקלים."
+      },
+      "id": "q2"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "באוטובוס 45 מקומות, ו-28 מהם תפוסים. כמה מקומות פנויים?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "17"
+        },
+        {
+          "id": "b",
+          "text": "23"
+        },
+        {
+          "id": "c",
+          "text": "27"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "45 − 28 = 17."
+      },
+      "id": "q3"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "קופסה של 6 ביצים עולה 9 שקלים. כמה עולות 3 קופסאות?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "18"
+        },
+        {
+          "id": "b",
+          "text": "27"
+        },
+        {
+          "id": "c",
+          "text": "36"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "9 × 3 = 27 שקלים."
+      },
+      "id": "q4"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "יוסי קרא 120 עמודים ב-4 ימים, אותו מספר עמודים בכל יום. כמה עמודים קרא בכל יום?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "25"
+        },
+        {
+          "id": "b",
+          "text": "30"
+        },
+        {
+          "id": "c",
+          "text": "40"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "120 לחלק ל-4 = 30."
+      },
+      "id": "q5"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "בגינה יש 7 שורות של עצים, ובכל שורה 9 עצים. כמה עצים יש בגינה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "56"
+        },
+        {
+          "id": "b",
+          "text": "63"
+        },
+        {
+          "id": "c",
+          "text": "72"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "7 × 9 = 63."
+      },
+      "id": "q6"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "לנועם היו 50 קלפים. הוא נתן לחבר 18 קלפים, ואחר כך קיבל עוד 7. כמה קלפים יש לו עכשיו?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "25"
+        },
+        {
+          "id": "b",
+          "text": "39"
+        },
+        {
+          "id": "c",
+          "text": "43"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "50 − 18 = 32, ו-32 + 7 = 39."
+      },
+      "id": "q7"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "הרכבת יוצאת ב-10:20, והנסיעה נמשכת 55 דקות. מתי היא מגיעה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "11:05"
+        },
+        {
+          "id": "b",
+          "text": "11:15"
+        },
+        {
+          "id": "c",
+          "text": "11:25"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "10:20 ועוד 40 דקות = 11:00, ועוד 15 דקות = 11:15."
+      },
+      "id": "q8"
+    }
+  ]
+}

@@ -1,0 +1,230 @@
+{
+  "id": "english-greetings-3",
+  "version": 1,
+  "title": {
+    "he": "אנגלית — שלום והיכרות",
+    "en": "English — greetings"
+  },
+  "category": "english",
+  "grade": 3,
+  "tags": [
+    "greetings",
+    "vocabulary",
+    "grade-3"
+  ],
+  "defaultPoints": 8,
+  "activities": [
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איך אומרים \"שלום\" באנגלית?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "Hello"
+        },
+        {
+          "id": "b",
+          "text": "Goodbye"
+        },
+        {
+          "id": "c",
+          "text": "Thanks"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "Hello = שלום."
+      },
+      "id": "q1"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "מה הפירוש של Goodbye?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "להתראות"
+        },
+        {
+          "id": "b",
+          "text": "בוקר טוב"
+        },
+        {
+          "id": "c",
+          "text": "תודה"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "Goodbye = להתראות."
+      },
+      "id": "q2"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איך אומרים \"תודה\" באנגלית?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "Please"
+        },
+        {
+          "id": "b",
+          "text": "Thank you"
+        },
+        {
+          "id": "c",
+          "text": "Sorry"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "Thank you = תודה. Please = בבקשה. Sorry = סליחה."
+      },
+      "id": "q3"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "דן אומר: My name is Dan. מה הוא אומר?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "קוראים לי דן"
+        },
+        {
+          "id": "b",
+          "text": "אני בן שמונה"
+        },
+        {
+          "id": "c",
+          "text": "אני גר בחיפה"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "My name is = קוראים לי."
+      },
+      "id": "q4"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "שואלים אותך: How are you? מה עונים?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "I'm fine, thank you"
+        },
+        {
+          "id": "b",
+          "text": "I'm seven"
+        },
+        {
+          "id": "c",
+          "text": "My name is Tom"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "How are you = מה שלומך. עונים: I'm fine, thank you."
+      },
+      "id": "q5"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "מה הפירוש של Good morning?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "בוקר טוב"
+        },
+        {
+          "id": "b",
+          "text": "לילה טוב"
+        },
+        {
+          "id": "c",
+          "text": "ערב טוב"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "Morning = בוקר."
+      },
+      "id": "q6"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "מה שואלים כשאומרים How old are you?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "בן כמה אתה?"
+        },
+        {
+          "id": "b",
+          "text": "איך קוראים לך?"
+        },
+        {
+          "id": "c",
+          "text": "איפה אתה גר?"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "How old = בן כמה. עונים למשל: I'm eight."
+      },
+      "id": "q7"
+    },
+    {
+      "type": "select_all",
+      "prompt": {
+        "text": "סמנו את כל המילים שהן ברכה."
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "Hello"
+        },
+        {
+          "id": "b",
+          "text": "Good night"
+        },
+        {
+          "id": "c",
+          "text": "Apple"
+        },
+        {
+          "id": "d",
+          "text": "Hi"
+        },
+        {
+          "id": "e",
+          "text": "Blue"
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "d"
+      ],
+      "explanation": {
+        "he": "Hello, Hi ו-Good night הן ברכות. Apple זה תפוח, ו-Blue זה כחול."
+      },
+      "id": "q8"
+    }
+  ]
+}

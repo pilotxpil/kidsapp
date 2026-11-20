@@ -313,12 +313,12 @@ export default function ParentHome() {
               }
             />
           ) : null}
-          {dash?.dailyRiddles?.length ? (
+          {(dash?.dailyRiddleSlots ?? dash?.dailyRiddles)?.length ? (
             <ParentDailyRiddleList
-              items={dash.dailyRiddles}
-              onReviewAppeal={(kidId, action) =>
+              items={dash?.dailyRiddleSlots ?? dash?.dailyRiddles ?? []}
+              onReviewAppeal={(kidId, action, slot) =>
                 api
-                  .reviewDailyRiddleAppeal(kidId, action)
+                  .reviewDailyRiddleAppeal(kidId, action, slot)
                   .then(() => load())
                   .catch(onError)
               }

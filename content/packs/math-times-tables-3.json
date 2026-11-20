@@ -1,0 +1,234 @@
+{
+  "id": "math-times-tables-3",
+  "version": 1,
+  "title": {
+    "he": "לוח הכפל",
+    "en": "Times tables"
+  },
+  "category": "math",
+  "grade": 3,
+  "tags": [
+    "multiplication",
+    "grade-3"
+  ],
+  "defaultPoints": 8,
+  "activities": [
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "3 × 4 = ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "7"
+        },
+        {
+          "id": "b",
+          "text": "12"
+        },
+        {
+          "id": "c",
+          "text": "14"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "3 × 4 = 12."
+      },
+      "id": "q1"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "5 × 6 = ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "25"
+        },
+        {
+          "id": "b",
+          "text": "30"
+        },
+        {
+          "id": "c",
+          "text": "35"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "5 × 6 = 30."
+      },
+      "id": "q2"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "7 × 3 = ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "21"
+        },
+        {
+          "id": "b",
+          "text": "24"
+        },
+        {
+          "id": "c",
+          "text": "10"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "7 × 3 = 21."
+      },
+      "id": "q3"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "8 × 5 = ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "35"
+        },
+        {
+          "id": "b",
+          "text": "40"
+        },
+        {
+          "id": "c",
+          "text": "45"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "8 × 5 = 40."
+      },
+      "id": "q4"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "9 × 2 = ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "11"
+        },
+        {
+          "id": "b",
+          "text": "16"
+        },
+        {
+          "id": "c",
+          "text": "18"
+        }
+      ],
+      "answer": "c",
+      "explanation": {
+        "he": "9 × 2 = 18."
+      },
+      "id": "q5"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "6 × 6 = ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "36"
+        },
+        {
+          "id": "b",
+          "text": "32"
+        },
+        {
+          "id": "c",
+          "text": "12"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "6 × 6 = 36."
+      },
+      "id": "q6"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "בכל שקית יש 4 סוכריות. כמה סוכריות יש ב-5 שקיות?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "9"
+        },
+        {
+          "id": "b",
+          "text": "20"
+        },
+        {
+          "id": "c",
+          "text": "24"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "5 × 4 = 20."
+      },
+      "id": "q7"
+    },
+    {
+      "type": "select_all",
+      "prompt": {
+        "text": "סמנו את כל התרגילים שהתוצאה שלהם 12."
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "3 × 4"
+        },
+        {
+          "id": "b",
+          "text": "2 × 6"
+        },
+        {
+          "id": "c",
+          "text": "5 × 2"
+        },
+        {
+          "id": "d",
+          "text": "6 × 2"
+        },
+        {
+          "id": "e",
+          "text": "12 × 1"
+        },
+        {
+          "id": "f",
+          "text": "4 × 4"
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "d",
+        "e"
+      ],
+      "explanation": {
+        "he": "3 × 4, 2 × 6, 6 × 2 ו-12 × 1 שווים 12. 5 × 2 = 10, ו-4 × 4 = 16."
+      },
+      "id": "q8"
+    }
+  ]
+}

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>KidsQuest תוכן</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#241547; --ink-soft:#6E6597; --ink-faint:#A59FC4;
+  --paper:#F2EEFF; --paper-deep:#E3DBFF; --card:#FFFFFF;
+  --sun:#FFC233; --math:#2C8BFF; --lang:#13B566; --danger:#E5484D; --off:#B9B3D6;
+  --r:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:Fredoka,system-ui,sans-serif;font-size:16px}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1040px;margin:0 auto;padding:20px 16px 80px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+header h1{margin:0;font-size:28px;font-weight:700}
+header .spacer{flex:1}
+.piko{width:46px;height:46px;flex:none}
+.btn{border:2px solid var(--ink);background:var(--card);border-radius:12px;padding:8px 14px;font-weight:600;cursor:pointer;box-shadow:0 3px 0 var(--ink);transition:transform .06s}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.btn.primary{background:var(--sun)}
+.btn.danger{background:#FFE1E2}
+.btn.small{padding:4px 10px;font-size:14px;box-shadow:0 2px 0 var(--ink)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--math);outline-offset:2px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tab{border:2px solid var(--ink);border-radius:999px;padding:8px 16px;background:var(--card);cursor:pointer;font-weight:600;display:flex;gap:8px;align-items:center}
+.tab[aria-selected=true]{color:#fff;box-shadow:0 3px 0 var(--ink)}
+.tab[data-k=math][aria-selected=true]{background:var(--math)}
+.tab[data-k=language][aria-selected=true]{background:var(--lang)}
+.tab[data-k=words][aria-selected=true],.tab[data-k=packs][aria-selected=true],.tab[data-k=io][aria-selected=true]{background:var(--ink)}
+.count{font-size:13px;background:rgba(36,21,71,.12);border-radius:999px;padding:1px 8px}
+.tab[aria-selected=true] .count{background:rgba(255,255,255,.25)}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.bar input[type=search]{flex:1;min-width:180px;border:2px solid var(--ink);border-radius:12px;padding:8px 12px;background:var(--card)}
+.bar label{display:flex;gap:6px;align-items:center;color:var(--ink-soft)}
+.list{display:grid;gap:10px}
+.item{background:var(--card);border:2px solid var(--ink);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:start}
+.item.off{opacity:.55;border-style:dashed}
+.item .main{min-width:0}
+.item .title{font-weight:600;font-size:17px;overflow-wrap:anywhere}
+.item .meta{color:var(--ink-soft);font-size:13px;display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.item .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.chip{display:inline-block;border-radius:8px;padding:0 6px;background:var(--paper-deep);color:var(--ink);font-size:12px}
+.chip.admin{background:#FFF1C2}
+.empty{padding:40px;text-align:center;color:var(--ink-soft)}
+dialog{border:3px solid var(--ink);border-radius:20px;padding:0;max-width:720px;width:calc(100% - 32px);box-shadow:0 8px 0 var(--ink);background:var(--card)}
+dialog::backdrop{background:rgba(36,21,71,.45)}
+.dlg{padding:18px 18px 14px}
+.dlg h2{margin:0 0 12px;font-size:22px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+.grid .full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:4px}
+.field span{font-size:13px;color:var(--ink-soft);font-weight:500}
+.field input,.field select,.field textarea{border:2px solid var(--ink);border-radius:10px;padding:7px 10px;background:#fff}
+.field textarea{min-height:64px;resize:vertical}
+textarea.code{font-family:ui-monospace,Menlo,monospace;font-size:13px;direction:ltr;text-align:left;min-height:320px}
+.dlg-acts{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap}
+.err{color:var(--danger);font-weight:500;min-height:1.2em}
+.preview{background:var(--paper);border:2px dashed var(--ink-faint);border-radius:14px;padding:12px;margin-top:6px}
+.preview .q{font-weight:600;font-size:18px;white-space:pre-wrap}
+.preview .x{color:var(--ink-soft);white-space:pre-wrap;margin-top:4px}
+.preview .ch{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.preview .ch div{border:2px solid var(--ink);border-radius:10px;padding:6px 10px;background:#fff}
+.preview .ch div.ok{background:#DDF7E8}
+.login{max-width:420px;margin:12vh auto 0;background:var(--card);border:3px solid var(--ink);border-radius:22px;padding:24px;box-shadow:0 6px 0 var(--ink);text-align:center}
+.login input{width:100%;border:2px solid var(--ink);border-radius:12px;padding:10px 12px;margin:14px 0;direction:ltr;text-align:center}
+.io{display:grid;gap:14px}
+.io .card{background:var(--card);border:2px solid var(--ink);border-radius:var(--r);padding:16px}
+.io h3{margin:0 0 6px}
+.io p{margin:0 0 10px;color:var(--ink-soft)}
+.report{white-space:pre-wrap;font-size:14px;margin-top:10px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:12px;padding:10px 16px;font-weight:500;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (max-width:640px){.grid{grid-template-columns:1fr}.item{grid-template-columns:1fr}.item .acts{justify-content:flex-start}.preview .ch{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="piko" viewBox="0 0 120 120"><polygon points="60,22 72.9,48.2 101.8,52.4 80.9,72.8 85.9,101.6 60,88 34.1,101.6 39.1,72.8 18.2,52.4 47.1,48.2" fill="#FFC233" stroke="#241547" stroke-width="7" stroke-linejoin="round"/><ellipse cx="50" cy="62" rx="4.4" ry="5.8" fill="#241547"/><ellipse cx="70" cy="62" rx="4.4" ry="5.8" fill="#241547"/><path d="M52 74 q8 8 16 0" stroke="#241547" stroke-width="3.6" stroke-linecap="round" fill="none"/></symbol></svg>
+
+<div id="login" class="login" hidden>
+  <svg class="piko" style="width:72px;height:72px"><use href="#piko"/></svg>
+  <h1 style="margin:6px 0 0;font-size:26px">ניהול תוכן</h1>
+  <p style="color:var(--ink-soft);margin:6px 0 0">הזינו את קוד הניהול (ADMIN_TOKEN מ-server/.env)</p>
+  <form id="loginForm"><input id="tokenInput" type="password" autocomplete="current-password" aria-label="קוד ניהול" required><button class="btn primary" type="submit">כניסה</button></form>
+  <div class="err" id="loginErr"></div>
+</div>
+
+<div id="app" class="wrap" hidden>
+  <header>
+    <svg class="piko"><use href="#piko"/></svg>
+    <h1>תוכן KidsQuest</h1>
+    <span class="spacer"></span>
+    <button class="btn small" id="logout" type="button">יציאה</button>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-k="math">חידות חשבון <span class="count" id="c-math"></span></button>
+    <button class="tab" role="tab" data-k="language">חידות שפה <span class="count" id="c-language"></span></button>
+    <button class="tab" role="tab" data-k="words">מילה יומית <span class="count" id="c-words"></span></button>
+    <button class="tab" role="tab" data-k="packs">חבילות לימוד <span class="count" id="c-packs"></span></button>
+    <button class="tab" role="tab" data-k="io">ייבוא וייצוא</button>
+  </nav>
+  <section id="listView">
+    <div class="bar">
+      <input type="search" id="q" placeholder="חיפוש…" aria-label="חיפוש">
+      <label><input type="checkbox" id="showOff" checked> להציג כבויים</label>
+      <button class="btn primary" id="addBtn" type="button">הוספה</button>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+  <section id="ioView" class="io" hidden>
+    <div class="card">
+      <h3>ייצוא</h3>
+      <p>כל התוכן בקובץ JSON אחד, באותו מבנה שהייבוא מקבל.</p>
+      <button class="btn" id="exportBtn" type="button">הורדת כל התוכן</button>
+    </div>
+    <div class="card">
+      <h3>ייבוא</h3>
+      <p>קובץ או טקסט בצורה <code dir="ltr">{"riddles":[…],"words":[…],"packs":[…]}</code>. פריט עם מזהה קיים מתעדכן, מזהה חדש נוסף.</p>
+      <div class="bar"><input type="file" id="importFile" accept="application/json,.json"></div>
+      <div class="field"><textarea id="importText" class="code" style="min-height:180px" placeholder='{"riddles":[{"id":"…","track":"language",…}]}'></textarea></div>
+      <div class="dlg-acts"><button class="btn primary" id="importBtn" type="button">ייבוא</button></div>
+      <div class="report" id="importReport"></div>
+    </div>
+  </section>
+</div>
+
+<dialog id="dlg"><form class="dlg" id="dlgForm" method="dialog"></form></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const CATS = { math: 'חשבון', logic: 'היגיון', pic: 'תמונה', odd: 'יוצא דופן', idiom: 'ניב', word: 'מילים' };
+const STORE = 'kq-admin-token';
+let token = '';
+try { token = sessionStorage.getItem(STORE) || ''; } catch {}
+let tab = 'math';
+let cache = { riddles: [], words: [], packs: [] };
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 2200); }
+
+async function api(path, opts = {}) {
+  const r = await fetch('/admin/api' + path, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, ...(opts.headers || {}) } });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) { showLogin(j.error || 'קוד ניהול שגוי'); throw new Error(j.error || 'unauthorized'); }
+  if (!r.ok) throw new Error(j.error || 'שגיאה ' + r.status);
+  return j;
+}
+
+function showLogin(err = '') { $('#app').hidden = true; $('#login').hidden = false; $('#loginErr').textContent = err; $('#tokenInput').focus(); }
+$('#loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault(); token = $('#tokenInput').value.trim();
+  try { await api('/stats'); try { sessionStorage.setItem(STORE, token); } catch {} start(); } catch {}
+});
+$('#logout').addEventListener('click', () => { token = ''; try { sessionStorage.removeItem(STORE); } catch {} showLogin(); });
+
+async function start() {
+  $('#login').hidden = true; $('#app').hidden = false;
+  await loadAll(); selectTab(tab);
+}
+
+async function loadAll() {
+  const [r, w, p] = await Promise.all([api('/riddles'), api('/words'), api('/packs')]);
+  cache = { riddles: r.items, words: w.items, packs: p.items };
+  const on = (a) => a.filter((x) => x.active).length;
+  $('#c-math').textContent = on(cache.riddles.filter((x) => x.track === 'math'));
+  $('#c-language').textContent = on(cache.riddles.filter((x) => x.track === 'language'));
+  $('#c-words').textContent = on(cache.words);
+  $('#c-packs').textContent = on(cache.packs);
+}
+
+function selectTab(k) {
+  tab = k;
+  document.querySelectorAll('.tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.k === k)));
+  $('#listView').hidden = k === 'io'; $('#ioView').hidden = k !== 'io';
+  if (k !== 'io') renderList();
+}
+document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.k)));
+$('#q').addEventListener('input', () => renderList());
+$('#showOff').addEventListener('change', () => renderList());
+
+function kindOf(k = tab) { return k === 'words' ? 'words' : k === 'packs' ? 'packs' : 'riddles'; }
+
+function rowsFor() {
+  const q = $('#q').value.trim().toLowerCase();
+  const showOff = $('#showOff').checked;
+  let rows = tab === 'words' ? cache.words : tab === 'packs' ? cache.packs : cache.riddles.filter((r) => r.track === tab);
+  if (!showOff) rows = rows.filter((r) => r.active);
+  if (q) rows = rows.filter((r) => JSON.stringify(r).toLowerCase().includes(q));
+  return rows;
+}
+
+function gradeText(r) { if (r.minGrade || r.maxGrade) return 'כיתות ' + (r.minGrade || 1) + '–' + (r.maxGrade || 6); return 'כל הכיתות'; }
+
+function renderList() {
+  const rows = rowsFor();
+  const list = $('#list');
+  if (!rows.length) { list.innerHTML = '<div class="empty">אין פריטים. לחצו "הוספה" כדי ליצור.</div>'; return; }
+  list.innerHTML = rows.map((r) => {
+    let title, meta;
+    if (tab === 'words') { title = esc(r.word) + ' <span style="color:var(--ink-soft);font-weight:400">· ' + esc(r.definition) + '</span>'; meta = [gradeText(r)]; }
+    else if (tab === 'packs') { title = esc(r.title); meta = [r.category, r.grade ? 'כיתה ' + r.grade : 'כל הכיתות', r.activities + ' שאלות', r.kind]; }
+    else { title = esc(r.prompt) + (r.extra ? '<div style="font-weight:400;color:var(--ink-soft);white-space:pre-wrap">' + esc(r.extra) + '</div>' : ''); meta = [CATS[r.cat] || r.cat, gradeText(r), 'תשובה: ' + r.answer]; }
+    return '<div class="item' + (r.active ? '' : ' off') + '"><div class="main"><div class="title">' + title + '</div><div class="meta"><span class="chip" dir="ltr">' + esc(r.id) + '</span>' + (r.source === 'admin' ? '<span class="chip admin">נערך</span>' : '') + meta.map((m) => '<span>' + esc(m) + '</span>').join('') + '</div></div>'
+      + '<div class="acts"><button class="btn small" data-act="edit" data-id="' + esc(r.id) + '">עריכה</button><button class="btn small" data-act="toggle" data-id="' + esc(r.id) + '">' + (r.active ? 'כיבוי' : 'הפעלה') + '</button><button class="btn small danger" data-act="del" data-id="' + esc(r.id) + '">מחיקה</button></div></div>';
+  }).join('');
+}
+
+$('#list').addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const id = b.dataset.id, kind = kindOf();
+  try {
+    if (b.dataset.act === 'edit') return openEditor(id);
+    if (b.dataset.act === 'toggle') {
+      const row = (cache[kind] || []).find((x) => x.id === id);
+      await api('/' + kind + '/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ active: !row.active }) });
+      toast(row.active ? 'כובה' : 'הופעל');
+    }
+    if (b.dataset.act === 'del') {
+      if (!confirm('למחוק את ' + id + '? פריט שילדים כבר ראו, או פריט מקובץ הבסיס, רק יכובה.')) return;
+      const r = await api('/' + kind + '/' + encodeURIComponent(id), { method: 'DELETE' });
+      toast(r.result === 'deleted' ? 'נמחק' : 'כובה (כבר בשימוש)');
+    }
+    await loadAll(); renderList();
+  } catch (err) { toast(err.message); }
+});
+$('#addBtn').addEventListener('click', () => openEditor(null));
+
+function field(name, label, value = '', opts = {}) {
+  const v = esc(value ?? '');
+  if (opts.type === 'textarea') return '<label class="field' + (opts.full ? ' full' : '') + '"><span>' + label + '</span><textarea name="' + name + '"' + (opts.code ? ' class="code"' : '') + (opts.ltr ? ' dir="ltr"' : '') + '>' + v + '</textarea></label>';
+  if (opts.type === 'select') return '<label class="field' + (opts.full ? ' full' : '') + '"><span>' + label + '</span><select name="' + name + '">' + opts.options.map(([k, t]) => '<option value="' + k + '"' + (String(k) === String(value ?? '') ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>';
+  return '<label class="field' + (opts.full ? ' full' : '') + '"><span>' + label + '</span><input name="' + name + '" value="' + v + '"' + (opts.ltr ? ' dir="ltr"' : '') + (opts.ro ? ' readonly' : '') + '></label>';
+}
+const GRADES = [['', 'ללא'], ...[1, 2, 3, 4, 5, 6].map((g) => [g, 'כיתה ' + 'אבגדהו'[g - 1] + "'"])];
+
+async function openEditor(id) {
+  const kind = kindOf();
+  let item = null;
+  if (id) item = (await api('/' + kind + '/' + encodeURIComponent(id))).item;
+  const f = $('#dlgForm');
+  let body;
+  if (kind === 'riddles') {
+    const r = item || { track: tab, cat: tab === 'math' ? 'math' : 'word', choices: [] };
+    body = '<h2>' + (id ? 'עריכת חידה' : 'חידה חדשה') + '</h2><div class="grid">'
+      + field('id', 'מזהה (אנגלית)', r.id, { ltr: true, ro: !!id })
+      + field('cat', 'סוג', r.cat, { type: 'select', options: Object.entries(CATS) })
+      + field('track', 'מסלול', r.track, { type: 'select', options: [['math', 'חשבון'], ['language', 'שפה']] })
+      + '<div class="grid" style="gap:10px">' + field('minGrade', 'מכיתה', r.minGrade, { type: 'select', options: GRADES }) + field('maxGrade', 'עד כיתה', r.maxGrade, { type: 'select', options: GRADES }) + '</div>'
+      + field('prompt', 'השאלה', r.prompt, { type: 'textarea', full: true })
+      + field('extra', 'שורה נוספת (לא חובה)', r.extra, { type: 'textarea', full: true })
+      + field('choices', 'תשובות לבחירה (שורה לכל תשובה)', (r.choices || []).join('\n'), { type: 'textarea' })
+      + '<div class="field">' + field('answer', 'התשובה הנכונה (בדיוק כמו באחת השורות)', r.answer) + field('alts', 'ניסוחים נוספים שנחשבים נכונים (פסיק ביניהם)', (r.alts || []).join(', ')) + '</div>'
+      + field('hint', 'רמז', r.hint, { type: 'textarea' })
+      + field('why', 'הסבר אחרי הפתרון', r.why, { type: 'textarea' })
+      + field('visual', 'ציור (JSON, לא חובה)', r.visual ? JSON.stringify(r.visual) : '', { type: 'textarea', full: true, ltr: true })
+      + '<div class="full"><span style="font-size:13px;color:var(--ink-soft)">תצוגה מקדימה</span><div class="preview" id="pv"></div></div>'
+      + '</div>';
+  } else if (kind === 'words') {
+    const w = item || {};
+    body = '<h2>' + (id ? 'עריכת מילה' : 'מילה חדשה') + '</h2><div class="grid">'
+      + field('id', 'מזהה (אנגלית)', w.id, { ltr: true, ro: !!id })
+      + field('word', 'המילה', w.word)
+      + field('definition', 'פירוש', w.definition, { type: 'textarea', full: true })
+      + field('hint', 'רמז / דוגמה במשפט', w.hint, { type: 'textarea', full: true })
+      + field('minGrade', 'מכיתה', w.minGrade, { type: 'select', options: GRADES })
+      + field('maxGrade', 'עד כיתה', w.maxGrade, { type: 'select', options: GRADES })
+      + '</div>';
+  } else {
+    const tpl = { id: '', version: 1, title: { he: '' }, category: 'math', grade: 2, defaultPoints: 30, activities: [] };
+    body = '<h2>' + (id ? 'עריכת חבילת לימוד' : 'חבילת לימוד חדשה') + '</h2>'
+      + '<p style="margin:0 0 8px;color:var(--ink-soft)">המבנה מתואר ב-content/packs/README.md. סוגי שאלות: multiple_choice, select_all, open_words.</p>'
+      + field('json', 'JSON', JSON.stringify(item || tpl, null, 2), { type: 'textarea', code: true, full: true });
+  }
+  f.innerHTML = body + '<div class="dlg-acts"><div class="err" id="dlgErr"></div><div style="display:flex;gap:8px"><button class="btn" value="cancel" formnovalidate>ביטול</button><button class="btn primary" id="saveBtn" type="button">שמירה</button></div></div>';
+  f.oninput = kind === 'riddles' ? preview : null;
+  if (kind === 'riddles') preview();
+  $('#saveBtn').addEventListener('click', () => save(kind, id));
+  $('#dlg').showModal();
+}
+
+function readRiddle() {
+  const f = $('#dlgForm'), g = (n) => f.elements[n]?.value ?? '';
+  const out = { id: g('id').trim(), track: g('track'), cat: g('cat'), prompt: g('prompt'), extra: g('extra') || undefined, hint: g('hint'), answer: g('answer').trim(), why: g('why'),
+    choices: g('choices').split('\n').map((s) => s.trim()).filter(Boolean), alts: g('alts').split(',').map((s) => s.trim()).filter(Boolean),
+    minGrade: g('minGrade') || undefined, maxGrade: g('maxGrade') || undefined };
+  const v = g('visual').trim();
+  if (v) out.visual = JSON.parse(v);
+  return out;
+}
+
+function preview() {
+  const pv = $('#pv'); if (!pv) return;
+  let r; try { r = readRiddle(); } catch { pv.innerHTML = '<span class="err">ה-JSON של הציור לא תקין</span>'; return; }
+  pv.innerHTML = '<div class="q">' + esc(r.prompt || '…') + '</div>' + (r.extra ? '<div class="x">' + esc(r.extra) + '</div>' : '')
+    + '<div class="ch">' + r.choices.map((c) => '<div class="' + (c === r.answer ? 'ok' : '') + '">' + esc(c) + '</div>').join('') + '</div>'
+    + (r.choices.length && !r.choices.includes(r.answer) ? '<div class="err" style="margin-top:6px">התשובה הנכונה לא מופיעה ברשימה</div>' : '');
+}
+
+async function save(kind, id) {
+  const f = $('#dlgForm'), err = $('#dlgErr');
+  let data;
+  try {
+    if (kind === 'riddles') data = readRiddle();
+    else if (kind === 'words') { const g = (n) => f.elements[n].value; data = { id: g('id').trim(), word: g('word'), definition: g('definition'), hint: g('hint'), minGrade: g('minGrade') || undefined, maxGrade: g('maxGrade') || undefined }; }
+    else data = JSON.parse(f.elements.json.value);
+  } catch { err.textContent = 'JSON לא תקין'; return; }
+  const target = id || data.id;
+  if (!target) { err.textContent = 'חסר מזהה'; return; }
+  if (!id && (cache[kind] || []).some((x) => x.id === target)) { err.textContent = 'המזהה כבר קיים'; return; }
+  try {
+    await api('/' + kind + '/' + encodeURIComponent(target), { method: 'PUT', body: JSON.stringify(data) });
+    $('#dlg').close(); toast('נשמר'); await loadAll(); renderList();
+  } catch (e) { err.textContent = e.message; }
+}
+
+$('#exportBtn').addEventListener('click', async () => {
+  try {
+    const data = await api('/export');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    a.download = 'kidsquest-content-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click(); URL.revokeObjectURL(a.href);
+  } catch (e) { toast(e.message); }
+});
+$('#importFile').addEventListener('change', async (e) => { const file = e.target.files[0]; if (file) $('#importText').value = await file.text(); });
+$('#importBtn').addEventListener('click', async () => {
+  const out = $('#importReport');
+  let data; try { data = JSON.parse($('#importText').value); } catch { out.textContent = 'JSON לא תקין'; return; }
+  if (Array.isArray(data)) data = { [data[0]?.track ? 'riddles' : data[0]?.word ? 'words' : 'packs']: data };
+  try {
+    const r = await api('/import', { method: 'POST', body: JSON.stringify(data) });
+    const names = { riddles: 'חידות', words: 'מילים', packs: 'חבילות' };
+    out.textContent = Object.entries(r.report).map(([k, v]) => names[k] + ': נשמרו ' + v.saved + (v.errors.length ? '\nשגיאות:\n• ' + v.errors.join('\n• ') : '')).join('\n\n') || 'לא נמצא תוכן לייבוא';
+    await loadAll();
+  } catch (e) { out.textContent = e.message; }
+});
+
+if (token) api('/stats').then(start).catch(() => {}); else showLogin();
+</script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+{
+  "id": "math-money-2",
+  "version": 1,
+  "title": {
+    "he": "כסף ועודף",
+    "en": "Money and change"
+  },
+  "category": "math",
+  "grade": 2,
+  "tags": [
+    "money",
+    "grade-2"
+  ],
+  "defaultPoints": 6,
+  "activities": [
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "כמה אגורות יש בשקל אחד?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "10"
+        },
+        {
+          "id": "b",
+          "text": "50"
+        },
+        {
+          "id": "c",
+          "text": "100"
+        }
+      ],
+      "answer": "c",
+      "explanation": {
+        "he": "בשקל אחד יש 100 אגורות."
+      },
+      "id": "q1"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "יש לי מטבע של 5 שקלים ומטבע של 2 שקלים. כמה כסף יש לי?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "3"
+        },
+        {
+          "id": "b",
+          "text": "7"
+        },
+        {
+          "id": "c",
+          "text": "10"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "5 + 2 = 7 שקלים."
+      },
+      "id": "q2"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "מחברת עולה 6 שקלים. שילמתי 10 שקלים. כמה עודף אקבל?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "3"
+        },
+        {
+          "id": "b",
+          "text": "4"
+        },
+        {
+          "id": "c",
+          "text": "6"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "10 − 6 = 4 שקלים."
+      },
+      "id": "q3"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "כמה מטבעות של 2 שקלים צריך כדי לשלם 10 שקלים?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "2"
+        },
+        {
+          "id": "b",
+          "text": "5"
+        },
+        {
+          "id": "c",
+          "text": "8"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "2 + 2 + 2 + 2 + 2 = 10."
+      },
+      "id": "q4"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "מה יותר כסף?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "12 שקלים"
+        },
+        {
+          "id": "b",
+          "text": "9 שקלים"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "12 גדול מ-9."
+      },
+      "id": "q5"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "ספר עולה 25 שקלים וחוברת עולה 15 שקלים. כמה עולים שניהם ביחד?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "35"
+        },
+        {
+          "id": "b",
+          "text": "40"
+        },
+        {
+          "id": "c",
+          "text": "45"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "25 + 15 = 40 שקלים."
+      },
+      "id": "q6"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "לנעמה יש 20 שקלים. היא קנתה כדור ב-13 שקלים. כמה כסף נשאר לה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "6"
+        },
+        {
+          "id": "b",
+          "text": "7"
+        },
+        {
+          "id": "c",
+          "text": "8"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "20 − 13 = 7 שקלים."
+      },
+      "id": "q7"
+    },
+    {
+      "type": "select_all",
+      "prompt": {
+        "text": "סמנו את כל הדרכים לשלם בדיוק 10 שקלים."
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "מטבע אחד של 10"
+        },
+        {
+          "id": "b",
+          "text": "שני מטבעות של 5"
+        },
+        {
+          "id": "c",
+          "text": "5 מטבעות של 2"
+        },
+        {
+          "id": "d",
+          "text": "3 מטבעות של 2"
+        },
+        {
+          "id": "e",
+          "text": "מטבע של 5 ומטבע של 2"
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": {
+        "he": "10 = 10, 10 = 5 + 5, 10 = 2 × 5. שלושה מטבעות של 2 הם רק 6, ו-5 + 2 = 7."
+      },
+      "id": "q8"
+    }
+  ]
+}

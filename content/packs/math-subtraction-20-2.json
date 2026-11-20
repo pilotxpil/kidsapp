@@ -1,0 +1,229 @@
+{
+  "id": "math-subtraction-20-2",
+  "version": 1,
+  "title": {
+    "he": "חיסור עד 20",
+    "en": "Subtraction to 20"
+  },
+  "category": "math",
+  "grade": 2,
+  "tags": [
+    "subtraction",
+    "grade-2"
+  ],
+  "defaultPoints": 6,
+  "activities": [
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "15 − 5 = ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "9"
+        },
+        {
+          "id": "b",
+          "text": "10"
+        },
+        {
+          "id": "c",
+          "text": "11"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "15 − 5 = 10."
+      },
+      "id": "q1"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "12 − 4 = ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "7"
+        },
+        {
+          "id": "b",
+          "text": "8"
+        },
+        {
+          "id": "c",
+          "text": "9"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "12 − 4 = 8."
+      },
+      "id": "q2"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "20 − 7 = ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "12"
+        },
+        {
+          "id": "b",
+          "text": "13"
+        },
+        {
+          "id": "c",
+          "text": "14"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "20 − 7 = 13."
+      },
+      "id": "q3"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "18 − 9 = ?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "8"
+        },
+        {
+          "id": "b",
+          "text": "9"
+        },
+        {
+          "id": "c",
+          "text": "10"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "9 + 9 = 18, ולכן 18 − 9 = 9."
+      },
+      "id": "q4"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "על העץ ישבו 14 ציפורים. 6 עפו. כמה נשארו?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "7"
+        },
+        {
+          "id": "b",
+          "text": "8"
+        },
+        {
+          "id": "c",
+          "text": "9"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "14 − 6 = 8."
+      },
+      "id": "q5"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזה מספר חסר?  11 − ? = 5"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "5"
+        },
+        {
+          "id": "b",
+          "text": "6"
+        },
+        {
+          "id": "c",
+          "text": "7"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "11 − 6 = 5."
+      },
+      "id": "q6"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "כמה חסר ל-9 כדי להגיע ל-17?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "7"
+        },
+        {
+          "id": "b",
+          "text": "8"
+        },
+        {
+          "id": "c",
+          "text": "9"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "9 + 8 = 17."
+      },
+      "id": "q7"
+    },
+    {
+      "type": "select_all",
+      "prompt": {
+        "text": "סמנו את כל התרגילים שהתוצאה שלהם 10."
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "15 − 5"
+        },
+        {
+          "id": "b",
+          "text": "13 − 2"
+        },
+        {
+          "id": "c",
+          "text": "20 − 10"
+        },
+        {
+          "id": "d",
+          "text": "19 − 9"
+        },
+        {
+          "id": "e",
+          "text": "16 − 7"
+        }
+      ],
+      "answer": [
+        "a",
+        "c",
+        "d"
+      ],
+      "explanation": {
+        "he": "15 − 5, 20 − 10 ו-19 − 9 שווים 10. 13 − 2 = 11, ו-16 − 7 = 9."
+      },
+      "id": "q8"
+    }
+  ]
+}

@@ -13,10 +13,13 @@ import learningRoutes from './routes/learning';
 import pushRoutes from './routes/push';
 import appRoutes from './routes/app';
 import billingRoutes from './routes/billing';
-import { loadLearningPacks } from './services/learningPacks';
+import adminRoutes from './routes/admin';
 import { migrateFamilies } from './utils/migrateFamilies';
 import { migrateUserIndexes } from './utils/migrateUserIndexes';
 import { migratePlans } from './utils/migratePlans';
+import { migrateContent } from './utils/migrateContent';
+import { migrateRiddleSlots } from './utils/migrateRiddleSlots';
+import { startContentStore } from './services/contentStore';
 import { startScheduledJobs } from './services/cron';
 
 dotenv.config();
@@ -77,6 +80,7 @@ app.use('/learning', learningRoutes);
 app.use('/push', pushRoutes);
 app.use('/app', appRoutes);
 app.use('/billing', billingRoutes);
+app.use('/admin', adminRoutes);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'לא נמצא' });
@@ -101,7 +105,9 @@ async function start() {
     await migrateFamilies();
     await migrateUserIndexes();
     await migratePlans();
-    loadLearningPacks();
+    await migrateContent();
+    await migrateRiddleSlots();
+    await startContentStore();
     startScheduledJobs();
 
     app.listen(Number(PORT), '0.0.0.0', () => {

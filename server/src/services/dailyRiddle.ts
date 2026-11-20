@@ -1,22 +1,37 @@
+/**
+ * Daily riddles: every kid gets two per day, one math and one language (slots).
+ * Riddles come from the database through the content store. Unsolved riddles come first;
+ * a riddle the kid solved never returns until that track's pool is exhausted.
+ *
+ * Backward compatibility: callers that don't pass a slot (app builds before 2.2) get the
+ * math riddle, which is picked exactly like the single riddle used to be.
+ */
 import {
-  DAILY_RIDDLES,
   DAILY_RIDDLE_POINTS,
+  RIDDLE_TRACKS,
   riddleGuessMatches,
   seededShuffle,
   type BadgeUnlock,
-  type DailyRiddleEntry,
   type DailyRiddleAppeal,
+  type DailyRiddleEntry,
   type DailyRiddlePlayStatus,
   type KidDailyRiddle,
   type ParentDailyRiddleKid,
+  type RiddleTrack,
 } from '@kidsapp/shared';
 import { IUser, User } from '../models/User';
-import { DailyRiddleClaim } from '../models/DailyRiddleClaim';
+import { DailyRiddleClaim, IDailyRiddleClaim } from '../models/DailyRiddleClaim';
 import { todayString } from '../utils/format';
 import { awardPoints } from './gamification';
+import { riddleById, riddlesFor } from './contentStore';
 
-function hashUint(kidId: string, date: string): number {
-  const str = `${kidId}:${date}:daily-riddle`;
+export function parseSlot(raw: unknown): RiddleTrack {
+  return raw === 'language' ? 'language' : 'math';
+}
+
+function hashUint(kidId: string, date: string, slot: RiddleTrack, extra = ''): number {
+  // The math slot keeps the original salt so in-flight days pick the same riddle as before.
+  const str = `${kidId}:${date}:daily-riddle${slot === 'math' ? '' : `:${slot}`}${extra}`;
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
     h ^= str.charCodeAt(i);
@@ -25,14 +40,23 @@ function hashUint(kidId: string, date: string): number {
   return h >>> 0;
 }
 
-function entryById(riddleId: string): DailyRiddleEntry | undefined {
-  return DAILY_RIDDLES.find((r) => r.id === riddleId);
-}
+const FALLBACK: DailyRiddleEntry = {
+  id: 'fallback-2plus2',
+  track: 'math',
+  cat: 'math',
+  prompt: 'כמה זה 2 + 2?',
+  hint: 'ספרו על האצבעות.',
+  answer: '4',
+  why: '2 + 2 = 4.',
+  choices: ['3', '4', '5', '22'],
+};
 
-function pickFromPool(kidId: string, date: string, wonIds: Set<string>): DailyRiddleEntry {
-  const pool = DAILY_RIDDLES.filter((r) => !wonIds.has(r.id));
-  const source = pool.length ? pool : DAILY_RIDDLES;
-  return source[hashUint(kidId, date) % source.length];
+function pickFromPool(kid: IUser, date: string, slot: RiddleTrack, wonIds: Set<string>): DailyRiddleEntry {
+  const all = riddlesFor(slot, kid.grade);
+  if (!all.length) return FALLBACK;
+  const pool = all.filter((r) => !wonIds.has(r.id));
+  const source = pool.length ? pool : all;
+  return source[hashUint(kid._id.toString(), date, slot) % source.length];
 }
 
 async function wonRiddleIdsFor(kidId: string): Promise<Set<string>> {
@@ -40,17 +64,22 @@ async function wonRiddleIdsFor(kidId: string): Promise<Set<string>> {
   return new Set(won.map((c) => c.riddleId));
 }
 
-function shuffledChoices(entry: DailyRiddleEntry, kidId: string, date: string): string[] {
-  return seededShuffle(entry.choices, hashUint(kidId, `${date}:${entry.id}`));
-}
-
 function kidAppeal(appeal?: string): DailyRiddleAppeal | undefined {
   if (appeal === 'pending' || appeal === 'rejected') return appeal;
   return undefined;
 }
 
+function playStatus(claim: { status: string; attempts: number; appeal?: string } | null): DailyRiddlePlayStatus {
+  if (!claim) return 'open';
+  if (claim.status === 'won') return 'won';
+  if (claim.appeal === 'pending') return 'appealed';
+  if (claim.status === 'missed' || claim.attempts > 0) return 'missed';
+  return 'open';
+}
+
 function toKidPayload(
   date: string,
+  slot: RiddleTrack,
   entry: DailyRiddleEntry,
   status: DailyRiddlePlayStatus,
   attempts: number,
@@ -59,12 +88,13 @@ function toKidPayload(
 ): KidDailyRiddle {
   const payload: KidDailyRiddle = {
     date,
+    slot,
     id: entry.id,
     cat: entry.cat,
     prompt: entry.prompt,
     extra: entry.extra,
     visual: entry.visual,
-    choices: shuffledChoices(entry, kidId, date),
+    choices: seededShuffle(entry.choices, hashUint(kidId, date, slot, `:${entry.id}`)),
     points: DAILY_RIDDLE_POINTS,
     status,
     attempts,
@@ -79,43 +109,53 @@ function toKidPayload(
   return payload;
 }
 
-function playStatus(claim: { status: string; attempts: number; appeal?: string } | null): DailyRiddlePlayStatus {
-  if (!claim) return 'open';
-  if (claim.status === 'won') return 'won';
-  if (claim.appeal === 'pending') return 'appealed';
-  if (claim.status === 'missed' || claim.attempts > 0) return 'missed';
-  return 'open';
-}
-
-async function entryForKid(kid: IUser, date: string): Promise<{
+type Today = {
   entry: DailyRiddleEntry;
   status: DailyRiddlePlayStatus;
   attempts: number;
   guess?: string;
   appeal?: string;
-}> {
-  const kidId = kid._id.toString();
-  const [todayClaim, wonIds] = await Promise.all([
-    DailyRiddleClaim.findOne({ kidId: kid._id, date }),
-    wonRiddleIdsFor(kidId),
-  ]);
-  if (todayClaim) {
-    const pinned = entryById(todayClaim.riddleId) ?? pickFromPool(kidId, date, wonIds);
+  claim: IDailyRiddleClaim | null;
+};
+
+function resolveToday(kid: IUser, date: string, slot: RiddleTrack, claim: IDailyRiddleClaim | null, wonIds: Set<string>): Today {
+  if (claim) {
     return {
-      entry: pinned,
-      status: playStatus(todayClaim),
-      attempts: todayClaim.attempts,
-      guess: todayClaim.guess,
-      appeal: todayClaim.appeal,
+      entry: riddleById(claim.riddleId) ?? pickFromPool(kid, date, slot, wonIds),
+      status: playStatus(claim),
+      attempts: claim.attempts,
+      guess: claim.guess,
+      appeal: claim.appeal,
+      claim,
     };
   }
-  return { entry: pickFromPool(kidId, date, wonIds), status: 'open', attempts: 0 };
+  return { entry: pickFromPool(kid, date, slot, wonIds), status: 'open', attempts: 0, claim: null };
 }
 
-export async function getKidDailyRiddle(kid: IUser): Promise<KidDailyRiddle> {
+async function entryForKid(kid: IUser, date: string, slot: RiddleTrack): Promise<Today> {
+  const [claim, wonIds] = await Promise.all([
+    DailyRiddleClaim.findOne({ kidId: kid._id, date, slot }),
+    wonRiddleIdsFor(kid._id.toString()),
+  ]);
+  return resolveToday(kid, date, slot, claim, wonIds);
+}
+
+export async function getKidDailyRiddle(kid: IUser, slot: RiddleTrack = 'math'): Promise<KidDailyRiddle> {
   const date = todayString();
-  const { entry, status, attempts, guess, appeal } = await entryForKid(kid, date);
-  return toKidPayload(date, entry, status, attempts, kid._id.toString(), { guess, appeal });
+  const t = await entryForKid(kid, date, slot);
+  return toKidPayload(date, slot, t.entry, t.status, t.attempts, kid._id.toString(), { guess: t.guess, appeal: t.appeal });
+}
+
+export async function getKidDailyRiddles(kid: IUser): Promise<KidDailyRiddle[]> {
+  const date = todayString();
+  const [claims, wonIds] = await Promise.all([
+    DailyRiddleClaim.find({ kidId: kid._id, date }),
+    wonRiddleIdsFor(kid._id.toString()),
+  ]);
+  return RIDDLE_TRACKS.map((slot) => {
+    const t = resolveToday(kid, date, slot, claims.find((c) => (c.slot ?? 'math') === slot) ?? null, wonIds);
+    return toKidPayload(date, slot, t.entry, t.status, t.attempts, kid._id.toString(), { guess: t.guess, appeal: t.appeal });
+  });
 }
 
 export async function listFamilyDailyRiddles(kids: IUser[]): Promise<ParentDailyRiddleKid[]> {
@@ -126,7 +166,6 @@ export async function listFamilyDailyRiddles(kids: IUser[]): Promise<ParentDaily
     DailyRiddleClaim.find({ kidId: { $in: kidObjectIds }, date }),
     DailyRiddleClaim.find({ kidId: { $in: kidObjectIds }, status: 'won' }).select('kidId riddleId'),
   ]);
-
   const wonByKid = new Map<string, Set<string>>();
   for (const c of wonClaims) {
     const id = c.kidId.toString();
@@ -135,41 +174,36 @@ export async function listFamilyDailyRiddles(kids: IUser[]): Promise<ParentDaily
     wonByKid.set(id, set);
   }
 
-  return kids.map((kid) => {
+  const out: ParentDailyRiddleKid[] = [];
+  for (const kid of kids) {
     const kidId = kid._id.toString();
-    const claim = todayClaims.find((c) => c.kidId.toString() === kidId);
-    const wonIds = wonByKid.get(kidId) ?? new Set<string>();
-    const entry = claim
-      ? entryById(claim.riddleId) ?? pickFromPool(kidId, date, wonIds)
-      : pickFromPool(kidId, date, wonIds);
-    const status = playStatus(claim ?? null);
-    const revealed = status === 'won' || status === 'missed' || status === 'appealed';
-    return {
-      kidId,
-      date,
-      id: entry.id,
-      cat: entry.cat,
-      prompt: entry.prompt,
-      extra: entry.extra,
-      visual: entry.visual,
-      points: DAILY_RIDDLE_POINTS,
-      status,
-      kid: { displayName: kid.displayName, avatar: kid.avatar || '🎮' },
-      ...(revealed
-        ? {
-            why: entry.why,
-            answer: entry.answer,
-            guess: claim?.guess,
-            appeal: kidAppeal(claim?.appeal),
-          }
-        : {}),
-    };
-  });
+    for (const slot of RIDDLE_TRACKS) {
+      const claim = todayClaims.find((c) => c.kidId.toString() === kidId && (c.slot ?? 'math') === slot) ?? null;
+      const t = resolveToday(kid, date, slot, claim, wonByKid.get(kidId) ?? new Set());
+      const revealed = t.status === 'won' || t.status === 'missed' || t.status === 'appealed';
+      out.push({
+        kidId,
+        date,
+        slot,
+        id: t.entry.id,
+        cat: t.entry.cat,
+        prompt: t.entry.prompt,
+        extra: t.entry.extra,
+        visual: t.entry.visual,
+        points: DAILY_RIDDLE_POINTS,
+        status: t.status,
+        kid: { displayName: kid.displayName, avatar: kid.avatar || '🎮' },
+        ...(revealed ? { why: t.entry.why, answer: t.entry.answer, guess: claim?.guess, appeal: kidAppeal(claim?.appeal) } : {}),
+      });
+    }
+  }
+  return out;
 }
 
 export async function guessDailyRiddle(
   kid: IUser,
-  guess: string
+  guess: string,
+  slot: RiddleTrack = 'math'
 ): Promise<
   | {
       ok: true;
@@ -188,42 +222,42 @@ export async function guessDailyRiddle(
 
   const date = todayString();
   const kidId = kid._id.toString();
-  const today = await entryForKid(kid, date);
-  const { entry, status, attempts } = today;
-  if (status !== 'open') {
+  const today = await entryForKid(kid, date, slot);
+  if (today.status !== 'open') {
     return {
       ok: true,
-      correct: status === 'won',
-      dailyRiddle: toKidPayload(date, entry, status, attempts, kidId, {
+      correct: today.status === 'won',
+      dailyRiddle: toKidPayload(date, slot, today.entry, today.status, today.attempts, kidId, {
         guess: today.guess,
         appeal: today.appeal,
       }),
     };
   }
 
-  let claim = await DailyRiddleClaim.findOne({ kidId: kid._id, date });
-  if (!claim) {
-    claim = await DailyRiddleClaim.create({
+  const claim =
+    today.claim ??
+    (await DailyRiddleClaim.create({
       kidId: kid._id,
       familyId: kid.familyId,
       date,
-      riddleId: entry.id,
+      slot,
+      riddleId: today.entry.id,
       status: 'open',
       attempts: 0,
-    });
-  }
+    }));
 
-  const correct = riddleGuessMatches(entry, trimmed);
+  const correct = riddleGuessMatches(today.entry, trimmed);
   claim.attempts += 1;
   claim.guess = trimmed;
   claim.status = correct ? 'won' : 'missed';
   await claim.save();
   if (correct) {
-    const newBadges = await awardPoints(kid, DAILY_RIDDLE_POINTS, 'bonus', 'חידה יומית', claim._id.toString());
+    const label = slot === 'language' ? 'חידת שפה' : 'חידה יומית';
+    const newBadges = await awardPoints(kid, DAILY_RIDDLE_POINTS, 'bonus', label, claim._id.toString());
     return {
       ok: true,
       correct: true,
-      dailyRiddle: toKidPayload(date, entry, 'won', claim.attempts, kidId),
+      dailyRiddle: toKidPayload(date, slot, today.entry, 'won', claim.attempts, kidId),
       pointsAwarded: DAILY_RIDDLE_POINTS,
       points: kid.points,
       level: kid.level,
@@ -231,64 +265,61 @@ export async function guessDailyRiddle(
       newBadges,
     };
   }
-
   return {
     ok: true,
     correct: false,
-    dailyRiddle: toKidPayload(date, entry, 'missed', claim.attempts, kidId, { guess: trimmed }),
+    dailyRiddle: toKidPayload(date, slot, today.entry, 'missed', claim.attempts, kidId, { guess: trimmed }),
   };
 }
 
 export async function appealDailyRiddle(
-  kid: IUser
+  kid: IUser,
+  slot: RiddleTrack = 'math'
 ): Promise<{ ok: true; dailyRiddle: KidDailyRiddle } | { ok: false; error: string }> {
   const date = todayString();
   const kidId = kid._id.toString();
-  const claim = await DailyRiddleClaim.findOne({ kidId: kid._id, date });
+  const claim = await DailyRiddleClaim.findOne({ kidId: kid._id, date, slot });
   if (!claim || claim.status !== 'missed' || !claim.guess) {
     return { ok: false, error: 'אפשר לערער רק אחרי תשובה שלא התקבלה' };
   }
-  if (claim.appeal === 'pending' || claim.appeal === 'approved') {
-    return { ok: false, error: 'הערעור כבר נשלח להורה' };
-  }
-  if (claim.appeal === 'rejected') {
-    return { ok: false, error: 'ההורה כבר בדק את הערעור' };
-  }
+  if (claim.appeal === 'pending' || claim.appeal === 'approved') return { ok: false, error: 'הערעור כבר נשלח להורה' };
+  if (claim.appeal === 'rejected') return { ok: false, error: 'ההורה כבר בדק את הערעור' };
 
   claim.appeal = 'pending';
   await claim.save();
-
   const wonIds = await wonRiddleIdsFor(kidId);
-  const entry = entryById(claim.riddleId) ?? pickFromPool(kidId, date, wonIds);
+  const entry = riddleById(claim.riddleId) ?? pickFromPool(kid, date, slot, wonIds);
   return {
     ok: true,
-    dailyRiddle: toKidPayload(date, entry, 'appealed', claim.attempts, kidId, {
-      guess: claim.guess,
-      appeal: 'pending',
-    }),
+    dailyRiddle: toKidPayload(date, slot, entry, 'appealed', claim.attempts, kidId, { guess: claim.guess, appeal: 'pending' }),
   };
 }
 
 export async function reviewDailyRiddleAppeal(
   familyId: string,
   kidId: string,
-  action: 'approve' | 'reject'
+  action: 'approve' | 'reject',
+  slot?: RiddleTrack
 ): Promise<{ ok: true; points?: number } | { ok: false; error: string }> {
   const kid = await User.findOne({ _id: kidId, familyId, role: 'kid' });
   if (!kid) return { ok: false, error: 'ילד לא נמצא' };
 
   const date = todayString();
-  const claim = await DailyRiddleClaim.findOne({ kidId: kid._id, familyId, date });
-  if (!claim || claim.appeal !== 'pending' || claim.status === 'won') {
-    return { ok: false, error: 'אין ערעור ממתין' };
-  }
+  // Older apps don't send a slot: review whichever riddle has the pending appeal.
+  const claim = await DailyRiddleClaim.findOne({
+    kidId: kid._id,
+    familyId,
+    date,
+    appeal: 'pending',
+    ...(slot ? { slot } : {}),
+  });
+  if (!claim || claim.status === 'won') return { ok: false, error: 'אין ערעור ממתין' };
 
   if (action === 'reject') {
     claim.appeal = 'rejected';
     await claim.save();
     return { ok: true };
   }
-
   claim.status = 'won';
   claim.appeal = 'approved';
   await claim.save();

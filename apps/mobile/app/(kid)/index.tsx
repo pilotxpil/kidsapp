@@ -257,7 +257,8 @@ export default function KidHomeScreen() {
       {userId ? (
         <View style={{ gap: 14, marginTop: 4 }}>
           <DailyWord kidId={userId} />
-          <DailyRiddle kidId={userId} onWon={(r) => applyPoints(r)} />
+          <DailyRiddle kidId={userId} slot="math" onWon={(r) => applyPoints(r)} />
+          <DailyRiddle kidId={userId} slot="language" onWon={(r) => applyPoints(r)} />
         </View>
       ) : null}
 

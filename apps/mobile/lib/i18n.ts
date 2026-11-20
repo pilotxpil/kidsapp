@@ -414,6 +414,7 @@ export const he = {
   noPendingDailyWord: 'אין ילדים במשפחה',
   dailyRiddle: 'חידה יומית',
   dailyRiddleTitle: 'החידה היומית',
+  dailyRiddlesTitle: 'החידות היומיות',
   dailyRiddleTapToOpen: 'לחצו לפתיחה · {n}+ נקודות',
   dailyRiddleTapToOpenParent: 'לחצו לפתיחה',
   dailyRiddleTapToClose: 'לחצו לסגירה',

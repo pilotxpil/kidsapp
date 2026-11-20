@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Text, StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { RIDDLE_TRACK_LABELS } from '@kidsapp/shared';
 import type {
   BadgeUnlock,
   KidDailyRiddle,
   ParentDailyRiddleKid,
+  RiddleTrack,
   RiddleVisual,
   UiThemeId,
 } from '@kidsapp/shared';
@@ -123,9 +125,22 @@ function puzzleLookFor(id: UiThemeId): PuzzleLook {
   };
 }
 
-function usePuzzleLook() {
+/** The language riddle borrows a contrasting world's puzzle colors so the two cards read apart. */
+const LANGUAGE_LOOK: Record<UiThemeId, UiThemeId> = {
+  ember: 'minecraft',
+  minecraft: 'brawl',
+  brawl: 'sparkle',
+  roblox: 'brawl',
+  sparkle: 'minecraft',
+};
+
+const SlotContext = React.createContext<RiddleTrack>('math');
+
+function usePuzzleLook(slotOverride?: RiddleTrack) {
   const { id } = useTheme();
-  return useMemo(() => puzzleLookFor(id), [id]);
+  const ctxSlot = React.useContext(SlotContext);
+  const slot = slotOverride ?? ctxSlot;
+  return useMemo(() => puzzleLookFor(slot === 'language' ? LANGUAGE_LOOK[id] ?? id : id), [id, slot]);
 }
 
 function PuzzleShell({
@@ -218,6 +233,9 @@ function RiddleVisualView({ visual }: { visual: RiddleVisual }) {
   );
 }
 
+/** Lines without Hebrew letters (number sequences, emoji sums) read left to right. */
+const HEBREW = /[\u0590-\u05FF]/;
+
 function RiddlePrompt({
   prompt,
   extra,
@@ -231,16 +249,18 @@ function RiddlePrompt({
   return (
     <View>
       <Text style={[styles.prompt, rtl.text]}>{prompt}</Text>
-      {extra ? <Text style={[styles.extra, rtl.text]}>{extra}</Text> : null}
+      {extra ? (
+        <Text style={[styles.extra, rtl.text, !HEBREW.test(extra) && styles.extraLtr]}>{extra}</Text>
+      ) : null}
       {visual ? <RiddleVisualView visual={visual} /> : null}
     </View>
   );
 }
 
-function useRiddleStyles() {
+function useRiddleStyles(slotOverride?: RiddleTrack) {
   const type = useType();
   const { id: themeId } = useTheme();
-  const look = usePuzzleLook();
+  const look = usePuzzleLook(slotOverride);
   return useMemo(
     () =>
       StyleSheet.create({
@@ -275,6 +295,12 @@ function useRiddleStyles() {
           fontFamily: 'Fredoka_700Bold',
           marginBottom: spacing.sm,
           ...type.ui,
+        },
+        extraLtr: {
+          writingDirection: 'ltr',
+          textAlign: 'center',
+          fontSize: 20,
+          letterSpacing: 0.5,
         },
         label: {
           color: look.muted,
@@ -421,13 +447,16 @@ function useRiddleStyles() {
 
 export function DailyRiddle({
   kidId,
+  slot = 'math',
   onWon,
 }: {
   kidId: string;
+  /** Which of today's two riddles (math / language) this card shows. */
+  slot?: RiddleTrack;
   onWon?: (result: { points: number; level: number; xp: number; newBadges?: BadgeUnlock[] }) => void;
 }) {
-  const styles = useRiddleStyles();
-  const look = usePuzzleLook();
+  const styles = useRiddleStyles(slot);
+  const look = usePuzzleLook(slot);
   const [riddle, setRiddle] = useState<KidDailyRiddle | null>(null);
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
@@ -441,26 +470,29 @@ export function DailyRiddle({
       let cancelled = false;
       const tick = async () => {
         try {
-          const res = await api.getDailyRiddle(kidId);
+          const res = await api.getDailyRiddle(kidId, slot);
           if (!cancelled) setRiddle(res.dailyRiddle);
         } catch {
           /* ignore while logged out / navigating */
         }
       };
       tick();
-      const id = setInterval(tick, 8000);
+      // Poll only while a parent still has to answer an appeal.
+      const id = setInterval(() => {
+        if (statusRef.current === 'appealed') void tick();
+      }, 8000);
       return () => {
         cancelled = true;
         clearInterval(id);
       };
-    }, [kidId])
+    }, [kidId, slot])
   );
 
   useEffect(() => {
     setOpen(false);
     setPicked(null);
     statusRef.current = null;
-  }, [kidId, riddle?.date, riddle?.id]);
+  }, [kidId, slot, riddle?.date, riddle?.id]);
 
   useEffect(() => {
     const prev = statusRef.current;
@@ -480,7 +512,7 @@ export function DailyRiddle({
     if (busy) return;
     setBusy(true);
     try {
-      const res = await api.appealDailyRiddle(kidId);
+      const res = await api.appealDailyRiddle(kidId, slot);
       setRiddle(res.dailyRiddle);
       setOpen(true);
       playSfx('tap');
@@ -503,7 +535,7 @@ export function DailyRiddle({
     setPicked(guess);
     setBusy(true);
     try {
-      const res = await api.guessDailyRiddle(kidId, guess);
+      const res = await api.guessDailyRiddle(kidId, guess, slot);
       setRiddle(res.dailyRiddle);
       setOpen(true);
       if (res.correct) {
@@ -527,6 +559,7 @@ export function DailyRiddle({
   };
 
   return (
+    <SlotContext.Provider value={slot}>
     <PuzzleShell>
       <BouncyPressable onPress={() => setOpen((v) => !v)} scaleDown={0.98}>
         <View style={[styles.header, rtl.row]}>
@@ -537,7 +570,7 @@ export function DailyRiddle({
             dark={look.pieceDark}
           />
           <View style={styles.textCol}>
-            <Text style={[styles.kicker, rtl.text]}>{t('dailyRiddleTitle')}</Text>
+            <Text style={[styles.kicker, rtl.text]}>{RIDDLE_TRACK_LABELS[slot]}</Text>
             {!revealed ? (
               <Text style={[styles.tapHint, rtl.text]}>
                 {t('dailyRiddleTapToOpen').replace('{n}', String(riddle.points))}
@@ -639,6 +672,7 @@ export function DailyRiddle({
         </View>
       ) : null}
     </PuzzleShell>
+    </SlotContext.Provider>
   );
 }
 
@@ -647,7 +681,7 @@ export function ParentDailyRiddleList({
   onReviewAppeal,
 }: {
   items: ParentDailyRiddleKid[];
-  onReviewAppeal?: (kidId: string, action: 'approve' | 'reject') => void | Promise<void>;
+  onReviewAppeal?: (kidId: string, action: 'approve' | 'reject', slot?: RiddleTrack) => void | Promise<void>;
 }) {
   const styles = useRiddleStyles();
   const look = usePuzzleLook();
@@ -659,10 +693,12 @@ export function ParentDailyRiddleList({
 
   if (!items.length) return null;
 
-  const review = (kidId: string, action: 'approve' | 'reject') => {
+  const keyOf = (item: ParentDailyRiddleKid) => `${item.kidId}-${item.slot ?? 'math'}`;
+  const slotLabel = (item: ParentDailyRiddleKid) => RIDDLE_TRACK_LABELS[item.slot ?? 'math'];
+  const review = (item: ParentDailyRiddleKid, action: 'approve' | 'reject') => {
     if (!onReviewAppeal || busyKid) return;
-    setBusyKid(kidId);
-    Promise.resolve(onReviewAppeal(kidId, action)).finally(() => setBusyKid(null));
+    setBusyKid(keyOf(item));
+    Promise.resolve(onReviewAppeal(item.kidId, action, item.slot)).finally(() => setBusyKid(null));
   };
 
   const hint =
@@ -681,7 +717,7 @@ export function ParentDailyRiddleList({
         dark={look.pieceDark}
       />
       <View style={styles.textCol}>
-        <Text style={[styles.kicker, rtl.text]}>{t('dailyRiddleTitle')}</Text>
+        <Text style={[styles.kicker, rtl.text]}>{t('dailyRiddlesTitle')}</Text>
         <Text style={[styles.tapHint, rtl.text]}>{hint}</Text>
       </View>
     </View>
@@ -693,12 +729,12 @@ export function ParentDailyRiddleList({
         {header}
       </BouncyPressable>
       {open ? appeals.map((item) => (
-        <View key={`appeal-${item.kidId}`} style={styles.kidBlock}>
+        <View key={`appeal-${keyOf(item)}`} style={styles.kidBlock}>
           <View style={[styles.kidHead, rtl.row]}>
             <KidAvatar avatar={item.kid?.avatar ?? '🎮'} size={40} />
             <View style={styles.textCol}>
               <Text style={[styles.kidName, rtl.text]}>{item.kid?.displayName ?? t('dailyRiddle')}</Text>
-              <Text style={[styles.kidMeta, rtl.text]}>{t('dailyRiddleParentAppealHint')}</Text>
+              <Text style={[styles.kidMeta, rtl.text]}>{`${slotLabel(item)} · ${t('dailyRiddleParentAppealHint')}`}</Text>
             </View>
           </View>
           <RiddlePrompt prompt={item.prompt} extra={item.extra} visual={item.visual} />
@@ -717,14 +753,14 @@ export function ParentDailyRiddleList({
           <View style={[styles.appealActions, rtl.row]}>
             <Button
               title={t('dailyRiddleAppealYes')}
-              onPress={() => review(item.kidId, 'approve')}
+              onPress={() => review(item, 'approve')}
               variant="success"
-              loading={busyKid === item.kidId}
+              loading={busyKid === keyOf(item)}
               disabled={!!busyKid}
             />
             <Button
               title={t('dailyRiddleAppealNo')}
-              onPress={() => review(item.kidId, 'reject')}
+              onPress={() => review(item, 'reject')}
               variant="outline"
               disabled={!!busyKid}
             />
@@ -734,7 +770,7 @@ export function ParentDailyRiddleList({
       {open ? settled.map((item) => {
         const correct = item.status === 'won';
         return (
-          <View key={`settled-${item.kidId}`} style={styles.kidBlock}>
+          <View key={`settled-${keyOf(item)}`} style={styles.kidBlock}>
             <View style={[styles.kidHead, rtl.row]}>
               <KidAvatar avatar={item.kid?.avatar ?? '🎮'} size={40} />
               <View style={styles.textCol}>
@@ -742,7 +778,7 @@ export function ParentDailyRiddleList({
                   {item.kid?.displayName ?? t('dailyRiddle')}
                 </Text>
                 <Text style={[correct ? styles.kidMetaOk : styles.kidMetaWrong, rtl.text]}>
-                  {correct ? t('dailyRiddleParentWon') : t('dailyRiddleParentMissed')}
+                  {`${slotLabel(item)} · ${correct ? t('dailyRiddleParentWon') : t('dailyRiddleParentMissed')}`}
                 </Text>
               </View>
             </View>
@@ -774,14 +810,14 @@ export function ParentDailyRiddleList({
       }) : null}
       {open
         ? pending.map((item) => (
-            <View key={item.kidId} style={styles.kidBlock}>
+            <View key={`open-${keyOf(item)}`} style={styles.kidBlock}>
               <View style={[styles.kidHead, rtl.row]}>
                 <KidAvatar avatar={item.kid?.avatar ?? '🎮'} size={40} />
                 <View style={styles.textCol}>
                   <Text style={[styles.kidName, rtl.text]}>
                     {item.kid?.displayName ?? t('dailyRiddle')}
                   </Text>
-                  <Text style={[styles.kidMeta, rtl.text]}>{t('dailyRiddleParentOpen')}</Text>
+                  <Text style={[styles.kidMeta, rtl.text]}>{`${slotLabel(item)} · ${t('dailyRiddleParentOpen')}`}</Text>
                 </View>
               </View>
               <RiddlePrompt prompt={item.prompt} extra={item.extra} visual={item.visual} />

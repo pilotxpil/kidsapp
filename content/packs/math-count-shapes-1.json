@@ -1,0 +1,226 @@
+{
+  "id": "math-count-shapes-1",
+  "version": 1,
+  "title": {
+    "he": "ספירה וצורות",
+    "en": "Counting and shapes"
+  },
+  "category": "math",
+  "grade": 1,
+  "tags": [
+    "counting",
+    "shapes",
+    "grade-1"
+  ],
+  "defaultPoints": 6,
+  "activities": [
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "כמה כוכבים יש כאן?  ⭐⭐⭐⭐⭐"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "4"
+        },
+        {
+          "id": "b",
+          "text": "5"
+        },
+        {
+          "id": "c",
+          "text": "6"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "סופרים אחד-אחד: 1, 2, 3, 4, 5."
+      },
+      "id": "q1"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזה מספר בא אחרי 7?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "6"
+        },
+        {
+          "id": "b",
+          "text": "8"
+        },
+        {
+          "id": "c",
+          "text": "9"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "7 ואחריו 8."
+      },
+      "id": "q2"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזה מספר גדול יותר?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "6"
+        },
+        {
+          "id": "b",
+          "text": "9"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "9 גדול מ-6."
+      },
+      "id": "q3"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "כמה צלעות יש למשולש?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "2"
+        },
+        {
+          "id": "b",
+          "text": "3"
+        },
+        {
+          "id": "c",
+          "text": "4"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "למשולש יש 3 צלעות ו-3 פינות."
+      },
+      "id": "q4"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "לאיזו צורה אין פינות בכלל?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "ריבוע"
+        },
+        {
+          "id": "b",
+          "text": "משולש"
+        },
+        {
+          "id": "c",
+          "text": "עיגול"
+        }
+      ],
+      "answer": "c",
+      "explanation": {
+        "he": "העיגול עגול לגמרי, בלי פינות."
+      },
+      "id": "q5"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "🍎🍎🍎 ועוד 🍎🍎. כמה תפוחים יש ביחד?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "4"
+        },
+        {
+          "id": "b",
+          "text": "5"
+        },
+        {
+          "id": "c",
+          "text": "6"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "3 ועוד 2 הם 5."
+      },
+      "id": "q6"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "כמה גלגלים יש למכונית?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "2"
+        },
+        {
+          "id": "b",
+          "text": "3"
+        },
+        {
+          "id": "c",
+          "text": "4"
+        }
+      ],
+      "answer": "c",
+      "explanation": {
+        "he": "למכונית יש 4 גלגלים."
+      },
+      "id": "q7"
+    },
+    {
+      "type": "select_all",
+      "prompt": {
+        "text": "סמנו את כל המספרים שקטנים מ-5."
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "1"
+        },
+        {
+          "id": "b",
+          "text": "3"
+        },
+        {
+          "id": "c",
+          "text": "6"
+        },
+        {
+          "id": "d",
+          "text": "4"
+        },
+        {
+          "id": "e",
+          "text": "9"
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "d"
+      ],
+      "explanation": {
+        "he": "1, 3 ו-4 קטנים מ-5. 6 ו-9 גדולים ממנו."
+      },
+      "id": "q8"
+    }
+  ]
+}

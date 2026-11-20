@@ -1,5 +1,4 @@
 import {
-  DAILY_WORDS,
   DAILY_WORD_POINTS,
   type DailyWordEntry,
   type DailyWordPlayStatus,
@@ -10,6 +9,7 @@ import { IUser } from '../models/User';
 import { DailyWordClaim } from '../models/DailyWordClaim';
 import { todayString } from '../utils/format';
 import { awardPoints } from './gamification';
+import { wordById, wordsFor } from './contentStore';
 
 
 function hashUint(kidId: string, date: string): number {
@@ -22,15 +22,21 @@ function hashUint(kidId: string, date: string): number {
   return h >>> 0;
 }
 
-function entryById(wordId: string): DailyWordEntry | undefined {
-  return DAILY_WORDS.find((w) => w.id === wordId);
-}
+const FALLBACK: DailyWordEntry = {
+  id: 'fallback-shalom',
+  word: 'שלום',
+  definition: 'ברכה שאומרים כשנפגשים או נפרדים, וגם מצב בלי מלחמה.',
+  hint: 'אומרים את זה כשנכנסים לכיתה.',
+};
 
-/** Unused words first; a scored word never returns until the pool is empty. */
-function pickFromPool(kidId: string, date: string, wonIds: Set<string>): DailyWordEntry {
-  const pool = DAILY_WORDS.filter((w) => !wonIds.has(w.id));
-  const source = pool.length ? pool : DAILY_WORDS;
-  return source[hashUint(kidId, date) % source.length];
+/** Words come from the database (content store), filtered to the kid's grade. */
+function pickFromPool(kid: IUser, date: string, wonIds: Set<string>): DailyWordEntry {
+  const all = wordsFor(kid.grade);
+  if (!all.length) return FALLBACK;
+  // Unused words first; a scored word never returns until the pool is empty.
+  const pool = all.filter((w) => !wonIds.has(w.id));
+  const source = pool.length ? pool : all;
+  return source[hashUint(kid._id.toString(), date) % source.length];
 }
 
 function statusFromClaims(claims: Array<{ status: string }>): DailyWordPlayStatus {
@@ -59,17 +65,17 @@ async function wonWordIdsFor(kidId: string): Promise<Set<string>> {
 }
 
 function entryForKid(
-  kidId: string,
+  kid: IUser,
   date: string,
   todayClaims: Array<{ status: string; wordId: string }>,
   wonIds: Set<string>
 ): DailyWordEntry {
   const pinned = pinnedWordId(todayClaims);
   if (pinned) {
-    const entry = entryById(pinned);
+    const entry = wordById(pinned);
     if (entry) return entry;
   }
-  return pickFromPool(kidId, date, wonIds);
+  return pickFromPool(kid, date, wonIds);
 }
 
 function toKidPayload(
@@ -96,7 +102,7 @@ export async function getKidDailyWord(kid: IUser): Promise<KidDailyWord> {
     wonWordIdsFor(kidId),
   ]);
   const status = statusFromClaims(todayClaims);
-  const entry = entryForKid(kidId, date, todayClaims, wonIds);
+  const entry = entryForKid(kid, date, todayClaims, wonIds);
   return toKidPayload(date, entry, status);
 }
 
@@ -123,7 +129,7 @@ export async function listFamilyDailyWords(kids: IUser[]): Promise<ParentDailyWo
     const kidId = kid._id.toString();
     const kidClaims = todayClaims.filter((c) => c.kidId.toString() === kidId);
     const status = statusFromClaims(kidClaims);
-    const entry = entryForKid(kidId, date, kidClaims, wonByKid.get(kidId) ?? new Set());
+    const entry = entryForKid(kid, date, kidClaims, wonByKid.get(kidId) ?? new Set());
     return {
       kidId,
       date,
@@ -157,7 +163,7 @@ export async function reviewDailyWord(
   }
 
   const wonIds = await wonWordIdsFor(kid._id.toString());
-  const entry = entryForKid(kid._id.toString(), date, existing, wonIds);
+  const entry = entryForKid(kid, date, existing, wonIds);
 
   const alreadyWon = await DailyWordClaim.findOne({
     kidId: kid._id,

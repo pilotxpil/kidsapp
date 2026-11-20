@@ -376,7 +376,10 @@ export interface ParentDashboard {
   pendingCompletions: TaskCompletion[];
   pendingRedemptions: Redemption[];
   dailyWords: ParentDailyWordKid[];
+  /** One riddle per kid, for app builds before 2.2 (the slot with a pending appeal, else math). */
   dailyRiddles: ParentDailyRiddleKid[];
+  /** Both riddles per kid (math + language), 2.2+. */
+  dailyRiddleSlots?: ParentDailyRiddleKid[];
   kids: User[];
   stats: {
     totalTasks: number;

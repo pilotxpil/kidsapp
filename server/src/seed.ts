@@ -15,7 +15,14 @@ import { generateUniqueInviteCode } from './utils/inviteCode';
 dotenv.config();
 
 async function seed() {
-  await mongoose.connect(process.env.MONGODB_URI!);
+  // The seed WIPES the database. server/.env points at production, so only local databases are allowed.
+  const uri = process.env.MONGODB_URI || '';
+  const local = /^mongodb:\/\/(localhost|127\.0\.0\.1|mongo|mongodb)(:\d+)?\//.test(uri);
+  if (!local && process.env.SEED_ALLOW_REMOTE !== '1') {
+    console.error('Refusing to seed a non-local database. Set MONGODB_URI=mongodb://localhost:27017/<db>.');
+    process.exit(1);
+  }
+  await mongoose.connect(uri);
   console.log('Connected to MongoDB');
 
   await Promise.all([

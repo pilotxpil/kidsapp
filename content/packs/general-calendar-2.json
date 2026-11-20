@@ -1,0 +1,231 @@
+{
+  "id": "general-calendar-2",
+  "version": 1,
+  "title": {
+    "he": "ימים, חודשים ועונות",
+    "en": "Days, months and seasons"
+  },
+  "category": "general",
+  "grade": 2,
+  "tags": [
+    "calendar",
+    "seasons",
+    "grade-2"
+  ],
+  "defaultPoints": 6,
+  "activities": [
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "כמה ימים יש בשבוע?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "5"
+        },
+        {
+          "id": "b",
+          "text": "7"
+        },
+        {
+          "id": "c",
+          "text": "10"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "ראשון, שני, שלישי, רביעי, חמישי, שישי ושבת: 7 ימים."
+      },
+      "id": "q1"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזה יום בא אחרי יום שלישי?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "שני"
+        },
+        {
+          "id": "b",
+          "text": "רביעי"
+        },
+        {
+          "id": "c",
+          "text": "חמישי"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "שני, שלישי, רביעי."
+      },
+      "id": "q2"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "כמה חודשים יש בשנה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "10"
+        },
+        {
+          "id": "b",
+          "text": "12"
+        },
+        {
+          "id": "c",
+          "text": "30"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "בשנה יש 12 חודשים."
+      },
+      "id": "q3"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "באיזו עונה יורד הכי הרבה גשם בישראל?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "קיץ"
+        },
+        {
+          "id": "b",
+          "text": "חורף"
+        },
+        {
+          "id": "c",
+          "text": "אביב"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "בישראל רוב הגשם יורד בחורף."
+      },
+      "id": "q4"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "באיזו עונה פורחים הכי הרבה פרחים?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "אביב"
+        },
+        {
+          "id": "b",
+          "text": "סתיו"
+        },
+        {
+          "id": "c",
+          "text": "חורף"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "באביב מתחמם, והפרחים פורחים."
+      },
+      "id": "q5"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזה יום בא לפני יום ראשון?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "שני"
+        },
+        {
+          "id": "b",
+          "text": "שישי"
+        },
+        {
+          "id": "c",
+          "text": "שבת"
+        }
+      ],
+      "answer": "c",
+      "explanation": {
+        "he": "אחרי שבת מתחיל שבוע חדש ביום ראשון."
+      },
+      "id": "q6"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "באיזו עונה הכי חם?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "קיץ"
+        },
+        {
+          "id": "b",
+          "text": "חורף"
+        },
+        {
+          "id": "c",
+          "text": "סתיו"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "הקיץ היא העונה החמה ביותר."
+      },
+      "id": "q7"
+    },
+    {
+      "type": "select_all",
+      "prompt": {
+        "text": "סמנו את כל עונות השנה."
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "קיץ"
+        },
+        {
+          "id": "b",
+          "text": "סתיו"
+        },
+        {
+          "id": "c",
+          "text": "חורף"
+        },
+        {
+          "id": "d",
+          "text": "אביב"
+        },
+        {
+          "id": "e",
+          "text": "לילה"
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": {
+        "he": "יש 4 עונות: קיץ, סתיו, חורף ואביב. לילה הוא חלק מהיממה."
+      },
+      "id": "q8"
+    }
+  ]
+}

@@ -1,0 +1,226 @@
+{
+  "id": "math-clock-3",
+  "version": 1,
+  "title": {
+    "he": "שעון וזמן",
+    "en": "Clock and time"
+  },
+  "category": "math",
+  "grade": 3,
+  "tags": [
+    "time",
+    "clock",
+    "grade-3"
+  ],
+  "defaultPoints": 8,
+  "activities": [
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "כמה דקות יש בשעה אחת?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "30"
+        },
+        {
+          "id": "b",
+          "text": "60"
+        },
+        {
+          "id": "c",
+          "text": "100"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "בשעה יש 60 דקות."
+      },
+      "id": "q1"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "המחוג הקטן מצביע על 4, והמחוג הגדול על 12. מה השעה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "12:04"
+        },
+        {
+          "id": "b",
+          "text": "4:00"
+        },
+        {
+          "id": "c",
+          "text": "4:12"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "כשהמחוג הגדול על 12, זו שעה עגולה. המחוג הקטן מראה את השעה: 4."
+      },
+      "id": "q2"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "המחוג הגדול מצביע על 6. כמה דקות עברו מתחילת השעה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "6"
+        },
+        {
+          "id": "b",
+          "text": "30"
+        },
+        {
+          "id": "c",
+          "text": "60"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "כל מספר בשעון שווה 5 דקות: 6 × 5 = 30."
+      },
+      "id": "q3"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "השעה 7:30. מה השעה תהיה בעוד חצי שעה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "7:45"
+        },
+        {
+          "id": "b",
+          "text": "8:00"
+        },
+        {
+          "id": "c",
+          "text": "8:30"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "30 דקות ועוד 30 דקות הן שעה שלמה: 8:00."
+      },
+      "id": "q4"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "כמה שעות יש ביממה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "12"
+        },
+        {
+          "id": "b",
+          "text": "24"
+        },
+        {
+          "id": "c",
+          "text": "60"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "יממה היא יום ולילה ביחד: 24 שעות."
+      },
+      "id": "q5"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "הסרט התחיל ב-5:00 ונמשך שעה וחצי. מתי הוא נגמר?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "6:00"
+        },
+        {
+          "id": "b",
+          "text": "6:30"
+        },
+        {
+          "id": "c",
+          "text": "7:30"
+        }
+      ],
+      "answer": "b",
+      "explanation": {
+        "he": "5:00 ועוד שעה = 6:00, ועוד חצי שעה = 6:30."
+      },
+      "id": "q6"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "מה מוקדם יותר?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "9:15"
+        },
+        {
+          "id": "b",
+          "text": "9:50"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "באותה שעה, 15 דקות באות לפני 50 דקות."
+      },
+      "id": "q7"
+    },
+    {
+      "type": "select_all",
+      "prompt": {
+        "text": "סמנו את כל מה ששווה לחצי שעה."
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "30 דקות"
+        },
+        {
+          "id": "b",
+          "text": "רבע שעה"
+        },
+        {
+          "id": "c",
+          "text": "שני רבעי שעה"
+        },
+        {
+          "id": "d",
+          "text": "60 דקות"
+        },
+        {
+          "id": "e",
+          "text": "חצי מ-60 דקות"
+        }
+      ],
+      "answer": [
+        "a",
+        "c",
+        "e"
+      ],
+      "explanation": {
+        "he": "חצי שעה = 30 דקות = שני רבעי שעה (15 + 15)."
+      },
+      "id": "q8"
+    }
+  ]
+}

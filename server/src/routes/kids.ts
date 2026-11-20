@@ -26,7 +26,9 @@ import { getKidDailyWord, listFamilyDailyWords, reviewDailyWord } from '../servi
 import {
   appealDailyRiddle,
   getKidDailyRiddle,
+  getKidDailyRiddles,
   guessDailyRiddle,
+  parseSlot,
   listFamilyDailyRiddles,
   reviewDailyRiddleAppeal,
 } from '../services/dailyRiddle';
@@ -508,11 +510,27 @@ router.get('/:id/daily-riddle', authenticate, async (req: Request, res: Response
     }
     const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
     if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
-    const dailyRiddle = await getKidDailyRiddle(kid);
+    const dailyRiddle = await getKidDailyRiddle(kid, parseSlot(req.query.slot));
     res.json({ dailyRiddle });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'שגיאה בטעינת החידה היומית' });
+  }
+});
+
+router.get('/:id/daily-riddles', authenticate, async (req: Request, res: Response) => {
+  try {
+    const kidId = req.params.id as string;
+    if (req.user!.role !== 'kid' || req.user!.userId !== kidId) {
+      return res.status(403).json({ error: 'רק הילד יכול לראות את החידות היומיות' });
+    }
+    const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
+    if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
+    const dailyRiddles = await getKidDailyRiddles(kid);
+    res.json({ dailyRiddles });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'שגיאה בטעינת החידות היומיות' });
   }
 });
 
@@ -524,7 +542,7 @@ router.post('/:id/daily-riddle/guess', authenticate, async (req: Request, res: R
     }
     const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
     if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
-    const result = await guessDailyRiddle(kid, req.body?.guess);
+    const result = await guessDailyRiddle(kid, req.body?.guess, parseSlot(req.body?.slot));
     if (!result.ok) return res.status(400).json({ error: result.error });
     res.json({
       dailyRiddle: result.dailyRiddle,
@@ -549,7 +567,7 @@ router.post('/:id/daily-riddle/appeal', authenticate, async (req: Request, res: 
     }
     const kid = await User.findOne({ _id: kidId, familyId: req.user!.familyId, role: 'kid' });
     if (!kid) return res.status(404).json({ error: 'ילד לא נמצא' });
-    const result = await appealDailyRiddle(kid);
+    const result = await appealDailyRiddle(kid, parseSlot(req.body?.slot));
     if (!result.ok) return res.status(400).json({ error: result.error });
     res.json({ dailyRiddle: result.dailyRiddle });
   } catch (err) {
@@ -563,7 +581,8 @@ router.post('/:id/daily-riddle/appeal/review', authenticate, requireParent, asyn
     const kidId = req.params.id as string;
     const action = req.body?.action === 'approve' ? 'approve' : req.body?.action === 'reject' ? 'reject' : null;
     if (!action) return res.status(400).json({ error: 'יש לאשר או לדחות' });
-    const result = await reviewDailyRiddleAppeal(req.user!.familyId, kidId, action);
+    const slot = req.body?.slot ? parseSlot(req.body.slot) : undefined;
+    const result = await reviewDailyRiddleAppeal(req.user!.familyId, kidId, action, slot);
     if (!result.ok) return res.status(400).json({ error: result.error });
     res.json({ ok: true, points: result.points });
   } catch (err) {
@@ -858,7 +877,13 @@ router.get('/dashboard', authenticate, requireParent, async (req: Request, res: 
         Reward.countDocuments({ familyId, isActive: true }),
       ]);
     const dailyWords = await listFamilyDailyWords(kids);
-    const dailyRiddles = await listFamilyDailyRiddles(kids);
+    const dailyRiddleSlots = await listFamilyDailyRiddles(kids);
+    // Builds before 2.2 key this list by kid: keep one entry per kid there.
+    const dailyRiddles = kids.flatMap((kid) => {
+      const mine = dailyRiddleSlots.filter((r) => r.kidId === kid._id.toString());
+      const pick = mine.find((r) => r.appeal === 'pending') ?? mine.find((r) => r.slot === 'math') ?? mine[0];
+      return pick ? [pick] : [];
+    });
 
     res.json({
       dashboard: {
@@ -899,6 +924,7 @@ router.get('/dashboard', authenticate, requireParent, async (req: Request, res: 
         })),
         dailyWords,
         dailyRiddles,
+        dailyRiddleSlots,
         kids: kids.map(formatUser),
         stats: {
           totalTasks,

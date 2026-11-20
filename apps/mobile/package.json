@@ -1,7 +1,7 @@
 {
   "name": "@kidsapp/mobile",
   "main": "expo-router/entry",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "dependencies": {
     "@expo-google-fonts/fredoka": "^0.4.1",
     "@expo-google-fonts/heebo": "^0.4.2",

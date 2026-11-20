@@ -1,0 +1,230 @@
+{
+  "id": "science-animals-2",
+  "version": 1,
+  "title": {
+    "he": "בעלי חיים ואיפה הם גרים",
+    "en": "Animals and their homes"
+  },
+  "category": "science",
+  "grade": 2,
+  "tags": [
+    "animals",
+    "nature",
+    "grade-2"
+  ],
+  "defaultPoints": 6,
+  "activities": [
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איפה גר דג?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "במים"
+        },
+        {
+          "id": "b",
+          "text": "במערה"
+        },
+        {
+          "id": "c",
+          "text": "על עץ"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "דגים נושמים במים בעזרת זימים."
+      },
+      "id": "q1"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזה בעל חיים בוקע מביצה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "תרנגולת"
+        },
+        {
+          "id": "b",
+          "text": "כלב"
+        },
+        {
+          "id": "c",
+          "text": "פרה"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "אפרוחים בוקעים מביצים. גורים ועגלים נולדים מהבטן של אמא."
+      },
+      "id": "q2"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "מה אוכלת פרה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "עשב"
+        },
+        {
+          "id": "b",
+          "text": "בשר"
+        },
+        {
+          "id": "c",
+          "text": "דגים"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "פרה אוכלת צמחים: עשב וחציר."
+      },
+      "id": "q3"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזה בעל חיים יכול לעוף?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "ציפור"
+        },
+        {
+          "id": "b",
+          "text": "צב"
+        },
+        {
+          "id": "c",
+          "text": "ארנב"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "לציפור יש כנפיים ונוצות."
+      },
+      "id": "q4"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איך נקרא התינוק של הכלב?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "גור"
+        },
+        {
+          "id": "b",
+          "text": "אפרוח"
+        },
+        {
+          "id": "c",
+          "text": "עגל"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "הכלבה ממליטה גורים."
+      },
+      "id": "q5"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזה בעל חיים ישן כמעט כל החורף?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "דוב"
+        },
+        {
+          "id": "b",
+          "text": "סוס"
+        },
+        {
+          "id": "c",
+          "text": "תרנגול"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "דובים רבים ישנים בחורף במאורה. זה נקרא שנת חורף."
+      },
+      "id": "q6"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "לאיזה בעל חיים יש שריון?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "צב"
+        },
+        {
+          "id": "b",
+          "text": "חתול"
+        },
+        {
+          "id": "c",
+          "text": "ינשוף"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "השריון שומר על הצב, והוא יכול להכניס לתוכו את הראש."
+      },
+      "id": "q7"
+    },
+    {
+      "type": "select_all",
+      "prompt": {
+        "text": "סמנו את כל בעלי החיים שחיים בים."
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "לוויתן"
+        },
+        {
+          "id": "b",
+          "text": "דולפין"
+        },
+        {
+          "id": "c",
+          "text": "גמל"
+        },
+        {
+          "id": "d",
+          "text": "תמנון"
+        },
+        {
+          "id": "e",
+          "text": "אריה"
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "d"
+      ],
+      "explanation": {
+        "he": "לוויתן, דולפין ותמנון חיים בים. גמל ואריה חיים ביבשה."
+      },
+      "id": "q8"
+    }
+  ]
+}

@@ -1,0 +1,230 @@
+{
+  "id": "language-rhymes-2",
+  "version": 1,
+  "title": {
+    "he": "חרוזים",
+    "en": "Rhymes"
+  },
+  "category": "language",
+  "grade": 2,
+  "tags": [
+    "rhymes",
+    "phonics",
+    "grade-2"
+  ],
+  "defaultPoints": 6,
+  "activities": [
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזו מילה מתחרזת עם כלב?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "לב"
+        },
+        {
+          "id": "b",
+          "text": "חתול"
+        },
+        {
+          "id": "c",
+          "text": "בית"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "כ-לב ולב נגמרות באותו צליל."
+      },
+      "id": "q1"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזו מילה מתחרזת עם שיר?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "עיר"
+        },
+        {
+          "id": "b",
+          "text": "שמש"
+        },
+        {
+          "id": "c",
+          "text": "ים"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "שיר ועיר נגמרות ב...יר."
+      },
+      "id": "q2"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזו מילה מתחרזת עם ים?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "חם"
+        },
+        {
+          "id": "b",
+          "text": "קר"
+        },
+        {
+          "id": "c",
+          "text": "גל"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "ים וחם נגמרות ב...ם."
+      },
+      "id": "q3"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזו מילה מתחרזת עם חלון?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "בלון"
+        },
+        {
+          "id": "b",
+          "text": "דלת"
+        },
+        {
+          "id": "c",
+          "text": "קיר"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "חלון ובלון נגמרות ב...לון."
+      },
+      "id": "q4"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזו מילה מתחרזת עם גינה?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "מדינה"
+        },
+        {
+          "id": "b",
+          "text": "פרח"
+        },
+        {
+          "id": "c",
+          "text": "עץ"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "גינה ומדינה נגמרות ב...ינה."
+      },
+      "id": "q5"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזו מילה מתחרזת עם זהב?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "צב"
+        },
+        {
+          "id": "b",
+          "text": "כסף"
+        },
+        {
+          "id": "c",
+          "text": "אדום"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "זהב וצב נגמרות ב...ב."
+      },
+      "id": "q6"
+    },
+    {
+      "type": "multiple_choice",
+      "prompt": {
+        "text": "איזו מילה מתחרזת עם תפוח?"
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "פתוח"
+        },
+        {
+          "id": "b",
+          "text": "בננה"
+        },
+        {
+          "id": "c",
+          "text": "אגס"
+        }
+      ],
+      "answer": "a",
+      "explanation": {
+        "he": "תפוח ופתוח נגמרות ב...וח."
+      },
+      "id": "q7"
+    },
+    {
+      "type": "select_all",
+      "prompt": {
+        "text": "סמנו את כל המילים שמתחרזות עם בית."
+      },
+      "options": [
+        {
+          "id": "a",
+          "text": "זית"
+        },
+        {
+          "id": "b",
+          "text": "כפית"
+        },
+        {
+          "id": "c",
+          "text": "דלת"
+        },
+        {
+          "id": "d",
+          "text": "קיר"
+        },
+        {
+          "id": "e",
+          "text": "טלית"
+        }
+      ],
+      "answer": [
+        "a",
+        "b",
+        "e"
+      ],
+      "explanation": {
+        "he": "בית, זית, כפית וטלית נגמרות כולן ב...ית."
+      },
+      "id": "q8"
+    }
+  ]
+}
