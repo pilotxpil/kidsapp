@@ -4,6 +4,7 @@ import type { ActivityOption } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
+import { ltrMath } from '../../lib/bidi';
 import { playSfx } from '../../lib/sfx';
 
 interface MultipleChoiceProps {
@@ -70,7 +71,7 @@ export function MultipleChoice({
 
   return (
     <View style={{ width: '100%' }}>
-      <Text style={[styles.prompt, rtl.text]}>{prompt}</Text>
+      <Text style={[styles.prompt, rtl.text]}>{ltrMath(prompt)}</Text>
       {options.map((option) => {
         const isSelected = selectedId === option.id;
         const isCorrect = correctId === option.id;
@@ -92,7 +93,7 @@ export function MultipleChoice({
             disabled={disabled}
             activeOpacity={0.8}
           >
-            <Text style={[styles.optionText, rtl.text]}>{option.text}</Text>
+            <Text style={[styles.optionText, rtl.text]}>{ltrMath(option.text)}</Text>
           </TouchableOpacity>
         );
       })}

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
+import { ltrMath } from '../../lib/bidi';
 import { t } from '../../lib/i18n';
 
 interface ReadingPassageProps {
@@ -55,7 +56,7 @@ export function ReadingPassage({ title, text, compact }: ReadingPassageProps) {
     <View style={[styles.wrap, compact && styles.compactWrap]}>
       <Text style={[styles.eyebrow, rtl.text]}>{t('readingPassageLabel')}</Text>
       {title ? <Text style={[styles.title, rtl.text]}>{title}</Text> : null}
-      <Text style={[styles.body, rtl.text]}>{text}</Text>
+      <Text style={[styles.body, rtl.text]}>{ltrMath(text)}</Text>
     </View>
   );
 }

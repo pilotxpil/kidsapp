@@ -26,7 +26,9 @@ echo "==> Build shared + Expo web export (API: $API_URL)..."
 cd "$REPO_ROOT"
 npm run build -w @kidsapp/shared
 cd "$MOBILE"
-EXPO_PUBLIC_API_URL="$API_URL" npx expo export --platform web
+# --clear: babel-preset-expo inlines app.json (expo.version) into a transformed module that
+# Metro caches without tracking app.json, so a cached build keeps showing an old version.
+EXPO_PUBLIC_API_URL="$API_URL" npx expo export --platform web --clear
 
 if [[ ! -d dist ]]; then
   echo "ERROR: apps/mobile/dist not found after export"

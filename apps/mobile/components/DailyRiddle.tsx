@@ -14,6 +14,7 @@ import { spacing } from '../constants/theme';
 import { useTheme } from '../lib/theme-context';
 import { useType } from '../lib/typography';
 import { rtl } from '../lib/rtl';
+import { ltrMath } from '../lib/bidi';
 import { t } from '../lib/i18n';
 import { api } from '../lib/api';
 import { playSfx } from '../lib/sfx';
@@ -248,9 +249,9 @@ function RiddlePrompt({
   const styles = useRiddleStyles();
   return (
     <View>
-      <Text style={[styles.prompt, rtl.text]}>{prompt}</Text>
+      <Text style={[styles.prompt, rtl.text]}>{ltrMath(prompt)}</Text>
       {extra ? (
-        <Text style={[styles.extra, rtl.text, !HEBREW.test(extra) && styles.extraLtr]}>{extra}</Text>
+        <Text style={[styles.extra, rtl.text, !HEBREW.test(extra) && styles.extraLtr]}>{ltrMath(extra)}</Text>
       ) : null}
       {visual ? <RiddleVisualView visual={visual} /> : null}
     </View>
@@ -612,7 +613,7 @@ export function DailyRiddle({
                     sound={false}
                   >
                     <View style={[styles.choice, isPicked && styles.choicePicked]}>
-                      <Text style={[styles.choiceText, rtl.text]}>{choice}</Text>
+                      <Text style={[styles.choiceText, rtl.text]}>{ltrMath(choice)}</Text>
                     </View>
                   </BouncyPressable>
                 );
@@ -639,7 +640,7 @@ export function DailyRiddle({
             <>
               <Text style={[styles.label, rtl.text]}>{t('dailyRiddleYourAnswer')}</Text>
               <View style={[styles.choice, styles.choiceWrong]}>
-                <Text style={[styles.choiceText, rtl.text]}>{riddle.guess}</Text>
+                <Text style={[styles.choiceText, rtl.text]}>{ltrMath(riddle.guess)}</Text>
               </View>
             </>
           ) : null}
@@ -647,7 +648,7 @@ export function DailyRiddle({
             <>
               <Text style={[styles.label, rtl.text]}>{t('dailyRiddleAnswer')}</Text>
               <View style={[styles.choice, styles.choiceOk]}>
-                <Text style={[styles.choiceText, rtl.text]}>{riddle.answer}</Text>
+                <Text style={[styles.choiceText, rtl.text]}>{ltrMath(riddle.answer)}</Text>
               </View>
             </>
           ) : null}
@@ -666,7 +667,7 @@ export function DailyRiddle({
           {riddle.why ? (
             <>
               <Text style={[styles.label, rtl.text]}>{t('dailyRiddleWhy')}</Text>
-              <Text style={[styles.why, rtl.text]}>{riddle.why}</Text>
+              <Text style={[styles.why, rtl.text]}>{ltrMath(riddle.why)}</Text>
             </>
           ) : null}
         </View>
@@ -741,13 +742,13 @@ export function ParentDailyRiddleList({
           {item.guess ? (
             <>
               <Text style={[styles.label, rtl.text]}>{t('dailyRiddleKidAnswer')}</Text>
-              <Text style={[styles.why, rtl.text]}>{item.guess}</Text>
+              <Text style={[styles.why, rtl.text]}>{ltrMath(item.guess)}</Text>
             </>
           ) : null}
           {item.answer ? (
             <>
               <Text style={[styles.label, rtl.text]}>{t('dailyRiddleOfficialAnswer')}</Text>
-              <Text style={[styles.kidMeta, rtl.text]}>{item.answer}</Text>
+              <Text style={[styles.kidMeta, rtl.text]}>{ltrMath(item.answer)}</Text>
             </>
           ) : null}
           <View style={[styles.appealActions, rtl.row]}>
@@ -787,7 +788,7 @@ export function ParentDailyRiddleList({
               <>
                 <Text style={[styles.label, rtl.text]}>{t('dailyRiddleKidAnswer')}</Text>
                 <View style={[styles.choice, correct ? styles.choiceOk : styles.choiceWrong]}>
-                  <Text style={[styles.choiceText, rtl.text]}>{item.guess}</Text>
+                  <Text style={[styles.choiceText, rtl.text]}>{ltrMath(item.guess)}</Text>
                 </View>
               </>
             ) : null}
@@ -795,14 +796,14 @@ export function ParentDailyRiddleList({
               <>
                 <Text style={[styles.label, rtl.text]}>{t('dailyRiddleOfficialAnswer')}</Text>
                 <View style={[styles.choice, styles.choiceOk]}>
-                  <Text style={[styles.choiceText, rtl.text]}>{item.answer}</Text>
+                  <Text style={[styles.choiceText, rtl.text]}>{ltrMath(item.answer)}</Text>
                 </View>
               </>
             ) : null}
             {item.why ? (
               <>
                 <Text style={[styles.label, rtl.text]}>{t('dailyRiddleWhy')}</Text>
-                <Text style={[styles.why, rtl.text]}>{item.why}</Text>
+                <Text style={[styles.why, rtl.text]}>{ltrMath(item.why)}</Text>
               </>
             ) : null}
           </View>

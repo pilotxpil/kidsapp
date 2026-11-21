@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
+import { ltrMath } from '../../lib/bidi';
 import { t } from '../../lib/i18n';
 import { Input } from '../Input';
 
@@ -74,7 +75,7 @@ export function OpenWords({
       <View style={styles.badge}>
         <Text style={[styles.badgeText, rtl.text]}>{t('openWordsHint')}</Text>
       </View>
-      <Text style={[styles.prompt, rtl.text]}>{prompt}</Text>
+      <Text style={[styles.prompt, rtl.text]}>{ltrMath(prompt)}</Text>
       {slots.map((value, i) => (
         <Input
           key={i}

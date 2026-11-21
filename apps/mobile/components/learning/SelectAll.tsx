@@ -4,6 +4,7 @@ import type { ActivityOption } from '@kidsapp/shared';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../lib/theme-context';
 import { rtl } from '../../lib/rtl';
+import { ltrMath } from '../../lib/bidi';
 import { t } from '../../lib/i18n';
 import { playSfx } from '../../lib/sfx';
 
@@ -109,7 +110,7 @@ export function SelectAll({
       <View style={styles.badge}>
         <Text style={[styles.badgeText, rtl.text]}>{t('selectAllHint')}</Text>
       </View>
-      <Text style={[styles.prompt, rtl.text]}>{prompt}</Text>
+      <Text style={[styles.prompt, rtl.text]}>{ltrMath(prompt)}</Text>
       {options.map((option) => {
         const isSelected = selectedIds.includes(option.id);
         const isCorrect = revealed && correctIds.includes(option.id);
@@ -137,7 +138,7 @@ export function SelectAll({
               <View style={[styles.box, isSelected && styles.boxOn]}>
                 {isSelected ? <Text style={styles.boxMark}>✓</Text> : null}
               </View>
-              <Text style={[styles.optionText, rtl.text]}>{option.text}</Text>
+              <Text style={[styles.optionText, rtl.text]}>{ltrMath(option.text)}</Text>
             </View>
           </TouchableOpacity>
         );
