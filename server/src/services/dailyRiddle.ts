@@ -18,12 +18,20 @@ import {
   type KidDailyRiddle,
   type ParentDailyRiddleKid,
   type RiddleTrack,
+  type RiddleVisual,
 } from '@kidsapp/shared';
 import { IUser, User } from '../models/User';
 import { DailyRiddleClaim, IDailyRiddleClaim } from '../models/DailyRiddleClaim';
 import { todayString } from '../utils/format';
 import { awardPoints } from './gamification';
 import { riddleById, riddlesFor } from './contentStore';
+import { clientShowsRiddleImages } from '../utils/clientContext';
+
+/** Uploaded pictures go only to apps that can show them (older ones would draw the forest). */
+function visibleVisual(v: RiddleVisual | undefined): RiddleVisual | undefined {
+  if (v?.kind === 'image' && !clientShowsRiddleImages()) return undefined;
+  return v;
+}
 
 export function parseSlot(raw: unknown): RiddleTrack {
   return raw === 'language' ? 'language' : 'math';
@@ -52,7 +60,8 @@ const FALLBACK: DailyRiddleEntry = {
 };
 
 function pickFromPool(kid: IUser, date: string, slot: RiddleTrack, wonIds: Set<string>): DailyRiddleEntry {
-  const all = riddlesFor(slot, kid.grade);
+  const showImages = clientShowsRiddleImages();
+  const all = riddlesFor(slot, kid.grade).filter((r) => showImages || r.visual?.kind !== 'image');
   if (!all.length) return FALLBACK;
   const pool = all.filter((r) => !wonIds.has(r.id));
   const source = pool.length ? pool : all;
@@ -93,7 +102,7 @@ function toKidPayload(
     cat: entry.cat,
     prompt: entry.prompt,
     extra: entry.extra,
-    visual: entry.visual,
+    visual: visibleVisual(entry.visual),
     choices: seededShuffle(entry.choices, hashUint(kidId, date, slot, `:${entry.id}`)),
     points: DAILY_RIDDLE_POINTS,
     status,
@@ -189,7 +198,7 @@ export async function listFamilyDailyRiddles(kids: IUser[]): Promise<ParentDaily
         cat: t.entry.cat,
         prompt: t.entry.prompt,
         extra: t.entry.extra,
-        visual: t.entry.visual,
+        visual: visibleVisual(t.entry.visual),
         points: DAILY_RIDDLE_POINTS,
         status: t.status,
         kid: { displayName: kid.displayName, avatar: kid.avatar || '🎮' },

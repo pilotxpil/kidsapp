@@ -1,4 +1,6 @@
 import { API_URL } from './config';
+import * as Application from 'expo-application';
+import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {
   AuthResponse,
@@ -54,6 +56,7 @@ export function isPremiumRequired(err: unknown): err is ApiError {
 }
 
 const TOKEN_KEY = 'kidsapp_token';
+const APP_VERSION: string | null = Application.nativeApplicationVersion ?? Constants.expoConfig?.version ?? null;
 
 async function getToken(): Promise<string | null> {
   return AsyncStorage.getItem(TOKEN_KEY);
@@ -63,6 +66,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = await getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    // Lets the server send only what this build can show (e.g. picture riddles from 2.3.1).
+    ...(APP_VERSION ? { 'X-App-Version': APP_VERSION } : {}),
     ...(options.headers as Record<string, string>),
   };
   if (token) headers.Authorization = `Bearer ${token}`;

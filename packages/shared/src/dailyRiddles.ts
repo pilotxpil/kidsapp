@@ -23,7 +23,12 @@ export type RiddleVisual =
   | { kind: 'row'; parts: RiddleVisualPart[] }
   | { kind: 'stack'; parts: RiddleVisualPart[] }
   | { kind: 'bag'; emoji: string }
-  | { kind: 'forest'; hidden: string };
+  | { kind: 'forest'; hidden: string }
+  /** An uploaded picture, served at /app/images/:id. `ratio` = width / height. Apps from 2.3.1. */
+  | { kind: 'image'; id: string; ratio?: number; alt?: string };
+
+/** First app version that can show `{ kind: 'image' }`; older apps draw unknown kinds as the forest. */
+export const RIDDLE_IMAGE_MIN_APP_VERSION = '2.3.1';
 
 export interface DailyRiddleEntry {
   id: string;

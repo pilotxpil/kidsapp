@@ -12,6 +12,7 @@ import familyRoutes from './routes/family';
 import learningRoutes from './routes/learning';
 import pushRoutes from './routes/push';
 import appRoutes from './routes/app';
+import { clientContext } from './utils/clientContext';
 import billingRoutes from './routes/billing';
 import adminRoutes from './routes/admin';
 import { migrateFamilies } from './utils/migrateFamilies';
@@ -42,6 +43,7 @@ app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
+app.use(clientContext);
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

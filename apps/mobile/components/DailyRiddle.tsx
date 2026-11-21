@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Text, StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
+import { Image, Text, StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { RIDDLE_TRACK_LABELS } from '@kidsapp/shared';
 import type {
@@ -17,6 +17,7 @@ import { rtl } from '../lib/rtl';
 import { ltrMath } from '../lib/bidi';
 import { t } from '../lib/i18n';
 import { api } from '../lib/api';
+import { API_URL } from '../lib/config';
 import { playSfx } from '../lib/sfx';
 import { BouncyPressable } from './animations/BouncyPressable';
 import { KidAvatar } from './KidAvatar';
@@ -223,6 +224,20 @@ function RiddleVisualView({ visual }: { visual: RiddleVisual }) {
       </View>
     );
   }
+  if (visual.kind === 'image') {
+    return (
+      <View style={styles.photoWrap}>
+        <Image
+          source={{ uri: `${API_URL}/app/images/${visual.id}` }}
+          style={[styles.photo, { aspectRatio: visual.ratio ?? 4 / 3 }]}
+          resizeMode="contain"
+          accessibilityLabel={visual.alt}
+        />
+      </View>
+    );
+  }
+  // Draw only what we know: a picture type added later shows nothing rather than a wrong scene.
+  if (visual.kind !== 'forest') return null;
   return (
     <View style={styles.forest}>
       <Text style={styles.forestLine}>🌲🌲🌲🌲🌲</Text>
@@ -399,6 +414,18 @@ function useRiddleStyles(slotOverride?: RiddleTrack) {
           backgroundColor: 'rgba(255,255,255,0.35)',
         },
         bagEmoji: { fontSize: 36 },
+        photoWrap: {
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: 320,
+          marginVertical: spacing.sm,
+          borderRadius: 14,
+          borderWidth: 2,
+          borderColor: look.title,
+          backgroundColor: '#FFFFFF',
+          overflow: 'hidden',
+        },
+        photo: { width: '100%', maxHeight: 260 },
         forest: { alignItems: 'center', marginVertical: spacing.sm },
         forestLine: { fontSize: 20, lineHeight: 26, textAlign: 'center' },
         forestHidden: { color: look.muted, fontSize: 13, fontFamily: 'Fredoka_700Bold' },

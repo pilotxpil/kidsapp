@@ -11,6 +11,7 @@
  *   PUT  /admin/api/:kind/:id       → create or replace
  *   PATCH /admin/api/:kind/:id      → { active }
  *   DELETE /admin/api/:kind/:id     → deletes unused admin items; anything else is deactivated
+ *   POST /admin/api/images          → { data: data-URL, width, height } upload a picture (riddles)
  *
  * Writes mark the item source 'admin', so the boot-time seed import never overwrites them.
  */
@@ -26,6 +27,7 @@ import { ContentPack } from '../models/ContentPack';
 import { DailyRiddleClaim } from '../models/DailyRiddleClaim';
 import { DailyWordClaim } from '../models/DailyWordClaim';
 import { LearningProgress } from '../models/LearningProgress';
+import { ContentImage, MAX_CONTENT_IMAGE_BYTES } from '../models/ContentImage';
 import { contentStats, reloadContent } from '../services/contentStore';
 import { validateRiddle, validateWord } from '../services/contentValidate';
 import { parseLearningPack } from '../services/learningPacks';
@@ -233,6 +235,27 @@ router.post('/api/import', wrap(async (req: Request, res: Response) => {
 router.post('/api/reload', wrap(async (_req: Request, res: Response) => {
   await afterWrite();
   res.json({ stats: contentStats() });
+}));
+
+/** Magic bytes must match the declared type, so only real PNG/JPEG/WebP files are ever served. */
+function looksLike(mime: string, b: Buffer): boolean {
+  if (mime === 'image/png') return b.length > 8 && b.readUInt32BE(0) === 0x89504e47;
+  if (mime === 'image/jpeg') return b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  return b.length > 12 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP';
+}
+
+router.post('/api/images', wrap(async (req: Request, res: Response) => {
+  const { data, width, height } = (req.body ?? {}) as { data?: unknown; width?: unknown; height?: unknown };
+  const m = typeof data === 'string' ? /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/.exec(data) : null;
+  if (!m) return res.status(400).json({ error: 'אפשר להעלות רק PNG, JPG או WebP' });
+  const buf = Buffer.from(m[2], 'base64');
+  if (!looksLike(m[1], buf)) return res.status(400).json({ error: 'הקובץ אינו תמונה תקינה' });
+  if (buf.length > MAX_CONTENT_IMAGE_BYTES) return res.status(400).json({ error: 'התמונה גדולה מדי (עד 700KB)' });
+  const w = Math.round(Number(width));
+  const h = Math.round(Number(height));
+  if (!(w > 0 && h > 0 && w <= 4096 && h <= 4096)) return res.status(400).json({ error: 'מידות התמונה לא תקינות' });
+  const doc = await ContentImage.create({ mime: m[1], data: buf, bytes: buf.length, width: w, height: h });
+  res.status(201).json({ id: doc.id, url: `/app/images/${doc.id}`, width: w, height: h });
 }));
 
 router.get('/api/:kind', wrap(async (req: Request, res: Response) => {

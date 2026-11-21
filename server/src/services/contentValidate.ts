@@ -49,6 +49,12 @@ function visual(v: unknown): RiddleVisual | undefined | null {
       return typeof o.emoji === 'string' && o.emoji ? { kind: 'bag', emoji: o.emoji } : null;
     case 'forest':
       return typeof o.hidden === 'string' && o.hidden ? { kind: 'forest', hidden: o.hidden } : null;
+    case 'image': {
+      if (typeof o.id !== 'string' || !/^[a-f0-9]{24}$/.test(o.id)) return null;
+      const ratio = typeof o.ratio === 'number' && o.ratio >= 0.2 && o.ratio <= 5 ? Math.round(o.ratio * 1000) / 1000 : undefined;
+      const alt = typeof o.alt === 'string' && o.alt.trim() ? o.alt.trim().slice(0, 120) : undefined;
+      return { kind: 'image', id: o.id, ...(ratio ? { ratio } : {}), ...(alt ? { alt } : {}) };
+    }
     default:
       return null;
   }

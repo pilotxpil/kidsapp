@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import type { AppRuntimeConfig } from '@kidsapp/shared';
 import { isMailerConfigured } from '../services/mailer';
 import { billingConfigured } from './billing';
+import { ContentImage } from '../models/ContentImage';
 
 const router = Router();
 
@@ -29,6 +30,21 @@ router.get('/config', (_req: Request, res: Response) => {
   };
   res.set('Cache-Control', 'public, max-age=300');
   res.json(config);
+});
+
+/** Pictures uploaded in the content admin (picture riddles). Immutable, so cached for a year. */
+router.get('/images/:id', async (req: Request, res: Response) => {
+  const id = String(req.params.id);
+  if (!/^[a-f0-9]{24}$/.test(id)) return res.status(404).end();
+  try {
+    const img = await ContentImage.findById(id).select('mime data');
+    if (!img) return res.status(404).end();
+    res.set('Content-Type', img.mime);
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.send(img.data);
+  } catch {
+    res.status(500).end();
+  }
 });
 
 export default router;
