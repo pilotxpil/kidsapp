@@ -28,9 +28,15 @@ echo "==> npm install + build..."
 # The VM is an e2-micro (1 GB RAM, shared with other services). Install only what the API needs:
 # a full `npm ci` would also pull the mobile app's React Native tree and push the box into swap.
 npm ci --workspace=server --workspace=@kidsapp/shared --include-workspace-root=false --no-audit --no-fund
-export NODE_OPTIONS="--max-old-space-size=384"
-npm run build -w @kidsapp/shared
-npm run build -w server
+# deploy.sh compiles on the Mac and ships dist/: tsc on this box gets OOM-killed (exit 137) when
+# the other pm2 app leaves ~300 MB free. Build here only if an older deploy.sh sent no dist.
+if [[ -f packages/shared/dist/index.js && -f server/dist/index.js ]]; then
+  echo "==> Using dist/ built by deploy.sh"
+else
+  export NODE_OPTIONS="--max-old-space-size=384"
+  npm run build -w @kidsapp/shared
+  npm run build -w server
+fi
 
 if [[ ! -f server/.env ]]; then
   echo "ERROR: server/.env missing on VM. Run deploy.sh from your Mac (it copies a local .env)."

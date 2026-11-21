@@ -45,7 +45,7 @@ else
   bash "$SCRIPT_DIR/sync-store-version.sh"
 fi
 
-echo "==> Building shared + server locally (sanity check)..."
+echo "==> Building shared + server locally (shipped as-is: the VM has too little free RAM for tsc)..."
 cd "$REPO_ROOT"
 npm run build -w @kidsapp/shared
 npm run build -w server
@@ -57,7 +57,6 @@ echo "==> Packaging (server + shared + content packs, no mobile)..."
 COPYFILE_DISABLE=1 tar -czf "$TMP_TAR" \
   -C "$REPO_ROOT" \
   --exclude='node_modules' \
-  --exclude='dist' \
   --exclude='.expo' \
   --exclude='.git' \
   --exclude='._*' \
