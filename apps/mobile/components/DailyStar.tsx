@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   FadeIn,
@@ -10,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { DailyStarClaimResult, DailyStarStatus } from '@kidsapp/shared';
 import { spacing } from '../constants/theme';
+import { GOLD, INK } from '../constants/themes';
 import { toTextShadow } from '../lib/shadow';
 import { useTheme } from '../lib/theme-context';
 import { playSfx, playStarTapSfx } from '../lib/sfx';
@@ -30,7 +32,19 @@ interface DailyStarProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const STAGE = 220;
+const STAGE = 250;
+
+const PIP = 'M12 2.6l2.8 5.7 6.3.9-4.6 4.4 1.1 6.2L12 16.9l-5.6 2.9 1.1-6.2L2.9 9.2l6.3-.9Z';
+
+/** Progress pip: an empty star outline that fills gold with each tap. */
+function StarPip({ filled }: { filled: boolean }) {
+  return (
+    <Svg width={26} height={26} viewBox="0 0 24 24">
+      <Path d={PIP} fill={filled ? GOLD : 'rgba(255,255,255,0.18)'} stroke={filled ? INK : 'rgba(255,255,255,0.8)'} strokeWidth={1.8} strokeLinejoin="round" />
+      {filled ? <Path d="M8.6 9.6q1.2-2.2 3-2.6" stroke="#FFF7DA" strokeWidth={1.4} strokeLinecap="round" fill="none" /> : null}
+    </Svg>
+  );
+}
 
 export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
   const { borderRadius, cardBorder, heroGradient, id: themeId } = useTheme();
@@ -106,20 +120,8 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
         },
         dots: {
           flexDirection: 'row',
-          gap: 10,
-          marginTop: spacing.sm,
-        },
-        dot: {
-          width: 14,
-          height: 14,
-          borderRadius: 7,
-          borderWidth: 2,
-          borderColor: 'rgba(255,255,255,0.75)',
-          backgroundColor: 'transparent',
-        },
-        dotFilled: {
-          backgroundColor: '#FFD700',
-          borderColor: '#FFF3A0',
+          gap: 8,
+          marginTop: spacing.xs,
         },
         reward: {
           color: '#FFD700',
@@ -194,8 +196,12 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
       const parts = [`+${result.dailyBonus} ${t('points')}`];
       if (result.streakBonus) parts.push(`${t('streakBonus')}: +${result.streakBonus}`);
       setCelebrateMsg(parts.join(' · '));
-      setCelebrate(true);
-      onClaimedRef.current?.(result);
+      playSfx('coin', { volume: 0.8 });
+      // let the sparkle-and-coin burst play before the celebration covers it
+      setTimeout(() => {
+        setCelebrate(true);
+        onClaimedRef.current?.(result);
+      }, 1000);
     } catch (err: unknown) {
       playSfx('error');
       claimingRef.current = false;
@@ -230,7 +236,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
 
     playStarTapSfx(next);
     setTaps(next);
-    starRef.current?.punch(next);
+    starRef.current?.punch(next, next / needed);
 
     flash.value = withSequence(
       withTiming(next >= needed ? 0.35 : 0.18, { duration: 40 }),
@@ -269,7 +275,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
                 <Animated.Text entering={FadeIn.delay(80)} style={styles.title}>
                   {t('dailyStar')}
                 </Animated.Text>
-                <Text style={styles.hint}>{t('dailyStarHint').replace('{n}', String(remaining))}</Text>
+                <Text style={styles.hint}>{remaining > 0 ? t('dailyStarHint').replace('{n}', String(remaining)) : t('dailyStarOpened')}</Text>
 
                 <Pressable
                   onPress={handleTap}
@@ -283,7 +289,7 @@ export function DailyStar({ kidId, onClaimed, onOpenChange }: DailyStarProps) {
 
                 <View style={styles.dots}>
                   {Array.from({ length: status?.tapsRequired ?? 4 }).map((_, i) => (
-                    <View key={i} style={[styles.dot, i < taps && styles.dotFilled]} />
+                    <StarPip key={i} filled={i < taps} />
                   ))}
                 </View>
 

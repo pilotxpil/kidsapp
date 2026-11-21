@@ -3,6 +3,7 @@
  * music and effects are 100% original (no samples, no licences).
  *
  *   node scripts/audio/synth.mjs            # writes assets/bgm/*.mp3, assets/sfx/<world>/*.wav, lib/sfx-files.ts
+ *   node scripts/audio/synth.mjs --sfx-only # sound effects only (music untouched)
  *
  * Needs `lame` (brew install lame) for the music MP3s.
  */
@@ -635,10 +636,32 @@ function noiseBurst(buf, startSec, durSec, filter, vel, shape = 'decay') {
 }
 const notes = (instr, buf, seq, opts) => seq.forEach(([sec, m, vel = 0.9]) => INSTR[instr](buf, SFX_SR, sAt(sec), midi(m), 0.25, vel, opts));
 
+/**
+ * Gentle UI blip for taps: a sine glide with a rounded (sin²) attack so there is no click, a
+ * quick exponential fade, and an optional quieter partial for the world's "material"
+ * (wood, glass, water). Taps play constantly, so they stay soft and low-pitched.
+ */
+function softBlip(buf, startSec, durSec, f0, f1, vel, { attack = 0.005, decay = 38, partial = 0, ratio = 2 } = {}) {
+  const n = Math.round(durSec * SFX_SR);
+  let ph = 0;
+  let ph2 = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / SFX_SR;
+    const f = f0 * Math.pow(f1 / f0, t / durSec);
+    ph = (ph + f / SFX_SR) % 1;
+    ph2 = (ph2 + (f * ratio) / SFX_SR) % 1;
+    const rise = t < attack ? Math.sin((Math.PI / 2) * (t / attack)) ** 2 : 1;
+    const env = rise * Math.exp(-decay * t) * Math.min(1, (durSec - t) / 0.015);
+    const k = sAt(startSec) + i;
+    if (k < buf.length) buf[k] += (Math.sin(TAU * ph) + partial * Math.sin(TAU * ph2) * Math.exp(-decay * t)) * env * vel;
+  }
+}
+
 /** Each world gets its own instrument family so a tap already tells you which world you're in. */
 const SFX = {
   ocean: {
-    tap: (b = sfxBuf(0.16)) => (sweep(b, 0, 0.12, 380, 1100, 'sine', 0.8, 10), b),
+    // soft water "bloop"
+    tap: (b = sfxBuf(0.12)) => (softBlip(b, 0, 0.11, 430, 640, 1, { decay: 36, partial: 0.12, ratio: 2 }), b),
     whoosh: (b = sfxBuf(0.4)) => {
       const bp = new Biquad(SFX_SR, 'bp', 900, 0.8);
       noiseBurst(b, 0, 0.38, (x) => bp.run(x), 0.9, 'swell');
@@ -657,10 +680,11 @@ const SFX = {
     stars: [79, 84, 88, 91].map((m) => (b = sfxBuf(0.7)) => (notes('marimba', b, [[0, m]]), INSTR.bubble(b, SFX_SR, 0, midi(m - 12), 0, 0.4), b)),
   },
   volcano: {
-    tap: (b = sfxBuf(0.14)) => {
-      const lp = new OnePole(SFX_SR, 1400);
-      noiseBurst(b, 0, 0.08, (x) => lp.lp(x), 0.9);
-      sweep(b, 0, 0.1, 210, 120, 'sine', 0.8, 30);
+    // warm pebble "thup"
+    tap: (b = sfxBuf(0.12)) => {
+      softBlip(b, 0, 0.1, 270, 190, 1, { attack: 0.004, decay: 40, partial: 0.16, ratio: 2.4 });
+      const lp = new OnePole(SFX_SR, 650);
+      noiseBurst(b, 0, 0.03, (x) => lp.lp(x), 0.1);
       return b;
     },
     whoosh: (b = sfxBuf(0.45)) => {
@@ -684,7 +708,8 @@ const SFX = {
     stars: [69, 74, 78, 81].map((m) => (b = sfxBuf(0.6)) => (notes('lead', b, [[0, m]], { pw: 0.25 }), INSTR.taiko(b, SFX_SR, 0, 90, 0, 0.5), b)),
   },
   jungle: {
-    tap: (b = sfxBuf(0.12)) => (INSTR.wood(b, SFX_SR, 0, 1180, 0, 1), b),
+    // soft wooden "tok"
+    tap: (b = sfxBuf(0.1)) => (softBlip(b, 0, 0.09, 760, 720, 1, { attack: 0.003, decay: 50, partial: 0.2, ratio: 2.76 }), b),
     whoosh: (b = sfxBuf(0.4)) => {
       const bp = new Biquad(SFX_SR, 'bp', 3200, 1.2);
       noiseBurst(b, 0, 0.36, (x, t) => bp.run(x) * (0.6 + 0.4 * Math.sin(TAU * 28 * t)), 1, 'swell');
@@ -702,7 +727,8 @@ const SFX = {
     stars: [79, 83, 86, 91].map((m) => (b = sfxBuf(0.8)) => (notes('kalimba', b, [[0, m]]), INSTR.wood(b, SFX_SR, 0, 1500, 0, 0.4), b)),
   },
   space: {
-    tap: (b = sfxBuf(0.12)) => (sweep(b, 0, 0.09, 1500, 380, 'sq', 0.45, 18), b),
+    // round little "blip"
+    tap: (b = sfxBuf(0.1)) => (softBlip(b, 0, 0.09, 880, 700, 1, { decay: 42, partial: 0.08, ratio: 1.5 }), b),
     whoosh: (b = sfxBuf(0.55)) => {
       const bp = new Biquad(SFX_SR, 'bp', 1800, 2);
       noiseBurst(b, 0, 0.5, (x) => bp.run(x), 0.6, 'swell');
@@ -735,7 +761,8 @@ const SFX = {
     }),
   },
   candy: {
-    tap: (b = sfxBuf(0.12)) => (sweep(b, 0, 0.07, 1500, 700, 'sine', 0.7, 25), sweep(b, 0.005, 0.04, 2600, 2400, 'tri', 0.2, 40), b),
+    // tiny bubble-gum "pop"
+    tap: (b = sfxBuf(0.1)) => (softBlip(b, 0, 0.08, 640, 960, 1, { attack: 0.004, decay: 46, partial: 0.1, ratio: 2 }), b),
     whoosh: (b = sfxBuf(0.4)) => (sweep(b, 0, 0.32, 500, 1600, 'sine', 0.55, 1.5), b),
     coin: (b = sfxBuf(0.9)) => (notes('bell', b, [[0, 88], [0.07, 95]], { ratio: 3.5, decay: 3 }), b),
     gem: (b = sfxBuf(1.2)) => (notes('musicbox', b, [[0, 96], [0.05, 100], [0.1, 103]]), b),
@@ -751,10 +778,35 @@ const SFX = {
 };
 
 // ─── build ───────────────────────────────────────────────────────────────────
+/**
+ * UI sounds that fire on every press are mastered quiet, unsaturated and low-passed so they
+ * sit under the music; rewards (coin, complete, cheer…) keep the full level.
+ */
+const SOFT_SFX = {
+  tap: { peak: 0.3, lowpass: 3200 },
+  whoosh: { peak: 0.3, lowpass: 2000 },
+};
+const SFX_PEAK = { star1: 0.6, star2: 0.6, star3: 0.6, star4: 0.6 };
+
+function soften(buf, peak, lowpassHz) {
+  const a = new OnePole(SFX_SR, lowpassHz);
+  const b = new OnePole(SFX_SR, lowpassHz);
+  const out = new Float32Array(buf.length);
+  for (let i = 0; i < buf.length; i++) out[i] = b.lp(a.lp(buf[i]));
+  const fade = Math.round(0.012 * SFX_SR);
+  for (let i = 0; i < fade && i < out.length; i++) out[out.length - 1 - i] *= i / fade;
+  let max = 0;
+  for (const v of out) max = Math.max(max, Math.abs(v));
+  const g = max > 0 ? peak / max : 1;
+  for (let i = 0; i < out.length; i++) out[i] *= g;
+  return out;
+}
+
 function main() {
+  const sfxOnly = process.argv.includes('--sfx-only');
   const bgmDir = path.join(ROOT, 'assets/bgm');
   const tmp = fs.mkdtempSync(path.join(process.env.TMPDIR || '/tmp', 'kq-audio-'));
-  for (const [name, world] of Object.entries(WORLDS)) {
+  for (const [name, world] of sfxOnly ? [] : Object.entries(WORLDS)) {
     const { data, sr, loopSec } = renderTrack(world);
     const wav = path.join(tmp, `${name}.wav`);
     writeWav(wav, data, sr);
@@ -766,7 +818,8 @@ function main() {
   for (const [world, set] of Object.entries(SFX)) {
     for (const n of names) {
       const fn = n.startsWith('star') ? set.stars[Number(n.slice(4)) - 1] : set[n];
-      const data = master(fn(), 0.8);
+      const soft = SOFT_SFX[n];
+      const data = soft ? soften(fn(), soft.peak, soft.lowpass) : master(fn(), SFX_PEAK[n] ?? 0.8);
       writeWav(path.join(ROOT, `assets/sfx/${world}/${n}.wav`), data, SFX_SR);
     }
     lines.push(

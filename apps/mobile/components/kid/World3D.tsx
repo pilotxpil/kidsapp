@@ -4,8 +4,8 @@ import { isRunningInExpoGo } from 'expo';
 import { useFocusEffect } from 'expo-router';
 import { GLView, type ExpoWebGLRenderingContext } from 'expo-gl';
 import * as THREE from 'three';
-import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { createExpoThreeRenderer } from '../../lib/threeGl';
+import { INK_HEX as INK, hullGeometry, inkMaterial, starGeometry } from '../../lib/toon3d';
 import { useTheme } from '../../lib/theme-context';
 import { haptic } from '../../lib/haptics';
 import { playStarTapSfx } from '../../lib/sfx';
@@ -17,8 +17,6 @@ import { Piko } from '../ui/Piko';
  * current world. Ink outlines (inverted hull) keep it in the sticker style of the 2D UI.
  * Tap → Piko jumps, spins and plays the world's sound. Falls back to 2D Piko without WebGL.
  */
-const INK = 0x241547;
-
 function canUse3D() {
   if (Platform.OS === 'web') return typeof document !== 'undefined';
   return !isRunningInExpoGo();
@@ -39,27 +37,6 @@ type Kit = {
   part: (geo: THREE.BufferGeometry, mat: THREE.Material, outline?: number) => THREE.Group;
 };
 
-/** Ink outline: a back-face hull pushed out along smoothed normals → even line width. */
-function inkMaterial(thickness: number) {
-  const m = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide });
-  m.onBeforeCompile = (shader) => {
-    shader.uniforms.thickness = { value: thickness };
-    shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nuniform float thickness;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed += normalize(normal) * thickness;');
-  };
-  return m;
-}
-
-function hullGeometry(geo: THREE.BufferGeometry) {
-  const g = geo.clone();
-  g.deleteAttribute('normal');
-  if (g.getAttribute('uv')) g.deleteAttribute('uv');
-  const merged = mergeVertices(g, 1e-3);
-  merged.computeVertexNormals();
-  return merged;
-}
-
 function makeKit(ramp: THREE.Texture): Kit {
   const inks = new Map<number, THREE.Material>();
   const ink = (t: number) => {
@@ -78,23 +55,28 @@ function makeKit(ramp: THREE.Texture): Kit {
   };
 }
 
-function starGeometry(outer = 1, inner = 0.56, depth = 0.42) {
-  const shape = new THREE.Shape();
-  for (let i = 0; i < 10; i++) {
-    const r = i % 2 === 0 ? outer : inner;
-    const a = (i * Math.PI) / 5 + Math.PI / 2;
-    const x = Math.cos(a) * r;
-    const y = Math.sin(a) * r;
-    if (i === 0) shape.moveTo(x, y);
-    else shape.lineTo(x, y);
+/** The 2D Piko's flame tuft (Piko.tsx "lava" outfit) as a chunky extrusion; base at y=0. */
+function flameGeometry(inner: boolean) {
+  const s = new THREE.Shape();
+  if (inner) {
+    s.moveTo(0, 0.4);
+    s.bezierCurveTo(0.1, 0.275, 0.1, 0.15, 0.025, 0.05);
+    s.bezierCurveTo(0, 0.125, -0.025, 0.125, -0.05, 0.05);
+    s.bezierCurveTo(-0.1, 0.15, -0.1, 0.275, 0, 0.4);
+  } else {
+    s.moveTo(0, 0.65);
+    s.bezierCurveTo(0.25, 0.4, 0.3, 0.2, 0.15, 0);
+    s.bezierCurveTo(0.1, 0.15, 0.025, 0.2, 0, 0.3);
+    s.bezierCurveTo(-0.025, 0.2, -0.1, 0.15, -0.15, 0);
+    s.bezierCurveTo(-0.3, 0.2, -0.25, 0.4, 0, 0.65);
   }
-  shape.closePath();
-  const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.16, bevelSegments: 4, curveSegments: 4 });
-  g.center();
+  const depth = inner ? 0.06 : 0.16;
+  const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.04, bevelSegments: 3, curveSegments: 10 });
+  g.translate(0, 0, -depth / 2);
   return g;
 }
 
-function buildPiko(kit: Kit, scenery: Scenery) {
+function buildPiko(kit: Kit, scenery: Scenery, movers: THREE.Object3D[]) {
   const piko = new THREE.Group();
   piko.add(kit.part(starGeometry(), kit.toon(0xffc93a, { emissive: 0x6a4000, emissiveIntensity: 0.18 }), 0.075));
   const front = 0.43;
@@ -126,8 +108,16 @@ function buildPiko(kit: Kit, scenery: Scenery) {
     band.position.y = -0.08;
     hat.add(band);
   } else if (scenery === 'lava') {
-    const flame = kit.part(new THREE.ConeGeometry(0.24, 0.55, 16), kit.toon(0xff7a1a, { emissive: 0xff5a00, emissiveIntensity: 0.5 }), 0.04);
-    flame.position.y = 0.16;
+    // Flame tuft sitting on the top spike: its notch hugs the tip, like the 2D outfit.
+    const flame = new THREE.Group();
+    flame.add(kit.part(flameGeometry(false), kit.toon(0xff7a1a, { emissive: 0xff4a00, emissiveIntensity: 0.35 }), 0.035));
+    const core = new THREE.Mesh(flameGeometry(true), new THREE.MeshBasicMaterial({ color: 0xffd54a }));
+    core.position.z = 0.13;
+    flame.add(core);
+    flame.position.y = -0.33;
+    flame.scale.setScalar(1.15);
+    flame.userData = { kind: 'flicker', speed: 9, phase: 0 };
+    movers.push(flame);
     hat.add(flame);
   } else if (scenery === 'leaves') {
     const dome = kit.part(new THREE.SphereGeometry(0.3, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), kit.toon(0xd9ae6a), 0.03);
@@ -174,19 +164,72 @@ function buildIsland(kit: Kit, scenery: Scenery, movers: THREE.Object3D[]) {
       break;
     }
     case 'lava': {
-      add(kit.part(new THREE.CylinderGeometry(1.5, 1.05, 0.55, 9), kit.toon(0x9c5a43)), 0, -0.27);
-      for (const [x, z, r] of [[0.7, 0.55, 0.32], [-0.5, 0.75, 0.22]] as const) {
-        const pool = add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.04, 16), new THREE.MeshBasicMaterial({ color: 0xff8a1f })), x, 0.01, z);
-        pool.userData = { kind: 'glow', speed: 3 + r * 4, phase: x };
+      // Cool basalt reads against the orange sky; everything hot glows (unlit materials).
+      const ROCK = 0x5a4775;
+      const ROCK_DARK = 0x3a2b52;
+      const lavaMat = () => new THREE.MeshBasicMaterial({ color: 0xff8a1f });
+      add(kit.part(new THREE.CylinderGeometry(1.75, 1.6, 0.36, 11), kit.toon(ROCK)), 0, -0.18);
+      const underside = add(kit.part(new THREE.ConeGeometry(1.6, 0.75, 11), kit.toon(ROCK_DARK)), 0, -0.735);
+      underside.rotation.x = Math.PI;
+
+      // Lava pools with a hot core, and cracks running between them.
+      for (const [x, z, r] of [[0.85, 0.6, 0.3], [-0.35, 0.95, 0.2]] as const) {
+        const pool = add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.04, 20), lavaMat()), x, 0.005, z);
+        pool.userData = { kind: 'glow', speed: 2.5 + r * 4, phase: x };
         movers.push(pool);
+        add(new THREE.Mesh(new THREE.CylinderGeometry(r * 0.5, r * 0.5, 0.05, 16), new THREE.MeshBasicMaterial({ color: 0xffd54a })), x, 0.01, z);
       }
-      const cone = add(kit.part(new THREE.ConeGeometry(0.75, 1.3, 9), kit.toon(0xb06a4e)), -1.35, 0.6, -0.6);
-      const crater = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.08, 12), new THREE.MeshBasicMaterial({ color: 0xffb13a }));
-      crater.position.y = 0.6;
-      cone.add(crater);
-      for (let i = 0; i < 5; i++) {
-        const e = add(new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffd54a : 0xff7a1a })), -1.35, 1.2, -0.6);
-        e.userData = { kind: 'ember', speed: 0.6 + i * 0.12, phase: i * 1.3, x0: -1.35 };
+      for (const [x, z, len, rot] of [[0.35, 0.75, 0.7, 0.25], [0.95, 0.05, 0.6, 1.4], [-0.75, 0.55, 0.55, -0.6]] as const) {
+        const crack = add(new THREE.Mesh(new THREE.BoxGeometry(len, 0.03, 0.06), lavaMat()), x, 0.005, z);
+        crack.rotation.y = rot;
+      }
+
+      // The volcano (left of Piko so it stays visible): a truncated cone with a crater lip,
+      // glowing lava and two flows down its face.
+      const V = { x: -1.28, z: -0.42, h: 1.15, top: 0.24, base: 0.56 };
+      const volcano = add(new THREE.Group(), V.x, V.h / 2, V.z);
+      volcano.add(kit.part(new THREE.CylinderGeometry(V.top, V.base, V.h, 14), kit.toon(ROCK)));
+      const lip = kit.part(new THREE.TorusGeometry(V.top, 0.065, 8, 20), kit.toon(ROCK_DARK), 0.02);
+      lip.rotation.x = Math.PI / 2;
+      lip.position.y = V.h / 2;
+      volcano.add(lip);
+      const crater = new THREE.Mesh(new THREE.CylinderGeometry(V.top - 0.05, V.top - 0.05, 0.02, 20), new THREE.MeshBasicMaterial({ color: 0xffc23a }));
+      crater.position.y = V.h / 2 + 0.005;
+      volcano.add(crater);
+      const slope = (V.base - V.top) / V.h;
+      // θ = 0 faces +z (the camera); the volcano sits left, so the camera is at θ ≈ 0.15
+      for (const [start, width, h] of [[-0.12, 0.3, 0.78], [-0.85, 0.2, 0.45]] as const) {
+        // radius follows the cone's slope, just above its surface
+        const rTop = V.top + 0.015;
+        const flow = new THREE.Mesh(
+          new THREE.CylinderGeometry(rTop, rTop + slope * h, h, 6, 1, true, start, width),
+          new THREE.MeshBasicMaterial({ color: 0xff8a1f, side: THREE.DoubleSide })
+        );
+        flow.position.y = V.h / 2 - h / 2;
+        volcano.add(flow);
+      }
+
+      // Rocks and glowing crystals around the rim.
+      for (const [x, z, s] of [[1.25, 0.75, 0.17], [0.15, -1.2, 0.14], [-1.45, 0.35, 0.12]] as const) {
+        const rock = add(kit.part(new THREE.IcosahedronGeometry(s, 0), kit.toon(ROCK_DARK), 0.02), x, s * 0.5, z);
+        rock.rotation.set(x, z, 0);
+      }
+      for (const [x, z, s, tilt] of [[1.2, -0.45, 1, -0.25], [1.42, -0.15, 0.7, 0.35], [0.95, -0.7, 0.6, 0.1]] as const) {
+        const crystal = add(kit.part(new THREE.OctahedronGeometry(0.15, 0), kit.toon(0xff4f6d, { emissive: 0xff2a4a, emissiveIntensity: 0.45 }), 0.02), x, 0.2 * s, z);
+        crystal.scale.set(s, s * 1.9, s);
+        crystal.rotation.z = tilt;
+      }
+
+      // Smoke puffs and embers rising out of the crater.
+      const top = { x: V.x, y: V.h + 0.05, z: V.z };
+      for (let i = 0; i < 3; i++) {
+        const puff = add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.15, 2), kit.toon(0xf6efea, { transparent: true, opacity: 0.8, depthWrite: false })), top.x, top.y, top.z);
+        puff.userData = { kind: 'smoke', speed: 0.3, phase: i / 3, x0: top.x, base: top.y };
+        movers.push(puff);
+      }
+      for (let i = 0; i < 6; i++) {
+        const e = add(new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffd54a : 0xff7a1a })), top.x, top.y, top.z);
+        e.userData = { kind: 'ember', speed: 0.55 + i * 0.1, phase: i * 1.1, x0: top.x, base: top.y };
         movers.push(e);
       }
       break;
@@ -277,7 +320,7 @@ export function World3D({ height = 210 }: { height?: number }) {
       const island = buildIsland(kit, world.scenery, movers);
       island.position.y = world.scenery === 'stars' ? -0.62 : -1.05;
       stage.add(island);
-      const piko = buildPiko(kit, world.scenery);
+      const piko = buildPiko(kit, world.scenery, movers);
       piko.scale.setScalar(0.78);
       stage.add(piko);
       scene.add(stage);
@@ -320,9 +363,18 @@ export function World3D({ height = 210 }: { height?: number }) {
             m.scale.setScalar(k > 0.85 ? (1 - k) / 0.15 : 1);
           } else if (u.kind === 'ember') {
             const k = ((t * u.speed + (u.phase ?? 0)) % 1.6) / 1.6;
-            m.position.y = 1.25 + k * 1.6;
+            m.position.y = (u.base ?? 1.25) + k * 1.6;
             m.position.x = (u.x0 ?? 0) + Math.sin(k * 6 + (u.phase ?? 0)) * 0.25;
             m.scale.setScalar(1 - k * 0.8);
+          } else if (u.kind === 'smoke') {
+            const k = (t * u.speed + (u.phase ?? 0)) % 1;
+            // drifts up and away from Piko (to the left), swelling as it fades
+            m.position.y = (u.base ?? 0) + k * 1.2;
+            m.position.x = (u.x0 ?? 0) - k * 0.45 + Math.sin(t * 1.5 + (u.phase ?? 0) * 6) * 0.04;
+            m.scale.setScalar(0.55 + k * 1.3);
+            ((m as THREE.Mesh).material as THREE.MeshToonMaterial).opacity = 0.85 * Math.min(1, k * 6) * (1 - k);
+          } else if (u.kind === 'flicker') {
+            m.scale.set(1.15 * (1 + Math.sin(t * u.speed) * 0.04), 1.15 * (1 + Math.sin(t * u.speed * 1.3 + 1) * 0.08), 1.15);
           } else if (u.kind === 'glow') {
             const k = 0.5 + 0.5 * Math.sin(t * u.speed + (u.phase ?? 0));
             ((m as THREE.Mesh).material as THREE.MeshBasicMaterial).color.setRGB(1, 0.35 + 0.3 * k, 0.05 + 0.08 * k, THREE.SRGBColorSpace);
