@@ -1,5 +1,7 @@
 # Public launch on Google Play — checklist
 
+> **Status (Nov 21, 2026):** 2.3.0 (29) was sent to Google for review for **production, Israel only, full rollout** (Play does not allow a staged rollout on an app's first release). Managed publishing is off, so it goes live automatically once approved. All App content declarations, the store listing and the Parenting category are done; Target audience is 6+ (incl. 18+) with Teacher Approved opt-in. Reviewer login: `reviewer-login.local.md` (gitignored), entered in Sign in details.
+
 Everything the Play Console asks for before a production (public) release, with the answers that
 match how KidsQuest 2.1 actually works. Texts: `LISTING.md`. Graphics: `screenshots/`, `feature-graphic.png`.
 Monetization setup (RevenueCat, AdMob, SMTP): `../PRODUCTION.md`.
